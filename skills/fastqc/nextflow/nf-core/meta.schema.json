@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fastqc_nextflow_nfcore",
+  "description": "nf-core/modules 官方 fastqc 模块（单 process：FASTQ → html/zip 报告）.",
+  "type": "object",
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Groovy map with sample id, read group info etc."
+    },
+    "reads": {
+      "type": "string",
+      "description": "Input FASTQ file(s) (single or paired end)"
+    },
+    "default_cpus": {
+      "type": "string"
+    },
+    "default_mem_mb": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reads"
+  ]
+}

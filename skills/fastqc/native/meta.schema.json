@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fastqc_native",
+  "description": "Self-contained FastQC runner，自动注入 JVM 内存、临时目录与线程优化。",
+  "type": "object",
+  "properties": {
+    "reads": {
+      "type": "string",
+      "description": "输入 FASTQ（支持 .fastq / .fq / .fastq.gz / .fq.gz，多个文件可用多入参）"
+    },
+    "outdir": {
+      "type": "string",
+      "description": "输出目录（默认 ./fastqc_results）"
+    },
+    "threads": {
+      "type": "integer",
+      "description": "线程数（自动注入）",
+      "default": 4
+    },
+    "extract": {
+      "type": "boolean",
+      "description": "自动解压结果 zip",
+      "default": true
+    },
+    "noextract": {
+      "type": "boolean",
+      "description": "不自动解压 zip",
+      "default": false
+    },
+    "nogroup": {
+      "type": "boolean",
+      "description": "禁用按碱基位置分组（更慢但更精确）",
+      "default": false
+    },
+    "format": {
+      "type": "string",
+      "description": "强制输入格式（bam/sam/bam_mapped/sam_mapped/fastq/fastq_bismark）"
+    },
+    "contaminants": {
+      "type": "string",
+      "description": "自定义污染序列列表"
+    },
+    "adapters": {
+      "type": "string",
+      "description": "自定义接头序列列表"
+    },
+    "kmers": {
+      "type": "integer",
+      "description": "k-mer 长度（2-10，默认 7）"
+    },
+    "java_mem_mb": {
+      "type": "integer",
+      "description": "JVM 最大堆内存（MB，通过 JAVA_OPTS 注入）",
+      "default": 8192
+    },
+    "default_cpus": {
+      "type": "string"
+    },
+    "default_mem_mb": {
+      "type": "string"
+    },
+    "env_vars": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reads"
+  ]
+}

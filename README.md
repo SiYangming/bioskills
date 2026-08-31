@@ -99,11 +99,12 @@ bioskills/
 - 测试与**环境配方默认路线（apt + bookworm-slim + 清理四连）**
 - 校验流程 + **新增软件 Checklist**（含 software_versions / apt / submodules 三条硬性检查）
 
-> ⚙️ **新增软件自动化 Skill（推荐）**：本仓库已内置 [`.trae/skills/bioskills-package-standardizer/`](.trae/skills/bioskills-package-standardizer/SKILL.md)，
-> 在 TRAE 中直接调用即可按上述标准生成/校验新软件包。
+> ⚙️ **新增软件自动化 Skill（推荐）**：本仓库在 TRAE 会话中打开时会自动挂载「bioskills-package-standardizer」Skill（本地路径 `.trae/skills/bioskills-package-standardizer/SKILL.md`，**不入库**），
+> 等价的标准清单见 [AGENT.md §10 新增软件 Checklist](AGENT.md#10-新增软件检查清单checklist) 与 [ARCHITECTURE.md §六.3 验收工具链](ARCHITECTURE.md#六-规范化实施步骤与里程碑)。
 
 参考黄金样例 `skills/samtools/`（三引擎五实现完整对照 + apt 最小化 + software_versions 差异声明）。
 参考第二个完整样例 `skills/fastqc/`（apt JVM + Babraham 官方 zip 路线示范、单 process / 单 wrapper 的 submodules 占位写法）。
+参考复合流程骨架 [skills/custom/dna_seq_align_qc/README.md](skills/custom/dna_seq_align_qc/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [skills/custom/README.md](skills/custom/README.md)。
 
 ## 构建规范
 
@@ -148,6 +149,28 @@ software_versions:
     fastqc: "0.12.1"
     wrapper_tag: "v3.13.0"
     source: "bio/fastqc/environment.yaml"
+```
+
+## GitHub 仓库 Description / Topics 建议（精简核心组）
+
+> 建议（Description）：
+> `Software-centric bioinformatics skill library — 标准化生信技能库。双引擎（Nextflow + Snakemake）× 三路线（nf-core / snakemake-wrappers / 自包含 Native），apt 最小化容器，JSON-Schema 原生支持 AI Agent 编排。`
+
+> 建议（Topics，约 12 个核心词；避免 nextflow-pipeline vs nextflow-pipelines 重复）：
+```
+bioinformatics
+nextflow
+snakemake
+nf-core
+pipeline
+workflow
+workflow-automation
+ai-agent
+tool-calling
+docker
+apptainer
+samtools
+fastqc
 ```
 
 ## License

@@ -88,10 +88,41 @@ class SchemaExporter:
         return mapping.get(yaml_type.lower(), "string")
 
     @staticmethod
+    def _normalize_io_block(block: Any) -> dict[str, dict[str, Any]]:
+        """把 meta.yaml 的 inputs/outputs 规范成 {name: spec} 形式。
+
+        本仓库两种写法都允许：
+        1) 字典形式（推荐 native / local 使用）
+            inputs:
+              reads: { type: file, required: true }
+        2) 列表形式（nf-core / snakemake-wrappers 为贴近官方 schema 常见写法）
+            inputs:
+              - name: reads
+                type: file
+                required: true
+        """
+        if block is None:
+            return {}
+        if isinstance(block, dict):
+            return {k: (v if isinstance(v, dict) else {}) for k, v in block.items()}
+        if isinstance(block, list):
+            out: dict[str, dict[str, Any]] = {}
+            for item in block:
+                if not isinstance(item, dict):
+                    continue
+                name = item.get("name")
+                if not name:
+                    continue
+                spec = {k: v for k, v in item.items() if k != "name"}
+                out[name] = spec
+            return out
+        return {}
+
+    @staticmethod
     def meta_to_json_schema(meta: dict[str, Any]) -> dict[str, Any]:
         software = meta.get("software", "skill")
         skill_id = meta.get("id", software)
-        inputs = meta.get("inputs", {}) or {}
+        inputs = SchemaExporter._normalize_io_block(meta.get("inputs"))
         properties: dict[str, Any] = {}
         required: list[str] = []
         for name, spec in inputs.items():
@@ -104,6 +135,9 @@ class SchemaExporter:
                 prop["default"] = spec["default"]
             if spec.get("format") in ("file", "directory"):
                 prop["format"] = "path"
+            # 列表块写法里 pattern 常放在 IO 层，这里挂到 prop 便于 Agent 参考
+            if "pattern" in spec:
+                prop["pattern"] = spec["pattern"]
             properties[name] = prop
             if spec.get("required"):
                 required.append(name)

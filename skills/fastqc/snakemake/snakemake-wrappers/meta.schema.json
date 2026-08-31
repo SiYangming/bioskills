@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "fastqc_snakemake_wrappers",
+  "description": "snakemake-wrappers 官方 bio/fastqc wrapper 说明 + 本地引用（单 wrapper：FASTQ → html/zip）.",
+  "type": "object",
+  "properties": {
+    "reads": {
+      "type": "string",
+      "description": "FASTQ / FASTQ.gz（支持单/双端）"
+    },
+    "default_cpus": {
+      "type": "string"
+    },
+    "default_mem_mb": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "reads"
+  ]
+}

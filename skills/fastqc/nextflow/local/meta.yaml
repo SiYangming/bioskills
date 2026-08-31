@@ -1,7 +1,7 @@
 # fastqc nextflow local 占位元数据
 
 id: fastqc_nextflow_local
-version: ""
+version: "0.0.0-placeholder"
 software: fastqc
 type: nextflow_local
 source_type: custom
@@ -9,7 +9,12 @@ source_type: custom
 summary: "自定义 FastQC Nextflow process 占位。按 README.md 定制 main.nf 后使用。"
 agent_guidance:
   when_to_use: "nf-core 模块缺失 / 需要自定义参数组合（-k / -c / format 等）时启用。"
-  enabled: false
+  enabled: false  # 占位：未补 main.nf / inputs/outputs 前，Agent 不得路由到此实现。
+  recommendation_priority: "Low（nf-core 优先）。"
+
+software_versions:
+  status: placeholder
+  note: "本地 Nextflow 自维护 FastQC process 尚未填充版本信息；实际启用时需按具体执行来源补 fastqc 版本、JDK 版本与构建路线。"
 
 inputs:
   reads: { required: true }

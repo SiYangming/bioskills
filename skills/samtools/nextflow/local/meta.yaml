@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 
 id: samtools_nextflow_local
-version: ""
+version: "0.0.0-placeholder"
 software: samtools
 type: nextflow_local
 source_type: custom
@@ -16,6 +16,11 @@ summary: "Placeholder for custom samtools Nextflow modules (populate when needed
 agent_guidance:
   when_to_use: "nf-core 子模块缺失，或需要本地定制 process 时使用。"
   recommendation_priority: "Low（nf-core 优先）。"
+  enabled: false  # 占位：未补 main.nf / inputs/outputs 前，Agent 不得路由到此实现。
+
+software_versions:
+  status: placeholder
+  note: "本地 Nextflow 自维护模块尚未填充版本信息；实际启用时需按具体 process 二进制来源补 samtools / htslib 版本与构建路线。"
 
 inputs: {}
 outputs: {}

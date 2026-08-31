@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "samtools_native",
+  "description": "Self-contained samtools runner，覆盖排序/索引/统计/提取/拼接等核心子命令，自动注入线程与内存优化。",
+  "type": "object",
+  "properties": {
+    "subcommand": {
+      "type": "string",
+      "description": "samtools 子命令：view|sort|index|flagstat|idxstats|stats|depth|mpileup|faidx|merge|quickcheck"
+    },
+    "input": {
+      "type": "string",
+      "description": "输入文件（SAM/BAM/CRAM/FASTA）"
+    },
+    "output": {
+      "type": "string",
+      "description": "输出文件路径"
+    },
+    "bam": {
+      "type": "string",
+      "description": "主输入 BAM（index/flagstat/idxstats/stats/depth 等）"
+    },
+    "bam_list": {
+      "type": "string",
+      "description": "merge 时的 BAM 列表文件"
+    },
+    "region": {
+      "type": "string",
+      "description": "区域字符串（如 chr1:1000-2000），view/stats/depth 等可用"
+    },
+    "fasta": {
+      "type": "string",
+      "description": "faidx 目标 FASTA / mpileup 参考序列"
+    },
+    "threads": {
+      "type": "integer",
+      "description": "线程数（自动注入）",
+      "default": 4
+    },
+    "output_format": {
+      "type": "string",
+      "description": "输出格式：SAM/BAM/CRAM/JSON"
+    },
+    "filter_flags": {
+      "type": "string",
+      "description": "过滤 FLAG（如 4=未比对，1796=常规质控）"
+    },
+    "require_flags": {
+      "type": "string",
+      "description": "要求 FLAG"
+    },
+    "min_mapq": {
+      "type": "integer",
+      "description": "最小 MAPQ"
+    },
+    "sort_by_name": {
+      "type": "boolean",
+      "description": "sort 时按 read name 排序",
+      "default": false
+    },
+    "index_format": {
+      "type": "string",
+      "description": "index 时的索引格式（bai/csi）"
+    },
+    "extra_args": {
+      "type": "string",
+      "description": "透传给 samtools 子命令的额外参数（高级用法，慎用）"
+    },
+    "default_cpus": {
+      "type": "string"
+    },
+    "default_mem_mb": {
+      "type": "string"
+    },
+    "env_vars": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "subcommand",
+    "input"
+  ]
+}
