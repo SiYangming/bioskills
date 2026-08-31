@@ -1,0 +1,86 @@
+# samtools / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 本目录为说明 + Schema；真正执行需 Snakemake 运行时联网或本地缓存解析 wrapper 路径。
+# ---------------------------------------------------------------------------
+
+id: samtools_snakemake_wrappers
+version: "v3.13.0"
+software: samtools
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers for samtools (bio/samtools/* 全子模块清单 + 使用参考)."
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程、复用中央 wrapper 缓存时，直接引用 wrapper 路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 snakemake-wrappers 仓库 tag；
+# samtools 上游二进制版本以各子模块 environment.yaml 中的 conda pin 为准。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  samtools: "1.24"
+  source: "bioconda samtools=1.24 + snakemake-wrapper-utils=0.9.0（bio/samtools/*/environment.yaml）"
+  note: "snakemake-wrappers master（2026-07 之后 autobump）已将 calmd/faidx/flagstat/index/markdup/merge/mpileup/sort/stats/view 等统一 bump 到 samtools=1.24；
+         若引用更旧 wrapper tag（如 v0.9x），samtools 可能仍在 1.21–1.23 区间。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/samtools"
+  tag: "v3.13.0"
+  submodules:
+    - "calmd"
+    - "collate"
+    - "depth"
+    - "faidx"
+    - "fastq"
+    - "fastx"
+    - "fixmate"
+    - "flagstat"
+    - "idxstats"
+    - "import"
+    - "index"
+    - "markdup"
+    - "merge"
+    - "mpileup"
+    - "sort"
+    - "stats"
+    - "view"
+  submodules_note: >
+    子模块列表以 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/samtools
+    在线目录为准；若需要某子模块缺失的参数，请降级使用 samtools_snakemake_local。
+
+inputs:
+  input:
+    type: file
+    format: [sam, bam, cram, fasta]
+    required: true
+    description: "输入文件（依子模块而定：view/sort/flagstat 用 BAM；faidx 用 FASTA；fastq/fastx 用 BAM->FQ 等）"
+
+outputs:
+  output:
+    type: file
+    description: "输出文件（依 wrapper 而定：view/sort 为 BAM/CRAM；flagstat/stats 为 txt；faidx 为 .fai；index 为 .bai/.csi 等）"
+
+params:
+  extra:
+    type: string
+    default: ""
+    description: "子命令额外参数（wrapper.py 中统一拼接）"
+  java_options:
+    type: string
+    default: ""
+    description: "部分子模块无 JVM 依赖；此处保留占位方便定制 rule 透传。"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/samtools/{subcommand}"
+  rule_example: |
+    rule samtools_sort:
+        input:  "aln/{sample}.bam"
+        output: "aln/{sample}.sorted.bam"
+        log:    "logs/samtools/sort/{sample}.log"
+        params: extra="-m 2G"
+        threads: 8
+        wrapper: "v3.13.0/bio/samtools/sort"

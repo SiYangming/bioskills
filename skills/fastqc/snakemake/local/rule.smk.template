@@ -1,0 +1,23 @@
+# fastqc snakemake local rule 模板
+import os
+rule fastqc_local:
+    input:
+        "raw/{sample}.fq.gz"
+    output:
+        html="qc/{sample}_fastqc.html",
+        zip="qc/{sample}_fastqc.zip",
+    log:
+        "logs/fastqc/{sample}.log"
+    params:
+        outdir=lambda wc, output: os.path.dirname(output.html),
+        extra="",
+    threads: 4
+    resources:
+        mem_mb=8192,
+    shell:
+        r"""
+        fastqc {params.extra} \
+            --threads {threads} \
+            -o {params.outdir} \
+            {input} > {log} 2>&1
+        """

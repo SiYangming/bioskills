@@ -1,0 +1,51 @@
+# -- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# -- 虚拟环境 & 缓存 --------------------------------------------------------
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# -- IDE -------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -- 运行产物 ---------------------------------------------------------------
+*.schema.json              # 由 skill-cli schema 导出（可再生）
+registry.yaml.bak
+tmp*/
+TMP*/
+test_artifacts/
+work/
+results/
+.nextflow/
+.nf-test/
+.snakemake/
+*.bam
+*.bai
+*.sam
+*.cram
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.vcf
+*.vcf.gz
+*.fa
+*.fasta
+*.fai
+*.bed
+*.bed.gz
+*.html
+*.zip

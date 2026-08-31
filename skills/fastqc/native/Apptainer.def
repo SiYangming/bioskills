@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# bioskills / fastqc native Apptainer 配方
+# Route: Debian bookworm-slim + apt(openjdk-17 + perl) + Babraham 官方 zip
+#   版本与 nf-core/modules / snakemake-wrappers 的 bioconda fastqc=0.12.1 对齐。
+# 目标：无 miniconda、仅保留运行必需、apt 立即清理，保持最小镜像。
+# 运行时要求：apptainer run 会自动继承宿主机 UID，避免文件属主污染。
+# ---------------------------------------------------------------------------
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%post
+    export DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 LC_ALL=C.UTF-8
+    export FASTQC_VERSION="0.12.1"
+
+    # ---- apt 最小化安装 + 清理四连 ----
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        openjdk-17-jre-headless \
+        perl \
+        procps \
+        unzip
+
+    # ---- 下载 & 部署 Babraham FastQC 官方 zip ----
+    curl -fSL "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip" -o /tmp/fastqc.zip
+    unzip -q /tmp/fastqc.zip -d /opt
+    chmod +x /opt/FastQC/fastqc
+    ln -sf /opt/FastQC/fastqc /usr/local/bin/fastqc
+
+    # ---- 清理：build 工具 curl 先 purge，再 autoremove/clean ----
+    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export JAVA_TOOL_OPTIONS="-Xmx8g -Djava.io.tmpdir=/tmp"
+
+%runscript
+    exec /usr/local/bin/fastqc "$@"
+
+%startscript
+    exec /usr/local/bin/fastqc "$@"
+
+%test
+    # 版本自检：--version 必须含 "v0.12.1"（与 nf-core / snakemake-wrappers 环境对齐）
+    /usr/local/bin/fastqc --version | grep -F "v0.12.1" || { echo "fastqc version mismatch"; exit 1; }
+    java -version 2>&1 | head -n 1 || { echo "java not available"; exit 1; }
+
+%labels
+    org.bioskills.software       fastqc
+    org.bioskills.impl           native
+    org.bioskills.base_image     debian:bookworm-slim
+    org.bioskills.fastqc_version 0.12.1
+    org.bioskills.java           openjdk-17-jre-headless (apt)
+    org.bioskills.pkg_route      apt + babraham official zip (bioconda fastqc=0.12.1 对齐)

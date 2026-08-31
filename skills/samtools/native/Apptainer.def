@@ -1,34 +1,81 @@
+# samtools native Apptainer/Singularity 定义（apt 最小化版本）
+#
+# 底座：Debian 12 bookworm-slim（通过 Docker hub library/debian:bookworm-slim bootstrap）
+# 安装：samtools=1.21-1（Debian bookworm stable）+ python3 运行驱动
+# 清理：apt lists / docs / man / cache
+#
+# 构建：apptainer build samtools.sif Apptainer.def
+# 运行：apptainer run samtools.sif view -h
+
 Bootstrap: docker
-From: continuumio/miniconda3:24.7.1-0
-
-%post
-    # 安装 conda 环境
-    conda env create -f /tmp/environment.yml -n samtools || true
-    conda clean -afy
-
-%files
-    environment.yml /tmp/environment.yml
-    main.py /opt/skill/main.py
-    meta.yaml /opt/skill/meta.yaml
-    test/ /opt/skill/test/
-
-%environment
-    export PATH=/opt/conda/envs/samtools/bin:$PATH
-    export PYTHONPATH=/opt/skill
-    export TMPDIR=/tmp
-
-%runscript
-    exec python /opt/skill/main.py "$@"
+From: debian:bookworm-slim
 
 %labels
     Maintainer bioskills
     Software samtools
     Version 1.21-v1.0
+    SamtoolsAptVersion 1.21-1
+
+%files
+    # 在 bootstrap 阶段把宿主机技能目录内容准备到镜像内路径
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        samtools=1.21-1 \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 强清理文档 / 手册 / locale / apt 缓存，保持 sif 尽量小
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+    # 版本断言：确保 build 环境未意外升级到 >1.21
+    dpkg -l | awk '$2=="samtools"{print $3}' | grep -Eq '^1\.21(-|$)'
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/skill:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
 
 %test
-    bash /opt/skill/test/run_test.sh
+    # 非交互自检：确保驱动与 samtools 二进制可运行
+    set -eux
+    samtools --version | head -n 1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
 
 %help
-    samtools native Apptainer/Singularity 镜像。
-    构建：apptainer build samtools.sif Apptainer.def
-    运行：apptainer run samtools.sif view -bS input.sam -o out.bam
+    samtools native Apptainer 镜像（apt 最小化）。
+    samtools: Debian bookworm stable 1.21-1
+    调用方式：apptainer run samtools.sif <subcommand> [options]
+    挂载卷示例：apptainer run -B $PWD:/data -H /data samtools.sif sort /data/in.bam -o /data/out.sorted.bam

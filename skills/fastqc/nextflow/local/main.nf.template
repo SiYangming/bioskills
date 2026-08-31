@@ -1,0 +1,21 @@
+// fastqc nextflow local 模板 — 复制为 main.nf 后再修改
+process FASTQC_LOCAL {
+    tag "$meta.id"
+    publishDir params.outdir, mode: 'copy', overwrite: true
+
+    input:
+    tuple val(meta), path(reads)
+
+    output:
+    tuple val(meta), path("*_fastqc.html"), emit: html
+    tuple val(meta), path("*_fastqc.zip"),  emit: zip
+    path "versions.yml",                    emit: versions
+
+    script:
+    """
+    fastqc ${reads} -o . -t ${task.cpus}
+    cat <<-END_VERSIONS > versions.yml
+    fastqc: \$(fastqc --version 2>&1 | sed 's/FastQC //')
+    END_VERSIONS
+    """
+}

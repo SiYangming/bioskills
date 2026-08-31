@@ -1,0 +1,27 @@
+// custom/dna_seq_align_qc Nextflow DSL2 骨架（复制到真实项目中使用）
+// 假设已把 skills/<sw>/nextflow/nf-core 或 local 模块通过官方方式安装到 modules/
+nextflow.enable.dsl = 2
+
+include { FASTP    } from './modules/nf-core/fastp/main'
+include { BWAMEM2_MEM } from './modules/local/bwa-mem2/mem/main'   // nf-core 暂无 bwa-mem2，示例用 local
+include { SAMTOOLS_SORT  } from './modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_INDEX } from './modules/nf-core/samtools/index/main'
+
+params {
+    samplesheet = null
+    outdir = 'results'
+}
+
+ch_reads = Channel.fromSamplesheet(params.samplesheet,
+                                   header: ['sample','fastq_1','fastq_2','fasta'])
+
+workflow {
+    ch_reads
+        | map { meta, r1, r2, ref -> [ meta, [r1,r2] ] }
+        | FASTP
+
+    BWAMEM2_MEM( FASTP.out.reads.join( ch_reads.map { m,r1,r2,ref -> [m, ref] } ) )
+
+    SAMTOOLS_SORT( BWAMEM2_MEM.out.bam.map { m, b -> [ m, b, [] ] } )
+    SAMTOOLS_INDEX( SAMTOOLS_SORT.out.bam )
+}

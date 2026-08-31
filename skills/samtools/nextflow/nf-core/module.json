@@ -10,18 +10,9 @@
   },
   "container_registry": "community.wave.seqera.io",
   "submodules": [
-    "view",
-    "sort",
-    "index",
-    "flagstat",
-    "idxstats",
-    "stats",
-    "mpileup",
-    "merge",
-    "faidx",
-    "quickcheck",
-    "dict",
-    "convert"
+    "view", "sort", "index", "flagstat", "idxstats", "stats",
+    "mpileup", "merge", "faidx", "quickcheck", "dict", "convert"
   ],
-  "install_command": "nf-core modules install samtools/<submodule>"
+  "install_command": "nf-core modules install samtools/<submodule>",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
 }

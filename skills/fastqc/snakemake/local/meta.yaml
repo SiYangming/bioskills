@@ -1,0 +1,22 @@
+# fastqc snakemake local 占位元数据
+
+id: fastqc_snakemake_local
+version: ""
+software: fastqc
+type: snakemake_local
+source_type: custom
+
+summary: "自定义 Snakemake FastQC rule 占位。按 README 启用。"
+agent_guidance:
+  when_to_use: "snakemake-wrappers 官方 wrapper 参数不足时启用。"
+  enabled: false
+
+inputs:
+  reads: { required: true }
+outputs:
+  html: { pattern: "qc/{sample}_fastqc.html" }
+  zip:  { pattern: "qc/{sample}_fastqc.zip"  }
+
+execution:
+  entrypoint: "snakemake_rule"
+  status: placeholder

@@ -1,0 +1,103 @@
+# samtools / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 本目录为说明 + Schema；真正执行需在项目内安装官方 nf-core 子模块。
+# ---------------------------------------------------------------------------
+
+id: samtools_nextflow_nfcore
+version: "2.2.0"
+software: samtools
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core process family for samtools (modules/nf-core/samtools/* 全子模块清单 + 使用参考)."
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时，直接 include 对应子模块。"
+  recommendation_priority: "Medium（Nextflow 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 nf-core/modules samtools 家族版本；
+# samtools 上游二进制版本以各子模块 environment.yml 中的 conda pin 为准。
+software_versions:
+  module_version: "2.2.0"
+  samtools: "1.24"
+  htslib: "1.24"
+  source: "bioconda::samtools=1.24 / bioconda::htslib=1.24（modules/nf-core/samtools/*/environment.yml）"
+  note: "nf-core master（2026-07 之后 Bump Samtools to v1.24 合入）已将绝大多数子模块升级至 samtools=1.24；
+         若固定 nf modules install 的 tag < 2.2.0，samtools/htslib 可能仍在 1.21–1.23 区间。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/samtools"
+  submodules:
+    - "addreplacerg"
+    - "ampliconclip"
+    - "bam2fq"
+    - "bedcov"
+    - "bgzip"
+    - "calmd"
+    - "cat"
+    - "collate"
+    - "collatefastq"
+    - "consensus"
+    - "convert"
+    - "coverage"
+    - "cramsize"
+    - "depth"
+    - "dict"
+    - "faidx"
+    - "fasta"
+    - "fastq"
+    - "fixmate"
+    - "flagstat"
+    - "getrg"
+    - "idxstats"
+    - "import"
+    - "index"
+    - "markdup"
+    - "merge"
+    - "mpileup"
+    - "quickcheck"
+    - "reheader"
+    - "samples"
+    - "sormadup"
+    - "sort"
+    - "splitheader"
+    - "stats"
+    - "view"
+  submodules_note: >
+    子模块列表以 https://github.com/nf-core/modules/tree/master/modules/nf-core/samtools
+    在线目录为准；若 nf-core 官方未提供某个子命令，请降级使用 samtools_nextflow_local。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1', single_end:false ]"
+  input:
+    type: file
+    format: [sam, bam, cram, fasta, bed, vcf]
+    description: "输入文件（依子模块而定：view/sort/flagstat 用 BAM/CRAM；faidx 用 FASTA；bedcov 用 BED；bgzip 用 VCF 等）"
+
+outputs:
+  output:
+    type: file
+    format: [sam, bam, cram, fasta, fq, vcf.gz, tbi, csi, bai, crai]
+    description: "输出文件（依子模块而定）"
+  report:
+    type: file
+    format: [txt, html, json]
+    description: "统计/报告文件（flagstat/stats/idxstats/coverage 等）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "include { SAMTOOLS_VIEW } from './modules/nf-core/samtools/view'"
+  include_pattern: "include { SAMTOOLS_<SUB> } from './modules/nf-core/samtools/<sub>'"
+  container: "community.wave.seqera.io/library/samtools:1.24--aes08f8c8e6e4b4b"
+  setup_hint: |
+    在项目仓库根执行：
+      nf modules install nf-core samtools sort view index flagstat stats ...
+    本目录仅提供 include 参考与统一 Schema，不重写官方源码。

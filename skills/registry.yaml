@@ -1,7 +1,44 @@
 version: '1.0'
-generated_at: '2026-08-31T09:33:26+00:00'
-# 由 skills/bin/skill-cli scan 自动生成；本文件为 samtools 三实现完整快照。
+generated_at: '2026-08-31T12:28:43+00:00'
 skills:
+- software: fastqc
+  canonical: fastqc
+  implementations:
+  - id: fastqc_native
+    source_type: custom
+    impl: native
+    version: 0.12.1-v1.0
+    path: fastqc/native
+    priority: High
+    entrypoint: python main.py
+  - id: fastqc_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: ''
+    path: fastqc/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: fastqc_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 2.1.0
+    path: fastqc/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: fastqc_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: ''
+    path: fastqc/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: fastqc_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: fastqc/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
 - software: samtools
   canonical: samtools
   implementations:
@@ -12,17 +49,31 @@ skills:
     path: samtools/native
     priority: High
     entrypoint: python main.py
-  - id: samtools_official_nfcore
+  - id: samtools_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: ''
+    path: samtools/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: samtools_nextflow_nfcore
     source_type: official
-    impl: nfcore_module
+    impl: nextflow_nfcore
     version: 2.2.0
-    path: samtools/official_nfcore
+    path: samtools/nextflow/nf-core
     priority: Medium
-    entrypoint: nextflow include
-  - id: samtools_official_snakemake
+    entrypoint: nextflow_include
+  - id: samtools_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: ''
+    path: samtools/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: samtools_snakemake_wrappers
     source_type: official
-    impl: snakemake_wrapper
+    impl: snakemake_wrappers
     version: v3.13.0
-    path: samtools/official_snakemake
+    path: samtools/snakemake/snakemake-wrappers
     priority: Medium
-    entrypoint: snakemake wrapper
+    entrypoint: snakemake_rule

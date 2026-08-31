@@ -1,0 +1,23 @@
+# fastqc nextflow local 占位元数据
+
+id: fastqc_nextflow_local
+version: ""
+software: fastqc
+type: nextflow_local
+source_type: custom
+
+summary: "自定义 FastQC Nextflow process 占位。按 README.md 定制 main.nf 后使用。"
+agent_guidance:
+  when_to_use: "nf-core 模块缺失 / 需要自定义参数组合（-k / -c / format 等）时启用。"
+  enabled: false
+
+inputs:
+  reads: { required: true }
+  outdir: { default: "fastqc_results" }
+outputs:
+  html: { pattern: "*fastqc.html" }
+  zip:  { pattern: "*fastqc.zip"  }
+
+execution:
+  entrypoint: "nextflow_include"
+  status: placeholder
