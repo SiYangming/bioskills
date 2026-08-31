@@ -61,3 +61,9 @@ bash test/run_test.sh   # 合成最小 BAM；lima 未安装时退化为 argv 构
 
 - lima 2.9.0（bioconda::lima=2.9.0）
 - 构建路线：debian:bookworm-slim + micromamba 引导 bioconda env（lima 不在 Debian apt）
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `lima_analysis.py`

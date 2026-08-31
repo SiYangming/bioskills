@@ -62,3 +62,9 @@ bash test/run_test.sh   # 合成最小 BAM；isoseq3 未安装时退化为 argv 
 
 - isoseq 4.0.0（bioconda::isoseq=4.0.0，binary `isoseq3`）
 - 构建路线：debian:bookworm-slim + micromamba 引导 bioconda env（isoseq 不在 Debian apt）
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `isoseq3_refine.py`

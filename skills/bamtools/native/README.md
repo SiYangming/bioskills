@@ -78,3 +78,9 @@ bash test/run_test.sh
   并在 `optimization.per_subcommand_threads` 中给出 sort 8 线程的调度建议。
 - **临时目录**：`--tmpdir` 可覆盖 `TMPDIR`；`sort` 中间文件写入 `$TMPDIR`。
 - **内存**：通过 `meta.yaml.optimization.default_mem_mb` 声明，供上层调度器读取。
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `bamtools_convert.py`

@@ -79,3 +79,9 @@ bash test/run_test.sh
   samtools sort/view 同步使用。
 - **临时目录**：`--tmpdir` 覆盖 `$TMPDIR`；中间 SAM 走管道不落盘（`pipefail` 保证失败传导）。
 - **内存**：通过 `meta.yaml.optimization.default_mem_mb` 声明，供上层调度器读取。
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `minimap2_align.py`

@@ -82,3 +82,9 @@ bash test/run_test.sh
 
 - TAMA 脚本为单线程；`--threads` 作为契约字段接收，供上层调度器参考。
 - `--tmpdir` 覆盖 `$TMPDIR`；所有中间产物落在 `--outdir` 内。
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `gs_tama.py, tama_polyacleanup.py`

@@ -66,8 +66,9 @@ cp -r workflow_skeleton/ my_isoseq/
 cd my_isoseq && snakemake -np
 ```
 
-- `config/config.yaml` — 从原 isoseq.smk 恢复的完整流程配置（9 个工具参数 + exec_mode + 01..09 输出目录映射）
-- `config/schemas/config.schema.yaml` / `samples.schema.yaml` — 供 `snakemake.utils.validate` 使用的校验 schema
+* `config/config.yaml` — 从原 isoseq.smk 恢复的完整流程配置（9 个工具参数 + exec\_mode + 01..09 输出目录映射）
+
+* `config/schemas/config.schema.yaml` / `samples.schema.yaml` — 供 `snakemake.utils.validate` 使用的校验 schema
 
 > 注意：迁移后的规则已去掉 docker 分支，直接调用本地二进制，因此示例 config 默认 `exec_mode: native`；
 > 各工具 bin 从 PATH 解析，`docker_image` 仅作为容器化参考值保留。

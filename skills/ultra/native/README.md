@@ -74,3 +74,9 @@ bash test/run_test.sh
 | `index` | `ULTRA_align.py:subcmd_index` + `ultra.smk:ultra_index` |
 | `align` | `ULTRA_align.py:subcmd_align` + `ultra.smk:ultra_align` |
 | `sort` | `ULTRA_align.py:subcmd_sort` + `ultra.smk:sort_gtf` |
+
+## 历史留存（legacy/）
+
+`legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
+
+- `ULTRA_align.py`
