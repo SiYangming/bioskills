@@ -60,15 +60,15 @@ outputs:
 execution:
   mode: snakemake_rule
   rule_files:
-    - "rule_gstama_polyacleanup.smk"
-    - "rule_gstama_collapse.smk"
-    - "rule_gstama_filelist.smk"
-    - "rule_gstama_merge.smk"
+    - "gstama_polyacleanup.smk"
+    - "gstama_collapse.smk"
+    - "gstama_filelist.smk"
+    - "gstama_merge.smk"
   wrapper_template: ""
   rule_example: |
-    include: "rules/rule_gstama_polyacleanup.smk"
-    include: "rules/rule_gstama_collapse.smk"
-    include: "rules/rule_gstama_filelist.smk"
-    include: "rules/rule_gstama_merge.smk"
+    include: "skills/gstama/snakemake/local/gstama_polyacleanup.smk"
+    include: "skills/gstama/snakemake/local/gstama_collapse.smk"
+    include: "skills/gstama/snakemake/local/gstama_filelist.smk"
+    include: "skills/gstama/snakemake/local/gstama_merge.smk"
     rule all:
         input: "results/gstama_merge/merged.bed"

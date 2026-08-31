@@ -57,7 +57,7 @@ implementations:
     type: snakemake_local
     version: "0.1-v1.0"
     priority: low
-    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 rule_ultra.smk）。
+    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 ultra.smk）。
 
 default_implementation: ultra_native
 
@@ -87,4 +87,4 @@ software_versions:
     source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ultra → 404"
     note: "snakemake-wrappers 官方 bio/ 目录无 ultra（2026-08 核对）；必须降级使用 ultra_snakemake_local。"
   snakemake_local:
-    ultra: "0.1（规则从 snakemake.smk/isoseq.smk/workflow/rules/ultra.smk 迁移，值内联）"
+    ultra: "0.1（规则从 snakemake.smk/isoseq.smk/workflow/skills/ultra/snakemake/local/ultra.smk 迁移，值内联）"

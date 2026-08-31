@@ -10,7 +10,7 @@
    python main.py --list-commands   # 列出支持的子命令
 
 命令逻辑迁移自 snakemake.smk/isoseq.smk/isoseq.py/isoseq3_refine.py
-与 workflow/rules/isoseq3.smk：isoseq3 refine [-j N] [--require-polya] <bam> <primers> <out.bam>。
+与 workflow/skills/isoseq3/snakemake/local/isoseq3.smk：isoseq3 refine [-j N] [--require-polya] <bam> <primers> <out.bam>。
 注意：bioconda 包名为 isoseq，可执行二进制为 isoseq3。
 """
 

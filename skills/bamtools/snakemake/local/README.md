@@ -7,7 +7,7 @@
 
 | 文件 | 作用 |
 |------|------|
-| `rule_bamtools_convert.smk` | `bamtools convert -format <fmt> -in <bam> -out <out>` 规则 |
+| `bamtools_convert.smk` | `bamtools convert -format <fmt> -in <bam> -out <out>` 规则 |
 | `meta.yaml` | 实现级 Schema（id: `bamtools_snakemake_local`） |
 
 ## 使用
@@ -15,7 +15,7 @@
 在 Snakefile 中：
 
 ```python
-include: "rules/rule_bamtools_convert.smk"
+include: "skills/bamtools/snakemake/local/bamtools_convert.smk"
 
 rule all:
     input:

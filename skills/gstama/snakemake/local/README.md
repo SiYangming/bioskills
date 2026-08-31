@@ -9,10 +9,10 @@
 
 | 文件 | 作用 |
 |------|------|
-| `rule_gstama_polyacleanup.smk` | polyA 清理 + gzip（tama_flnc_polya_cleanup.py） |
-| `rule_gstama_collapse.smk` | 转录本去冗余（tama_collapse.py） |
-| `rule_gstama_filelist.smk` | 由 collapse bed 生成 merge TSV（`run:` 纯 Python，无外部依赖） |
-| `rule_gstama_merge.smk` | 合并转录本（tama_merge.py，空 filelist 自动跳过） |
+| `gstama_polyacleanup.smk` | polyA 清理 + gzip（tama_flnc_polya_cleanup.py） |
+| `gstama_collapse.smk` | 转录本去冗余（tama_collapse.py） |
+| `gstama_filelist.smk` | 由 collapse bed 生成 merge TSV（`run:` 纯 Python，无外部依赖） |
+| `gstama_merge.smk` | 合并转录本（tama_merge.py，空 filelist 自动跳过） |
 | `meta.yaml` | 实现级 Schema（id: `gstama_snakemake_local`） |
 
 ## 使用
@@ -20,10 +20,10 @@
 在 Snakefile 中：
 
 ```python
-include: "rules/rule_gstama_polyacleanup.smk"
-include: "rules/rule_gstama_collapse.smk"
-include: "rules/rule_gstama_filelist.smk"
-include: "rules/rule_gstama_merge.smk"
+include: "skills/gstama/snakemake/local/gstama_polyacleanup.smk"
+include: "skills/gstama/snakemake/local/gstama_collapse.smk"
+include: "skills/gstama/snakemake/local/gstama_filelist.smk"
+include: "skills/gstama/snakemake/local/gstama_merge.smk"
 
 rule all:
     input:

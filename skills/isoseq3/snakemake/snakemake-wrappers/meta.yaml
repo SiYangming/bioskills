@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
 # 注意：官方 snakemake-wrappers 目前【没有】bio/isoseq3 wrapper（抓取 404），
-#       本目录仅登记桥接层；实际执行请使用 isoseq3_snakemake_local（rule_isoseq3.smk）。
+#       本目录仅登记桥接层；实际执行请使用 isoseq3_snakemake_local（isoseq3.smk）。
 # ---------------------------------------------------------------------------
 
 id: isoseq3_snakemake_wrappers
@@ -23,7 +23,7 @@ software_versions:
   isoseq: "官方无 wrapper（bio/isoseq3 404）"
   source: "—（snakemake-wrappers 仓库 bio/isoseq3 目录不存在）"
   note: "2026-08 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/isoseq3 返回 404；
-         Snakemake 场景请使用 isoseq3_snakemake_local（rule_isoseq3.smk，pin bioconda::isoseq=4.0.0，binary isoseq3）。"
+         Snakemake 场景请使用 isoseq3_snakemake_local（isoseq3.smk，pin bioconda::isoseq=4.0.0，binary isoseq3）。"
 
 source_reference:
   repository: "https://github.com/snakemake/snakemake-wrappers"
@@ -64,7 +64,7 @@ execution:
   wrapper_template: "v3.13.0/bio/isoseq3/{subcommand}（官方缺失，占位）"
   rule_example: |
     # 官方 wrapper 缺失 —— 直接使用本仓库自维护 rule：
-    #   include: "skills/isoseq3/snakemake/local/rule_isoseq3.smk"
+    #   include: "skills/isoseq3/snakemake/local/isoseq3.smk"
     rule isoseq3_refine:
         input:  bam="lima/{sample}.chunk{n}.bam", primers="primers.fasta"
         output: "isoseq3/{sample}.chunk{n}.bam"

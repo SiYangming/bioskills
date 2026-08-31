@@ -6,7 +6,7 @@
 
 注意：官方 snakemake-wrappers 目前【没有】bio/isoseq3 wrapper（抓取 404），
 wrapper_path() 返回的句柄仅作占位登记；实际 Snakemake 场景请使用
-skills/isoseq3/snakemake/local/rule_isoseq3.smk（isoseq3_snakemake_local）。
+skills/isoseq3/snakemake/local/isoseq3.smk（isoseq3_snakemake_local）。
 
 用法：
   python wrapper.py <subcommand> [--tag vX.Y.Z]
@@ -56,7 +56,7 @@ class IsoSeq3WrapperBridge:
             f"        mem_mb={d['mem_mb']}\n"
             f"    wrapper:\n"
             f"        \"{wp}\"\n"
-            f"# 注意：官方 bio/isoseq3 wrapper 不存在；请改用 ../local/rule_isoseq3.smk\n"
+            f"# 注意：官方 bio/isoseq3 wrapper 不存在；请改用 ../local/isoseq3.smk\n"
         )
 
 

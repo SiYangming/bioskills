@@ -58,7 +58,7 @@ implementations:
     type: snakemake_local
     version: "0.1.0"
     priority: low
-    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 rule_lima.smk。
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 lima.smk。
 
 # 默认推荐路径（Agent 路由用）
 default_implementation: lima_native
@@ -87,5 +87,5 @@ software_versions:
     note: "2026-08 抓取 snakemake-wrappers bio/lima 返回 404，官方未收录；请使用 lima_snakemake_local。"
   snakemake_local:
     lima: "2.9.0"
-    source: "自维护 rule_lima.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/lima.smk）"
+    source: "自维护 lima.smk（迁移自 snakemake.smk/isoseq.smk/workflow/skills/lima/snakemake/local/lima.smk）"
     note: "rule 内 conda 指向 bioconda::lima=2.9.0；二进制 lima。"

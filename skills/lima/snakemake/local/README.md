@@ -5,9 +5,9 @@
 
 ## 规则文件
 
-- `rule_lima.smk` — `rule lima`：reads + primers → 去引物/拆分后的 reads（bam/pbi/report/summary/counts）
+- `lima.smk` — `rule lima`：reads + primers → 去引物/拆分后的 reads（bam/pbi/report/summary/counts）
 
-规则迁移自 `snakemake.smk/isoseq.smk/workflow/rules/lima.smk`，并去除对
+规则迁移自 `snakemake.smk/isoseq.smk/workflow/skills/lima/snakemake/local/lima.smk`，并去除对
 `workflow/lib/helpers.py`（get_lima_input / docker_run / LIMA_DIR / LOG_DIR）的依赖：
 - 输入路径模板：`ccs/{sample}/{sample}.chunk{n}.bam` + `primers.fasta`
 - 输出：`lima/{sample}/{sample}.chunk{n}.bam` 及 `.pbi` / `.lima.report` / `.lima.summary` / `.lima.counts`
@@ -17,7 +17,7 @@
 
 ```python
 # Snakefile 中
-include: "skills/lima/snakemake/local/rule_lima.smk"
+include: "skills/lima/snakemake/local/lima.smk"
 
 # 运行
 snakemake -j 8 lima/sample1/sample1.chunk1.bam

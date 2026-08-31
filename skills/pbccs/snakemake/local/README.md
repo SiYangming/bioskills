@@ -5,9 +5,9 @@
 
 ## 规则文件
 
-- `rule_pbccs.smk` — `rule pbccs`：subreads BAM → HiFi/CCS BAM（含 chunk 分块与过滤阈值）
+- `pbccs.smk` — `rule pbccs`：subreads BAM → HiFi/CCS BAM（含 chunk 分块与过滤阈值）
 
-规则迁移自 `snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk`，并去除对
+规则迁移自 `snakemake.smk/isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk`，并去除对
 `workflow/lib/helpers.py`（sample_to_bam / docker_run / LOG_DIR）的依赖：
 - 输入路径模板：`subreads/{sample}.subreads.bam`
 - 输出：`ccs/{sample}/{sample}.chunk{n}.bam` 及 `.pbi` / `.report.txt` / `.report.json` / `.metrics.json.gz`
@@ -17,7 +17,7 @@
 
 ```python
 # Snakefile 中
-include: "skills/pbccs/snakemake/local/rule_pbccs.smk"
+include: "skills/pbccs/snakemake/local/pbccs.smk"
 
 # 运行（n 为分块编号通配符，如 1..4）
 snakemake -j 8 ccs/sample1/sample1.chunk1.bam

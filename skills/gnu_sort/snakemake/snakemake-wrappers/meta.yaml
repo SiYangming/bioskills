@@ -14,7 +14,7 @@ source_type: official
 summary: "Official Snakemake Wrappers for GNU sort（bio/gnu 官方缺失 → 降级 ../local 的登记位）。"
 
 agent_guidance:
-  when_to_use: "Snakemake 流程中优先考虑官方 wrapper；但 bio/gnu 官方不存在，应直接使用 gnu_sort_snakemake_local（rule_gnu_sort.smk）。"
+  when_to_use: "Snakemake 流程中优先考虑官方 wrapper；但 bio/gnu 官方不存在，应直接使用 gnu_sort_snakemake_local（gnu_sort.smk）。"
   recommendation_priority: "Low（官方缺失；Snakemake 场景请走 gnu_sort_snakemake_local）。"
 
 software_versions:
@@ -30,7 +30,7 @@ source_reference:
   submodules: []
   submodules_note: >
     https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gnu 返回 404
-    （2026-08 核对），官方无任何 gnu/sort wrapper；执行层一律走 ../local/rule_gnu_sort.smk。
+    （2026-08 核对），官方无任何 gnu/sort wrapper；执行层一律走 ../local/gnu_sort.smk。
     若未来官方新增，以在线目录为准刷新本列表。
 
 inputs:
@@ -49,6 +49,6 @@ execution:
   wrapper_template: "v3.13.0/bio/gnu/{subcommand}（官方不存在，勿直接引用）"
   rule_example: |
     # 官方 wrapper 缺失：直接在 Snakefile 中
-    include: "skills/gnu_sort/snakemake/local/rule_gnu_sort.smk"
+    include: "skills/gnu_sort/snakemake/local/gnu_sort.smk"
     # 或
     use rule gnu_sort from rule_gnu_sort as gnu_sort

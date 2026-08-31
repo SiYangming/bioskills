@@ -1,14 +1,14 @@
 # gnu_sort / snakemake / local — 自定义 Snakemake 实现
 
 > 本目录为 snakemake-wrappers 官方缺失（bio/gnu 404）时的 **Snakemake 自维护 rule**。
-> 规则从 `snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk` 迁移，去掉了对
+> 规则从 `snakemake.smk/isoseq.smk/workflow/skills/gnu_sort/snakemake/local/gnu_sort.smk` 迁移，去掉了对
 > `workflow/lib/helpers.py` 的全局依赖（`get_gnu_sort_args` 的后缀 override 逻辑）。
 
 ## 使用方式
 
 ```python
 # Snakefile 中引入（可按需 use 重命名避免规则冲突）
-include: "skills/gnu_sort/snakemake/local/rule_gnu_sort.smk"
+include: "skills/gnu_sort/snakemake/local/gnu_sort.smk"
 # 或
 use rule gnu_sort from rule_gnu_sort as gnu_sort
 ```

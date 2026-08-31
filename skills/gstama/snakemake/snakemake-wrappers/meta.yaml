@@ -43,7 +43,7 @@ execution:
   wrapper_template: "v3.13.0/bio/gstama/{subcommand}（官方不存在，解析必然失败）"
   rule_example: |
     # 官方 bio/gstama 不存在，请改用 ../local/ 的规则：
-    include: "rules/rule_gstama_polyacleanup.smk"
-    include: "rules/rule_gstama_collapse.smk"
-    include: "rules/rule_gstama_filelist.smk"
-    include: "rules/rule_gstama_merge.smk"
+    include: "skills/gstama/snakemake/local/gstama_polyacleanup.smk"
+    include: "skills/gstama/snakemake/local/gstama_collapse.smk"
+    include: "skills/gstama/snakemake/local/gstama_filelist.smk"
+    include: "skills/gstama/snakemake/local/gstama_merge.smk"

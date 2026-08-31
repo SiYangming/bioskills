@@ -1,6 +1,6 @@
 # isoseq3 / snakemake / local — 自维护 Snakemake rule
 # ---------------------------------------------------------------------------
-# source_type: custom —— 规则迁移自 snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk，
+# source_type: custom —— 规则迁移自 snakemake.smk/isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk，
 # 去掉对 workflow/lib/helpers.py 的全局依赖，参数内联。
 # 适用场景：官方 snakemake-wrappers 无 bio/isoseq3（当前正是如此）。
 # ---------------------------------------------------------------------------
@@ -11,7 +11,7 @@ software: isoseq3
 type: snakemake_local
 source_type: custom
 
-summary: "Self-maintained Snakemake rule for isoseq3 refine（迁移自 isoseq.smk/workflow/rules/isoseq3.smk，官方 wrapper 缺失时的执行路径）。"
+summary: "Self-maintained Snakemake rule for isoseq3 refine（迁移自 isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk，官方 wrapper 缺失时的执行路径）。"
 
 agent_guidance:
   when_to_use: "Snakemake 流程中需要 isoseq3 refine 精炼 reads 时；官方 bio/isoseq3 wrapper 不存在，本 rule 为 Snakemake 场景主路径。"
@@ -22,7 +22,7 @@ agent_guidance:
 software_versions:
   isoseq: "4.0.0"
   binary: "isoseq3"
-  source: "自维护 rule_isoseq3.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk；conda 建议 bioconda::isoseq=4.0.0）"
+  source: "自维护 isoseq3.smk（迁移自 snakemake.smk/isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk；conda 建议 bioconda::isoseq=4.0.0）"
   note: "原 rule 依赖 workflow/lib/helpers.py 的 get_isoseq_input_bam / docker_run / ISOSEQ_DIR / LOG_DIR；迁移后输入用路径模板 lima/{sample}/{sample}.chunk{n}.bam，docker 分支移除，直接调用 isoseq3 二进制；extra_args 默认 --require-polya。"
 
 inputs:
@@ -62,8 +62,8 @@ outputs:
 execution:
   mode: snakemake_rule
   rule_files:
-    - "rule_isoseq3.smk"
+    - "isoseq3.smk"
   include_hint: |
     # 在 Snakefile 中：
-    include: "skills/isoseq3/snakemake/local/rule_isoseq3.smk"
+    include: "skills/isoseq3/snakemake/local/isoseq3.smk"
   conda_hint: "rule 内 conda 指向 envs/isoseq3.yaml（内容：bioconda::isoseq=4.0.0，binary isoseq3）"

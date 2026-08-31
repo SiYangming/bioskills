@@ -5,11 +5,15 @@ conda 包名为 `pbccs`，可执行二进制为 **`ccs`**。
 
 ## 功能
 
-- `ccs <subreads.bam> <out.bam>`：subreads BAM → HiFi/CCS BAM
-- 分块并行：`--chunk N/TOTAL`（大型样本按 ZMW 分块，可多机并行）
-- 过滤阈值：`--min-rq --min-passes --min-snr --min-length --max-length --top-passes`
-- 报告：`--report-file --report-json --metrics-json`（与输出同前缀自动生成）
-- 自动注入线程（`-j`）与 `TMPDIR`
+* `ccs <subreads.bam> <out.bam>`：subreads BAM → HiFi/CCS BAM
+
+* 分块并行：`--chunk N/TOTAL`（大型样本按 ZMW 分块，可多机并行）
+
+* 过滤阈值：`--min-rq --min-passes --min-snr --min-length --max-length --top-passes`
+
+* 报告：`--report-file --report-json --metrics-json`（与输出同前缀自动生成）
+
+* 自动注入线程（`-j`）与 `TMPDIR`
 
 ## 用法
 
@@ -58,5 +62,7 @@ bash test/run_test.sh   # 无需真实 subreads BAM；ccs 未安装时退化为 
 
 ## 版本
 
-- pbccs 6.4.0（bioconda::pbccs=6.4.0，二进制 `ccs`）
-- 构建路线：debian:bookworm-slim + micromamba 引导 bioconda env（pbccs 不在 Debian apt）
+* pbccs 6.4.0（bioconda::pbccs=6.4.0，二进制 `ccs`）
+
+* 构建路线：debian:bookworm-slim + micromamba 引导 bioconda env（pbccs 不在 Debian apt）
+

@@ -1,6 +1,6 @@
 # pbccs 自维护 Snakemake 规则
 # ---------------------------------------------------------------------------
-# 迁移自：snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk
+# 迁移自：snakemake.smk/isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk
 # 去掉对 workflow/lib/helpers.py 的全局依赖（sample_to_bam / docker_run / LOG_DIR）：
 #   - 输入改为路径模板 subreads/{sample}.subreads.bam
 #   - docker 分支移除，直接调用本地 ccs 二进制

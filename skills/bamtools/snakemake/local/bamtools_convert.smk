@@ -5,7 +5,7 @@
 #   - 去掉 docker_run 分支与 BAMTOOLS_DOCKER_IMAGE 容器配置
 #   - 路径通过 config["bamtools"] 可覆盖，默认与 isoseq.smk 一致
 #
-# 用法：include: "rules/rule_bamtools_convert.smk" 后声明目标文件即可。
+# 用法：include: "skills/bamtools/snakemake/local/bamtools_convert.smk" 后声明目标文件即可。
 
 BAMTOOLS_BIN = config.get("bamtools", {}).get("bamtools_bin", "bamtools")
 BAMTOOLS_FORMAT = config.get("bamtools", {}).get("format", "fasta")

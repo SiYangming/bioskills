@@ -7,7 +7,7 @@
 > 本地缓存解析执行；wrapper.py 脚本本身不运行 lima，只生成 rule 模板。
 >
 > **重要：截至 2026-08，官方 snakemake-wrappers 仓库中 `bio/lima` 目录不存在（API 返回 404），**
-> **因此本目录无可用 wrapper 清单；Snakemake 场景请直接使用 `../local/rule_lima.smk`（lima_snakemake_local）。**
+> **因此本目录无可用 wrapper 清单；Snakemake 场景请直接使用 `../local/lima.smk`（lima_snakemake_local）。**
 
 ## 目录内容
 
@@ -25,7 +25,7 @@
 
 ```python
 # 官方 wrapper 缺失，使用本仓库自维护 rule：
-include: "skills/lima/snakemake/local/rule_lima.smk"
+include: "skills/lima/snakemake/local/lima.smk"
 
 rule lima:
     input: bam="ccs/{sample}.chunk{n}.bam", primers="primers.fasta"
@@ -50,6 +50,6 @@ python wrapper.py lima --tag v3.13.0
 ## 何时选择本实现
 
 - 官方 wrapper 出现后（重新抓取 bio/lima 有目录时）可恢复使用
-- 当前 Snakemake 场景一律走 `../local/rule_lima.smk`
+- 当前 Snakemake 场景一律走 `../local/lima.smk`
 
 非流程引擎场景（独立 CLI / Agent Function Calling）请走 `../../native/`。

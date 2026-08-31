@@ -6,7 +6,7 @@
 
 注意：官方 snakemake-wrappers 目前【没有】bio/lima wrapper（抓取 404），
 wrapper_path() 返回的句柄仅作占位登记；实际 Snakemake 场景请使用
-skills/lima/snakemake/local/rule_lima.smk（lima_snakemake_local）。
+skills/lima/snakemake/local/lima.smk（lima_snakemake_local）。
 
 用法：
   python wrapper.py <subcommand> [--tag vX.Y.Z]
@@ -56,7 +56,7 @@ class LimaWrapperBridge:
             f"        mem_mb={d['mem_mb']}\n"
             f"    wrapper:\n"
             f"        \"{wp}\"\n"
-            f"# 注意：官方 bio/lima wrapper 不存在；请改用 ../local/rule_lima.smk\n"
+            f"# 注意：官方 bio/lima wrapper 不存在；请改用 ../local/lima.smk\n"
         )
 
 

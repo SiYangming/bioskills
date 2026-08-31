@@ -41,9 +41,9 @@ outputs:
 execution:
   mode: snakemake_rule
   rule_files:
-    - "rule_bamtools_convert.smk"
+    - "bamtools_convert.smk"
   wrapper_template: ""
   rule_example: |
-    include: "rules/rule_bamtools_convert.smk"
+    include: "skills/bamtools/snakemake/local/bamtools_convert.smk"
     rule all:
         input: "results/bamtools/sample1/sample1.chunk1.fasta"

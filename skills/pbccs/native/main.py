@@ -10,7 +10,7 @@
    python main.py --list-commands   # 列出支持的子命令
 
 命令逻辑迁移自 snakemake.smk/isoseq.smk/isoseq.py/ccs_analysis.py
-与 workflow/rules/pbccs.smk：ccs <in> <out> --report-file --report-json --metrics-json
+与 workflow/skills/pbccs/snakemake/local/pbccs.smk：ccs <in> <out> --report-file --report-json --metrics-json
 --chunk N/TOTAL --min-rq --min-passes --min-snr --min-length --max-length --top-passes -j。
 """
 

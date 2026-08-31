@@ -5,7 +5,7 @@
 > ⚠️ **本目录仅为说明 + Schema 挂载层 + 降级桥接脚本**。经 2026-08 核对，
 > 官方 snakemake-wrappers **不存在 `bio/ultra` 目录**（GitHub API 返回 404），
 > 因此没有任何 `wrapper: "vX.Y.Z/bio/ultra/<subcommand>"` 句柄可被 Snakemake 运行时解析。
-> **Snakemake 场景请直接使用 `../local/rule_ultra.smk`**（本技能已内置迁移规则）。
+> **Snakemake 场景请直接使用 `../local/ultra.smk`**（本技能已内置迁移规则）。
 
 ## 目录内容
 
@@ -29,7 +29,7 @@ curl -s https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/u
 
 ```python
 # 直接在 Snakefile 中引入本地迁移规则
-include: "skills/ultra/snakemake/local/rule_ultra.smk"
+include: "skills/ultra/snakemake/local/ultra.smk"
 
 rule ultra_align_on_sample:
     input:
@@ -43,13 +43,13 @@ rule ultra_align_on_sample:
         ...
 ```
 
-推荐直接用 `rule_ultra.smk`（见 `../local/README.md`）。
+推荐直接用 `ultra.smk`（见 `../local/README.md`）。
 
 ## 桥接脚本能力
 
 ```bash
 python wrapper.py --status        # official wrapper available: False
-python wrapper.py index           # 打印降级 rule 参考（include ../local/rule_ultra.smk）
+python wrapper.py index           # 打印降级 rule 参考（include ../local/ultra.smk）
 ```
 
 ## 若官方缺失 / 需定制

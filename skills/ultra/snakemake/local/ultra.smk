@@ -1,6 +1,6 @@
-# ultra / snakemake / local — rule_ultra.smk
+# ultra / snakemake / local — ultra.smk
 # ---------------------------------------------------------------------------
-# 迁移自 snakemake.smk/isoseq.smk/workflow/rules/ultra.smk，去掉了对
+# 迁移自 snakemake.smk/isoseq.smk/workflow/skills/ultra/snakemake/local/ultra.smk，去掉了对
 # workflow/lib/helpers.py 的全局依赖（SPECIES_INFO / get_sample_species /
 # get_ultra_reads / get_index_flag / docker_run），改为 config 驱动 + 内联简化。
 # 使用前请在 Snakefile 声明 config（见文件尾部注释）。

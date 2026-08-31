@@ -51,9 +51,9 @@ outputs:
 execution:
   mode: snakemake_rule
   rule_files:
-    - "rule_minimap2_align.smk"
+    - "minimap2_align.smk"
   wrapper_template: ""
   rule_example: |
-    include: "rules/rule_minimap2_align.smk"
+    include: "skills/minimap2/snakemake/local/minimap2_align.smk"
     rule all:
         input: "results/minimap2/sample1/sample1.chunk1.bam"

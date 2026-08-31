@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
 # 注意：官方 snakemake-wrappers 目前【没有】bio/pbccs wrapper（抓取 404），
-#       本目录仅登记桥接层；实际执行请使用 pbccs_snakemake_local（rule_pbccs.smk）。
+#       本目录仅登记桥接层；实际执行请使用 pbccs_snakemake_local（pbccs.smk）。
 # ---------------------------------------------------------------------------
 
 id: pbccs_snakemake_wrappers
@@ -23,7 +23,7 @@ software_versions:
   pbccs: "官方无 wrapper（bio/pbccs 404）"
   source: "—（snakemake-wrappers 仓库 bio/pbccs 目录不存在）"
   note: "2026-08 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/pbccs 返回 404；
-         Snakemake 场景请使用 pbccs_snakemake_local（rule_pbccs.smk，pin bioconda::pbccs=6.4.0）。"
+         Snakemake 场景请使用 pbccs_snakemake_local（pbccs.smk，pin bioconda::pbccs=6.4.0）。"
 
 source_reference:
   repository: "https://github.com/snakemake/snakemake-wrappers"
@@ -59,7 +59,7 @@ execution:
   wrapper_template: "v3.13.0/bio/pbccs/{subcommand}（官方缺失，占位）"
   rule_example: |
     # 官方 wrapper 缺失 —— 直接使用本仓库自维护 rule：
-    #   include: "skills/pbccs/snakemake/local/rule_pbccs.smk"
+    #   include: "skills/pbccs/snakemake/local/pbccs.smk"
     rule pbccs:
         input:  "subreads/{sample}.subreads.bam"
         output: "ccs/{sample}.chunk{n}.bam"

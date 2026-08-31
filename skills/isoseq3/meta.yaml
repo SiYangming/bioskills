@@ -61,7 +61,7 @@ implementations:
     type: snakemake_local
     version: "0.1.0"
     priority: low
-    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 rule_isoseq3.smk。
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 isoseq3.smk。
 
 # 默认推荐路径（Agent 路由用）
 default_implementation: isoseq3_native
@@ -95,5 +95,5 @@ software_versions:
   snakemake_local:
     isoseq: "4.0.0"
     binary: "isoseq3"
-    source: "自维护 rule_isoseq3.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk）"
+    source: "自维护 isoseq3.smk（迁移自 snakemake.smk/isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk）"
     note: "rule 内 conda 指向 bioconda::isoseq=4.0.0；二进制 isoseq3 refine。"

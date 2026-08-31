@@ -7,7 +7,7 @@
 > 本地缓存解析执行；wrapper.py 脚本本身不运行 isoseq3，只生成 rule 模板。
 >
 > **重要：截至 2026-08，官方 snakemake-wrappers 仓库中 `bio/isoseq3` 目录不存在（API 返回 404），**
-> **因此本目录无可用 wrapper 清单；Snakemake 场景请直接使用 `../local/rule_isoseq3.smk`（isoseq3_snakemake_local）。**
+> **因此本目录无可用 wrapper 清单；Snakemake 场景请直接使用 `../local/isoseq3.smk`（isoseq3_snakemake_local）。**
 
 ## 目录内容
 
@@ -25,7 +25,7 @@
 
 ```python
 # 官方 wrapper 缺失，使用本仓库自维护 rule：
-include: "skills/isoseq3/snakemake/local/rule_isoseq3.smk"
+include: "skills/isoseq3/snakemake/local/isoseq3.smk"
 
 rule isoseq3_refine:
     input: bam="lima/{sample}.chunk{n}.bam", primers="primers.fasta"
@@ -50,6 +50,6 @@ python wrapper.py refine --tag v3.13.0
 ## 何时选择本实现
 
 - 官方 wrapper 出现后（重新抓取 bio/isoseq3 有目录时）可恢复使用
-- 当前 Snakemake 场景一律走 `../local/rule_isoseq3.smk`
+- 当前 Snakemake 场景一律走 `../local/isoseq3.smk`
 
 非流程引擎场景（独立 CLI / Agent Function Calling）请走 `../../native/`。

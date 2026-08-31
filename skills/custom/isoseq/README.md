@@ -17,18 +17,18 @@ subreads ──> [pbccs] ──> HiFi CCS ──> [lima] ──> 去引物/拆�
 
 ## 依赖的原子模块技能
 
-| 阶段 | 软件技能 | 主要入口 |
-|------|----------|----------|
-| CCS | `skills/pbccs/native/` | `python main.py ccs ...` |
-| 去引物 | `skills/lima/native/` | `python main.py lima ...` |
-| refine | `skills/isoseq3/native/` | `python main.py refine ...` |
-| BAM→FASTA | `skills/bamtools/native/` | `python main.py convert ...` |
-| polyA 清理 | `skills/gstama/native/` | `python main.py polyacleanup ...` |
-| 比对 A | `skills/minimap2/native/` | `python main.py align --bam ...` |
-| 比对 B | `skills/ultra/native/` | `python main.py index/align ...` |
-| collapse | `skills/gstama/native/` | `python main.py collapse ...` |
-| filelist | `skills/gstama/native/` | `python main.py filelist ...` |
-| merge | `skills/gstama/native/` | `python main.py merge ...` |
+| 阶段        | 软件技能                      | 主要入口                              |
+| --------- | ------------------------- | --------------------------------- |
+| CCS       | `skills/pbccs/native/`    | `python main.py ccs ...`          |
+| 去引物       | `skills/lima/native/`     | `python main.py lima ...`         |
+| refine    | `skills/isoseq3/native/`  | `python main.py refine ...`       |
+| BAM→FASTA | `skills/bamtools/native/` | `python main.py convert ...`      |
+| polyA 清理  | `skills/gstama/native/`   | `python main.py polyacleanup ...` |
+| 比对 A      | `skills/minimap2/native/` | `python main.py align --bam ...`  |
+| 比对 B      | `skills/ultra/native/`    | `python main.py index/align ...`  |
+| collapse  | `skills/gstama/native/`   | `python main.py collapse ...`     |
+| filelist  | `skills/gstama/native/`   | `python main.py filelist ...`     |
+| merge     | `skills/gstama/native/`   | `python main.py merge ...`        |
 
 每个软件技能内同时提供 `nextflow/nf-core/`（官方模块说明层）与
 `snakemake/local/rule_*.smk`（迁移自原流程的规则）实现。
@@ -48,8 +48,10 @@ python skills/custom/isoseq/isoseq.py ... --real
 ```
 
 `samples.csv` 至少含 `sample` 列；可选列：
-- `seq_data`：输入路径（subreads.bam / ccs.bam / lima.bam / fasta）
-- `start_from`：`ccs|lima|refine|bamtools|gstama|mapping`，支持从中间步骤接入
+
+* `seq_data`：输入路径（subreads.bam / ccs.bam / lima.bam / fasta）
+
+* `start_from`：`ccs|lima|refine|bamtools|gstama|mapping`，支持从中间步骤接入
 
 ### 2. Snakemake
 
@@ -64,7 +66,9 @@ python skills/custom/isoseq/isoseq.py ... --real
 
 ## 容器运行注意
 
-- native 容器统一走 Debian bookworm-slim + apt/micromamba 最小化路线，
-  运行 `docker run` 时**必须加 `-u $(id -u):$(id -g)`** 避免 root 持有输出文件。
-- uLTRA 路径需要 `ultra_bioinformatics` 环境（内置 minimap2/namfinder/samtools），
+* native 容器统一走 Debian bookworm-slim + apt/micromamba 最小化路线，
+  运行 `docker run` 时**必须加** **`-u $(id -u):$(id -g)`** 避免 root 持有输出文件。
+
+* uLTRA 路径需要 `ultra_bioinformatics` 环境（内置 minimap2/namfinder/samtools），
   未安装时请用 `--aligner minimap2`。
+

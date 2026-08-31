@@ -5,7 +5,7 @@
 > ⚠️ **本目录仅为说明 + Schema 挂载层 + 降级桥接脚本**。经 2026-08 核对，
 > 官方 snakemake-wrappers **不存在 `bio/gunzip` 目录**（GitHub API 返回 404，`bio/gzip` 同样未收录），
 > 因此没有任何 `wrapper: "vX.Y.Z/bio/gunzip"` 句柄可被 Snakemake 运行时解析。
-> **Snakemake 场景请直接使用 `../local/rule_gunzip.smk`**（本技能已内置迁移规则）。
+> **Snakemake 场景请直接使用 `../local/gunzip.smk`**（本技能已内置迁移规则）。
 
 ## 目录内容
 
@@ -29,7 +29,7 @@ curl -s https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/g
 
 ```python
 # 直接在 Snakefile 中引入本地迁移规则
-include: "skills/gunzip/snakemake/local/rule_gunzip.smk"
+include: "skills/gunzip/snakemake/local/gunzip.smk"
 
 # 之后即可使用 rule gunzip：
 rule gunzip_demo:
@@ -41,7 +41,7 @@ rule gunzip_demo:
 
 ```bash
 python wrapper.py --status        # official wrapper available: False
-python wrapper.py gunzip          # 打印降级 rule 参考（include ../local/rule_gunzip.smk）
+python wrapper.py gunzip          # 打印降级 rule 参考（include ../local/gunzip.smk）
 ```
 
 ## 若官方缺失 / 需定制

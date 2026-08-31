@@ -5,19 +5,22 @@
 
 ## 规则文件
 
-- `rule_isoseq3.smk` — `rule isoseq3_refine`：lima 产物 → 精炼 reads（去 polyA 尾与人工连接体）
+* `isoseq3.smk` — `rule isoseq3_refine`：lima 产物 → 精炼 reads（去 polyA 尾与人工连接体）
 
-规则迁移自 `snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk`，并去除对
-`workflow/lib/helpers.py`（get_isoseq_input_bam / docker_run / ISOSEQ_DIR / LOG_DIR）的依赖：
-- 输入路径模板：`lima/{sample}/{sample}.chunk{n}.bam` + `primers.fasta`
-- 输出：`isoseq3/{sample}/{sample}.chunk{n}.bam` 及 `.pbi` / `.consensusreadset.xml` / `.filter_summary.report.json` / `.report.csv`
-- 参数：`isoseq3 refine -j {threads} [--require-polya] <bam> <primers> <out>`
+规则迁移自 `snakemake.smk/isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk`，并去除对
+`workflow/lib/helpers.py`（get\_isoseq\_input\_bam / docker\_run / ISOSEQ\_DIR / LOG\_DIR）的依赖：
+
+* 输入路径模板：`lima/{sample}/{sample}.chunk{n}.bam` + `primers.fasta`
+
+* 输出：`isoseq3/{sample}/{sample}.chunk{n}.bam` 及 `.pbi` / `.consensusreadset.xml` / `.filter_summary.report.json` / `.report.csv`
+
+* 参数：`isoseq3 refine -j {threads} [--require-polya] <bam> <primers> <out>`
 
 ## 用法
 
 ```python
 # Snakefile 中
-include: "skills/isoseq3/snakemake/local/rule_isoseq3.smk"
+include: "skills/isoseq3/snakemake/local/isoseq3.smk"
 
 # 运行
 snakemake -j 8 isoseq3/sample1/sample1.chunk1.bam
@@ -36,5 +39,7 @@ dependencies:
 
 ## 与其它实现的关系
 
-- 官方 wrapper 若未来出现（重新抓取 bio/isoseq3 有目录），可切换回 `../snakemake-wrappers/` 登记层
-- 非 Snakemake 场景（独立 CLI / Agent Function Calling）请走 `../../native/`
+* 官方 wrapper 若未来出现（重新抓取 bio/isoseq3 有目录），可切换回 `../snakemake-wrappers/` 登记层
+
+* 非 Snakemake 场景（独立 CLI / Agent Function Calling）请走 `../../native/`
+

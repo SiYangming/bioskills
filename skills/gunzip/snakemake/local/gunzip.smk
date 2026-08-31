@@ -1,6 +1,6 @@
-# gunzip / snakemake / local — rule_gunzip.smk
+# gunzip / snakemake / local — gunzip.smk
 # ---------------------------------------------------------------------------
-# 迁移自 snakemake.smk/isoseq.smk/workflow/rules/gunzip.smk，去掉了对
+# 迁移自 snakemake.smk/isoseq.smk/workflow/skills/gunzip/snakemake/local/gunzip.smk，去掉了对
 # workflow/lib/helpers.py 的全局依赖（docker_run / GUNZIP_DOCKER_IMAGE），
 # 简化为 gzip -cd <in.gz> > <out> 核心语义。
 # 使用前请在 Snakefile 声明 config（可选）。

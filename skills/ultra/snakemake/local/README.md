@@ -1,7 +1,7 @@
 # ultra / snakemake / local — 自定义 Snakemake 实现
 
 > 本目录为 snakemake-wrappers 官方缺失（bio/ultra 404）时的 **Snakemake 自维护 rule**。
-> 规则从 `snakemake.smk/isoseq.smk/workflow/rules/ultra.smk` 迁移，去掉了对
+> 规则从 `snakemake.smk/isoseq.smk/workflow/skills/ultra/snakemake/local/ultra.smk` 迁移，去掉了对
 > `workflow/lib/helpers.py` 的全局依赖（get_sample_species / get_ultra_reads /
 > get_index_flag / SPECIES_INFO 等），改为 config 驱动 + 内联简化。
 
@@ -9,7 +9,7 @@
 
 ```python
 # Snakefile 中引入（可按需 use 重命名避免规则冲突）
-include: "skills/ultra/snakemake/local/rule_ultra.smk"
+include: "skills/ultra/snakemake/local/ultra.smk"
 # 或
 use rule prepare_genome, prepare_gtf, sort_gtf, ultra_index, ultra_align \
     from rule_ultra as ultra_prepare_genome, ultra_prepare_gtf, ultra_sort_gtf, ultra_index, ultra_align

@@ -1,7 +1,7 @@
 # gnu_sort native 自包含实现元数据
 # ---------------------------------------------------------------------------
 # source_type: custom —— 本地全量自维护（命令逻辑迁移自
-#   snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk：sort [args] <in> > <out>.sorted）。
+#   snakemake.smk/isoseq.smk/workflow/skills/gnu_sort/snakemake/local/gnu_sort.smk：sort [args] <in> > <out>.sorted）。
 # ---------------------------------------------------------------------------
 
 id: gnu_sort_native

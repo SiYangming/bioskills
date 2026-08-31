@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
 # 注意：官方 snakemake-wrappers 目前【没有】bio/lima wrapper（抓取 404），
-#       本目录仅登记桥接层；实际执行请使用 lima_snakemake_local（rule_lima.smk）。
+#       本目录仅登记桥接层；实际执行请使用 lima_snakemake_local（lima.smk）。
 # ---------------------------------------------------------------------------
 
 id: lima_snakemake_wrappers
@@ -23,7 +23,7 @@ software_versions:
   lima: "官方无 wrapper（bio/lima 404）"
   source: "—（snakemake-wrappers 仓库 bio/lima 目录不存在）"
   note: "2026-08 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/lima 返回 404；
-         Snakemake 场景请使用 lima_snakemake_local（rule_lima.smk，pin bioconda::lima=2.9.0）。"
+         Snakemake 场景请使用 lima_snakemake_local（lima.smk，pin bioconda::lima=2.9.0）。"
 
 source_reference:
   repository: "https://github.com/snakemake/snakemake-wrappers"
@@ -64,7 +64,7 @@ execution:
   wrapper_template: "v3.13.0/bio/lima/{subcommand}（官方缺失，占位）"
   rule_example: |
     # 官方 wrapper 缺失 —— 直接使用本仓库自维护 rule：
-    #   include: "skills/lima/snakemake/local/rule_lima.smk"
+    #   include: "skills/lima/snakemake/local/lima.smk"
     rule lima:
         input:  bam="ccs/{sample}.chunk{n}.bam", primers="primers.fasta"
         output: "lima/{sample}.chunk{n}.bam"

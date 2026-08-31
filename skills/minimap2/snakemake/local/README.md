@@ -7,7 +7,7 @@
 
 | 文件 | 作用 |
 |------|------|
-| `rule_minimap2_align.smk` | `minimap2 -a <ref> <reads> | samtools sort | samtools view -b -h` 规则 |
+| `minimap2_align.smk` | `minimap2 -a <ref> <reads> | samtools sort | samtools view -b -h` 规则 |
 | `meta.yaml` | 实现级 Schema（id: `minimap2_snakemake_local`） |
 
 ## 使用
@@ -15,7 +15,7 @@
 在 Snakefile 中：
 
 ```python
-include: "rules/rule_minimap2_align.smk"
+include: "skills/minimap2/snakemake/local/minimap2_align.smk"
 
 rule all:
     input:

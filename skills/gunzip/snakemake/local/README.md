@@ -1,14 +1,14 @@
 # gunzip / snakemake / local — 自定义 Snakemake 实现
 
 > 本目录为 snakemake-wrappers 官方缺失（bio/gunzip 404）时的 **Snakemake 自维护 rule**。
-> 规则从 `snakemake.smk/isoseq.smk/workflow/rules/gunzip.smk` 迁移，去掉了对
+> 规则从 `snakemake.smk/isoseq.smk/workflow/skills/gunzip/snakemake/local/gunzip.smk` 迁移，去掉了对
 > `workflow/lib/helpers.py` 的全局依赖（docker_run / GUNZIP_DOCKER_IMAGE）。
 
 ## 使用方式
 
 ```python
 # Snakefile 中引入（可按需 use 重命名避免规则冲突）
-include: "skills/gunzip/snakemake/local/rule_gunzip.smk"
+include: "skills/gunzip/snakemake/local/gunzip.smk"
 # 或
 use rule gunzip from rule_gunzip as gunzip
 ```

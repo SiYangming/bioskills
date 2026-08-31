@@ -1,6 +1,6 @@
 # lima 自维护 Snakemake 规则
 # ---------------------------------------------------------------------------
-# 迁移自：snakemake.smk/isoseq.smk/workflow/rules/lima.smk
+# 迁移自：snakemake.smk/isoseq.smk/workflow/skills/lima/snakemake/local/lima.smk
 # 去掉对 workflow/lib/helpers.py 的全局依赖（get_lima_input / docker_run / LIMA_DIR / LOG_DIR）：
 #   - 输入改为路径模板 ccs/{sample}/{sample}.chunk{n}.bam
 #   - docker 分支移除，直接调用本地 lima 二进制

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """gunzip native 标准入口驱动。
 
-命令逻辑迁移自 snakemake.smk/isoseq.smk/workflow/rules/gunzip.smk：
+命令逻辑迁移自 snakemake.smk/isoseq.smk/workflow/skills/gunzip/snakemake/local/gunzip.smk：
   gzip -cd <in.gz> > <out>
 
 支持两种调用模式：

@@ -5,7 +5,7 @@
 #   - 去掉 docker_run 分支与 MINIMAP2_DOCKER_IMAGE / SAMTOOLS_DOCKER_IMAGE 容器配置
 #   - 参数通过 config["minimap2"] 可覆盖，默认与 isoseq.smk 一致
 #
-# 用法：include: "rules/rule_minimap2_align.smk" 后声明目标文件即可。
+# 用法：include: "skills/minimap2/snakemake/local/minimap2_align.smk" 后声明目标文件即可。
 
 MINIMAP2_BIN = config.get("minimap2", {}).get("minimap2_bin", "minimap2")
 SAMTOOLS_BIN = config.get("minimap2", {}).get("samtools_bin", "samtools")

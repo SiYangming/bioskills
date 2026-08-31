@@ -1,6 +1,6 @@
 # isoseq3 自维护 Snakemake 规则
 # ---------------------------------------------------------------------------
-# 迁移自：snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk
+# 迁移自：snakemake.smk/isoseq.smk/workflow/skills/isoseq3/snakemake/local/isoseq3.smk
 # 去掉对 workflow/lib/helpers.py 的全局依赖（get_isoseq_input_bam / docker_run / ISOSEQ_DIR / LOG_DIR）：
 #   - 输入改为路径模板 lima/{sample}/{sample}.chunk{n}.bam
 #   - docker 分支移除，直接调用本地 isoseq3 二进制

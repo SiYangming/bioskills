@@ -1,6 +1,6 @@
-# gnu_sort / snakemake / local — rule_gnu_sort.smk
+# gnu_sort / snakemake / local — gnu_sort.smk
 # ---------------------------------------------------------------------------
-# 迁移自 snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk，去掉了对
+# 迁移自 snakemake.smk/isoseq.smk/workflow/skills/gnu_sort/snakemake/local/gnu_sort.smk，去掉了对
 # workflow/lib/helpers.py 的全局依赖（get_gnu_sort_args 的后缀 override 逻辑
 # 简化为 config["gnu_sort"]["args"] 单一透传；如需要按后缀 override，
 # 可在调用方用 use rule 覆盖 params.args）。

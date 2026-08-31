@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-08-31T14:41:12+00:00'
+generated_at: '2026-08-31T15:08:32+00:00'
 skills:
 - software: bamtools
   canonical: bamtools
@@ -107,7 +107,7 @@ skills:
     version: 9.1-v1.0
     path: gnu_sort/snakemake/local
     priority: Medium
-    entrypoint: 'include: rule_gnu_sort.smk（或用 use rule gnu_sort from rule_gnu_sort）'
+    entrypoint: 'include: gnu_sort.smk（或用 use rule gnu_sort from rule_gnu_sort）'
   - id: gnu_sort_snakemake_wrappers
     source_type: official
     impl: snakemake_wrappers
@@ -183,7 +183,7 @@ skills:
     version: 1.12-v1.0
     path: gunzip/snakemake/local
     priority: Medium
-    entrypoint: 'include: rule_gunzip.smk（或用 use rule gunzip from rule_gunzip）'
+    entrypoint: 'include: gunzip.smk（或用 use rule gunzip from rule_gunzip）'
   - id: gunzip_snakemake_wrappers
     source_type: official
     impl: snakemake_wrappers
@@ -411,7 +411,7 @@ skills:
     version: 0.1-v1.0
     path: ultra/snakemake/local
     priority: Medium
-    entrypoint: 'include: rule_ultra.smk（或用 use rule ... from rule_ultra）'
+    entrypoint: 'include: ultra.smk（或用 use rule ... from rule_ultra）'
   - id: ultra_snakemake_wrappers
     source_type: official
     impl: snakemake_wrappers

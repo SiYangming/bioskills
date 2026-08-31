@@ -60,7 +60,7 @@ implementations:
     type: snakemake_local
     version: "0.1.0"
     priority: low
-    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 rule_pbccs.smk。
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 pbccs.smk。
 
 # 默认推荐路径（Agent 路由用）
 default_implementation: pbccs_native
@@ -90,5 +90,5 @@ software_versions:
     note: "2026-08 抓取 snakemake-wrappers bio/pbccs 返回 404，官方未收录；请使用 pbccs_snakemake_local。"
   snakemake_local:
     pbccs: "6.4.0"
-    source: "自维护 rule_pbccs.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk）"
+    source: "自维护 pbccs.smk（迁移自 snakemake.smk/isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk）"
     note: "rule 内 conda 指向 bioconda::pbccs=6.4.0；二进制 ccs。"

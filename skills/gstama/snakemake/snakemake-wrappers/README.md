@@ -23,10 +23,10 @@
 
 ```python
 # 官方 wrapper 不可用，改用 ../local/ 迁移规则：
-include: "rules/rule_gstama_polyacleanup.smk"
-include: "rules/rule_gstama_collapse.smk"
-include: "rules/rule_gstama_filelist.smk"
-include: "rules/rule_gstama_merge.smk"
+include: "skills/gstama/snakemake/local/gstama_polyacleanup.smk"
+include: "skills/gstama/snakemake/local/gstama_collapse.smk"
+include: "skills/gstama/snakemake/local/gstama_filelist.smk"
+include: "skills/gstama/snakemake/local/gstama_merge.smk"
 ```
 
 或直接调用 native 驱动：

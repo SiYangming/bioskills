@@ -56,7 +56,7 @@ implementations:
     type: snakemake_local
     version: "9.1-v1.0"
     priority: low
-    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 rule_gnu_sort.smk）。
+    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 gnu_sort.smk）。
 
 default_implementation: gnu_sort_native
 
@@ -85,4 +85,4 @@ software_versions:
     source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gnu → 404"
     note: "snakemake-wrappers 官方 bio/ 目录无 gnu/sort（2026-08 核对）；必须降级使用 gnu_sort_snakemake_local。"
   snakemake_local:
-    gnu_sort: "9.1（规则从 snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk 迁移，sort <args> <in> > <out>.sorted）"
+    gnu_sort: "9.1（规则从 snakemake.smk/isoseq.smk/workflow/skills/gnu_sort/snakemake/local/gnu_sort.smk 迁移，sort <args> <in> > <out>.sorted）"

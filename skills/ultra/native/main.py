@@ -3,7 +3,7 @@
 
 命令逻辑迁移自 snakemake.smk/isoseq.smk：
   - isoseq.py/ULTRA_align.py（subcmd_gunzip / subcmd_index / subcmd_align / subcmd_sort）
-  - workflow/rules/ultra.smk（prepare_genome / prepare_gtf / sort_gtf / ultra_index / ultra_align）
+  - workflow/skills/ultra/snakemake/local/ultra.smk（prepare_genome / prepare_gtf / sort_gtf / ultra_index / ultra_align）
 
 支持两种调用模式：
 1. CLI 直跑（人类 / Shell）：

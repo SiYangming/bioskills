@@ -1,6 +1,6 @@
 # pbccs / snakemake / local — 自维护 Snakemake rule
 # ---------------------------------------------------------------------------
-# source_type: custom —— 规则迁移自 snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk，
+# source_type: custom —— 规则迁移自 snakemake.smk/isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk，
 # 去掉对 workflow/lib/helpers.py 的全局依赖，参数内联。
 # 适用场景：官方 snakemake-wrappers 无 bio/pbccs（当前正是如此）。
 # ---------------------------------------------------------------------------
@@ -11,7 +11,7 @@ software: pbccs
 type: snakemake_local
 source_type: custom
 
-summary: "Self-maintained Snakemake rule for pbccs/ccs (迁移自 isoseq.smk/workflow/rules/pbccs.smk，官方 wrapper 缺失时的执行路径)."
+summary: "Self-maintained Snakemake rule for pbccs/ccs (迁移自 isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk，官方 wrapper 缺失时的执行路径)."
 
 agent_guidance:
   when_to_use: "Snakemake 流程中需要 ccs 生成 HiFi reads 时；官方 bio/pbccs wrapper 不存在，本 rule 为 Snakemake 场景主路径。"
@@ -22,7 +22,7 @@ agent_guidance:
 software_versions:
   pbccs: "6.4.0"
   binary: "ccs"
-  source: "自维护 rule_pbccs.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk；conda 建议 bioconda::pbccs=6.4.0）"
+  source: "自维护 pbccs.smk（迁移自 snakemake.smk/isoseq.smk/workflow/skills/pbccs/snakemake/local/pbccs.smk；conda 建议 bioconda::pbccs=6.4.0）"
   note: "原 rule 依赖 workflow/lib/helpers.py 的 sample_to_bam / docker_run / LOG_DIR；迁移后输入用路径模板 subreads/{sample}.subreads.bam，docker 分支移除，直接调用 ccs 二进制。"
 
 inputs:
@@ -57,8 +57,8 @@ outputs:
 execution:
   mode: snakemake_rule
   rule_files:
-    - "rule_pbccs.smk"
+    - "pbccs.smk"
   include_hint: |
     # 在 Snakefile 中：
-    include: "skills/pbccs/snakemake/local/rule_pbccs.smk"
+    include: "skills/pbccs/snakemake/local/pbccs.smk"
   conda_hint: "rule 内 conda 指向 envs/pbccs.yaml（内容：bioconda::pbccs=6.4.0）"

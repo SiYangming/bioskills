@@ -1,7 +1,7 @@
 # gunzip / native
 
 自包含的 gunzip 驱动实现（`source_type: custom`），命令逻辑迁移自
-`snakemake.smk/isoseq.smk/workflow/rules/gunzip.smk`（`gzip -cd <in.gz> > <out>`）。
+`snakemake.smk/isoseq.smk/workflow/skills/gunzip/snakemake/local/gunzip.smk`（`gzip -cd <in.gz> > <out>`）。
 
 ## 能力
 

@@ -4,7 +4,7 @@
 ⚠️ 官方 snakemake-wrappers 的 bio/gnu 目录不存在（GitHub API 404，2026-08 核对）。
 本脚本仅保留 samtools 风格的桥接 API（wrapper_path / defaults / rule），
 但 wrapper_path() 明确标注官方句柄不可用，rule() 生成的是指向
-../local/rule_gnu_sort.smk 的降级规则参考。本身不执行 sort。
+../local/gnu_sort.smk 的降级规则参考。本身不执行 sort。
 
 用法：
   python wrapper.py sort       # 打印降级 rule 参考
@@ -42,11 +42,11 @@ class GnuSortWrapperBridge:
         return SUBCOMMAND_DEFAULTS.get(subcommand, {"threads": 4, "mem_mb": 4096})
 
     def rule(self, subcommand: str = "sort") -> str:
-        """生成降级 rule 参考：include ../local/rule_gnu_sort.smk 后 use 对应规则。"""
+        """生成降级 rule 参考：include ../local/gnu_sort.smk 后 use 对应规则。"""
         d = self.defaults(subcommand)
         return (
             f"# 官方 wrapper 缺失（{self.wrapper_path(subcommand)} 不可解析），降级本地规则：\n"
-            f"include: \"../local/rule_gnu_sort.smk\"\n"
+            f"include: \"../local/gnu_sort.smk\"\n"
             f"# 之后即可使用 gnu_sort 规则（默认 threads={d['threads']}, mem_mb={d['mem_mb']}）。"
         )
 
