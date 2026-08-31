@@ -1,0 +1,72 @@
+# gunzip native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护（命令逻辑迁移自
+#   snakemake.smk/isoseq.smk/workflow/rules/gunzip.smk：gzip -cd <in.gz> > <out>）。
+# ---------------------------------------------------------------------------
+
+id: gunzip_native
+version: "1.12-v1.0"
+software: gunzip
+type: native
+source_type: custom
+
+summary: "Self-contained gunzip runner，解压 .gz 文件（gzip -cd <in.gz> > <out>），与 isoseq.smk / nf-core gunzip 语义对齐。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "gunzip 子命令：gunzip"
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: "输入 .gz 文件"
+  output:
+    type: file
+    required: false
+    cli_arg: "-o"
+    description: "输出文件路径（默认去掉 .gz 后缀）"
+  args:
+    type: string
+    required: false
+    cli_arg: "--args"
+    description: "透传 gzip 附加参数（高级用法，慎用）"
+  threads:
+    type: integer
+    default: 1
+    cli_arg: "--threads"
+    description: "线程数（gzip -cd 单线程；此处仅供上层调度器读取）"
+
+outputs:
+  decompressed:
+    type: file
+    description: "解压后的原始文件"
+
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 1
+  default_mem_mb: 2048
+  env_vars:
+    TMPDIR: "{tmpdir}"
+  per_subcommand_threads:
+    default: 1
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "gzip"
+
+software_versions:
+  gunzip: "1.12"
+  gzip: "1.12"
+  source: "Debian bookworm apt gzip=1.12-1（binary: gzip / gunzip）"
+  note: "与软件级 meta 对齐；nf-core 侧 conda gzip=1.13 略新，行为兼容（解压语义相同）。"

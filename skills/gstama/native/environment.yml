@@ -1,0 +1,13 @@
+# gstama native Conda 环境配方
+# 创建：mamba env create -f environment.yml
+# 说明：apt 无 gs-tama 包，本环境为唯一 Conda 兜底；Docker/Apptainer 用 micromamba 引导同款 env。
+name: gstama-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - gs-tama=1.0.3
+  - samtools=1.21   # tama_collapse.py 内部调用 samtools
+  - pyyaml>=6.0
+  - pip

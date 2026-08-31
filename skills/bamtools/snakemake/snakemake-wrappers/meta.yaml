@@ -1,0 +1,69 @@
+# bamtools / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 本目录为说明 + Schema；真正执行需 Snakemake 运行时联网或本地缓存解析 wrapper 路径。
+# ---------------------------------------------------------------------------
+
+id: bamtools_snakemake_wrappers
+version: "v3.13.0"
+software: bamtools
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers for bamtools (bio/bamtools/* 全子模块清单 + 使用参考)."
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程、复用中央 wrapper 缓存时，直接引用 wrapper 路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 snakemake-wrappers 仓库 tag；
+# bamtools 上游二进制版本以各子模块 environment.yaml 中的 conda pin 为准。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  bamtools: "2.5.3"
+  source: "bioconda bamtools=2.5.3（bio/bamtools/*/environment.yaml）"
+  note: "bio/bamtools 仅含 filter / filter_json / split / stats，无 convert wrapper；
+         convert（Iso-Seq 流程核心）请走 native 或 nf-core；若引用更旧 wrapper tag，bamtools 可能回落到 2.5.2。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/bamtools"
+  tag: "v3.13.0"
+  submodules:
+    - "filter"
+    - "filter_json"
+    - "split"
+    - "stats"
+  submodules_note: >
+    子模块列表以 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/bamtools
+    在线目录为准（2026-08 抓取）；若需要缺失的 convert 等 wrapper，请降级使用 bamtools_snakemake_local。
+
+inputs:
+  input:
+    type: file
+    format: [bam]
+    required: true
+    description: "输入 BAM 文件（依 wrapper 而定：filter/filter_json/split/stats 均以 BAM 为输入）"
+
+outputs:
+  output:
+    type: file
+    description: "输出文件（依 wrapper 而定：filter/filter_json 为过滤后 BAM/JSON；split 为多个 BAM；stats 为文本统计）"
+
+params:
+  extra:
+    type: string
+    default: ""
+    description: "子命令额外参数（wrapper.py 中统一拼接）"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/bamtools/{subcommand}"
+  rule_example: |
+    rule bamtools_stats:
+        input:  "aln/{sample}.bam"
+        output: "aln/{sample}.bam.stats"
+        log:    "logs/bamtools/stats/{sample}.log"
+        params: extra=""
+        threads: 1
+        wrapper: "v3.13.0/bio/bamtools/stats"

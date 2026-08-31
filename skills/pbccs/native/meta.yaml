@@ -1,0 +1,145 @@
+# pbccs native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护，不依赖官方 wrapper 源码。
+# 二进制为 `ccs`（PacBio 官方把 CCS 打包在 pbccs conda 包中）。
+# 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
+# ---------------------------------------------------------------------------
+
+id: pbccs_native
+version: "6.4.0-v1.0"
+software: pbccs
+type: native
+source_type: custom
+
+summary: "Self-contained ccs (pbccs) runner，覆盖 subreads BAM -> HiFi/CCS BAM 的分块一致性序列生成，自动注入线程与分块/过滤参数。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# 本实现实际运行的上游二进制版本 + 构建来源
+software_versions:
+  pbccs: "6.4.0"
+  binary: "ccs"
+  source: "bioconda::pbccs=6.4.0（micromamba 引导的 /opt/env；environment.yml 已 pin）"
+  note: "pbccs 不在 Debian bookworm apt，容器走 bookworm-slim + micromamba + bioconda 路线；与 nf-core 模块 bioconda::pbccs=6.4.0 版本一致。"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "pbccs 子命令：ccs（唯一核心命令）"
+  subreads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: "输入 subreads BAM 文件（*.subreads.bam）"
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "输出 CCS BAM 路径（默认 <prefix>.chunk<N>.bam）"
+  outdir:
+    type: string
+    required: false
+    cli_arg: "-d"
+    description: "输出目录（缺省为输入文件所在目录）"
+  prefix:
+    type: string
+    required: false
+    description: "输出前缀（默认 <sample>.chunk<chunk_num>，sample 取自 subreads 文件名去 .subreads 后缀）"
+  chunk_num:
+    type: integer
+    required: true
+    cli_arg: "--chunk"
+    description: "当前分块编号（1-based）"
+  chunk_total:
+    type: integer
+    required: true
+    cli_arg: "--chunk"
+    description: "总分块数"
+  min_rq:
+    type: float
+    default: 0.9
+    cli_arg: "--min-rq"
+    description: "最小读取质量阈值（0-1）"
+  min_passes:
+    type: integer
+    default: 3
+    cli_arg: "--min-passes"
+    description: "最小 subread 通过次数"
+  min_snr:
+    type: float
+    default: 2.5
+    cli_arg: "--min-snr"
+    description: "最小信噪比"
+  min_length:
+    type: integer
+    default: 10
+    cli_arg: "--min-length"
+    description: "最小序列长度"
+  max_length:
+    type: integer
+    default: 50000
+    cli_arg: "--max-length"
+    description: "最大序列长度"
+  top_passes:
+    type: integer
+    default: 60
+    cli_arg: "--top-passes"
+    description: "每个 ZMW 最多使用的 subread 通过次数"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "-j"
+    description: "线程数（自动注入）"
+  extra_args:
+    type: string
+    required: false
+    description: "透传给 ccs 的额外参数（高级用法，慎用）"
+
+outputs:
+  bam:
+    type: file
+    format: bam
+    description: "CCS 一致性序列 BAM（HiFi reads）"
+  pbi:
+    type: file
+    format: pbi
+    description: "CCS BAM 的 PacBio 索引"
+  report_txt:
+    type: file
+    format: txt
+    description: "ccs 汇总报告（txt）"
+  report_json:
+    type: file
+    format: json
+    description: "ccs 汇总报告（json）"
+  metrics:
+    type: file
+    format: json.gz
+    description: "ZMW 级指标（json.gz）"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: "/tmp"
+  env_vars:
+    TMPDIR: "{tmpdir}"
+    PYTHONUNBUFFERED: "1"
+  # 子命令级线程建议（高于用户显式 --threads 时仍以用户为准）
+  per_subcommand_threads:
+    ccs: 8        # CCS 生成是 CPU 密集，优先多线程
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "ccs"

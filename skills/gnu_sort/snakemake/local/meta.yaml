@@ -1,0 +1,40 @@
+# gnu_sort / snakemake / local 自维护规则元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则从 snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk 迁移，
+# 已去掉对 workflow/lib/helpers.py 的全局依赖（get_gnu_sort_args → config 内联简化）。
+# ---------------------------------------------------------------------------
+
+id: gnu_sort_snakemake_local
+version: "9.1-v1.0"
+software: gnu_sort
+type: snakemake_local
+source_type: custom
+
+summary: "Custom GNU sort Snakemake rule（sort <args> <in> > <out>.sorted，自 isoseq.smk 迁移）。"
+
+agent_guidance:
+  when_to_use: "snakemake-wrappers 官方缺失（bio/gnu 404）时，Snakemake 流程直接使用本目录 rule_gnu_sort.smk。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景的主执行目标）。"
+
+software_versions:
+  gnu_sort: "9.1"
+  coreutils: "9.1"
+  source: "规则迁移自 snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk（sort 语义）"
+  note: "与 native（apt coreutils=9.1）版本对齐；容器/conda 由调用方在 rule 上声明。"
+
+inputs:
+  input:
+    type: file
+    format: [txt, sam, gtf, bed]
+    description: "待排序文件（通配 {filepath}）"
+
+outputs:
+  output:
+    type: file
+    description: "排序后文件（通配 {filepath}.sorted）"
+
+execution:
+  mode: snakemake_rule
+  rule_files: ["rule_gnu_sort.smk"]
+  entrypoint: "include: rule_gnu_sort.smk（或用 use rule gnu_sort from rule_gnu_sort）"
+  binary: "sort"

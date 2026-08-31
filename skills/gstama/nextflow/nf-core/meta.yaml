@@ -1,0 +1,88 @@
+# gstama / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 本目录为说明 + Schema；真正执行需在项目内安装官方 nf-core 子模块。
+# ---------------------------------------------------------------------------
+
+id: gstama_nextflow_nfcore
+version: "master@68566f0"
+software: gstama
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core process family for gstama (modules/nf-core/gstama/* 全子模块清单 + 使用参考)."
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时，直接 include 对应子模块。"
+  recommendation_priority: "Medium（Nextflow 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 nf-core/modules gstama 目录 master sha；
+# gstama 上游二进制版本以各子模块 environment.yml 中的 conda pin 为准。
+software_versions:
+  module_version: "master@68566f03108f24882569441de144a05b10568a0c（modules/nf-core/gstama/collapse）"
+  gstama: "1.0.3"
+  source: "bioconda::gs-tama=1.0.3（modules/nf-core/gstama/*/environment.yml）"
+  note: "nf-core 拆分为 collapse / merge / polyacleanup 三个独立 process；升级 modules 时请同步刷新。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/gstama"
+  submodules:
+    - "collapse"
+    - "merge"
+    - "polyacleanup"
+  submodules_note: >
+    子模块列表以 https://github.com/nf-core/modules/tree/master/modules/nf-core/gstama
+    在线目录为准（2026-08 抓取）；若 nf-core 官方未提供某个子命令，请降级使用 gstama_nextflow_local。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1', single_end:false ]"
+  fasta:
+    type: file
+    format: [fa, fasta]
+    required: true
+    description: "polyacleanup 的输入 FLNC FASTA（collapse 的参考 FASTA 另为独立 input.fasta）"
+  bam:
+    type: file
+    format: [bam, sam]
+    required: true
+    description: "collapse 的输入比对 BAM/SAM（建议已排序）"
+  bed:
+    type: file
+    format: [bed]
+    required: true
+    description: "merge 的输入 bed12（由 collapse 产出）"
+
+outputs:
+  fasta:
+    type: file
+    format: fasta.gz
+    description: "polyacleanup 输出（*_tama.fa.gz / *_tama_tails.fa.gz）"
+  report:
+    type: file
+    format: txt.gz
+    description: "polyacleanup 输出（*_tama_polya_flnc_report.txt.gz）"
+  bed:
+    type: file
+    format: bed
+    description: "collapse 输出的去冗余转录本 / merge 输出的合并注释"
+  read:
+    type: file
+    format: txt
+    description: "collapse 输出的 reads 支持信息（*_read.txt）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "include { GSTAMA_COLLAPSE } from './modules/nf-core/gstama/collapse'"
+  include_pattern: "include { GSTAMA_<SUB> } from './modules/nf-core/gstama/<sub>'"
+  container: "quay.io/biocontainers/gs-tama:1.0.3--hdfd78af_0"
+  setup_hint: |
+    在项目仓库根执行：
+      nf modules install nf-core gstama collapse merge polyacleanup
+    本目录仅提供 include 参考与统一 Schema，不重写官方源码。

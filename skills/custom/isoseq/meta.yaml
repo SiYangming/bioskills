@@ -1,0 +1,146 @@
+# custom / isoseq 复合流程元数据
+# ---------------------------------------------------------------------------
+# 流程：subreads -> CCS(pbccs) -> 引物去除(lima) -> refine(isoseq3)
+#       -> BAM->FASTA(bamtools) -> polyA清理(gstama) -> 比对(minimap2/ultra)
+#       -> collapse(gstama) -> filelist(gstama) -> merge(gstama)
+# 本流程为**编排层**：默认调用 skills/ 下各原子模块的 default_implementation
+# （通常是 native），也提供 Snakemake/Nextflow 骨架模板。
+# 迁移来源：snakemake.smk/isoseq.smk（原单体流程已拆分为原子模块技能）。
+# ---------------------------------------------------------------------------
+
+id: custom_isoseq
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "PacBio Iso-Seq 全长转录组流程编排：pbccs -> lima -> isoseq3 refine -> bamtools convert -> gstama polyA 清理 -> minimap2/ultra 比对 -> gstama collapse/merge"
+
+description: |
+  将原 /snakemake.smk/isoseq.smk 单体流程按「原子模块软件」拆分后重新编排：
+  1) 每个工具（pbccs/lima/isoseq3/bamtools/gstama/minimap2/ultra/gunzip/gnu_sort）
+     成为独立的 skills/<software>/ 技能，各自含 native / nextflow / snakemake 实现；
+  2) 本目录只负责**流程编排**（stages 声明 + Python 编排脚本 + 工作流骨架模板）；
+  3) Snakemake 规则已迁移到各软件技能的 snakemake/local/rule_*.smk，
+     Nextflow 模块参考 nf-core/isoseq（modules/nf-core/{pbccs,lima,isoseq/refine,...}）。
+
+agent_guidance:
+  when_to_use: "用户需要完整跑通 PacBio Iso-Seq 全长转录组（含双比对路径 minimap2 / uLTRA）时使用本编排；需要单步能力时直接调用 skills/<sw>/native/main.py。"
+  recommendation_priority: "Medium（复合流程编排层；单工具调用请走各软件 native 实现）。"
+
+stages:
+  - id: pbccs
+    software: pbccs
+    implementation: pbccs_native
+    purpose: "subreads -> HiFi CCS reads（按 chunk 并行，--min-rq/--min-passes 质控）"
+  - id: lima
+    software: lima
+    implementation: lima_native
+    purpose: "引物识别与去除 / 条形码拆分（--isoseq --peek-guess）"
+  - id: isoseq3_refine
+    software: isoseq3
+    implementation: isoseq3_native
+    purpose: "去除 polyA 尾与人工接头（--require-polya）"
+  - id: bamtools_convert
+    software: bamtools
+    implementation: bamtools_native
+    purpose: "refined BAM -> FASTA（供 gstama polyA 清理）"
+  - id: gstama_polyacleanup
+    software: gstama
+    implementation: gstama_native
+    purpose: "TAMA FLNC polyA 清理（输出 .fa.gz / report / tails）"
+  - id: minimap2_align
+    software: minimap2
+    implementation: minimap2_native
+    purpose: "路径A比对：-x splice -uf -k14，minimap2|samtools sort 出 BAM"
+  - id: ultra_align
+    software: ultra
+    implementation: ultra_native
+    purpose: "路径B比对：uLTRA index + align（依赖 minimap2/namfinder/samtools）"
+  - id: gstama_collapse
+    software: gstama
+    implementation: gstama_native
+    purpose: "按比对 BAM 做转录本去冗余，产出 *.bed"
+  - id: gstama_filelist
+    software: gstama
+    implementation: gstama_native
+    purpose: "收集各样本/比对器 collapse 的 bed 生成 filelist.tsv（含排序优先级）"
+  - id: gstama_merge
+    software: gstama
+    implementation: gstama_native
+    purpose: "跨样本/跨比对器合并，输出 merged.bed"
+
+inputs:
+  samplesheet:
+    type: file
+    required: true
+    description: "样本表 CSV/TSV，至少含 sample 列；列 seq_data 为 subreads/ccs/lima 输入路径，start_from 支持 ccs/lima/refine/bamtools/gstama/mapping 分段入口"
+  primers:
+    type: file
+    required: true
+    description: "引物 FASTA（lima / isoseq3 refine 共用）"
+  reference:
+    type: file
+    required: true
+    description: "参考基因组 FASTA（gstama collapse / minimap2 / uLTRA index 使用）"
+  gtf:
+    type: file
+    required: false
+    description: "参考注释 GTF（仅 uLTRA 路径需要，index 前自动 sort）"
+  aligner:
+    type: string
+    default: minimap2
+    description: "比对器选择：minimap2（默认）| ultra"
+  outdir:
+    type: string
+    default: results
+    description: "输出根目录（01PBCCS/02LIMA/.../09TAMA_MERGE 子目录）"
+  chunk_total:
+    type: integer
+    default: 10
+    description: "pbccs 分块总数（chunk 并行度）"
+  threads:
+    type: integer
+    default: 8
+
+outputs:
+  ccs_bam:
+    path_pattern: "{outdir}/01PBCCS/{sample}/{sample}.chunk{n}.bam"
+  lima_bam:
+    path_pattern: "{outdir}/02LIMA/{sample}/{sample}.chunk{n}.bam"
+  refine_bam:
+    path_pattern: "{outdir}/03ISOSEQ_REFINE/{sample}/{sample}.chunk{n}.bam"
+  converted_fasta:
+    path_pattern: "{outdir}/04BAMTOOLS_CONVERT/{sample}/{sample}.chunk{n}.fasta"
+  polya_fasta:
+    path_pattern: "{outdir}/05TAMA_POLYACLEANUP/{sample}/{sample}.chunk{n}_gstama.fa.gz"
+  aligned_bam:
+    path_pattern: "{outdir}/06_{aligner}/{sample}/{sample}.chunk{n}.bam"
+  collapsed_bed:
+    path_pattern: "{outdir}/07TAMA_COLLAPSE/{aligner}/{sample}/{sample}.chunk{n}_gstama_collapsed.bed"
+  filelist:
+    path_pattern: "{outdir}/08TAMA_FILELIST/filelist.tsv"
+  merged_bed:
+    path_pattern: "{outdir}/09TAMA_MERGE/merged.bed"
+
+execution:
+  entrypoint: "python isoseq.py"
+  test_command: "python isoseq.py --list-stages"
+  dependencies_in_skills:
+    - pbccs/native
+    - lima/native
+    - isoseq3/native
+    - bamtools/native
+    - gstama/native
+    - minimap2/native
+    - ultra/native
+    - gunzip/native
+    - gnu_sort/native
+  workflow_skeleton:
+    snakemake: "workflow_skeleton/Snakefile.template"
+    nextflow: "workflow_skeleton/main.nf.template"
+  fallback_note: "uLTRA 路径需要 ultra_bioinformatics 环境（含 minimap2/namfinder/samtools）；未安装时请使用 minimap2 路径。"
+
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384

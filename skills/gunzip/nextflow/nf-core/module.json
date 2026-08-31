@@ -1,0 +1,15 @@
+{
+  "software": "gunzip",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "GPL-3.0-or-later",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": "9b926b1ffaf469636f8fdfcbb092487aa88c3b24",
+    "note": "commit sha 为 2026-08 抓取 modules/nf-core/gunzip/environment.yml 时的占位；实际 install 时由 nf-core tools download 写入。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [],
+  "install_command": "nf-core modules install gunzip",
+  "important": "本 module.json 仅作登记与引用；gunzip 为单模块（无子模块拆分），真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

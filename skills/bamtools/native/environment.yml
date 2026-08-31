@@ -1,0 +1,13 @@
+# bamtools native Conda 环境配方
+# 创建：mamba env create -f environment.yml
+# 说明：Docker/Apptainer 走 apt 最小化路线（bamtools=2.5.2+dfsg-4），
+#      本文件仅作 HPC 无 root 场景 / 非容器场景的 Conda 兜底。
+name: bamtools-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - bamtools=2.5.2
+  - pyyaml>=6.0
+  - pip

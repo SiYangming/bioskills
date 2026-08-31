@@ -1,0 +1,99 @@
+# ---------------------------------------------------------------------------
+# bioskills / ultra native Apptainer/Singularity 定义
+# Route: Debian bookworm-slim + apt(运行时) + micromamba(bioconda ultra_bioinformatics=0.1)
+#   Debian apt 无 ultra 包（uLTRA 仅 bioconda 提供），故用 micromamba 引导安装；
+#   minimap2 / namfinder / samtools 为 uLTRA align 运行时依赖，一并装入 /opt/conda。
+# 目标：无 miniconda、仅保留运行必需、apt 立即清理。
+# 运行时要求：apptainer run 自动继承宿主机 UID，避免文件属主污染。
+#
+# 构建：apptainer build ultra.sif Apptainer.def
+# 运行：apptainer run ultra.sif align --help
+# ---------------------------------------------------------------------------
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software ultra
+    Version 0.1-v1.0
+    UltraBioinformaticsVersion 0.1
+    PkgRoute apt-runtime + micromamba(bioconda)
+
+%files
+    # 在 bootstrap 阶段把宿主机技能目录内容准备到镜像内路径
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    # ---- apt 运行时 + micromamba 引导（无 miniconda）----
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        bzip2 \
+        procps \
+        python3-minimal \
+        python3 \
+        python3-yaml
+
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /tmp bin/micromamba
+    /tmp/bin/micromamba create -y -p /opt/conda -c conda-forge -c bioconda \
+        python=3.11 \
+        ultra_bioinformatics=0.1 \
+        minimap2 \
+        namfinder \
+        samtools \
+        pyyaml
+
+    # ---- 版本断言 ----
+    /tmp/bin/micromamba list -p /opt/conda | grep -E '^ultra_bioinformatics[[:space:]]+0\.1'
+    /opt/conda/bin/uLTRA --version >/dev/null 2>&1
+    /opt/conda/bin/samtools --version | head -n1
+    /opt/conda/bin/minimap2 --version >/dev/null 2>&1
+    /opt/conda/bin/namfinder --help >/dev/null 2>&1 || true
+
+    rm -rf /tmp/bin /tmp/pkgs /opt/conda/pkgs
+
+    # ---- 清理四连 ----
+    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false curl bzip2
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/locale/* /var/cache/debconf/*
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：驱动 + uLTRA 二进制可运行
+    set -eux
+    /opt/conda/bin/uLTRA --version | head -n1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    ultra native Apptainer 镜像（apt 运行时 + micromamba 引导 bioconda）。
+    ultra_bioinformatics: 0.1（依赖 minimap2 / namfinder / samtools）
+    调用方式：apptainer run ultra.sif <subcommand> [options]
+    挂载卷示例：apptainer run -B $PWD:/data -H /data ultra.sif align --help

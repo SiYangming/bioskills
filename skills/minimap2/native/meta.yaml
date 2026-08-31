@@ -1,0 +1,108 @@
+# minimap2 native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护，不依赖官方 wrapper 源码。
+# 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
+# 命令逻辑从 snakemake.smk/isoseq.smk/isoseq.py/minimap2_align.py 迁移。
+# ---------------------------------------------------------------------------
+
+id: minimap2_native
+version: "2.24-v1.0"
+software: minimap2
+type: native
+source_type: custom
+
+summary: "Self-contained minimap2 runner，align 子命令支持 PAF / BAM 输出（BAM 走 minimap2 | samtools sort | samtools view 管线），自动注入线程。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "minimap2 子命令：align"
+  reads:
+    type: file
+    required: true
+    format: [fasta, fastq, fasta.gz, fastq.gz]
+    description: "输入 reads（FASTA/FASTQ，支持 .gz）"
+  reference:
+    type: file
+    required: false
+    format: [fasta]
+    description: "参考基因组 FASTA；不提供时退化为 reads vs reads 自比对"
+  outdir:
+    type: string
+    required: false
+    description: "输出目录（默认当前目录）"
+  prefix:
+    type: string
+    required: false
+    description: "输出前缀（默认从 reads 文件名推断）"
+  bam:
+    type: boolean
+    required: false
+    default: false
+    description: "输出 BAM（否则输出 PAF）"
+  cigar_paf:
+    type: boolean
+    required: false
+    default: false
+    description: "PAF 输出写入 CIGAR（-c，仅 PAF 模式有效）"
+  cigar_bam:
+    type: boolean
+    required: false
+    default: false
+    description: "BAM 输出为长 CIGAR 写 CG 标签（-L）"
+  args:
+    type: string
+    required: false
+    description: "透传 minimap2 附加参数（如 \"-x splice -uf -k14\"）"
+  samtools_bin:
+    type: string
+    required: false
+    description: "samtools 可执行路径（BAM 输出管线用；默认从 PATH 解析）"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "-t"
+    description: "线程数（自动注入 -t）"
+
+outputs:
+  paf:
+    type: file
+    format: paf
+    description: "PAF 模式输出（<prefix>.paf）"
+  bam:
+    type: file
+    format: bam
+    description: "BAM 模式输出（<prefix>.bam，经 samtools sort + view -b -h）"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: "{tmpdir}"
+  per_subcommand_threads:
+    align: 8        # 比对为 CPU 密集，优先多线程
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "minimap2"
+
+# 本实现实际运行的上游二进制版本与来源
+software_versions:
+  minimap2: "2.24"
+  samtools: "1.17（apt bookworm，BAM 输出管线依赖）"
+  source: "apt / Debian bookworm stable（minimap2=2.24+dfsg-3）；Conda 兜底 environment.yml 用 bioconda::minimap2=2.24"
+  note: "与 isoseq.smk 流程原配 2.28 有差异；如需完全对齐 2.28，可用 micromamba 装 bioconda::minimap2=2.28（native 版本表已注明）。"

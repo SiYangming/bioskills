@@ -1,0 +1,105 @@
+# bamtools native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护，不依赖官方 wrapper 源码。
+# 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
+# 命令逻辑从 snakemake.smk/isoseq.smk/isoseq.py/bamtools_convert.py 迁移。
+# ---------------------------------------------------------------------------
+
+id: bamtools_native
+version: "2.5.2-v1.0"
+software: bamtools
+type: native
+source_type: custom
+
+summary: "Self-contained bamtools runner，覆盖 convert/count/stats/header/index/sort 子命令，Iso-Seq 场景下 BAM->FASTA/FASTQ 转换首选。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "bamtools 子命令：convert|count|stats|header|index|sort"
+  bam:
+    type: file
+    required: true
+    cli_arg: "-in"
+    description: "输入 BAM 文件"
+  format:
+    type: string
+    required: false
+    cli_arg: "-format"
+    description: "convert 目标格式：bed/fasta/fastq/json/pileup/sam/yaml（默认 fasta）"
+  outdir:
+    type: string
+    required: false
+    description: "convert 输出目录（默认当前目录）"
+  prefix:
+    type: string
+    required: false
+    description: "convert 输出前缀（默认从 BAM 文件名推断）"
+  output:
+    type: file
+    required: false
+    cli_arg: "-out"
+    description: "sort/index 的显式输出文件"
+  region:
+    type: string
+    required: false
+    cli_arg: "-region"
+    description: "区域字符串（如 chr1:100-200），convert 限定转换范围"
+  sort_by:
+    type: string
+    required: false
+    cli_arg: "-by"
+    description: "sort 排序依据：region/name/size"
+  extra_args:
+    type: string
+    required: false
+    description: "透传给 bamtools 子命令的额外参数（高级用法，慎用）"
+  threads:
+    type: integer
+    default: 4
+    description: "线程数（契约字段；bamtools CLI 无通用 -@ 参数，不实际注入）"
+
+outputs:
+  converted_file:
+    type: file
+    description: "convert 输出文件（<prefix>.<format>）"
+  sorted_bam:
+    type: file
+    format: bam
+    description: "sort 输出的排序 BAM"
+  bai:
+    type: file
+    format: bai
+    description: "index 生成的 .bai 索引"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: "{tmpdir}"
+  per_subcommand_threads:
+    sort: 8        # 排序为 CPU 密集，优先多线程（bamtools 无 -@，仅作调度器参考）
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "bamtools"
+
+# 本实现实际运行的上游二进制版本与来源
+software_versions:
+  bamtools: "2.5.2"
+  source: "apt / Debian bookworm stable（bamtools=2.5.2+dfsg-4）；Conda 兜底 environment.yml 用 bioconda::bamtools=2.5.2"
+  note: "若需与流程原配 bioconda 2.5.2 之外的更新版（如 snakemake-wrappers 的 2.5.3）对齐，请显式改 environment.yml pin。"

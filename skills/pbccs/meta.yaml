@@ -1,0 +1,94 @@
+# pbccs 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 原则：
+#   canonical 目录名 = Bioconda / nf-core 统一的规范化软件名（pbccs）。
+#   注意：pbccs 的 conda 包名 / 目录名为 pbccs，但可执行二进制为 `ccs`
+#   （PacBio 官方在 pbbioconda 中把 CCS 打包为 pbccs）。
+#   implementations 固定 5 路实现，按类型 + 来源编排。
+#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
+# ---------------------------------------------------------------------------
+
+software: pbccs
+canonical: pbccs
+category: isoseq
+description: >
+  pbccs（二进制名 ccs）是 PacBio 的高精度一致性序列（HiFi / CCS）生成工具，
+  从 subreads BAM 生成单分子一致性 reads，支持分块并行（--chunk N/TOTAL）、
+  最小质量/通过次数/信噪比/长度过滤，是 Iso-Seq 流程的第一步。
+
+homepage: https://ccs.how/
+license: BSD-3-Clause-Clear
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: pbccs_native
+    path: native
+    source_type: custom
+    type: native
+    version: "6.4.0-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。自动注入线程与分块参数。
+
+  - id: pbccs_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "1.0.0"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时（nf-core 官方单模块 modules/nf-core/pbccs）。
+
+  - id: pbccs_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 缺失 / 本地定制 ccs process。
+
+  - id: pbccs_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+    note: "官方 snakemake-wrappers 暂无 bio/pbccs wrapper（2026-08 抓取 404），本实现仅登记桥接层，实际请降级 pbccs_snakemake_local。"
+
+  - id: pbccs_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 rule_pbccs.smk。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: pbccs_native
+
+# ---------------------------------------------------------------------------
+# 版本差异声明：native / nf-core / snakemake-wrappers 的 pbccs 上游二进制版本可能不同。
+# 关键差异：pbccs 不在 Debian bookworm apt 源，只能走 bioconda（micromamba 引导）。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    pbccs: "6.4.0"
+    binary: "ccs"
+    build_route: "debian:bookworm-slim + micromamba 引导 bioconda env（/opt/env，binary=ccs）"
+    source: "bioconda::pbccs=6.4.0（environment.yml 已 pin）"
+    note: "bookworm apt 不提供 pbccs/ccs，故走 micromamba + bioconda 路线；版本与 nf-core 对齐。"
+  nextflow_nfcore:
+    pbccs: "6.4.0"
+    module_version: "1.0.0"
+    source: "bioconda::pbccs=6.4.0（modules/nf-core/pbccs/environment.yml）"
+    note: "nf-core pbccs 为单模块（不分子命令）；container 用 community.wave.seqera.io 生成。"
+  nextflow_local:
+    pbccs: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    pbccs: "官方无 wrapper（bio/pbccs 404）"
+    wrapper_tag: "v3.13.0"
+    source: "—"
+    note: "2026-08 抓取 snakemake-wrappers bio/pbccs 返回 404，官方未收录；请使用 pbccs_snakemake_local。"
+  snakemake_local:
+    pbccs: "6.4.0"
+    source: "自维护 rule_pbccs.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/pbccs.smk）"
+    note: "rule 内 conda 指向 bioconda::pbccs=6.4.0；二进制 ccs。"

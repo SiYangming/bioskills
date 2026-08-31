@@ -1,0 +1,18 @@
+{
+  "software": "bamtools",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "MIT",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": "ad1de302063fd1b7d3e9e3d936759b460abfa5c7",
+    "note": "commit sha 对应 modules/nf-core/bamtools/convert 目录（2026-08 抓取）；实际 install 时由 nf-core tools download 写入，此处为参考占位。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "container_example": "quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2",
+  "submodules": [
+    "convert", "split", "stats"
+  ],
+  "install_command": "nf-core modules install bamtools/<submodule>",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

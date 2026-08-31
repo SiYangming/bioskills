@@ -1,0 +1,73 @@
+# lima / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 注意：官方 snakemake-wrappers 目前【没有】bio/lima wrapper（抓取 404），
+#       本目录仅登记桥接层；实际执行请使用 lima_snakemake_local（rule_lima.smk）。
+# ---------------------------------------------------------------------------
+
+id: lima_snakemake_wrappers
+version: "v3.13.0"
+software: lima
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers 登记层 for lima（官方 bio/lima 缺失，submodules 为空；实际走 local）。"
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程时；官方 bio/lima wrapper 缺失，请直接使用 lima_snakemake_local。"
+  recommendation_priority: "Low（官方 wrapper 不存在；本实现仅说明层，实际路由到 snakemake_local）。"
+
+# 版本对齐：官方 bio/lima 不存在，无法从 environment.yaml 取 conda pin。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  lima: "官方无 wrapper（bio/lima 404）"
+  source: "—（snakemake-wrappers 仓库 bio/lima 目录不存在）"
+  note: "2026-08 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/lima 返回 404；
+         Snakemake 场景请使用 lima_snakemake_local（rule_lima.smk，pin bioconda::lima=2.9.0）。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/lima"
+  tag: "v3.13.0"
+  submodules: []
+  submodules_note: >
+    官方 bio/lima 目录不存在（2026-08 抓取 404），故 submodules 为空列表。
+    若未来官方新增该 wrapper，请以 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/lima
+    在线目录为准刷新；当前 Snakemake 场景请使用 lima_snakemake_local。
+
+inputs:
+  input:
+    type: file
+    format: [bam, fasta, fasta.gz, fastq, fastq.gz]
+    required: true
+    description: "输入 reads 文件（ccs/subreads）"
+  primers:
+    type: file
+    format: fasta
+    required: true
+    description: "引物 FASTA 文件"
+
+outputs:
+  output:
+    type: file
+    format: [bam, fasta, fastq]
+    description: "去引物/拆分后的 reads"
+
+params:
+  extra:
+    type: string
+    default: ""
+    description: "lima 额外参数（如 --isoseq --peek-guess --min-score 0）"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/lima/{subcommand}（官方缺失，占位）"
+  rule_example: |
+    # 官方 wrapper 缺失 —— 直接使用本仓库自维护 rule：
+    #   include: "skills/lima/snakemake/local/rule_lima.smk"
+    rule lima:
+        input:  bam="ccs/{sample}.chunk{n}.bam", primers="primers.fasta"
+        output: "lima/{sample}.chunk{n}.bam"
+        params: extra="--isoseq"
+        threads: 8
+        conda: "envs/lima.yaml"   # bioconda::lima=2.9.0

@@ -1,0 +1,87 @@
+# minimap2 native Apptainer/Singularity 定义（apt 最小化版本）
+#
+# 底座：Debian 12 bookworm-slim（通过 Docker hub library/debian:bookworm-slim bootstrap）
+# 安装：minimap2=2.24+dfsg-3（Debian bookworm stable）+ samtools（BAM 输出管线）+ python3 运行驱动
+# 清理：apt lists / docs / man / cache
+#
+# 构建：apptainer build minimap2.sif Apptainer.def
+# 运行：apptainer run minimap2.sif align --reads /data/reads.fa --reference /data/ref.fa --outdir /data
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software minimap2
+    Version 2.24-v1.0
+    Minimap2AptVersion 2.24+dfsg-3
+    org.bioskills.software minimap2
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt
+
+%files
+    # 在 bootstrap 阶段把宿主机技能目录内容准备到镜像内路径
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        minimap2=2.24+dfsg-3 \
+        samtools \
+        python3-minimal \
+        python3 \
+        python3-yaml \
+        ca-certificates \
+        procps
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 强清理文档 / 手册 / locale / apt 缓存，保持 sif 尽量小
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+    # 版本断言：确保 build 环境未意外升级到 >2.24
+    dpkg -l | awk '$2=="minimap2"{print $3}' | grep -Eq '^2\.24'
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/skill:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保驱动与 minimap2 二进制可运行
+    set -eux
+    minimap2 --version | head -n 1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    minimap2 native Apptainer 镜像（apt 最小化）。
+    minimap2: Debian bookworm stable 2.24+dfsg-3（流程原配 2.28 差异见 native README）
+    调用方式：apptainer run minimap2.sif <subcommand> [options]
+    挂载卷示例：apptainer run -B $PWD:/data -H /data minimap2.sif align --reads /data/reads.fa --reference /data/ref.fa --outdir /data --bam

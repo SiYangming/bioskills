@@ -1,0 +1,99 @@
+# isoseq3 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 原则：
+#   目录 canonical 名 = isoseq3（用户/社区常用的流程命名）。
+#   注意差异：bioconda 包名与可执行文件名为 **isoseq**（PacBio IsoSeq 套件，
+#   内含 isoseq3 / isoseq cluster / isoseq polish 等子命令）。本技能聚焦
+#   `isoseq3 refine`（去 polyA 尾与人工连接体，Iso-Seq 流程第三步）。
+#   implementations 固定 5 路实现，按类型 + 来源编排。
+#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
+# ---------------------------------------------------------------------------
+
+software: isoseq3
+canonical: isoseq3
+category: isoseq
+description: >
+  isoseq3 是 PacBio IsoSeq 套件（conda 包名 isoseq，二进制 isoseq3）的 refine 子命令：
+  去除 polyA 尾与人工连接体，将 lima 清理后的全长相 reads 精炼为高质量转录本 reads，
+  并输出 consensusreadset.xml / filter_summary.report.json / report.csv 等报告。
+
+homepage: https://github.com/PacificBiosciences/IsoSeq
+license: BSD-3-Clause-Clear
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: isoseq3_native
+    path: native
+    source_type: custom
+    type: native
+    version: "4.0.0-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。自动注入线程与 --require-polya 默认。
+
+  - id: isoseq3_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "1.0.0"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时（nf-core 官方目录 modules/nf-core/isoseq/{refine,cluster}，本技能对应 refine）。
+
+  - id: isoseq3_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 缺失 / 本地定制 isoseq3 refine process。
+
+  - id: isoseq3_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+    note: "官方 snakemake-wrappers 暂无 bio/isoseq3 wrapper（2026-08 抓取 404），本实现仅登记桥接层，实际请降级 isoseq3_snakemake_local。"
+
+  - id: isoseq3_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 rule_isoseq3.smk。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: isoseq3_native
+
+# ---------------------------------------------------------------------------
+# 版本差异声明：native / nf-core / snakemake-wrappers 的 isoseq 上游二进制版本可能不同。
+# 关键差异：
+#   - 软件 canonical 目录名为 isoseq3，但 bioconda 包名 / 二进制名为 isoseq（binary 为 isoseq3）。
+#   - isoseq 不在 Debian bookworm apt 源，只能走 bioconda（micromamba 引导）。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    isoseq: "4.0.0"
+    binary: "isoseq3"
+    build_route: "debian:bookworm-slim + micromamba 引导 bioconda env（/opt/env，binary=isoseq3）"
+    source: "bioconda::isoseq=4.0.0（environment.yml 已 pin）"
+    note: "bookworm apt 不提供 isoseq，故走 micromamba + bioconda 路线；版本与 nf-core 对齐。"
+  nextflow_nfcore:
+    isoseq: "4.0.0"
+    module_version: "1.0.0"
+    submodule: "isoseq/refine"
+    source: "bioconda::isoseq=4.0.0（modules/nf-core/isoseq/refine/environment.yml）"
+    note: "nf-core 目录为 modules/nf-core/isoseq/{refine,cluster}；本技能对应 refine 子模块；container 由 community.wave.seqera.io 生成。"
+  nextflow_local:
+    isoseq: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    isoseq: "官方无 wrapper（bio/isoseq3 404）"
+    wrapper_tag: "v3.13.0"
+    source: "—"
+    note: "2026-08 抓取 snakemake-wrappers bio/isoseq3 返回 404，官方未收录；请使用 isoseq3_snakemake_local。"
+  snakemake_local:
+    isoseq: "4.0.0"
+    binary: "isoseq3"
+    source: "自维护 rule_isoseq3.smk（迁移自 snakemake.smk/isoseq.smk/workflow/rules/isoseq3.smk）"
+    note: "rule 内 conda 指向 bioconda::isoseq=4.0.0；二进制 isoseq3 refine。"

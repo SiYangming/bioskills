@@ -1,0 +1,49 @@
+# bamtools / snakemake / local —— 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# 从 snakemake.smk/isoseq.smk/workflow/rules/bamtools.smk 迁移，
+# 去掉对 workflow/lib/helpers.py 与 docker_run 的全局依赖，路径/参数内联简化。
+# ---------------------------------------------------------------------------
+
+id: bamtools_snakemake_local
+version: "1.0.0"
+software: bamtools
+type: snakemake_local
+source_type: custom
+
+summary: "Custom Snakemake rule for bamtools convert（从 isoseq.smk 迁移，自包含无 helper 依赖）。"
+
+agent_guidance:
+  when_to_use: "snakemake-wrappers 无 convert wrapper、或需要本地定制 bamtools rule / 资源配置时使用。"
+  recommendation_priority: "Low（snakemake-wrappers / native 优先）。"
+  enabled: true
+
+software_versions:
+  bamtools: "2.5.2"
+  source: "从 snakemake.smk/isoseq.smk（quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2）迁移"
+  note: "rule 未固定 conda/container 时，由执行环境提供 bamtools；建议与 native 的 2.5.2 对齐。"
+
+inputs:
+  bam:
+    type: file
+    format: [bam]
+    required: true
+    description: "输入 BAM（Iso-Seq refine 产物，如 <sample>.chunk<N>.bam）"
+
+outputs:
+  out:
+    type: file
+    description: "转换产物（<prefix>.<format>，默认 format=fasta）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "bamtools 版本信息"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "rule_bamtools_convert.smk"
+  wrapper_template: ""
+  rule_example: |
+    include: "rules/rule_bamtools_convert.smk"
+    rule all:
+        input: "results/bamtools/sample1/sample1.chunk1.fasta"

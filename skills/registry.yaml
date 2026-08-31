@@ -1,6 +1,44 @@
 version: '1.0'
-generated_at: '2026-08-31T12:52:08+00:00'
+generated_at: '2026-08-31T14:41:12+00:00'
 skills:
+- software: bamtools
+  canonical: bamtools
+  implementations:
+  - id: bamtools_native
+    source_type: custom
+    impl: native
+    version: 2.5.2-v1.0
+    path: bamtools/native
+    priority: High
+    entrypoint: python main.py
+  - id: bamtools_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: bamtools/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: bamtools_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master@ad1de30
+    path: bamtools/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: bamtools_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 1.0.0
+    path: bamtools/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: bamtools_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: bamtools/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
 - software: fastqc
   canonical: fastqc
   implementations:
@@ -39,6 +77,272 @@ skills:
     path: fastqc/snakemake/snakemake-wrappers
     priority: Medium
     entrypoint: snakemake_rule
+- software: gnu_sort
+  canonical: gnu_sort
+  implementations:
+  - id: gnu_sort_native
+    source_type: custom
+    impl: native
+    version: 9.1-v1.0
+    path: gnu_sort/native
+    priority: High
+    entrypoint: python main.py
+  - id: gnu_sort_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: gnu_sort/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: gnu_sort_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: gnu_sort/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: gnu_sort_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 9.1-v1.0
+    path: gnu_sort/snakemake/local
+    priority: Medium
+    entrypoint: 'include: rule_gnu_sort.smk（或用 use rule gnu_sort from rule_gnu_sort）'
+  - id: gnu_sort_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: gnu_sort/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: gstama
+  canonical: gstama
+  implementations:
+  - id: gstama_native
+    source_type: custom
+    impl: native
+    version: 1.0.3-v1.0
+    path: gstama/native
+    priority: High
+    entrypoint: python main.py
+  - id: gstama_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: gstama/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: gstama_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master@68566f0
+    path: gstama/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: gstama_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 1.0.0
+    path: gstama/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: gstama_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: gstama/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
+- software: gunzip
+  canonical: gunzip
+  implementations:
+  - id: gunzip_native
+    source_type: custom
+    impl: native
+    version: 1.12-v1.0
+    path: gunzip/native
+    priority: High
+    entrypoint: python main.py
+  - id: gunzip_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: gunzip/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: gunzip_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: gunzip/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: gunzip_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 1.12-v1.0
+    path: gunzip/snakemake/local
+    priority: Medium
+    entrypoint: 'include: rule_gunzip.smk（或用 use rule gunzip from rule_gunzip）'
+  - id: gunzip_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: gunzip/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: isoseq3
+  canonical: isoseq3
+  implementations:
+  - id: isoseq3_native
+    source_type: custom
+    impl: native
+    version: 4.0.0-v1.0
+    path: isoseq3/native
+    priority: High
+    entrypoint: python main.py
+  - id: isoseq3_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: isoseq3/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: isoseq3_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 1.0.0
+    path: isoseq3/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: isoseq3_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: isoseq3/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: isoseq3_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: isoseq3/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: lima
+  canonical: lima
+  implementations:
+  - id: lima_native
+    source_type: custom
+    impl: native
+    version: 2.9.0-v1.0
+    path: lima/native
+    priority: High
+    entrypoint: python main.py
+  - id: lima_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: lima/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: lima_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 1.0.0
+    path: lima/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: lima_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: lima/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: lima_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: lima/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: minimap2
+  canonical: minimap2
+  implementations:
+  - id: minimap2_native
+    source_type: custom
+    impl: native
+    version: 2.24-v1.0
+    path: minimap2/native
+    priority: High
+    entrypoint: python main.py
+  - id: minimap2_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: minimap2/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: minimap2_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master@aa4e071
+    path: minimap2/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: minimap2_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 1.0.0
+    path: minimap2/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: minimap2_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: minimap2/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
+- software: pbccs
+  canonical: pbccs
+  implementations:
+  - id: pbccs_native
+    source_type: custom
+    impl: native
+    version: 6.4.0-v1.0
+    path: pbccs/native
+    priority: High
+    entrypoint: python main.py
+  - id: pbccs_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: pbccs/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: pbccs_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 1.0.0
+    path: pbccs/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: pbccs_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: pbccs/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: pbccs_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: pbccs/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
 - software: samtools
   canonical: samtools
   implementations:
@@ -76,4 +380,42 @@ skills:
     version: v3.13.0
     path: samtools/snakemake/snakemake-wrappers
     priority: Medium
+    entrypoint: snakemake_rule
+- software: ultra
+  canonical: ultra
+  implementations:
+  - id: ultra_native
+    source_type: custom
+    impl: native
+    version: 0.1-v1.0
+    path: ultra/native
+    priority: High
+    entrypoint: python main.py
+  - id: ultra_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: ultra/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: ultra_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: ultra/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: ultra_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1-v1.0
+    path: ultra/snakemake/local
+    priority: Medium
+    entrypoint: 'include: rule_ultra.smk（或用 use rule ... from rule_ultra）'
+  - id: ultra_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: ultra/snakemake/snakemake-wrappers
+    priority: Low
     entrypoint: snakemake_rule

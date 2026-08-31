@@ -1,0 +1,17 @@
+{
+  "software": "ultra",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "GPL-3.0",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": "0fa687d4c20524951a9d8d73cabb5b96260838cc",
+    "note": "commit sha 为 2026-08 抓取 modules/nf-core/ultra/align 目录时的占位；实际 install 时由 nf-core tools download 写入。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [
+    "align", "index", "pipeline"
+  ],
+  "install_command": "nf-core modules install ultra/<submodule>",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

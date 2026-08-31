@@ -1,0 +1,90 @@
+# ultra 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 原则：
+#   canonical 目录名 = Bioconda / nf-core / Debian 统一的规范化软件名（ultra）。
+#   implementations 固定 5 路实现，按类型 + 来源编排。
+#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
+# ---------------------------------------------------------------------------
+
+software: ultra
+canonical: ultra
+category: alignment_utils
+description: >
+  uLTRA 是长读长转录组 reads（PacBio Iso-Seq / ONT）的剪接比对工具，
+  基于 minimap2 预过滤 + NAM（maximal exact matches）外显子连接搜索，
+  提供 index（GTF 转录组索引）与 align（reads → SAM/BAM）两大核心能力，
+  依赖 minimap2 / namfinder / samtools。
+
+homepage: https://github.com/ksahlin/uLTRA
+license: GPL-3.0
+
+implementations:
+  - id: ultra_native
+    path: native
+    source_type: custom
+    type: native
+    version: "0.1-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。自动注入线程与依赖路径。
+
+  - id: ultra_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时（ultra/align + ultra/index）。
+
+  - id: ultra_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 缺失 / 本地定制 ultra process。
+
+  - id: ultra_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: Snakemake 流程、复用中央 wrapper 缓存时（注意：官方暂缺 ultra wrapper，见下方说明）。
+
+  - id: ultra_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1-v1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 rule_ultra.smk）。
+
+default_implementation: ultra_native
+
+# ---------------------------------------------------------------------------
+# 版本差异声明：native / nf-core / snakemake-wrappers 的 ultra 上游二进制版本可能不同。
+# ultra 仅由 bioconda 提供（Debian apt 无 ultra 包），故 native 走 micromamba/conda 引导。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    ultra: "0.1"
+    ultra_bioinformatics: "0.1"
+    build_route: "CONDA：micromamba/conda 引导 bioconda ultra_bioinformatics=0.1（apt 无 ultra 包）"
+    deps: "minimap2 + namfinder + samtools（同一 conda env，uLTRA 运行时按 PATH 查找）"
+    source: "bioconda::ultra_bioinformatics=0.1"
+    note: "binary 名为 uLTRA；Debian bookworm apt 无此包，因此容器走 apt 运行时 + micromamba 引导，禁止 miniconda。"
+  nextflow_nfcore:
+    ultra: "0.1"
+    samtools: "1.17"
+    module_version: "master（2026-08 抓取；install 时由 nf-core tools 写实际 commit）"
+    source: "bioconda::ultra_bioinformatics=0.1 + bioconda::samtools=1.17 + gffutils=0.11.1 + python=3.10.12（modules/nf-core/ultra/{index,align}/environment.yml）"
+    note: "nf-core 拆分为 ultra/align、ultra/index、ultra/pipeline 三个子模块；isoseq 类流程使用 align + index。"
+  nextflow_local:
+    ultra: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    ultra: "无官方 wrapper"
+    wrapper_tag: "v3.13.0"
+    source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ultra → 404"
+    note: "snakemake-wrappers 官方 bio/ 目录无 ultra（2026-08 核对）；必须降级使用 ultra_snakemake_local。"
+  snakemake_local:
+    ultra: "0.1（规则从 snakemake.smk/isoseq.smk/workflow/rules/ultra.smk 迁移，值内联）"

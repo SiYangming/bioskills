@@ -1,0 +1,92 @@
+# minimap2 / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 本目录为说明 + Schema；真正执行需在项目内安装官方 nf-core 子模块。
+# ---------------------------------------------------------------------------
+
+id: minimap2_nextflow_nfcore
+version: "master@aa4e071"
+software: minimap2
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core process family for minimap2 (modules/nf-core/minimap2/* 全子模块清单 + 使用参考)."
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时，直接 include 对应子模块。"
+  recommendation_priority: "Medium（Nextflow 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 nf-core/modules minimap2 目录 master sha；
+# minimap2 上游二进制版本以各子模块 environment.yml 中的 conda pin 为准。
+software_versions:
+  module_version: "master@aa4e071548b09324d25c3dd28833ed53c8d9ea00（modules/nf-core/minimap2/align）"
+  minimap2: "2.30"
+  samtools: "1.23.1"
+  source: "bioconda::minimap2=2.30 + bioconda::samtools=1.23.1（modules/nf-core/minimap2/align/environment.yml，2026-08 抓取）"
+  note: "早期 master pin 曾为 htslib=1.20 + minimap2=2.28 + samtools=1.20；nf-core 后续 bump 到 2.30/1.23.1，
+         若固定 nf modules install 的 release tag，请以对应 environment.yml 为准。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/minimap2"
+  submodules:
+    - "align"
+    - "index"
+  submodules_note: >
+    子模块列表以 https://github.com/nf-core/modules/tree/master/modules/nf-core/minimap2
+    在线目录为准（2026-08 抓取）；若 nf-core 官方未提供某个子命令，请降级使用 minimap2_nextflow_local。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1', single_end:false ]"
+  reads:
+    type: file
+    format: [fasta, fastq, fasta.gz, fastq.gz]
+    required: true
+    description: "输入 reads（minimap2/align）"
+  reference:
+    type: file
+    format: [fasta]
+    required: true
+    description: "参考数据库 FASTA（minimap2/align 的 reference；minimap2/index 为输入 FASTA）"
+  bam_format:
+    type: boolean
+    required: false
+    description: "align 输出 BAM（否则 PAF）"
+  cigar_paf_format:
+    type: boolean
+    required: false
+    description: "align 输出 PAF CIGAR（-c）"
+  cigar_bam:
+    type: boolean
+    required: false
+    description: "align 为长 CIGAR 写 CG 标签（-L）"
+
+outputs:
+  paf:
+    type: file
+    format: paf
+    description: "align PAF 模式输出"
+  bam:
+    type: file
+    format: bam
+    description: "align BAM 模式输出"
+  index:
+    type: file
+    description: "index 子模块输出的 minimap2 索引（.mmi）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "include { MINIMAP2_ALIGN } from './modules/nf-core/minimap2/align'"
+  include_pattern: "include { MINIMAP2_<SUB> } from './modules/nf-core/minimap2/<sub>'"
+  container: "quay.io/biocontainers/minimap2:2.28--h577a1d6_4"
+  setup_hint: |
+    在项目仓库根执行：
+      nf modules install nf-core minimap2 align
+      nf modules install nf-core minimap2 index
+    本目录仅提供 include 参考与统一 Schema，不重写官方源码。

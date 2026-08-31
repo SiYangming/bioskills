@@ -1,0 +1,74 @@
+# gnu_sort native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护（命令逻辑迁移自
+#   snakemake.smk/isoseq.smk/workflow/rules/gnu_sort.smk：sort [args] <in> > <out>.sorted）。
+# ---------------------------------------------------------------------------
+
+id: gnu_sort_native
+version: "9.1-v1.0"
+software: gnu_sort
+type: native
+source_type: custom
+
+summary: "Self-contained GNU sort runner，文本行排序（sort [args] <in> > <out>.sorted），自动注入 --parallel（GNU 时）。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "gnu_sort 子命令：sort"
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: "输入文件（文本/SAM/GTF/BED 等）"
+  output:
+    type: file
+    required: false
+    cli_arg: "-o"
+    description: "输出文件路径（默认 <input>.sorted）"
+  args:
+    type: string
+    required: false
+    cli_arg: "--args"
+    description: "透传 sort 附加参数（如 -k1,1 -k4,4n、-n、-S 2G、--parallel 8）"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "--threads"
+    description: "线程数（检测到 GNU coreutils 时注入 --parallel=N；BSD sort 忽略）"
+
+outputs:
+  sorted_file:
+    type: file
+    description: "排序后的输出文件"
+
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  env_vars:
+    TMPDIR: "{tmpdir}"
+  # 子命令级线程建议（sort 为 CPU/内存密集，优先多线程；--parallel 仅 GNU 支持）
+  per_subcommand_threads:
+    sort: 8
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "sort"
+
+software_versions:
+  gnu_sort: "9.1"
+  coreutils: "9.1"
+  source: "Debian bookworm apt coreutils=9.1-1（binary: sort）"
+  note: "与软件级 meta 对齐；nf-core 侧 conda coreutils=9.5 略新。macOS 系统 sort 为 BSD（2.3-Apple），-k/-n 兼容，--parallel 自动跳过。"

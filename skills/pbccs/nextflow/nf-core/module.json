@@ -1,0 +1,17 @@
+{
+  "software": "pbccs",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "MIT",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": "54911ce4ff19513624dbc3d02d95ba79e26ad563",
+    "note": "commit sha 为抓取时刻 modules/nf-core/pbccs/main.nf 的 blob sha；实际 install 时由 nf-core tools 写入最新值。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [
+    "pbccs"
+  ],
+  "install_command": "nf-core modules install nf-core pbccs",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

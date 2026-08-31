@@ -1,0 +1,102 @@
+# gstama native Apptainer/Singularity 定义（CONDA 路线：micromamba 引导 bioconda env，禁止 miniconda）
+#
+# 底座：Debian 12 bookworm-slim（通过 Docker hub library/debian:bookworm-slim bootstrap）
+# 安装：apt 仅装 python3-minimal/ca-certificates/procps/curl，curl 引导 micromamba，
+#       再 micromamba create bioconda::gs-tama=1.0.3 env（含 samtools + python3 + pyyaml）
+# 清理：apt lists / docs / man / cache + micromamba pkgs
+#
+# 构建：apptainer build gstama.sif Apptainer.def
+# 运行：apptainer run gstama.sif polyacleanup --fasta /data/flnc.fa --outdir /data
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software gstama
+    Version 1.0.3-v1.0
+    GstamaCondaVersion 1.0.3
+    org.bioskills.software gstama
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route conda_micromamba
+
+%files
+    # 在 bootstrap 阶段把宿主机技能目录内容准备到镜像内路径
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl
+
+    # 官方 micromamba 引导（免 miniconda）
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /usr/local bin/micromamba
+    export MAMBA_ROOT_PREFIX=/opt/micromamba
+    micromamba create -y -p /opt/micromamba/envs/gstama -c conda-forge -c bioconda \
+        gs-tama=1.0.3 \
+        samtools=1.21 \
+        python=3.11 \
+        pyyaml
+    micromamba clean -a -y
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 仅构建期需要的 curl 移除 + 强清理
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /opt/micromamba/pkgs
+
+    # 版本断言：env 内必须存在 gs-tama 提供的三个脚本
+    test -x /opt/micromamba/envs/gstama/bin/tama_flnc_polya_cleanup.py
+    test -x /opt/micromamba/envs/gstama/bin/tama_collapse.py
+    test -x /opt/micromamba/envs/gstama/bin/tama_merge.py
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/micromamba/envs/gstama/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /opt/micromamba/envs/gstama/bin/python /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保驱动与 gs-tama 脚本可运行
+    set -eux
+    test -x /opt/micromamba/envs/gstama/bin/tama_collapse.py
+    /opt/micromamba/envs/gstama/bin/python /opt/skill/main.py --list-commands
+    /opt/micromamba/envs/gstama/bin/python /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    gstama native Apptainer 镜像（CONDA 路线：micromamba + bioconda gs-tama=1.0.3）。
+    apt 无 gs-tama 包，故容器内用 micromamba 引导 bioconda env（禁止 miniconda）。
+    调用方式：apptainer run gstama.sif <subcommand> [options]
+    挂载卷示例：apptainer run -B $PWD:/data -H /data gstama.sif collapse --bam /data/aln.bam --fasta /data/ref.fa --outdir /data
