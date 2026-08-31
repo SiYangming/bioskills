@@ -70,14 +70,41 @@ cd my_isoseq && snakemake -np
 
 * `config/schemas/config.schema.yaml` / `samples.schema.yaml` — 供 `snakemake.utils.validate` 使用的校验 schema
 
-> 注意：迁移后的规则已去掉 docker 分支，直接调用本地二进制，因此示例 config 默认 `exec_mode: native`；
-> 各工具 bin 从 PATH 解析，`docker_image` 仅作为容器化参考值保留。
+> 注意：迁移后的规则默认走本地二进制（`exec_mode: native`），各工具 bin 从 PATH 解析；
+> 需要 docker 执行时，请使用 `workflow_skeleton/scripts/docker_wrapper.py`
+> （参考 flrnaseq.smk 留存模式）在规则中包装 docker 命令，config 中提供对应 `docker_image`。
 
 ### 3. Nextflow
 
 参考 `workflow_skeleton/main.nf.template` 与 nf-core/isoseq
 （`/Users/siyangming/nextflow_nf_core/isoseq.nf`），用
 `nf-core modules install` 安装官方模块后组装。
+
+## Docker 环境执行支持（Snakemake）
+
+参考 `flrnaseq.smk/workflow/scripts/docker_wrapper.py` 的留存方式，本流程提供
+`workflow_skeleton/scripts/docker_wrapper.py`：
+
+```python
+# 在规则中启用 docker 执行（config.exec_mode = "docker"）
+import scripts.docker_wrapper as dw
+wrapper, bin = dw.isoseq_wrapper(config, "pbccs")   # -> ("docker run ... <image> ", "ccs")
+shell(f"{wrapper} {bin} <args>")
+```
+
+- `docker_run(exec_mode, platform)`：生成 docker 前缀（含 `-u $(id -u):$(id -g)` 与 `$(pwd)` 挂载）
+- `docker_wrapper_binary(config, tool, bin_key, default_bin)`：按 `docker/native/conda` 三模式决策
+- `isoseq_wrapper(config, tool)`：按内置 `ISOSEQ_TOOLS` 速查表便捷调用
+- 自检：`python docker_wrapper.py config/config.yaml`
+
+## 历史留存资产（来自原 isoseq.smk）
+
+| 资产 | 位置 | 说明 |
+|------|------|------|
+| 原生 Python 实现 | 各模块 `native/legacy/*.py` | ccs/lima/isoseq3_refine/bamtools_convert/gs_tama+tama_polyacleanup/minimap2_align/ULTRA_align |
+| 并发批处理脚本 | 各模块 `native/legacy/run_*.sh` | ParaFly/parallel/xargs 目录批量入口（含 `--*-bin` 绝对路径注入） |
+| 模块完整文档 | `LEGACY_README.md` | 含 6 步完整流程串联示例与参数说明 |
+| 示例引物 | `workflow_skeleton/primers.fasta` | NEB 5p/3p 标准引物（lima/isoseq3 refine 用） |
 
 ## 容器运行注意
 
