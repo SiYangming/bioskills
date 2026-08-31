@@ -25,7 +25,10 @@ env/
 .trae/
 
 # -- 运行产物 ---------------------------------------------------------------
-*.schema.json              # 由 skill-cli schema 导出（可再生）
+# *.schema.json 由 skill-cli schema 导出（可再生）。
+# 说明：官方仓库一般保留至少一套样例 schema 便于 Agent/FaaS 直接读取，
+#       本地增量生成的可按需 gitignore 单文件；此处保留仓库内已入库的 4 份样例，
+#       运行时新产生的 <name>.schema.json 可在本仓库覆盖策略中忽略（建议开发者自行加私有规则）。
 registry.yaml.bak
 tmp*/
 TMP*/
