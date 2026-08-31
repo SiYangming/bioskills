@@ -56,7 +56,21 @@ python skills/custom/isoseq/isoseq.py ... --real
 ### 2. Snakemake
 
 参考 `workflow_skeleton/Snakefile.template`，各步骤规则已迁移到
-`skills/<sw>/snakemake/local/rule_*.smk`，直接 include 即可。
+`skills/<sw>/snakemake/local/*.smk`（文件名无 `rule_` 前缀），直接 include 即可。
+
+流程级示例配置已随模板保留在 `workflow_skeleton/config/`：
+
+```bash
+cp -r workflow_skeleton/ my_isoseq/
+# 按需修改 my_isoseq/config/config.yaml（samplesheet / 各工具参数 / 输出目录）
+cd my_isoseq && snakemake -np
+```
+
+- `config/config.yaml` — 从原 isoseq.smk 恢复的完整流程配置（9 个工具参数 + exec_mode + 01..09 输出目录映射）
+- `config/schemas/config.schema.yaml` / `samples.schema.yaml` — 供 `snakemake.utils.validate` 使用的校验 schema
+
+> 注意：迁移后的规则已去掉 docker 分支，直接调用本地二进制，因此示例 config 默认 `exec_mode: native`；
+> 各工具 bin 从 PATH 解析，`docker_image` 仅作为容器化参考值保留。
 
 ### 3. Nextflow
 

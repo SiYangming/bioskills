@@ -1,0 +1,33 @@
+# custom/isoseq — samplesheet schema（重建版）
+# ---------------------------------------------------------------------------
+# 从 snakemake.smk/isoseq.smk/config/schemas/samples.schema.yaml 重建。
+# 原文件随 isoseq.smk 一并删除，本版按迁移后的样本表结构（sample / seq_data /
+# start_from / species / genome / gtf）重新编写，供 Snakemake validate 使用：
+#   validate(samples, schema="config/schemas/samples.schema.yaml")
+# ---------------------------------------------------------------------------
+$schema: "https://json-schema.org/draft-07/schema"
+description: "custom/isoseq samplesheet（CSV/TSV）校验 schema"
+
+properties:
+  sample:
+    type: string
+    description: "样本唯一标识（输出目录/文件名前缀）"
+  seq_data:
+    type: string
+    description: "输入数据路径：subreads.bam / ccs.bam / lima.bam / fasta（依 start_from 而定）"
+  start_from:
+    type: string
+    enum: [ccs, lima, refine, bamtools, gstama, mapping]
+    description: "本样本从哪一步开始接入流程（缺省表示从 subreads 完整跑 CCS）"
+  species:
+    type: string
+    description: "物种标识（uLTRA 路径按物种组织索引时使用）"
+  genome:
+    type: string
+    description: "参考基因组 FASTA 路径（uLTRA 路径使用）"
+  gtf:
+    type: string
+    description: "参考注释 GTF 路径（uLTRA 路径使用）"
+
+required:
+  - sample
