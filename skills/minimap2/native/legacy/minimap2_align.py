@@ -1,6 +1,3 @@
-# NOTE: 本文件为「部分重建」——前 117 行（run_minimap2_align 主体）按原始文件恢复；
-# 尾部（版本写入 + main CLI）在原文件被删除且会话记录截断，按与 bamtools_convert.py
-# 一致的风格补全，逻辑与迁移后的 skills/minimap2/native/main.py 对齐。
 import os
 import subprocess
 import argparse
@@ -122,12 +119,12 @@ def run_minimap2_align(
             stderr=subprocess.STDOUT,
             text=True,
         ).stdout.strip()
-        version = version_out.splitlines()[0] if version_out else "unknown"
         with open(outdir_path / "versions.yml", "w") as vf:
-            vf.write(f"minimap2:\n    minimap2: {version}\n")
+            vf.write(f"minimap2_align:\n    minimap2: {version_out}\n")
 
         return {
-            "out": str(out_prefix) + (".bam" if bam else ".paf"),
+            "paf": str(out_prefix) + ".paf" if not bam else None,
+            "bam": str(out_prefix) + ".bam" if bam else None,
             "versions": str(outdir_path / "versions.yml"),
         }
 
@@ -137,33 +134,33 @@ def run_minimap2_align(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Minimap2 比对封装脚本（兼容 nf-core minimap2/align）")
+    parser = argparse.ArgumentParser(description="Minimap2 比对封装（兼容 nf-core minimap2/align）")
     parser.add_argument("--reads", required=True, help="输入 FASTA/FASTQ（支持 .gz）")
-    parser.add_argument("--reference", default=None, help="参考基因组 FASTA（缺省为 reads vs reads）")
-    parser.add_argument("--outdir", default=".", help="输出目录")
-    parser.add_argument("--prefix", default=None, help="输出前缀（默认从 reads 文件名推断）")
+    parser.add_argument("--reference", required=False, help="参考基因组 FASTA（可选；缺省为 reads vs reads）")
+    parser.add_argument("--outdir", required=True, help="输出目录")
+    parser.add_argument("--prefix", required=False, help="输出前缀（默认从 reads 文件名推断）")
     parser.add_argument("--bam", action="store_true", help="输出 BAM（否则输出 PAF）")
-    parser.add_argument("--cigar-paf", action="store_true", help="PAF 输出包含 CIGAR（-c）")
-    parser.add_argument("--cigar-bam", action="store_true", help="BAM 输出写 CG 标签（-L）")
-    parser.add_argument("--args", default="", help="透传 minimap2 附加参数，例如 \"-x splice -uf -k14\"")
+    parser.add_argument("--cigar-paf", action="store_true", help="在 PAF 输出中写入 CIGAR（-c）")
+    parser.add_argument("--cigar-bam", action="store_true", help="在 BAM 输出中为长CIGAR写入 CG 标签（-L）")
+    parser.add_argument("--args", default="", help="透传 minimap2 参数（例如 \"-x splice -uf -k14\"）")
     parser.add_argument("--cpus", type=int, default=None, help="线程数（默认自动选择）")
-    parser.add_argument("--minimap2-bin", default=None, help="minimap2 可执行路径（默认从 PATH 查找）")
-    parser.add_argument("--samtools-bin", default=None, help="samtools 可执行路径（BAM 管线用）")
+    parser.add_argument("--minimap2-bin", default=None, help="minimap2 可执行路径（默认从 PATH 解析）")
+    parser.add_argument("--samtools-bin", default=None, help="samtools 可执行路径（用于 BAM 输出管线）")
 
-    ns = parser.parse_args()
+    args = parser.parse_args()
 
     run_minimap2_align(
-        reads=ns.reads,
-        reference=ns.reference,
-        outdir=ns.outdir,
-        prefix=ns.prefix,
-        bam=ns.bam,
-        cigar_paf=ns.cigar_paf,
-        cigar_bam=ns.cigar_bam,
-        args=ns.args,
-        cpus=ns.cpus,
-        minimap2_bin=ns.minimap2_bin,
-        samtools_bin=ns.samtools_bin,
+        reads=args.reads,
+        reference=args.reference,
+        outdir=args.outdir,
+        prefix=args.prefix,
+        bam=args.bam,
+        cigar_paf=args.cigar_paf,
+        cigar_bam=args.cigar_bam,
+        args=args.args,
+        cpus=args.cpus,
+        minimap2_bin=args.minimap2_bin,
+        samtools_bin=args.samtools_bin,
     )
 
 
