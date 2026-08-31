@@ -1,0 +1,50 @@
+# samtools / official_snakemake 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# ---------------------------------------------------------------------------
+
+id: samtools_official_snakemake
+version: "v3.13.0"
+software: samtools
+type: snakemake_wrapper
+source_type: official
+
+summary: "Official Snakemake Wrappers for samtools (view/sort/index/stats/...)."
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程、复用中央 wrapper 缓存时，直接引用 wrapper 路径。"
+  recommendation_priority: "Medium（流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/samtools"
+  tag: "v3.13.0"
+  submodules:
+    - "view"
+    - "sort"
+    - "index"
+    - "flagstat"
+    - "idxstats"
+    - "stats"
+    - "mpileup"
+    - "merge"
+    - "faidx"
+    - "quickcheck"
+    - "depth"
+    - "dict"
+
+inputs:
+  input:
+    type: file
+    format: [sam, bam, cram]
+    required: true
+    description: "输入文件"
+
+outputs:
+  output:
+    type: file
+    description: "输出文件（依 wrapper 而定）"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/samtools/{subcommand}"

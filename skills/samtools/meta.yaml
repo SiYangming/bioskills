@@ -1,0 +1,43 @@
+# samtools 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# ---------------------------------------------------------------------------
+
+software: samtools
+canonical: samtools
+category: alignment_utils
+description: >
+  samtools 是操作 SAM/BAM/CRAM 的高通量测序数据工具集，提供排序、索引、
+  统计、提取、转换、拼接、pileup 等核心能力，是绝大多数 NGS 流程的底座。
+
+homepage: http://www.htslib.org/
+license: MIT
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: samtools_native
+    path: native
+    source_type: custom
+    type: native
+    version: "1.21-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+  - id: samtools_official_nfcore
+    path: official_nfcore
+    source_type: official
+    type: nfcore_module
+    version: "2.2.0"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时。
+  - id: samtools_official_snakemake
+    path: official_snakemake
+    source_type: official
+    type: snakemake_wrapper
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: samtools_native

@@ -1,0 +1,126 @@
+# samtools native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护，不依赖官方 wrapper 源码。
+# 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
+# ---------------------------------------------------------------------------
+
+id: samtools_native
+version: "1.21-v1.0"
+software: samtools
+type: native
+source_type: custom
+
+summary: "Self-contained samtools runner，覆盖排序/索引/统计/提取/拼接等核心子命令，自动注入线程与内存优化。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "samtools 子命令：view|sort|index|flagstat|idxstats|stats|depth|mpileup|faidx|merge|quickcheck"
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: "输入文件（SAM/BAM/CRAM/FASTA）"
+  output:
+    type: file
+    required: false
+    cli_arg: "-o"
+    description: "输出文件路径"
+  bam:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "主输入 BAM（index/flagstat/idxstats/stats/depth 等）"
+  bam_list:
+    type: string
+    required: false
+    cli_arg: "-b"
+    description: "merge 时的 BAM 列表文件"
+  region:
+    type: string
+    required: false
+    cli_arg: positional
+    description: "区域字符串（如 chr1:1000-2000），view/stats/depth 等可用"
+  fasta:
+    type: file
+    required: false
+    cli_arg: "-f"
+    description: "faidx 目标 FASTA / mpileup 参考序列"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "-@"
+    description: "线程数（自动注入）"
+  output_format:
+    type: string
+    required: false
+    cli_arg: "-O"
+    description: "输出格式：SAM/BAM/CRAM/JSON"
+  filter_flags:
+    type: string
+    required: false
+    cli_arg: "-F"
+    description: "过滤 FLAG（如 4=未比对，1796=常规质控）"
+  require_flags:
+    type: string
+    required: false
+    cli_arg: "-f"
+    description: "要求 FLAG"
+  min_mapq:
+    type: integer
+    required: false
+    cli_arg: "-q"
+    description: "最小 MAPQ"
+  sort_by_name:
+    type: boolean
+    default: false
+    cli_arg: "-n"
+    description: "sort 时按 read name 排序"
+  index_format:
+    type: string
+    required: false
+    cli_arg: "-c"
+    description: "index 时的索引格式（bai/csi）"
+  extra_args:
+    type: string
+    required: false
+    description: "透传给 samtools 子命令的额外参数（高级用法，慎用）"
+
+outputs:
+  result_file:
+    type: file
+    description: "主输出文件（BAM/索引/报告等，依子命令而定）"
+  stats_report:
+    type: file
+    format: txt
+    description: "stats 子命令产生的统计报告"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: "{tmpdir}"
+    HTS_LOG_TRACE: "off"
+  # 子命令级线程建议（高于用户显式 --threads 时仍以用户为准）
+  per_subcommand_threads:
+    sort: 8        # 排序为 CPU 密集，优先多线程
+    view: 4
+    mpileup: 4
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "samtools"

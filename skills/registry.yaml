@@ -1,0 +1,28 @@
+version: '1.0'
+generated_at: '2026-08-31T09:33:26+00:00'
+# 由 skills/bin/skill-cli scan 自动生成；本文件为 samtools 三实现完整快照。
+skills:
+- software: samtools
+  canonical: samtools
+  implementations:
+  - id: samtools_native
+    source_type: custom
+    impl: native
+    version: 1.21-v1.0
+    path: samtools/native
+    priority: High
+    entrypoint: python main.py
+  - id: samtools_official_nfcore
+    source_type: official
+    impl: nfcore_module
+    version: 2.2.0
+    path: samtools/official_nfcore
+    priority: Medium
+    entrypoint: nextflow include
+  - id: samtools_official_snakemake
+    source_type: official
+    impl: snakemake_wrapper
+    version: v3.13.0
+    path: samtools/official_snakemake
+    priority: Medium
+    entrypoint: snakemake wrapper

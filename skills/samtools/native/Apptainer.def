@@ -1,0 +1,34 @@
+Bootstrap: docker
+From: continuumio/miniconda3:24.7.1-0
+
+%post
+    # 安装 conda 环境
+    conda env create -f /tmp/environment.yml -n samtools || true
+    conda clean -afy
+
+%files
+    environment.yml /tmp/environment.yml
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%environment
+    export PATH=/opt/conda/envs/samtools/bin:$PATH
+    export PYTHONPATH=/opt/skill
+    export TMPDIR=/tmp
+
+%runscript
+    exec python /opt/skill/main.py "$@"
+
+%labels
+    Maintainer bioskills
+    Software samtools
+    Version 1.21-v1.0
+
+%test
+    bash /opt/skill/test/run_test.sh
+
+%help
+    samtools native Apptainer/Singularity 镜像。
+    构建：apptainer build samtools.sif Apptainer.def
+    运行：apptainer run samtools.sif view -bS input.sam -o out.bam
