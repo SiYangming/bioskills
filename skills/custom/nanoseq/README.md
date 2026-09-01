@@ -72,3 +72,7 @@ python skills/custom/nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识�
 
 > 容器运行注意：各模块容器为 Debian bookworm-slim + micromamba 最小化，`docker run` 必须加
 > `-u $(id -u):$(id -g)` 避免 root 持有输出文件。
+
+## 测试数据（testdata/）
+
+`testdata/` 提供 nf-core/test-datasets `nanoseq` 分支的官方精简子集（HEK293T-METTL3-KO-rep1 / HEK293T-WT-rep1 的 fast5 与 fastq.gz），来源与完整数据下载方式见 `testdata/README.md`。
