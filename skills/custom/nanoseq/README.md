@@ -57,10 +57,17 @@ python skills/custom/nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识�
 | 资产 | 位置 | 说明 |
 |------|------|------|
 | FLAIR 批处理脚本 | `skills/flair/native/legacy/run_flair_consensus.sh` | 原 nanoseq.sh 脚本 |
+| FLAIR 辅助脚本 | `skills/flair/native/legacy/bed12_add_trailing_commas.py` | 原 workflow/scripts/ |
 | StringTie 脚本 | `skills/stringtie/native/legacy/run_stringtie.sh` | 原 nanoseq.sh 脚本 |
+| StringTie 修复脚本 | `skills/stringtie/native/legacy/fix_gtf.awk` | 原 workflow/scripts/ |
 | SRA 批处理脚本 | `skills/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
 | 比对脚本 | `skills/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
 | QC 脚本 | `skills/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
+| 原 workflow 完整快照 | `LEGACY_WORKFLOW/` | Snakefile + rules/{common,flair,minimap2,samtools,stringtie}.smk + envs/ + scripts/ |
+| Docker 包装脚本 | `workflow_skeleton/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
+| 辅助脚本 | `workflow_skeleton/scripts/{alignment_summary,samplesheet_group_summary}.py` | 原 workflow/scripts/ |
+| 单元测试 | `LEGACY_tests/test_docker_wrapper.py` | 原 tests/ |
+| 流程文档 | `LEGACY_README.md` + `LEGACY_run_workflow.sh` | 原 README.md / run_workflow.sh |
 | 流程 config + schema | `workflow_skeleton/config/` | 原 config/config.yaml + samples.schema.yaml |
 
 > 容器运行注意：各模块容器为 Debian bookworm-slim + micromamba 最小化，`docker run` 必须加

@@ -92,19 +92,22 @@ wrapper, bin = dw.isoseq_wrapper(config, "pbccs")   # -> ("docker run ... <image
 shell(f"{wrapper} {bin} <args>")
 ```
 
-- `docker_run(exec_mode, platform)`：生成 docker 前缀（含 `-u $(id -u):$(id -g)` 与 `$(pwd)` 挂载）
-- `docker_wrapper_binary(config, tool, bin_key, default_bin)`：按 `docker/native/conda` 三模式决策
-- `isoseq_wrapper(config, tool)`：按内置 `ISOSEQ_TOOLS` 速查表便捷调用
-- 自检：`python docker_wrapper.py config/config.yaml`
+* `docker_run(exec_mode, platform)`：生成 docker 前缀（含 `-u $(id -u):$(id -g)` 与 `$(pwd)` 挂载）
+
+* `docker_wrapper_binary(config, tool, bin_key, default_bin)`：按 `docker/native/conda` 三模式决策
+
+* `isoseq_wrapper(config, tool)`：按内置 `ISOSEQ_TOOLS` 速查表便捷调用
+
+* 自检：`python docker_wrapper.py config/config.yaml`
 
 ## 历史留存资产（来自原 isoseq.smk）
 
-| 资产 | 位置 | 说明 |
-|------|------|------|
-| 原生 Python 实现 | 各模块 `native/legacy/*.py` | ccs/lima/isoseq3_refine/bamtools_convert/gs_tama+tama_polyacleanup/minimap2_align/ULTRA_align |
-| 并发批处理脚本 | 各模块 `native/legacy/run_*.sh` | ParaFly/parallel/xargs 目录批量入口（含 `--*-bin` 绝对路径注入） |
-| 模块完整文档 | `LEGACY_README.md` | 含 6 步完整流程串联示例与参数说明 |
-| 示例引物 | `workflow_skeleton/primers.fasta` | NEB 5p/3p 标准引物（lima/isoseq3 refine 用） |
+| 资产           | 位置                                | 说明                                                                                                  |
+| ------------ | --------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 原生 Python 实现 | 各模块 `native/legacy/*.py`          | ccs/lima/isoseq3\_refine/bamtools\_convert/gs\_tama+tama\_polyacleanup/minimap2\_align/ULTRA\_align |
+| 并发批处理脚本      | 各模块 `native/legacy/run_*.sh`      | ParaFly/parallel/xargs 目录批量入口（含 `--*-bin` 绝对路径注入）                                                   |
+| 模块完整文档       | `LEGACY_README.md`                | 含 6 步完整流程串联示例与参数说明                                                                                  |
+| 示例引物         | `workflow_skeleton/primers.fasta` | NEB 5p/3p 标准引物（lima/isoseq3 refine 用）                                                               |
 
 ## 容器运行注意
 

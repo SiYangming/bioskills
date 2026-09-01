@@ -1,0 +1,1 @@
+/usr/local/opt/transdecoder/util/compute_base_probs.pl testdata/HEK293T-METTL3-KO-rep1.fasta 1 > /Users/siyangming/Desktop/flrnaseq.smk/testdata_results/01_1_TRANSDECODER/HEK293T-METTL3-KO-rep1/HEK293T-METTL3-KO-rep1.fasta.transdecoder_dir/base_freqs.dat

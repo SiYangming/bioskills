@@ -1,0 +1,92 @@
+samplesheet: "testdata/samplesheet_local.csv"
+output_dir: "testdata_results"
+transdecoder_dir: "{output_dir}/01_1_TRANSDECODER"
+td2_dir: "{output_dir}/01_2_TD2"
+# execution mode: docker ｜ native ｜ conda ｜ apptainer
+exec_mode: "docker" 
+threads: 4
+
+transdecoder:
+  # Displayed version tag for reference
+  version: "5.7.1"
+  docker_image: "quay.io/biocontainers/transdecoder:5.7.1--pl5321hdfd78af_2"
+  transdecoder_longorfs_bin: "TransDecoder.LongOrfs"
+  transdecoder_predict_bin: "TransDecoder.Predict"
+
+  #### Parameters for TransDecoder.LongOrfs
+  # Use longorfs_extra_params to provide combined flags:
+  #   -m <int>                 minimum protein length
+  #   -S                       strand-specific (top strand only)
+  #   --complete_orfs_only     only complete ORFs
+  #   -G <string>              genetic code (see allowed values below)
+  gene_trans_map: ""
+  #   --gene_trans_map <file>  path to gene_trans_map file
+  longorfs_extra_params: "-m 50 -G Universal -S --complete_orfs_only"
+
+  #### Parameters for TransDecoder.Predict
+  # Use predict_extra_params to provide combined flags:
+  #   --retain_long_orfs_mode <string>    'dynamic' or 'strict'
+  #   --retain_long_orfs_length <int>     length threshold for 'strict' mode
+  #   --single_best_only                  retain only single best ORF
+  #   --no_refine_starts                  disable start refinement
+  #   -T <int>                            top longest ORFs to train model
+  #   -G <string>                         genetic code (see allowed values below)
+  # predict_extra_params: "-G Universal --retain_long_orfs_mode dynamic --retain_long_orfs_length 1000000 -T 500"
+  # for Test
+  predict_extra_params: "--no_refine_starts"
+  # Paths to optional external evidence files:
+  #   --retain_pfam_hits <file>           hmmscan Pfam domain table
+  #   --retain_blastp_hits <file>         blastp output in '-outfmt 6'
+  retain_pfam_hits: ""
+  retain_blastp_hits: ""
+  # Genetic code allowed values: Acetabularia, Candida, Ciliate, Dasycladacean, Euplotid, Hexamita, Mesodinium,
+  # Mitochondrial-(Ascidian, Chlorophycean, Echinoderm, Flatworm, Invertebrates, Protozoan, Pterobranchia,
+  # Scenedesmus_obliquus, Thraustochytrium, Trematode, Vertebrates, Yeast), Pachysolen_tannophilus,
+  # Peritrich, SR1_Gracilibacteria, Tetrahymena, Universal
+
+td2:
+  # Displayed version tag for reference
+  version: "1.0.6"
+  docker_image: "quay.io/biocontainers/td2:1.0.6--pyhdfd78af_0"
+  td2_longorfs_bin: "TD2.LongOrfs"
+  td2_predict_bin: "TD2.Predict"
+
+  #### Parameters for TD2.LongOrfs
+  # Use longorfs_extra_params to provide combined flags:
+  #   --precise                enable precise mode (equivalent to -m 98 -M 98)
+  #   -m <int>                 minimum protein length for proteins in long transcripts (default: 90)
+  #   -M <int>                 minimum protein length for proteins in short transcripts (default: 90)
+  #   -L <float>               allow short ORFs in short transcripts if length fraction >= scale (default: 1.1)
+  #   -S                       strand-specific (top strand only)
+  #   -G <int>                 genetic code (NCBI integer code, default: 1)
+  #   --complete-orfs-only     ignore all ORFs without both a stop and start codon
+  #   --alt-start              include alternative initiator codons
+  #   --all-stopless           report stopless sequences rather than ORFs
+  #   --top <int>              record the top N CDS transcripts by length
+  #   --threads <int>          number of threads to use, default=8
+  #   -% <float>               percent of available memory to use per batch
+  gene_trans_map: ""
+  #   --gene-trans-map <file>  path to gene_trans_map file
+  longorfs_extra_params: "-m 90 -M 90 -G 1 -S --alt-start --all-stopless"
+
+  #### Parameters for TD2.Predict
+  # Use predict_extra_params to provide combined flags:
+  #   --precise                enable precise mode (equivalent to -P 0.9 --retain-long-orfs-fdr 0.005)
+  #   -P <float>               minimum in-frame PSAURON score (default: 0.50)
+  #   --all-good               report all ORFs that pass PSAURON and/or length-based filters
+  #   --retain-long-orfs-mode <string>    'dynamic' or 'strict'
+  #   --retain-long-orfs-fdr <float>      FDR for 'dynamic' mode (default: 0.10)
+  #   --retain-long-orfs-length <int>     length threshold for 'strict' mode (default: 100000)
+  #   --discard-encapsulated   retain ORFs that are fully contained within larger ORFs
+  #   --complete-orfs-only     discard all ORFs without both a stop and start codon
+  #   --psauron-all-frame      require ORF to have highest PSAURON score across frames
+  #   -G <int>                 genetic code (NCBI integer code, default: 1)
+  # predict_extra_params: "-P 0.5 --all-good --retain-long-orfs-mode dynamic --retain-long-orfs-fdr 0.10"
+  predict_extra_params: "--psauron-all-frame"
+  # Paths to optional external evidence files:
+  #   --retain-mmseqs-hits <file>         mmseqs output in '.m8' format
+  #   --retain-blastp_hits <file>         blastp output in '-outfmt 6'
+  #   --retain-hmmer_hits <file>          hmmscan Pfam domain table
+  retain_mmseqs_hits: ""
+  retain_blastp_hits: ""
+  retain_hmmer_hits: ""

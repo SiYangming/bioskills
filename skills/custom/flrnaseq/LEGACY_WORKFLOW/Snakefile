@@ -1,0 +1,60 @@
+import pandas as pd
+from os.path import join
+from snakemake.utils import validate
+
+configfile: "config/config.yaml"
+
+# Format all string values in config using the config dict
+for key, value in config.items():
+    if isinstance(value, str) and "{" in value:
+        try:
+            config[key] = value.format(**config)
+        except Exception:
+            pass
+
+try:
+    _cores = workflow.cores
+except NameError:
+    _cores = None
+try:
+    _samples_df_tmp = pd.read_csv(config["samplesheet"])
+    _sample_count = len(_samples_df_tmp.index)
+except Exception:
+    _sample_count = 1
+_threads_cfg = config["threads"]
+if not isinstance(_threads_cfg, int) or _threads_cfg <= 0:
+    if isinstance(_cores, int) and _cores > 1:
+        config["threads"] = _sample_count if _sample_count < _cores else max(_cores - 1, 1)
+    else:
+        config["threads"] = 1
+
+validate(config, schema="schemas/config_schema.yaml")
+
+# Parse samplesheet
+samples_df = pd.read_csv(config["samplesheet"]).set_index("sample", drop=False)
+SAMPLES = samples_df
+validate(samples_df, schema="schemas/samples_schema.yaml")
+
+TRANSDECODER_DIR = config["transdecoder_dir"]
+TD2_DIR = config["td2_dir"]
+ORFFINDER_DIR = config["orffinder_dir"]
+OUTFMT = config["orffinder"]["outfmt"]
+_SUFFIX_MAP = config["orffinder"]["suffix_map"]
+ORFFINDER_SUFFIX = _SUFFIX_MAP[OUTFMT]
+
+rule all:
+    input:
+        # TransDecoder LongOrfs and Predict outputs
+        expand(join(TRANSDECODER_DIR, "{sample}", "predict"), sample=SAMPLES.index),
+        # TD2
+        expand(join(TD2_DIR, "{sample}", "predict"), sample=SAMPLES.index),
+        # ORFfinder
+        expand(join(ORFFINDER_DIR, "{sample}" + ORFFINDER_SUFFIX), sample=SAMPLES.index)
+
+ruleorder: transdecoder_longorfs > transdecoder_predict
+ruleorder: td2_longorfs > td2_predict
+
+include: "rules/common.smk"
+include: "rules/transdecoder.smk"
+include: "rules/td2.smk"
+include: "rules/orffinder.smk"

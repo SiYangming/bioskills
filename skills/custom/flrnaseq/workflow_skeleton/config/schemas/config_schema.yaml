@@ -1,0 +1,107 @@
+"$schema": "http://json-schema.org/draft-07/schema#"
+type: object
+properties:
+  samplesheet:
+    type: string
+  workflow_dir:
+    type: string
+  output_dir:
+    type: string
+  transdecoder_dir:
+    type: string
+  td2_dir:
+    type: string
+  orffinder_dir:
+    type: string
+  exec_mode:
+    type: string
+    enum:
+      - docker
+      - conda
+      - apptainer
+      - native
+  threads:
+    type: integer
+    minimum: 1
+  transdecoder:
+    type: object
+    properties:
+      version:
+        type: string
+      docker_image:
+        type: string
+      transdecoder_longorfs_bin:
+        type: string
+      transdecoder_predict_bin:
+        type: string
+      gene_trans_map:
+        type: string
+      longorfs_extra_params:
+        type: string
+      predict_extra_params:
+        type: string
+      retain_pfam_hits:
+        type: string
+      retain_blastp_hits:
+        type: string
+    additionalProperties: true
+  td2:
+    type: object
+    properties:
+      version:
+        type: string
+      docker_image:
+        type: string
+      td2_longorfs_bin:
+        type: string
+      td2_predict_bin:
+        type: string
+      gene_trans_map:
+        type: string
+      longorfs_extra_params:
+        type: string
+      predict_extra_params:
+        type: string
+      retain_mmseqs_hits:
+        type: string
+      retain_blastp_hits:
+        type: string
+      retain_hmmer_hits:
+        type: string
+    additionalProperties: true
+  orffinder:
+    type: object
+    properties:
+      version:
+        type: string
+      docker_image:
+        type: string
+      orffinder_bin:
+        type: string
+      outfmt:
+        type: integer
+      suffix_map:
+        type: object
+        additionalProperties:
+          type: string
+      extra_params:
+        type: string
+    additionalProperties: true
+  containers:
+    type: object
+    properties:
+      transdecoder:
+        type: string
+      td2:
+        type: string
+      orffinder:
+        type: string
+    additionalProperties: true
+required:
+  - samplesheet
+  - output_dir
+  - transdecoder_dir
+  - td2_dir
+  - orffinder_dir
+  - exec_mode
+additionalProperties: true

@@ -58,5 +58,8 @@ python skills/custom/flrnaseq/flrnaseq.py ... --real   # 真实执行
 |------|------|------|
 | 原生 Python 实现 | 各模块 `native/legacy/*.py` | transdecoder_longorfs/transdecoder_predict/td2_longorfs/td2_predict/orffinder |
 | Snakemake 规则 | 各模块 `snakemake/local/*.smk` | 迁移自原 workflow/rules/ |
-| 单元测试 | `test/`（各模块 test/run_test.sh） | 原 .tests/unit 用例思路已吸收 |
+| 单元测试 | `LEGACY_TESTS/unit/` | 原 .tests/unit（transdecoder_longorfs/predict、td2_predict 用例 + common/conftest） |
+| 原流程骨架 | `LEGACY_WORKFLOW/Snakefile` | 原 workflow/Snakefile |
+| 流程 config + schemas | `workflow_skeleton/config/` | 原 config/config.yaml + schemas/{config,samples}_schema.yaml |
 | orfrange 归档 | `LEGACY_ORFRANGE/` | 原 orfrange_archive/（orfanage 相关） |
+| 批处理脚本 | `LEGACY_FLRNASEQ_SH/` + `LEGACY_run_smk.sh` | run_td2_orf_prediction.sh / run_smk.sh |

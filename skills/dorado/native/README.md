@@ -10,10 +10,10 @@ Dorado（Oxford Nanopore 官方 basecaller）的本地自包含实现
 
 两个子命令覆盖 nanoseq / dorado 官方的高频用法：
 
-| 子命令 | 命令 | 作用 |
-|--------|------|------|
+| 子命令        | 命令                                                                                         | 作用                                                            |
+| ---------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
 | `basecall` | `dorado basecaller <model> <reads> --emit-fastq [--output-dir] [--device] [--num-workers]` | POD5/FAST5 原始信号 → FASTQ（RNA 用 `rna004_130bps_sup@v5.1.0` 等模型） |
-| `demux` | `dorado demux <reads> [--kit-name] [--output-dir]` | 按 barcode 拆分 reads |
+| `demux`    | `dorado demux <reads> [--kit-name] [--output-dir]`                                         | 按 barcode 拆分 reads                                            |
 
 nanoseq Snakefile 中的 dorado 规则（`dorado basecaller <model> <pod5> --estimate-poly-a > <fastq>`）
 由 `basecall` 子命令 + `--estimate-poly-a`（经 `--extra-args` 透传）等价覆盖。
@@ -71,7 +71,9 @@ bash test/run_test.sh   # dorado basecaller 需要真实 POD5 + 模型，本脚�
 ## 版本
 
 * dorado：latest（官方 release，如 0.9.x / 0.10.x；Dockerfile 用 `ARG DORADO_VERSION` 可 pin）
+
 * 不在 Debian bookworm apt、不在 bioconda；容器走 bookworm-slim + 官方二进制下载路线
+
 * Docker 直用建议：`docker.1ms.run/nanoporetech/dorado:latest`（nanoseq config 默认）
 
 ## 历史留存（legacy/）
@@ -80,4 +82,5 @@ nanoseq 流程中 dorado **无 shell 脚本**（`nanoseq.sh/` 下没有 dorado �
 `config/config.yaml` 的 dorado 配置段，因此 `legacy/` 目录以 README 记录该 config 段原文，
 不做脚本留存。dorado 的 native 命令逻辑按 config 默认值 + 官方 CLI 在 `main.py` 实现。
 
-- `legacy/README.md`（config 段说明）
+* `legacy/README.md`（config 段说明）
+

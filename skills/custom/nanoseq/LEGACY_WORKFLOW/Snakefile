@@ -1,0 +1,33 @@
+include: "rules/common.smk"
+include: "rules/minimap2.smk"
+include: "rules/samtools.smk"
+include: "rules/flair.smk"
+include: "rules/stringtie.smk"
+
+DORADO_OUTPUTS = expand(os.path.join(config["output_dir"], "01_DORADO_BASECALL", "{sample}.fastq"), sample=SAMPLES.keys()) if config.get("enable_dorado", False) else []
+
+rule all:
+    input:
+        DORADO_OUTPUTS
+
+# Optional Dorado basecalling rule
+rule DORADO_FAST5_TO_FASTQ:
+    input:
+        pod5 = lambda wc: f"{SAMPLES[wc.sample]['input_file']}/{wc.sample}.pod5"
+    output:
+        fastq = os.path.join(config["output_dir"], "01_DORADO_BASECALL", "{sample}.fastq")
+    params:
+        dorado_version = "666.666.666",
+        model = config.get("dorado", {}).get("model", "rna004_130bps_sup@v5.1.0"),
+        exec_mode = config.get("dorado", {}).get("exec_mode", config.get("exec_mode", "native")),
+        docker_image = config.get("dorado", {}).get("docker_image", "docker.1ms.run/nanoporetech/dorado:latest")
+    threads: 1
+    conda:
+        None
+    container:
+        lambda wc, output, params: params.docker_image if params.exec_mode == "docker" else None
+    shell:
+        """
+        mkdir -p "$(dirname {output.fastq})"
+        dorado basecaller {params.model} {input.pod5} --estimate-poly-a > {output.fastq}
+        """
