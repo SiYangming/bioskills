@@ -83,5 +83,7 @@ rule alignment_summary:
         os.path.join(config["output_dir"], "LOGS", "MINIMAP2_ALIGN_alignment_summary.log")
     conda:
         "../envs/python.yaml"
+    # 脚本见 skills/samtools/native/legacy/alignment_summary.py；
+    # 组装流程时请复制该脚本到项目 scripts/ 目录
     script:
         "../scripts/alignment_summary.py"

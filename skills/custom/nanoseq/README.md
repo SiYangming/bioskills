@@ -65,7 +65,8 @@ python skills/custom/nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识�
 | QC 脚本 | `skills/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
 | 原 workflow 快照（去重后） | `workflow_skeleton/LEGACY_WORKFLOW/` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/local/ |
 | Docker 包装脚本 | `workflow_skeleton/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
-| 辅助脚本 | `workflow_skeleton/scripts/{alignment_summary,samplesheet_group_summary}.py` | 原 workflow/scripts/ |
+| 汇总脚本 | `skills/samtools/native/legacy/alignment_summary.py` | 原 workflow/scripts/alignment_summary.py（flagstat 汇总，归位 samtools） |
+| 辅助脚本 | `workflow_skeleton/scripts/samplesheet_group_summary.py` | 原 workflow/scripts/ |
 | 单元测试 | `LEGACY_tests/test_docker_wrapper.py` | 原 tests/ |
 | 流程文档 | `LEGACY_README.md` + `LEGACY_run_workflow.sh` | 原 README.md / run_workflow.sh |
 | 流程 config + schema | `workflow_skeleton/config/` | 原 config/config.yaml + samples.schema.yaml |
