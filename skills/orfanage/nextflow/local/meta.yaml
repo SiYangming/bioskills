@@ -1,0 +1,24 @@
+# orfanage / nextflow / local 占位 meta.yaml
+# 启用时补全 id/version/inputs/outputs 并编写 <PROCESS>.nf
+
+id: orfanage_nextflow_local
+version: "0.0.0-placeholder"
+software: orfanage
+type: nextflow_local
+source_type: custom
+
+summary: "Placeholder for custom orfanage Nextflow module (populate when needed)."
+
+agent_guidance:
+  when_to_use: "需要本地定制 orfanage Nextflow process 时使用。"
+  recommendation_priority: "Low（占位）。"
+  enabled: false
+
+software_versions:
+  status: placeholder
+
+inputs: {}
+outputs: {}
+execution:
+  mode: nextflow_include
+  include_statement: ""

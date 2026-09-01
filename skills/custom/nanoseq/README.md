@@ -63,7 +63,7 @@ python skills/custom/nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识�
 | SRA 批处理脚本 | `skills/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
 | 比对脚本 | `skills/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
 | QC 脚本 | `skills/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
-| 原 workflow 完整快照 | `LEGACY_WORKFLOW/` | Snakefile + rules/{common,flair,minimap2,samtools,stringtie}.smk + envs/ + scripts/ |
+| 原 workflow 完整快照 | `workflow_skeleton/LEGACY_WORKFLOW/` | Snakefile + rules/{common,flair,minimap2,samtools,stringtie}.smk + envs/ + scripts/ |
 | Docker 包装脚本 | `workflow_skeleton/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
 | 辅助脚本 | `workflow_skeleton/scripts/{alignment_summary,samplesheet_group_summary}.py` | 原 workflow/scripts/ |
 | 单元测试 | `LEGACY_tests/test_docker_wrapper.py` | 原 tests/ |

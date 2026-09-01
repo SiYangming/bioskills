@@ -80,3 +80,7 @@ bash test/run_test.sh   # 无需真实转录本 FASTA；工具未装时退化为
 
 - `td2_longorfs.py` — TD2.LongOrfs 原始 wrapper（snakemake.shell + docker_wrapper）
 - `td2_predict.py` — TD2.Predict 原始 wrapper（snakemake.shell + docker_wrapper）
+
+## 历史单元测试（test/unit/）
+
+`test/unit/` 存放迁移自原 flrnaseq.smk `.tests/unit/` 的原始单元测试（td2_predict 用例 + common.py/conftest.py），供追溯对照与 pytest 回归；`test/run_test.sh` 为技能自带的最小回归。

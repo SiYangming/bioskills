@@ -1,0 +1,23 @@
+# orfanage / nextflow / nf-core 占位说明
+# ---------------------------------------------------------------------------
+# nf-core/modules 官方无 orfanage 模块（2026-09 核对 404）。
+# 需要 Nextflow 实现时请使用 nextflow/local 或降级 native。
+# ---------------------------------------------------------------------------
+
+id: orfanage_nextflow_nfcore
+version: ""
+software: orfanage
+type: nextflow_nfcore
+source_type: official
+
+summary: "nf-core/modules 官方暂无 orfanage 模块（占位说明层）。"
+
+agent_guidance:
+  when_to_use: "nf-core 官方缺失 orfanage；Nextflow 场景请走 nextflow/local 或降级 native。"
+  recommendation_priority: "Low（官方不存在，占位）。"
+
+software_versions:
+  orfanage: "官方无"
+  module_version: ""
+  source: "（占位）"
+  note: "若未来 nf-core/modules 新增 orfanage，刷新本文件并补 submodules。"

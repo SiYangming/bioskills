@@ -1,0 +1,40 @@
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software orfanage
+    Version 1.2.0-v1.0
+    OrfanageVersion 1.2.0
+    PkgRoute bioconda-micromamba
+
+%files
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    environment.yml /opt/skill/environment.yml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8 LC_ALL=C.UTF-8
+    set -eux
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates curl procps tini bzip2
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /usr/local/bin bin/micromamba
+    micromamba create -y -f /opt/skill/environment.yml -p /opt/env
+    micromamba clean -ay
+    rm -rf /usr/local/bin/micromamba /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8 LC_ALL=C.UTF-8
+    export PATH=/opt/env/bin:$PATH
+    export PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+
+%runscript
+    exec /opt/env/bin/python /opt/skill/main.py "$@"
+
+%test
+    set -eux
+    /opt/env/bin/orfanage --help | head -n 3
+    /opt/env/bin/python /opt/skill/main.py --list-commands

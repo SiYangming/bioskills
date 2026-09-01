@@ -14,11 +14,11 @@
 
 ## 依赖的原子模块技能
 
-| 阶段 | 软件技能 | 主要入口 |
-|------|----------|----------|
+| 阶段           | 软件技能                          | 主要入口                                  |
+| ------------ | ----------------------------- | ------------------------------------- |
 | TransDecoder | `skills/transdecoder/native/` | `python main.py longorfs/predict ...` |
-| TD2 | `skills/td2/native/` | `python main.py longorfs/predict ...` |
-| ORFfinder | `skills/orffinder/native/` | `python main.py run ...` |
+| TD2          | `skills/td2/native/`          | `python main.py longorfs/predict ...` |
+| ORFfinder    | `skills/orffinder/native/`    | `python main.py run ...`              |
 
 每个软件技能内同时提供 `nextflow/nf-core/`（说明层）、`snakemake/local/*.smk`（迁移规则）
 与 `native/legacy/`（原始 scripts 留存）。
@@ -54,12 +54,13 @@ python skills/custom/flrnaseq/flrnaseq.py ... --real   # 真实执行
 
 ## 历史留存资产（来自原 flrnaseq.smk）
 
-| 资产 | 位置 | 说明 |
-|------|------|------|
-| 原生 Python 实现 | 各模块 `native/legacy/*.py` | transdecoder_longorfs/transdecoder_predict/td2_longorfs/td2_predict/orffinder |
-| Snakemake 规则 | 各模块 `snakemake/local/*.smk` | 迁移自原 workflow/rules/ |
-| 单元测试 | `LEGACY_TESTS/unit/` | 原 .tests/unit（transdecoder_longorfs/predict、td2_predict 用例 + common/conftest） |
-| 原流程骨架 | `LEGACY_WORKFLOW/Snakefile` | 原 workflow/Snakefile |
-| 流程 config + schemas | `workflow_skeleton/config/` | 原 config/config.yaml + schemas/{config,samples}_schema.yaml |
-| orfrange 归档 | `LEGACY_ORFRANGE/` | 原 orfrange_archive/（orfanage 相关） |
-| 批处理脚本 | `LEGACY_FLRNASEQ_SH/` + `LEGACY_run_smk.sh` | run_td2_orf_prediction.sh / run_smk.sh |
+| 资产                  | 位置                                          | 说明                                                                                |
+| ------------------- | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| 原生 Python 实现        | 各模块 `native/legacy/*.py`                    | transdecoder\_longorfs/transdecoder\_predict/td2\_longorfs/td2\_predict/orffinder |
+| Snakemake 规则        | 各模块 `snakemake/local/*.smk`                 | 迁移自原 workflow/rules/                                                              |
+| 单元测试                | `skills/transdecoder\|td2/native/test/unit/` | 原 .tests/unit（transdecoder\_longorfs/predict、td2\_predict 用例 + common/conftest）   |
+| 原流程骨架               | `workflow_skeleton/LEGACY_Snakefile`        | 原 workflow/Snakefile                                                              |
+| 流程 config + schemas | `workflow_skeleton/config/`                 | 原 config/config.yaml + schemas/{config,samples}\_schema.yaml                      |
+| ORFanage 实现          | `skills/orfanage/`（独立模块）                   | 原 orfrange\_archive/ 已归位为 orfanage 技能（native/legacy 存原始文件）                      |
+| 批处理脚本               | `skills/td2/native/legacy/run_td2_orf_prediction.sh` + `LEGACY_run_smk.sh` | 原 flrnaseq.sh/run\_td2\_orf\_prediction.sh / run\_smk.sh        |
+

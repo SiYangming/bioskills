@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-01T00:46:35+00:00'
+generated_at: '2026-09-01T01:53:04+00:00'
 skills:
 - software: bamtools
   canonical: bamtools
@@ -380,6 +380,44 @@ skills:
     version: v3.13.0
     path: minimap2/snakemake/snakemake-wrappers
     priority: Medium
+    entrypoint: snakemake_rule
+- software: orfanage
+  canonical: orfanage
+  implementations:
+  - id: orfanage_native
+    source_type: custom
+    impl: native
+    version: 1.2.0-v1.0
+    path: orfanage/native
+    priority: High
+    entrypoint: python main.py
+  - id: orfanage_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: orfanage/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: orfanage_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: ''
+    path: orfanage/nextflow/nf-core
+    priority: Low
+    entrypoint: ''
+  - id: orfanage_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 1.0.0
+    path: orfanage/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: orfanage_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: ''
+    path: orfanage/snakemake/snakemake-wrappers
+    priority: Low
     entrypoint: snakemake_rule
 - software: orffinder
   canonical: orffinder

@@ -1,0 +1,78 @@
+# orfanage 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 迁移自 snakemake.smk/flrnaseq.smk/orfrange_archive/（原为 flrnaseq 流程归档的
+# ORFanage 用法：将 TransDecoder 等预测的 GFF3 与模板比对，输出合并/注释 GTF）。
+# 注意：orfanage 是独立软件（bioconda orfanage），与 orffinder / transdecoder 不同。
+# ---------------------------------------------------------------------------
+
+software: orfanage
+canonical: orfanage
+category: orf_annotation
+description: >
+  ORFanage 用于在参考转录本模板上合并/注释来自不同预测工具的 ORF（GFF3），
+  支持跨物种直系同源 ORF 保留、CDS 校验与统计输出。
+
+homepage: https://github.com/BrendelGroup/ORFanage
+license: MIT
+
+implementations:
+  - id: orfanage_native
+    path: native
+    source_type: custom
+    type: native
+    version: "1.2.0-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。
+  - id: orfanage_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: ""
+    priority: medium
+    when_to_use: nf-core 官方无 orfanage 模块，此路径为占位说明。
+  - id: orfanage_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: 需要本地定制的 Nextflow process 时启用。
+  - id: orfanage_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: ""
+    priority: medium
+    when_to_use: snakemake-wrappers 官方无 orfanage wrapper，此路径为占位说明。
+  - id: orfanage_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "1.0.0"
+    priority: low
+    when_to_use: 组装 Snakemake 流程时，使用迁移自 flrnaseq orfrange_archive 的规则。
+
+default_implementation: orfanage_native
+
+software_versions:
+  native:
+    orfanage: "1.2.0"
+    build_route: "bioconda（Debian apt 无 orfanage）"
+    source: "bioconda::orfanage=1.2.0"
+    note: "native 容器走 micromamba 引导 bioconda env。"
+  nextflow_nfcore:
+    orfanage: "官方无 nf-core 模块"
+    module_version: ""
+    source: "（占位）"
+    note: "缺失时用 nextflow/local 或降级 native。"
+  nextflow_local:
+    orfanage: "（未启用占位）"
+  snakemake_wrappers:
+    orfanage: "官方无 wrapper"
+    wrapper_tag: "v3.13.0"
+    source: "（占位）"
+    note: "缺失时用 snakemake/local。"
+  snakemake_local:
+    orfanage: "1.2.0"
+    source: "迁移自 flrnaseq.smk/orfrange_archive/orfanage.smk"
+    note: "规则参数与 native 对齐。"
