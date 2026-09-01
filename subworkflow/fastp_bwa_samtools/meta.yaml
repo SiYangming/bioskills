@@ -16,7 +16,7 @@ description: |
   作为“复合流程如何在 workflow/ 下按 AGENT.md 存档”的可参考样例：
   1) meta.yaml 声明 stages / inputs / outputs；
   2) 提供一个可执行 Python 编排器 fastp_bwa_samtools.py，通过 modules/<sw>/native/main.py 调用相应 native 实现；
-  3) 提供 workflow_skeleton/ 下 Snakefile / main.nf 模板，便于实际项目改造。
+  3) 按引擎分目录提供模板：snakemake/Snakefile.template 与 nextflow/main.nf.template，便于实际项目改造。
 
 agent_guidance:
   when_to_use: "用户需要一条快速的 DNA 短读序列 -> BAM 对比 + QC 演示，或要新建 subworkflow/ 复合流程时参考。"
@@ -77,7 +77,7 @@ outputs:
     path_pattern: "{outdir}/fastp/{sample_id}_fastp.html"
 
 execution:
-  entrypoint: "python fastp_bwa_samtools.py"
+  entrypoint: "python native/fastp_bwa_samtools.py"
   test_command: "python fastp_bwa_samtools.py --help"
   dependencies_in_skills:
     - fastp/native

@@ -33,7 +33,7 @@ curl -sfL \
 
 ```bash
 # 冒烟：用 testdata fastq 跑 dry-run
-python workflow/nanoseq/nanoseq.py \
+python workflow/nanoseq/native/nanoseq.py \
     --samplesheet <(printf 'sample,input_file\nHEK293T-METTL3-KO-rep1,%s\n' \
         "$PWD/workflow/nanoseq/testdata/HEK293T-METTL3-KO-rep1/fastq/HEK293T-METTL3-KO-rep1.fastq.gz") \
     --reference ref.fa --gtf ref.gtf --outdir /tmp/nano_test

@@ -39,7 +39,7 @@ subreads ──> [pbccs] ──> HiFi CCS ──> [lima] ──> 去引物/拆�
 
 ```bash
 # 仅打印将执行的命令（不真正运行）
-python isoseq/isoseq.py \
+python isoseq/native/isoseq.py \
     --samplesheet samples.csv --primers primers.fasta \
     --reference genome.fa --aligner minimap2 --outdir results
 

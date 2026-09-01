@@ -34,7 +34,7 @@ reads_R1,R2 ──► fastp (trim + QC)
 ## 快速体验（dry-run，无外部依赖）
 
 ```bash
-python subworkflow/fastp_bwa_samtools/fastp_bwa_samtools.py \
+python subworkflow/fastp_bwa_samtools/native/fastp_bwa_samtools.py \
     --sample-id s001 \
     --reads-r1 /tmp/s001_R1.fq.gz \
     --reads-r2 /tmp/s001_R2.fq.gz \

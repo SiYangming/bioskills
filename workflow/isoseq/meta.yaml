@@ -124,7 +124,7 @@ outputs:
     path_pattern: "{outdir}/09TAMA_MERGE/merged.bed"
 
 execution:
-  entrypoint: "python isoseq.py"
+  entrypoint: "python native/isoseq.py"
   test_command: "python isoseq.py --list-stages"
   dependencies_in_skills:
     - pbccs/native
@@ -137,8 +137,8 @@ execution:
     - gunzip/native
     - gnu_sort/native
   workflow_skeleton:
-    snakemake: "workflow_skeleton/Snakefile.template"
-    nextflow: "workflow_skeleton/main.nf.template"
+    snakemake: "snakemake/Snakefile.template"
+    nextflow: "nextflow/main.nf.template"
   fallback_note: "uLTRA 路径需要 ultra_bioinformatics 环境（含 minimap2/namfinder/samtools）；未安装时请使用 minimap2 路径。"
 
 optimization:

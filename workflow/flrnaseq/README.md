@@ -28,7 +28,7 @@
 ### 1. Python 编排器（dry-run 默认）
 
 ```bash
-python flrnaseq/flrnaseq.py \
+python flrnaseq/native/flrnaseq.py \
     --samplesheet samples.csv --outdir results
 
 python flrnaseq/flrnaseq.py ... --real   # 真实执行

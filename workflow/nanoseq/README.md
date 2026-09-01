@@ -33,7 +33,7 @@ fastq ──> [minimap2 align] -x splice -uf -k14 ──> BAM
 ### 1. Python 编排器（dry-run 默认）
 
 ```bash
-python nanoseq/nanoseq.py \
+python nanoseq/native/nanoseq.py \
     --samplesheet samples.csv --reference ref.fa --gtf ref.gtf \
     --outdir results --orf-tool transdecoder
 
@@ -46,7 +46,7 @@ python nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识别
 
 ### 2. Snakemake
 
-参考 `workflow_skeleton/Snakefile.template`，流程级示例 config 在 `workflow_skeleton/config/`。
+参考 `snakemake/Snakefile.template`，流程级示例 config 在 `snakemake/`（config.yaml / samples.schema.yaml）。
 
 ### 3. Nextflow
 
@@ -63,13 +63,13 @@ python nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识别
 | SRA 批处理脚本 | `modules/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
 | 比对脚本 | `modules/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
 | QC 脚本 | `modules/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
-| 原 workflow 快照（去重后） | `workflow_skeleton/LEGACY_WORKFLOW/` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/local/ |
-| Docker 包装脚本 | `workflow_skeleton/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
+| 原 workflow 快照（去重后） | `snakemake/Snakefile` + `snakemake/common.smk` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/local/ |
+| Docker 包装脚本 | `native/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
 | 汇总脚本 | `modules/samtools/native/legacy/alignment_summary.py` | 原 workflow/scripts/alignment_summary.py（flagstat 汇总，归位 samtools） |
-| 辅助脚本 | `workflow_skeleton/scripts/samplesheet_group_summary.py` | 原 workflow/scripts/ |
+| 辅助脚本 | `native/scripts/samplesheet_group_summary.py` | 原 workflow/scripts/ |
 | 单元测试 | `LEGACY_tests/test_docker_wrapper.py` | 原 tests/ |
 | 流程文档 | `LEGACY_README.md` + `LEGACY_run_workflow.sh` | 原 README.md / run_workflow.sh |
-| 流程 config + schema | `workflow_skeleton/config/` | 原 config/config.yaml + samples.schema.yaml |
+| 流程 config + schema | `snakemake/config.yaml` + `snakemake/samples.schema.yaml` | 原 config/config.yaml + samples.schema.yaml |
 
 > 容器运行注意：各模块容器为 Debian bookworm-slim + micromamba 最小化，`docker run` 必须加
 > `-u $(id -u):$(id -g)` 避免 root 持有输出文件。

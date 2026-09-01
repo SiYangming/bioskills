@@ -44,11 +44,14 @@ modules/<software>/
 - `workflow/<flow_name>/` —— **专门设计流程**：面向特定领域的完整流程（如 `nanoseq`、`isoseq`、`flrnaseq`），可引用 subworkflow 与各原子模块；
 - `subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `fastp_bwa_samtools`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用。
 
-每个流程目录含 `meta.yaml`（stages/inputs/outputs）、入口编排脚本、`workflow_skeleton/`（模板）与 `README.md`。
+每个流程目录含 `meta.yaml`（stages/inputs/outputs）、`README.md`，并按引擎分三个实现目录（与 `modules/` 一致）：
+  - `native/`：经典脚本（编排器 `*.py`、原生辅助脚本）
+  - `nextflow/`：nf 流程文件（`main.nf.template` 等）
+  - `snakemake/`：环境配置与脚本（`Snakefile.template`、`common.smk`、`config.yaml`、`envs/` 等）
 
-**目录扁平化**：`workflow_skeleton/` 下的辅助文件尽量放根级（`config.yaml`、`common.smk`、脚本等），避免 `config/`/`rules/` 等多级子目录；仅当同层文件确实过多时才建子目录。
+**目录扁平化**：各实现目录下的辅助文件尽量放对应目录根级（如 `snakemake/` 下的 `config.yaml`、`common.smk`），避免 `config/`/`rules/` 等多级子目录；仅当同层文件确实过多时才建子目录。
 
-**脚本归位**：流程中出现的辅助脚本先判断归属——专属于某软件（如 samtools flagstat 汇总脚本）→ 归位到该软件 `native/legacy/` 或 `snakemake/local/`；流程级通用脚本（docker_wrapper、samplesheet 处理）→ 保留在流程 `workflow_skeleton/` 下。
+**脚本归位**：流程中出现的辅助脚本先判断归属——专属于某软件（如 samtools flagstat 汇总脚本）→ 归位到该软件 `native/legacy/` 或 `snakemake/local/`；流程级通用脚本（docker_wrapper、samplesheet 处理）→ 保留在流程 `native/scripts/` 下。
 
 ---
 

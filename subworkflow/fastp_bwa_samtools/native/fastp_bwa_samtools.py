@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent / "modules"  # modules/
+_SKILLS_ROOT = _HERE.parent.parent.parent / "modules"  # modules/
 _STAGES = ["fastp", "bwa-mem2", "samtools", "qc_optional"]
 
 

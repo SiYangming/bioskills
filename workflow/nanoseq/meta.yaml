@@ -102,7 +102,7 @@ outputs:
     path_pattern: "{outdir}/04_2_TD2_ORF_PREDICTION/{sample}.gff3"
 
 execution:
-  entrypoint: "python nanoseq.py"
+  entrypoint: "python native/nanoseq.py"
   test_command: "python nanoseq.py --list-stages"
   dependencies_in_skills:
     - minimap2/native
@@ -114,8 +114,8 @@ execution:
     - dorado/native
     - sra-tools/native
   workflow_skeleton:
-    snakemake: "workflow_skeleton/Snakefile.template"
-    nextflow: "workflow_skeleton/main.nf.template"
+    snakemake: "snakemake/Snakefile.template"
+    nextflow: "nextflow/main.nf.template"
   fallback_note: "dorado/sra-tools 为可选前置；ORF 预测可用 transdecoder 或 td2 任一。"
 
 optimization:

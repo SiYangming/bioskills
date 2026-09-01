@@ -91,7 +91,7 @@ subworkflow/                      # 【复合流程层】常用软件组合：�
 └── fastp_bwa_samtools/           # 例：Fastp + BWA + Samtools 基因组比对与质控链
 ```
 
-> workflow/ 与 subworkflow/ 为复合流程层（编排器 + workflow_skeleton 模板 + legacy/testdata），
+> workflow/ 与 subworkflow/ 为复合流程层（native 编排脚本 + nextflow 文件 + snakemake 配置 + legacy/testdata），
 > 与 modules/（原子技能）平级，不参与 skill-cli scan/validate。
 
 ### 3.1 canonical 目录名（示例）

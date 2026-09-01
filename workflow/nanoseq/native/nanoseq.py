@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent / "modules"  # modules/
+_SKILLS_ROOT = _HERE.parent.parent.parent / "modules"  # modules/
 
 
 def _native_cmd(software: str, subcmd: list[str], threads: int | None = None) -> list[str]:
