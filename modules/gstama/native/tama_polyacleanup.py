@@ -10,7 +10,7 @@ import shlex
 
 def _default_tama_script_path() -> Path:
     here = Path(__file__).parent
-    return here / "gs-tama-1.0.3" / "tama_go" / "sequence_cleanup" / "tama_flnc_polya_cleanup.py"
+    return here / "gs-tama-1.0.4" / "tama_go" / "sequence_cleanup" / "tama_flnc_polya_cleanup.py"
 
 
 def _derive_prefix_from_fasta(fasta_path: str) -> str:
@@ -35,7 +35,7 @@ def run_tama_polyacleanup(
         output_dir: 输出目录
         prefix: 输出前缀（默认在输入文件名基础上追加 _tama）
         args: 透传给 TAMA 脚本的附加参数（若有）
-        tama_script: TAMA 脚本绝对路径（默认使用仓库内 gs-tama-1.0.3 路径）
+        tama_script: TAMA 脚本绝对路径（默认使用仓库内 gs-tama-1.0.4 路径）
     返回:
         dict: 包含压缩后的输出文件路径与版本信息文件路径
     """
@@ -88,7 +88,7 @@ def run_tama_polyacleanup(
 
         # 版本信息（与 nf-core 模块保持风格）
         # 使用仓库内的 tama_collapse.py 获取版本日期（若存在），否则标记为 unknown
-        collapse_path = Path(__file__).parent / "gs-tama-1.0.3" / "tama_collapse.py"
+        collapse_path = Path(__file__).parent / "gs-tama-1.0.4" / "tama_collapse.py"
         if collapse_path.exists():
             version_cmd = f"python3 {collapse_path} -version | grep 'tc_version_date_' | sed 's/tc_version_date_//g'"
             version = subprocess.run(version_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).stdout.strip()

@@ -2,7 +2,7 @@
 #
 # 底座：Debian 12 bookworm-slim（通过 Docker hub library/debian:bookworm-slim bootstrap）
 # 安装：apt 仅装 python3-minimal/ca-certificates/procps/curl，curl 引导 micromamba，
-#       再 micromamba create bioconda::gs-tama=1.0.3 env（含 samtools + python3 + pyyaml）
+#       再 micromamba create bioconda::gs-tama=1.0.4 env（含 samtools + python3 + pyyaml）
 # 清理：apt lists / docs / man / cache + micromamba pkgs
 #
 # 构建：apptainer build gstama.sif Apptainer.def
@@ -14,8 +14,8 @@ From: debian:bookworm-slim
 %labels
     Maintainer bioskills
     Software gstama
-    Version 1.0.3-v1.0
-    GstamaCondaVersion 1.0.3
+    Version 1.0.4-v1.0
+    GstamaCondaVersion 1.0.4
     org.bioskills.software gstama
     impl native
     base_image debian:bookworm-slim
@@ -46,7 +46,7 @@ From: debian:bookworm-slim
     curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /usr/local bin/micromamba
     export MAMBA_ROOT_PREFIX=/opt/micromamba
     micromamba create -y -p /opt/micromamba/envs/gstama -c conda-forge -c bioconda \
-        gs-tama=1.0.3 \
+        gs-tama=1.0.4 \
         samtools=1.21 \
         python=3.11 \
         pyyaml
@@ -96,7 +96,7 @@ From: debian:bookworm-slim
     rm -f /tmp/schema.json
 
 %help
-    gstama native Apptainer 镜像（CONDA 路线：micromamba + bioconda gs-tama=1.0.3）。
+    gstama native Apptainer 镜像（CONDA 路线：micromamba + bioconda gs-tama=1.0.4）。
     apt 无 gs-tama 包，故容器内用 micromamba 引导 bioconda env（禁止 miniconda）。
     调用方式：apptainer run gstama.sif <subcommand> [options]
     挂载卷示例：apptainer run -B $PWD:/data -H /data gstama.sif collapse --bam /data/aln.bam --fasta /data/ref.fa --outdir /data

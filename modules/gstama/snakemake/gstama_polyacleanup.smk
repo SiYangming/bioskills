@@ -30,5 +30,5 @@ rule gstama_polyacleanup:
         done
 
         echo "gstama:" > {output.versions}
-        echo "    gstama: 1.0.3" >> {output.versions}
+        echo "    gstama: 1.0.4" >> {output.versions}
         """

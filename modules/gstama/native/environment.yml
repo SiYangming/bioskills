@@ -7,7 +7,7 @@ channels:
   - bioconda
 dependencies:
   - python=3.11
-  - gs-tama=1.0.3
+  - gs-tama=1.0.4
   - samtools=1.21   # tama_collapse.py 内部调用 samtools
   - pyyaml>=6.0
   - pip

@@ -1,18 +1,18 @@
 # gstama native Docker 镜像配方（CONDA 路线：micromamba 引导 bioconda env，禁止 miniconda）
 # 底座：Debian 12 bookworm-slim
 # 安装：apt 仅装 python3-minimal/ca-certificates/procps/tini/curl，curl 引导 micromamba，
-#       再 micromamba create bioconda::gs-tama=1.0.3 env（含 samtools + python3 + pyyaml）
+#       再 micromamba create bioconda::gs-tama=1.0.4 env（含 samtools + python3 + pyyaml）
 # 清理：apt lists / docs / man / cache + micromamba pkgs，尽力保持镜像尺寸
 #
-# 构建：docker build -t bioskills/gstama:1.0.3-v1.0 -f Dockerfile .
-# 运行：docker run --rm -u $(id -u):$(id -g) -v $PWD:/data bioskills/gstama:1.0.3-v1.0 ...
+# 构建：docker build -t bioskills/gstama:1.0.4-v1.0 -f Dockerfile .
+# 运行：docker run --rm -u $(id -u):$(id -g) -v $PWD:/data bioskills/gstama:1.0.4-v1.0 ...
 
 FROM debian:bookworm-slim AS build
 
 LABEL maintainer="bioskills"
 LABEL software="gstama"
-LABEL version="1.0.3-v1.0"
-LABEL gstama_conda_version="1.0.3"
+LABEL version="1.0.4-v1.0"
+LABEL gstama_conda_version="1.0.4"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
@@ -38,7 +38,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj -C /usr/local bin/micromamba; \
     export MAMBA_ROOT_PREFIX=/opt/micromamba; \
     micromamba create -y -p /opt/micromamba/envs/gstama -c conda-forge -c bioconda \
-        gs-tama=1.0.3 \
+        gs-tama=1.0.4 \
         samtools=1.21 \
         python=3.11 \
         pyyaml \

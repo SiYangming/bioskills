@@ -10,16 +10,16 @@ homepage: https://github.com/sguizard/gs-tama
 license: GPL-3.0-or-later
 software_versions:
   native:
-    gstama: 1.0.3
-    build_route: CONDA（bioconda gs-tama=1.0.3，包提供 tama_flnc_polya_cleanup.py / tama_collapse.py
+    gstama: 1.0.4
+    build_route: CONDA（bioconda gs-tama=1.0.4，包提供 tama_flnc_polya_cleanup.py / tama_collapse.py
       / tama_merge.py）
-    source: bioconda::gs-tama=1.0.3（Dockerfile/Apptainer 用 micromamba 引导，禁止 miniconda）
+    source: bioconda::gs-tama=1.0.4（Dockerfile/Apptainer 用 micromamba 引导，禁止 miniconda）
     note: apt 无 gs-tama 包，故 native 容器走 micromamba + bioconda env 路线；python 驱动 main.py
       由 env python 运行。
   nextflow_nfcore:
-    gstama: 1.0.3
+    gstama: 1.0.4
     module_version: master@68566f0（modules/nf-core/gstama/collapse）
-    source: bioconda::gs-tama=1.0.3（modules/nf-core/gstama/*/environment.yml）
+    source: bioconda::gs-tama=1.0.4（modules/nf-core/gstama/*/environment.yml）
     note: nf-core 拆分为 collapse / merge / polyacleanup 三个子模块；升级 modules 时请同步刷新。
   nextflow_local:
     gstama: （继承 native 容器或显式 pin；未启用则写占位）
@@ -35,7 +35,7 @@ implementations:
   path: native
   source_type: custom
   type: native
-  version: 1.0.3-v1.0
+  version: 1.0.4-v1.0
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标， 实现 polyacleanup
     / collapse / filelist / merge 四个子命令。

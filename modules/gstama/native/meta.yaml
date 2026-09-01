@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 
 id: gstama_native
-version: "1.0.3-v1.0"
+version: "1.0.4-v1.0"
 software: gstama
 type: native
 source_type: custom
@@ -143,6 +143,6 @@ execution:
 
 # 本实现实际运行的上游二进制版本与来源
 software_versions:
-  gstama: "1.0.3"
-  source: "bioconda gs-tama=1.0.3（tama_flnc_polya_cleanup.py / tama_collapse.py / tama_merge.py 由包提供到 PATH）"
+  gstama: "1.0.4"
+  source: "bioconda gs-tama=1.0.4（tama_flnc_polya_cleanup.py / tama_collapse.py / tama_merge.py 由包提供到 PATH）"
   note: "apt 无 gs-tama；native 容器用 micromamba 引导 bioconda env（禁止 miniconda）。collapse 需 samtools 在 PATH。"

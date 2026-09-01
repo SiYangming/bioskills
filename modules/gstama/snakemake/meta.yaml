@@ -18,9 +18,9 @@ agent_guidance:
   enabled: true
 
 software_versions:
-  gstama: "1.0.3（流程原配）"
-  source: "从 snakemake.smk/isoseq.smk（quay.io/biocontainers/gs-tama:1.0.3--hdfd78af_0）迁移"
-  note: "rule 未固定 conda/container 时，由执行环境提供 tama_*.py（bioconda gs-tama=1.0.3）+ samtools（collapse 用）。"
+  gstama: "1.0.4（流程原配）"
+  source: "从 snakemake.smk/isoseq.smk（quay.io/biocontainers/gs-tama:1.0.4）迁移"
+  note: "rule 未固定 conda/container 时，由执行环境提供 tama_*.py（bioconda gs-tama=1.0.4）+ samtools（collapse 用）。"
 
 inputs:
   fasta:

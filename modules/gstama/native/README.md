@@ -49,8 +49,8 @@ python main.py collapse --bam x.bam --fasta r.fa --dry-run   # 只打印构建�
 ### 4. 容器运行
 
 ```bash
-docker build -t bioskills/gstama:1.0.3-v1.0 -f Dockerfile .
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data bioskills/gstama:1.0.3-v1.0 \
+docker build -t bioskills/gstama:1.0.4-v1.0 -f Dockerfile .
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data bioskills/gstama:1.0.4-v1.0 \
   collapse --bam /data/aln.bam --fasta /data/ref.fa --outdir /data/collapse
 ```
 
@@ -68,11 +68,11 @@ bash test/run_test.sh
 ```
 
 `filelist` 子命令不依赖任何外部工具（纯 Python），无 gs-tama 环境也能端到端验证；
-`polyacleanup/collapse/merge` 需 gs-tama 脚本（bioconda `gs-tama=1.0.3`），未安装时测试自动降级为命令构建自检。
+`polyacleanup/collapse/merge` 需 gs-tama 脚本（bioconda `gs-tama=1.0.4`），未安装时测试自动降级为命令构建自检。
 
 ## 版本说明
 
-- **二进制来源**：bioconda `gs-tama=1.0.3`（apt 无此包），包提供
+- **二进制来源**：bioconda `gs-tama=1.0.4`（apt 无此包），包提供
   `tama_flnc_polya_cleanup.py` / `tama_collapse.py` / `tama_merge.py` 到 env `bin/`。
 - **容器路线**：Dockerfile / Apptainer.def 用 **micromamba** 引导 bioconda env（禁止 miniconda），
   驱动 main.py 由 env python 运行。
@@ -88,3 +88,11 @@ bash test/run_test.sh
 `legacy/` 存放迁移自原 isoseq.smk 流程 `isoseq.py/` 的原始实现脚本，仅供追溯对照，**正式入口为 `main.py`**。
 
 - `gs_tama.py, tama_polyacleanup.py`
+
+## 版本与来源（重要）
+
+gs-tama（tama_* 脚本与 tama-py3 库）**必须使用 1.0.4 版本，其他版本无法运行**。
+- 来源：<https://github.com/SiYangming/gs-tama>
+- 安装：`mamba create -n gstama -c conda-forge -c bioconda gs-tama=1.0.4`
+- 容器：quay.io/biocontainers/gs-tama:1.0.4
+- 仓库内 tama-py3/ 参考库来自该仓库 1.0.4；被误删时可用 `git clone --branch 1.0.4 https://github.com/SiYangming/gs-tama` 重新获取。

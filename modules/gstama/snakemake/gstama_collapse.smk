@@ -36,5 +36,5 @@ rule gstama_collapse:
         {params.gstama_collapse_bin} -s {input.bam} -f "$REF" -p "{params.prefix}" \
             -b BAM {params.args} >> {log} 2>&1
 
-        echo "tama_collapse: 1.0.3" > {output.versions}
+        echo "tama_collapse: 1.0.4" > {output.versions}
         """

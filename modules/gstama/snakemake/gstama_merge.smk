@@ -34,5 +34,5 @@ rule gstama_merge:
         {params.gstama_merge_bin} -f {input.filelist} -p "{params.prefix}" \
             {params.args} >> {log} 2>&1
 
-        echo "tama_merge: 1.0.3" > {output.versions}
+        echo "tama_merge: 1.0.4" > {output.versions}
         """

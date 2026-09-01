@@ -18,7 +18,7 @@ def _strip_ext(path_str: str) -> str:
 
 
 def _default_tama_dir() -> Path:
-    return Path(__file__).parent / "gs-tama-1.0.3"
+    return Path(__file__).parent / "gs-tama-1.0.4"
 
 
 def cmd_run(cmd: str):

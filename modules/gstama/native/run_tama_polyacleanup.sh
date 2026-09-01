@@ -10,7 +10,7 @@ OUT_BASE=${OUT_BASE:-"tama_polyacleanup_output"}     # 输出根目录
 ARGS=${ARGS:-""}                                     # 透传给 TAMA 脚本的附加参数
 PARA_CPU=${PARA_CPU:-28}                              # 并发任务数
 CMD_FILE=${CMD_FILE:-"${OUT_BASE}/tama_polyacleanup_commands.txt"}
-TAMA_SCRIPT=${TAMA_SCRIPT:-"/data2/liuqi/chaizengpu/pacbio/X101SC24054971-Z01-J001.Pacbio.Rawdata.20240625/pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py"}  # 可选：脚本绝对路径
+TAMA_SCRIPT=${TAMA_SCRIPT:-"/data2/liuqi/chaizengpu/pacbio/X101SC24054971-Z01-J001.Pacbio.Rawdata.20240625/pyflow/gs-tama-1.0.4/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py"}  # 可选：脚本绝对路径
 
 mkdir -p "$OUT_BASE"
 > "$CMD_FILE"

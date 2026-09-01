@@ -145,7 +145,7 @@ class GstamaSkill(base.SkillBase):
             f"{' '.join(map(q, args))} && "
             f"for f in {q(prefix)}.fa {q(prefix)}_polya_flnc_report.txt {q(prefix)}_tails.fa; do "
             f"[ -f \"$f\" ] && gzip -f \"$f\"; done; "
-            f"echo 'gstama: 1.0.3' > versions.yml"
+            f"echo 'gstama: 1.0.4' > versions.yml"
         )
         return ["bash", "-c", cmd]
 
@@ -169,7 +169,7 @@ class GstamaSkill(base.SkillBase):
             f"cd {q(str(outdir))} && {env_setup}"
             f"{q(sys.executable)} {q(script)} -s {q(str(bam))} -f {q(str(fasta))} "
             f"-p {q(prefix)} {input_flag} {' '.join(map(q, args))} && "
-            f"echo 'gstama: 1.0.3' > versions.yml"
+            f"echo 'gstama: 1.0.4' > versions.yml"
         )
         return ["bash", "-c", cmd]
 
@@ -200,7 +200,7 @@ class GstamaSkill(base.SkillBase):
             f"echo 'gstama_merge: skipped (no filelist)' > versions.yml; "
             f"else {q(sys.executable)} {q(script)} -f {q(str(filelist))} "
             f"-p {q(prefix)} -d merge_dup {' '.join(map(q, args))} && "
-            f"echo 'gstama: 1.0.3' > versions.yml; fi"
+            f"echo 'gstama: 1.0.4' > versions.yml; fi"
         )
         return ["bash", "-c", cmd]
 
