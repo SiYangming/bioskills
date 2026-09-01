@@ -1,0 +1,43 @@
+// isoseq — Nextflow DSL2 骨架模板
+// ---------------------------------------------------------------------------
+// 用法：将本模板复制到实际项目，并通过 nf-core modules install 安装
+//       nf-core/isoseq 用到的官方模块（pbccs/lima/isoseq/refine/bamtools/convert/
+//       gstama/collapse、gstama/merge、gstama/polyacleanup、minimap2/align、
+//       ultra/align、ultra/index、gunzip、gnu/sort），再 include 对应 process。
+// 参考：/Users/siyangming/nextflow_nf_core/isoseq.nf（工作流主体 workflow/isoseq.nf）。
+// ---------------------------------------------------------------------------
+
+include { PBCCS }                        from './modules/nf-core/pbccs/main'
+include { LIMA }                         from './modules/nf-core/lima/main'
+include { ISOSEQ_REFINE }                from './modules/nf-core/isoseq/refine/main'
+include { BAMTOOLS_CONVERT }             from './modules/nf-core/bamtools/convert/main'
+include { GSTAMA_POLYACLEANUP }          from './modules/nf-core/gstama/polyacleanup/main'
+include { GSTAMA_COLLAPSE }              from './modules/nf-core/gstama/collapse/main'
+include { GSTAMA_MERGE }                 from './modules/nf-core/gstama/merge/main'
+include { MINIMAP2_ALIGN }               from './modules/nf-core/minimap2/align/main'
+include { ULTRA_ALIGN }                  from './modules/nf-core/ultra/align/main'
+include { ULTRA_INDEX }                  from './modules/nf-core/ultra/index/main'
+
+workflow ISOSEQ {
+    take:
+    ch_samplesheet    // Channel of [ meta, subreads_bam ]
+
+    main:
+    // 1. subreads -> HiFi CCS（按 chunk 并行）
+    PBCCS(ch_samplesheet, ch_chunk_num, params.chunk)
+    // 2. 引物去除 / 条形码拆分
+    LIMA(ch_pbccs_bam, ch_primers)
+    // 3. refine：polyA 尾与人工接头去除
+    ISOSEQ_REFINE(ch_lima_bam, ch_primers)
+    // 4. BAM -> FASTA
+    BAMTOOLS_CONVERT(ISOSEQ_REFINE.out.bam)
+    // 5. TAMA FLNC polyA 清理
+    GSTAMA_POLYACLEANUP(BAMTOOLS_CONVERT.out.fasta)
+    // 6. 比对（二选一：minimap2 或 uLTRA）
+    MINIMAP2_ALIGN(GSTAMA_POLYACLEANUP.out.fasta, ch_reference)
+    // 7. collapse：转录本去冗余
+    GSTAMA_COLLAPSE(MINIMAP2_ALIGN.out.bam, ch_reference)
+    // 8. filelist（本地辅助） + merge
+    ch_filelist = GSTAMA_FILELIST(GSTAMA_COLLAPSE.out.bed)
+    GSTAMA_MERGE(ch_filelist)
+}

@@ -11,7 +11,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑对齐 custom/subworkflow/fastp_bwa_samtools/fastp_bwa_samtools.py 的
+命令逻辑对齐 subworkflow/fastp_bwa_samtools/fastp_bwa_samtools.py 的
 fastp stage 调用约定（run 子命令 + -i/-I/-o/-O/-h/-j）。
 
 fastp 版本注意：

@@ -9,7 +9,7 @@
 #   │       local/            # 自定义 Nextflow 模块（source_type: custom）
 #   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
 #           local/              # 自定义 Snakemake 实现（source_type: custom）
-# 被 custom/subworkflow/fastp_bwa_samtools 编排器引用（调用 native main.py run）。
+# 被 subworkflow/fastp_bwa_samtools 编排器引用（调用 native main.py run）。
 # ---------------------------------------------------------------------------
 
 software: fastp
@@ -56,7 +56,7 @@ implementations:
     priority: high
     when_to_use: >
       非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
-      custom/subworkflow/fastp_bwa_samtools 编排器即调用本实现的 run 子命令。
+      subworkflow/fastp_bwa_samtools 编排器即调用本实现的 run 子命令。
 
   - id: fastp_nextflow_nfcore
     path: nextflow/nf-core

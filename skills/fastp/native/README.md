@@ -12,7 +12,7 @@ conda 包 `fastp=0.24.0` 提供二进制 **`fastp`**。
   - HTML + JSON 质控报告（`-h`/`-j`）
   - 自动创建输出父目录、自动注入线程（fastp 0.20+ 为 `-w`）与 `TMPDIR`
 
-* 与 `custom/subworkflow/fastp_bwa_samtools` 编排器调用约定完全一致：
+* 与 `subworkflow/fastp_bwa_samtools` 编排器调用约定完全一致：
   `python main.py run -i R1.fq.gz -o clean_R1.fq.gz -h report.html -j report.json`
 
 > ⚠️ **版本坑**：fastp 0.20.0 起线程参数由 `-t` 改为 `-w, --thread`；
@@ -87,7 +87,7 @@ bash test/run_test.sh   # 无需真实 FASTQ；fastp 未装时退化为 argv 构
 
 ## 历史留存说明
 
-本技能为新建（补齐 `custom/subworkflow/fastp_bwa_samtools` 编排器对
+本技能为新建（补齐 `subworkflow/fastp_bwa_samtools` 编排器对
 `skills/fastp/native/main.py run` 的引用缺口），**无 legacy/ 迁移脚本**。
 编排器与历史流程请直接以 `main.py` 为正式入口；若未来从旧流程迁移辅助脚本，
 按 AGENT.md「脚本归位」原则放入 `native/legacy/`。

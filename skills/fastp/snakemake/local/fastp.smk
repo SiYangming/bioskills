@@ -3,7 +3,7 @@
 # source_type: custom —— 不依赖官方 snakemake-wrappers 中央缓存，
 # 直接调用本地 fastp 二进制（或 conda env：conda: "envs/fastp.yaml"）。
 #
-# 命令对齐 native 与 custom/subworkflow/fastp_bwa_samtools 编排器约定：
+# 命令对齐 native 与 subworkflow/fastp_bwa_samtools 编排器约定：
 #   fastp -i R1 [-I R2] -o out1 [-O out2] -h report.html -j report.json -w <threads>
 #
 # 用法：

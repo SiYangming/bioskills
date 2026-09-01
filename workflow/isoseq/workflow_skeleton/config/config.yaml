@@ -1,0 +1,99 @@
+# isoseq — Snakemake 流程级示例 config
+# ---------------------------------------------------------------------------
+# 从 snakemake.smk/isoseq.smk/config/config.yaml 恢复的「流程级执行配置」。
+# 迁移说明：
+#   - exec_mode 默认 native：迁移后的规则已去掉 docker 分支，直接调用本地二进制；
+#     需要容器化时可在各规则中自行补 container:/docker 配置。
+#   - 各 bin 路径默认从 PATH 解析（不再写本机绝对路径）。
+#   - docker_image 保留为容器参考值（来自原流程，未被规则消费）。
+# 使用方法：将本文件与同目录 Snakefile.template 一起复制到项目，按需修改。
+# ---------------------------------------------------------------------------
+
+samplesheet: "samples/samplesheet.csv"   # 至少含 sample 列；可选 seq_data / start_from
+# Execution settings
+exec_mode: "native" # options: native | conda | docker（迁移后规则仅支持本地二进制直调）
+
+pbccs:
+  min_rq: 0.9
+  min_passes: 3
+  min_snr: 2.5
+  min_length: 10
+  max_length: 50000
+  top_passes: 60
+  chunk_total: 10
+  ccs_bin: "ccs"
+  docker_image: "quay.io/biocontainers/pbccs:6.4.0--h9ee0642_0"   # 参考值
+
+lima:
+  primers: "samples/primers.fasta"
+  lima_bin: "lima"
+  extra_args: "--isoseq --peek-guess"
+  docker_image: "quay.io/biocontainers/lima:2.9.0--h9ee0642_0"    # 参考值
+
+isoseq3:
+  primers: "samples/primers.fasta"
+  isoseq3_bin: "isoseq3"
+  extra_args: "--require-polya"
+  docker_image: "quay.io/biocontainers/isoseq:4.0.0--h9ee0642_0"  # 参考值
+
+bamtools:
+  bamtools_bin: "bamtools"
+  format: "fasta"
+  docker_image: "quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2"  # 参考值
+
+gstama:
+  gstama_bin: "tama_flnc_polya_cleanup.py"
+  gstama_collapse_bin: "tama_collapse.py"
+  gstama_merge_bin: "tama_merge.py"
+  fasta: "refs/Homo_sapiens.GRCh38.dna.chromosome.19.fasta"
+  collapse_dir: "results/gstama_collapse"   # 迁移后 filelist 规则读取
+  collapse_args: "-x no_cap -a 100 -z 100 -sj sj_priority -sjt 20 -lde 5"
+  filelist_cap: "no_cap"
+  filelist_order: "1"
+  merge_args: "-a 100 -z 100 -m 20 -d merge_dup"
+
+minimap2:
+  minimap2_bin: "minimap2"
+  samtools_bin: "samtools"
+  args: "-x splice -uf -k14"
+  fasta: "refs/Homo_sapiens.GRCh38.dna.chromosome.19.fasta"
+  docker_image: "quay.io/biocontainers/minimap2:2.28--h577a1d6_4"  # 参考值
+
+ultra:
+  ultra_bin: "uLTRA"
+  minimap2_bin: "minimap2"
+  samtools_bin: "samtools"
+  namfinder_bin: "namfinder"
+  fasta: "refs/Homo_sapiens.GRCh38.dna.chromosome.19.fasta"
+  gtf: "refs/Homo_sapiens.GRCh38.104.chr.13_18_19.gtf"
+  index_args: "--disable_infer"
+  align_args: ""
+  species_genome: {}   # 示例：{"hg38": "refs/hg38.fa"}（uLTRA index 按物种组织）
+  species_gtf: {}      # 示例：{"hg38": "refs/hg38.sorted.gtf"}
+  docker_image: "quay.io/biocontainers/ultra_bioinformatics:0.1--pyh7cba7a3_1"  # 参考值
+
+gnu_sort:
+  sort_bin: "sort"
+  args: ""
+  overrides:
+    ".gtf.filtered": "-k1,1 -k4,4n"
+  docker_image: "quay.io/biocontainers/coreutils:9.3--h46c0cb4_0"  # 参考值
+
+gunzip:
+  gzip_bin: "gzip"
+  docker_image: "quay.io/biocontainers/coreutils:9.3--h46c0cb4_0"  # 参考值
+
+# 输出目录（01..09 分阶段，与原流程一致）
+output_dir: "results"
+pbccs_dir: "{output_dir}/01PBCCS"
+lima_dir: "{output_dir}/02LIMA"
+isoseq_dir: "{output_dir}/03ISOSEQ_REFINE"
+bamtools_dir: "{output_dir}/04BAMTOOLS_CONVERT"
+gstama_dir: "{output_dir}/05TAMA_POLYACLEANUP"
+minimap2_dir: "{output_dir}/06_01MINIMAP2"
+ultra_dir: "{output_dir}/06_02ULTRA"
+gstama_collapse_dir: "{output_dir}/07TAMA_COLLAPSE"
+gstama_filelist_dir: "{output_dir}/08TAMA_FILELIST"
+gstama_merge_dir: "{output_dir}/09TAMA_MERGE"
+resources_dir: "{output_dir}/resources"
+logs_dir: "{output_dir}/logs"

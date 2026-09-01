@@ -18,7 +18,7 @@
 
 1. **软件与复合流程分层归档**：
    - **原子技能（Atomic Skill）**：顶级目录按照软件 Canonical Name 命名，规范统一小写（如 `samtools`, `bwa-mem2`, `fastqc`）。命名优先级：Debian 仓库名 > nf-core/modules 目录名 > Bioconda 名；冲突时在 meta.yaml 写清别名。
-   - **复合技能（Composite Skill）**：涉及多软件串联的常用小流程统一归档在 `custom/` 下。
+   - **复合流程（Composite Workflow）**：涉及多软件串联的流程统一归档在 `workflow/`（完整流程）与 `subworkflow/`（常用组合）下，与 `skills/` 平级。
 2. **官方现有模块与自定义构建双轨制（Hybrid Sourcing Strategy）**：
    - **官方现有（Official-Annotated）**：对 `nf-core/modules` 或 `snakemake-wrappers` 中已有的成熟模块，在本地**只保留说明文档、校验 Schema、标准接口描述 (meta.yaml + 三件套)**，注明引用仓库与官方子模块清单，**不重写源码**。
    - **本地自定义（Custom-Native）**：官方缺少、或有特殊优化需求的模块，在 `native/` 目录下提供自包含构建（`main.py` + `Dockerfile`/`Apptainer.def`/`environment.yml` + `test/`）。
@@ -82,17 +82,17 @@ skills/
 ```
 
 ```
-custom/                          # 【复合流程层】与 skills/ 平级：workflow/（专门流程）+ subworkflow/（常用组合）
-├── workflow/                    # 专门设计流程：面向特定领域的完整流程，可引用 subworkflow 与原子模块
-│   ├── nanoseq/                 # 例：Nanopore RNA-seq（SRA/dorado -> minimap2 -> samtools -> FLAIR -> StringTie -> ORF）
-│   ├── isoseq/                  # 例：PacBio Iso-Seq（CCS -> Lima -> Refine -> GSTAMA）
-│   └── flrnaseq/                # 例：全长 RNA-seq ORF 预测（TransDecoder -> TD2 -> ORFfinder）
-└── subworkflow/                 # 常用软件组合：可复用小流程，供 workflow 引用或独立调用
-    └── fastp_bwa_samtools/      # 例：Fastp + BWA + Samtools 基因组比对与质控链
+workflow/                         # 【复合流程层】完整流程，与 skills/ 平级；可引用 subworkflow 与原子模块
+├── nanoseq/                      # 例：Nanopore RNA-seq（SRA/dorado -> minimap2 -> samtools -> FLAIR -> StringTie -> ORF）
+├── isoseq/                       # 例：PacBio Iso-Seq（CCS -> Lima -> Refine -> GSTAMA）
+└── flrnaseq/                     # 例：全长 RNA-seq ORF 预测（TransDecoder -> TD2 -> ORFfinder）
+
+subworkflow/                      # 【复合流程层】常用软件组合：可复用小流程，供 workflow 引用或独立调用
+└── fastp_bwa_samtools/           # 例：Fastp + BWA + Samtools 基因组比对与质控链
 ```
 
-> custom/ 为复合流程层（编排器 + workflow_skeleton 模板 + legacy/testdata），
-> 不参与 skill-cli scan/validate（原子技能才在 skills/ 下）。
+> workflow/ 与 subworkflow/ 为复合流程层（编排器 + workflow_skeleton 模板 + legacy/testdata），
+> 与 skills/（原子技能）平级，不参与 skill-cli scan/validate。
 
 ### 3.1 canonical 目录名（示例）
 
@@ -305,7 +305,7 @@ execution:
    - 建立 `AGENT.md §10` 作为每次新增软件的 Checklist（含 `software_versions` / apt 最小化 / submodules 抓官方目录 / `-u` 参数等硬性检查项）。
    - 完成 8-12 个核心原子软件的 `native/` 自定义构建，同时在同级目录建立 `nextflow/nf-core/` / `snakemake/snakemake-wrappers/` 的说明层与 Schema 挂载，并补充 `nextflow/local` / `snakemake/local` 占位。
 2. **阶段 2：复合技能沉淀与 CI/CD 测试（2 周）**
-   - 在 `custom/` 下建立复合小流程，演示「串联本地 Native 技能 + 为 Nextflow/Snakemake 自动生成调用代码」。
+   - 在 `workflow/`（或 `subworkflow/`）下建立复合流程，演示「串联本地 Native 技能 + 为 Nextflow/Snakemake 自动生成调用代码」。
    - 配置自动化回归：覆盖 native `run_test.sh`、`skill-cli validate` 5 目录、`skill-cli scan` 产物完整性。
 3. **阶段 3：动态 Registry 生成与 Agent 接入（长期）**
    - 自动扫描所有目录下的 `meta.yaml` 生成全局 `registry.yaml`，并按 `default_implementation` / `priority` 排序。

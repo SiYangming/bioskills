@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # source_type: custom —— 本地全量自维护。
 # 二进制：fastp（bioconda::fastp=0.24.0，micromamba 引导 /opt/env）。
-# 命令逻辑对齐 custom/subworkflow/fastp_bwa_samtools 编排器的调用：
+# 命令逻辑对齐 subworkflow/fastp_bwa_samtools 编排器的调用：
 #   python main.py run -i R1.fq.gz -o clean_R1.fq.gz -h report.html -j report.json
 # fastp 0.20+ 线程参数为 -w/--thread（-t 已被占用为 --trim_tail1，注意勿混用）。
 # ---------------------------------------------------------------------------
@@ -16,7 +16,7 @@ source_type: custom
 summary: "Self-contained fastp runner（run 子命令：单/双端 FASTQ 质控 + 去接头 + 报告），自动注入线程与临时目录优化，兼容 fastp_bwa_samtools 编排器调用约定。"
 
 agent_guidance:
-  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现；custom/subworkflow/fastp_bwa_samtools 的 fastp stage 即调用本实现。"
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现；subworkflow/fastp_bwa_samtools 的 fastp stage 即调用本实现。"
   recommendation_priority: "High（非流程引擎场景的主执行目标）"
 
 # 本实现实际运行的上游二进制版本 + 构建来源

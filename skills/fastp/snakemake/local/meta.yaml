@@ -1,7 +1,7 @@
 # fastp / snakemake / local — 自维护 Snakemake rule
 # ---------------------------------------------------------------------------
 # source_type: custom —— 自包含规则（fastp.smk），不依赖官方 wrapper 缓存。
-# 命令对齐 native 与 custom/subworkflow/fastp_bwa_samtools 编排器约定：
+# 命令对齐 native 与 subworkflow/fastp_bwa_samtools 编排器约定：
 #   fastp -i R1 [-I R2] -o out1 [-O out2] -h report.html -j report.json -w <threads>
 # ---------------------------------------------------------------------------
 

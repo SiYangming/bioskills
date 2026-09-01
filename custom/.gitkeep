@@ -1,8 +1,0 @@
-# 复合技能（Composite Skills）目录
-#
-# 分两层归档多软件流程：
-#   custom/workflow/<flow_name>/     专门设计流程（如 nanoseq / isoseq / flrnaseq）
-#   custom/subworkflow/<组合名>/      常用软件组合（如 fastp_bwa_samtools）
-#
-# 每个流程目录含 {meta.yaml, 编排脚本, workflow_skeleton/, README.md}。
-# 详见 custom/README.md 与 AGENT.md。

@@ -1,0 +1,90 @@
+# custom / fastp_bwa_samtools 最小复合流程示例元数据
+#
+# 流程：fastp 去接头 -> bwa-mem2 比对 -> samtools sort/index -> QC（可选）
+# 本示例为 **骨架 + 编排脚本**：不内置具体软件实现，
+# 默认调用 skills/ 下对应软件的 default_implementation（通常是 native）。
+
+id: custom_fastp_bwa_samtools
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "最小 DNA 短读比对 + 排序 + 质控串联示例：fastp -> bwa-mem2 mem -> samtools sort/index -> QC 占位"
+
+description: |
+  作为“复合流程如何在 workflow/ 下按 AGENT.md 存档”的可参考样例：
+  1) meta.yaml 声明 stages / inputs / outputs；
+  2) 提供一个可执行 Python 编排器 fastp_bwa_samtools.py，通过 skills/<sw>/native/main.py 调用相应 native 实现；
+  3) 提供 workflow_skeleton/ 下 Snakefile / main.nf 模板，便于实际项目改造。
+
+agent_guidance:
+  when_to_use: "用户需要一条快速的 DNA 短读序列 -> BAM 对比 + QC 演示，或要新建 subworkflow/ 复合流程时参考。"
+  recommendation_priority: "Low（仅作为示例/模板；正式项目需按具体基因组、CPU 资源扩展）。"
+
+stages:
+  - id: fastp
+    software: fastp
+    implementation: fastp_native
+    purpose: "Adapter + quality trimming，输出 clean FQ、QC 报告"
+  - id: bwa_mem2
+    software: bwa-mem2
+    implementation: bwa_mem2_native
+    purpose: "BWA-MEM2 比对，输出 SAM/BAM"
+  - id: samtools_sort_index
+    software: samtools
+    implementation: samtools_native
+    purpose: "sort + index 输出可查询的 sorted.bam + .bai"
+  - id: qc_optional
+    software: multiqc
+    implementation: multiqc_native
+    purpose: "汇总 fastp + fastqc + bam QC（可选占位）"
+
+inputs:
+  sample_id:
+    type: string
+    required: true
+    description: "样本 ID（用于输出文件名）"
+  reads_r1:
+    type: file
+    required: true
+    description: "输入 FASTQ R1"
+  reads_r2:
+    type: file
+    required: false
+    description: "输入 FASTQ R2（PE 必需；SE 留空）"
+  reference:
+    type: file
+    required: true
+    description: "参考基因组 FASTA（已用 bwa-mem2 index 建索引）"
+  outdir:
+    type: string
+    default: results
+  threads:
+    type: integer
+    default: 8
+
+outputs:
+  clean_r1:
+    path_pattern: "{outdir}/fastp/{sample_id}_R1.clean.fq.gz"
+  clean_r2:
+    path_pattern: "{outdir}/fastp/{sample_id}_R2.clean.fq.gz"
+  sorted_bam:
+    path_pattern: "{outdir}/bam/{sample_id}.sorted.bam"
+  sorted_bai:
+    path_pattern: "{outdir}/bam/{sample_id}.sorted.bam.bai"
+  fastp_html:
+    path_pattern: "{outdir}/fastp/{sample_id}_fastp.html"
+
+execution:
+  entrypoint: "python fastp_bwa_samtools.py"
+  test_command: "python fastp_bwa_samtools.py --help"
+  dependencies_in_skills:
+    - fastp/native
+    - bwa-mem2/native   # 尚未提供，仅占位
+    - samtools/native   # 已提供
+  fallback_note: "bwa-mem2 / fastp / multiqc native 若尚未构建，本流程仅以 --dry-run 模式运行演示"
+
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384

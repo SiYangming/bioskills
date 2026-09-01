@@ -1,0 +1,30 @@
+# flrnaseq — Snakemake 骨架模板
+# ---------------------------------------------------------------------------
+# 迁移自 snakemake.smk/flrnaseq.smk/workflow/Snakefile。
+# 将本模板与 config/ 复制到实际项目，include 指向各原子模块技能的规则。
+# ---------------------------------------------------------------------------
+
+configfile: "config/config.yaml"
+
+# 各步骤规则来自原子模块技能（已迁移原 flrnaseq.smk 的规则）
+include: "../../../skills/transdecoder/snakemake/local/transdecoder.smk"
+include: "../../../skills/td2/snakemake/local/td2.smk"
+include: "../../../skills/orffinder/snakemake/local/orffinder.smk"
+
+# 输出目录（与原流程一致）
+TRANSDECODER_DIR = config.get("transdecoder_dir", "results/01_1_TRANSDECODER")
+TD2_DIR          = config.get("td2_dir",          "results/01_2_TD2")
+ORFFINDER_DIR    = config.get("orffinder_dir",    "results/03_ORFFINDER")
+
+# 样本表解析（简化版：sample + long_read_fasta）
+import pandas as pd
+
+_samples = pd.read_csv(config["samplesheet"], dtype={"sample": str}).set_index("sample", drop=False)
+SAMPLES = _samples
+
+rule all:
+    input:
+        expand(f"{TRANSDECODER_DIR}/{{sample}}/predict", sample=SAMPLES.index),
+        expand(f"{TD2_DIR}/{{sample}}/predict", sample=SAMPLES.index),
+        expand(f"{ORFFINDER_DIR}/{{sample}}.asn1", sample=SAMPLES.index)
+    default_target: True
