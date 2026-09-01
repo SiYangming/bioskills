@@ -1,7 +1,0 @@
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - bioconda::flair=3.0.0b1
-  - bioconda::bedtools
-  - bioconda::samtools

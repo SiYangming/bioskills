@@ -1,5 +1,0 @@
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - bioconda::stringtie=3.0.3
