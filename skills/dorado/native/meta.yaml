@@ -1,0 +1,102 @@
+# dorado native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护，不依赖官方 wrapper 源码。
+# dorado 是 Nanopore 官方静态二进制（不在 Debian apt / bioconda），
+# 本实现把 nanoseq config.yaml 的 dorado 段 + dorado 官方用法提炼为 basecall/demux 子命令。
+# ---------------------------------------------------------------------------
+
+id: dorado_native
+version: "latest-v1.0"
+software: dorado
+type: native
+source_type: custom
+
+summary: "Self-contained Dorado runner，覆盖 basecall（POD5/FAST5 -> FASTQ）与 demux（barcode 拆分），自动注入线程/设备参数。"
+software_versions:
+  dorado: "latest（官方 release；本实现按 dorado basecaller/demux 稳定 CLI 构建）"
+  source: "https://github.com/nanoporetech/dorado/releases（官方 Linux x64 静态二进制 tar.gz；Dockerfile 用 ARG DORADO_VERSION 可 pin）"
+  note: "dorado 不在 Debian bookworm apt、不在 bioconda；容器走 bookworm-slim + 官方二进制下载路线（非 micromamba）；模型目录用 --model 指向本地下载的模型或 --model dir 自动命名。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "dorado 子命令：basecall|demux"
+  model:
+    type: string
+    required: true
+    cli_arg: positional
+    description: "basecall 模型（如 rna004_130bps_sup@v5.1.0 / 本地模型目录）"
+  reads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: "输入 raw 信号目录或文件（POD5/FAST5，basecall）"
+  output:
+    type: file
+    required: false
+    cli_arg: "-o"
+    description: "输出文件/目录（basecall 用 --output-dir；demux 用 --output-dir）"
+  emit_fastq:
+    type: boolean
+    default: true
+    cli_arg: "--emit-fastq"
+    description: "输出 FASTQ（basecall；nanoseq 默认开启）"
+  device:
+    type: string
+    required: false
+    cli_arg: "--device"
+    description: "计算设备（cuda:all / cuda:0 / cpu；默认自动）"
+  demux_kit:
+    type: string
+    required: false
+    cli_arg: "--kit-name"
+    description: "demux 的 barcode 试剂盒名（如 SQK-RNA004-24）"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "--num-workers"
+    description: "线程数（自动注入）"
+  extra_args:
+    type: string
+    required: false
+    description: "透传给 dorado 的额外参数（高级用法，慎用）"
+
+outputs:
+  fastq:
+    type: file
+    format: fastq
+    description: "basecall 输出的 FASTQ 文件"
+  demuxed_fastq:
+    type: file
+    format: fastq
+    description: "demux 输出的拆分 FASTQ（按 barcode）"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: "/tmp"
+  env_vars:
+    TMPDIR: "{tmpdir}"
+    PYTHONUNBUFFERED: "1"
+  # 子命令级线程建议（高于用户显式 --threads 时仍以用户为准）
+  per_subcommand_threads:
+    basecall: 8        # basecalling 为 GPU/CPU 密集，优先多线程
+    demux: 4
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "dorado"

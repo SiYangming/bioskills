@@ -1,0 +1,98 @@
+# flair native Apptainer/Singularity 定义（bookworm-slim + micromamba 引导 bioconda env）
+#
+# 路线：与 Dockerfile 一致 —— flair 不在 Debian apt，apt 只装运行时，
+#       curl 拉 micromamba 静态二进制，用 environment.yml 构建 /opt/env（bioconda flair=3.0.0b1）。
+#
+# 构建：apptainer build flair.sif Apptainer.def
+# 运行：apptainer run flair.sif collapse -q sample.annotated.bed -g hg38.fa -r sample.fastq.gz \
+#           -o out/sample -f gencode.v49.annotation.gtf
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software flair
+    Version 3.0.0b1-v1.0
+    FlairVersion 3.0.0b1
+    PkgRoute apt(runtime)+micromamba(bioconda flair=3.0.0b1)
+
+%files
+    environment.yml /opt/environment.yml
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export MAMBA_ROOT_PREFIX=/opt/micromamba
+
+    set -eux
+
+    # 1) apt 最小运行时（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) micromamba 静态二进制
+    mkdir -p /opt/micromamba
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+        | tar -xvj -C /opt/micromamba bin/micromamba
+
+    # 3) 构建 /opt/env（bioconda flair=3.0.0b1 + minimap2）
+    /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml
+
+    # 4) 清理四连 + 删 curl / micromamba pkgs 缓存
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+    rm -rf /opt/micromamba/pkgs
+
+    # 版本断言
+    /opt/env/bin/flair --version 2>&1 | grep -q '3\.0\.0b1'
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/env/bin:/opt/micromamba/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保 flair 二进制与驱动可用
+    set -eux
+    /opt/env/bin/flair --version | head -n 1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    flair native Apptainer 镜像（bookworm-slim + micromamba 引导 bioconda）。
+    flair: 3.0.0b1（可执行 flair / bam2Bed12 / identify_gene_isoform 位于 /opt/env/bin）
+    调用方式：apptainer run flair.sif <子命令> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data flair.sif collapse \
+        -q /data/sample.annotated.bed -g /data/hg38.fa -r /data/sample.fastq.gz \
+        -o /data/out/sample -f /data/gencode.v49.annotation.gtf

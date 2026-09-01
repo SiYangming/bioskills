@@ -1,0 +1,78 @@
+# td2 / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 本目录为说明 + Schema；真正执行需在项目内安装官方 nf-core 子模块。
+# ---------------------------------------------------------------------------
+
+id: td2_nextflow_nfcore
+version: "master"
+software: td2
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core processes for td2 (modules/nf-core/td2/{longorfs,predict}：转录本 ORF 提取与 CDS 预测)."
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时，直接 include 对应子模块。"
+  recommendation_priority: "Medium（Nextflow 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 nf-core/modules 跟踪分支；
+# td2 上游二进制版本以子模块 environment.yml 中的 conda pin 为准。
+software_versions:
+  module_version: "master（2026-09-01 抓取；submodules: longorfs / predict）"
+  td2: "1.1.0"
+  source: "bioconda::td2=1.1.0（modules/nf-core/td2/{longorfs,predict}/environment.yml）"
+  note: "nf-core master 当前两个子模块（longorfs / predict）均 pin bioconda::td2=1.1.0，比 native 的 1.0.6 新；跨引擎迁移时注意，bump 模块后请同步刷新本文件。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/td2"
+  submodules:
+    - "longorfs"
+    - "predict"
+  submodules_note: >
+    2026-09-01 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/td2
+    得到两个子目录：longorfs（TD2.LongOrfs）与 predict（TD2.Predict）。
+    列表以官方在线目录为准，更新时重新抓取并刷新本字段。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1' ]"
+  fasta:
+    type: file
+    format: fasta
+    required: true
+    description: "输入转录本 FASTA（longorfs 与 predict 均需要）"
+
+outputs:
+  pep:
+    type: file
+    format: fasta
+    description: "预测蛋白序列"
+  cds:
+    type: file
+    format: fasta
+    description: "预测 CDS 核酸序列"
+  gff3:
+    type: file
+    format: gff3
+    description: "CDS 注释"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "include { TD2_LONGORFS } from './modules/nf-core/td2/longorfs/main'"
+  include_pattern: |
+    include { TD2_LONGORFS } from './modules/nf-core/td2/longorfs/main'
+    include { TD2_PREDICT } from './modules/nf-core/td2/predict/main'
+  container: "community.wave.seqera.io（按子模块 environment.yml 自动生成）"
+  setup_hint: |
+    在项目仓库根执行：
+      nf modules install nf-core td2/longorfs
+      nf modules install nf-core td2/predict
+    本目录仅提供 include 参考与统一 Schema，不重写官方源码；
+    若官方缺失 / 需定制，请使用 ../local/。

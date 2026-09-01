@@ -1,0 +1,96 @@
+# orffinder native Apptainer/Singularity 定义（bookworm-slim + micromamba 引导 bioconda env）
+#
+# 路线：与 Dockerfile 一致 —— orffinder 不在 Debian apt，apt 只装运行时，
+#       curl 拉 micromamba 静态二进制，用 environment.yml 构建 /opt/env（bioconda orffinder=0.4.3）。
+#
+# 构建：apptainer build orffinder.sif Apptainer.def
+# 运行：apptainer run orffinder.sif run -in transcripts.fa -out out/result.asn1 -outfmt 2
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software orffinder
+    Version 0.4.3-v1.0
+    OrffinderVersion 0.4.3
+    PkgRoute apt(runtime)+micromamba(bioconda orffinder=0.4.3)
+
+%files
+    environment.yml /opt/environment.yml
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export MAMBA_ROOT_PREFIX=/opt/micromamba
+
+    set -eux
+
+    # 1) apt 最小运行时（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) micromamba 静态二进制
+    mkdir -p /opt/micromamba
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+        | tar -xvj -C /opt/micromamba bin/micromamba
+
+    # 3) 构建 /opt/env（bioconda orffinder=0.4.3）
+    /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml
+
+    # 4) 清理四连 + 删 curl / micromamba pkgs 缓存
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+    rm -rf /opt/micromamba/pkgs
+
+    # 版本断言
+    /opt/env/bin/ORFfinder -version | grep -Eq '0\.4\.3|ORFfinder'
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/env/bin:/opt/micromamba/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保二进制与驱动可用
+    set -eux
+    /opt/env/bin/ORFfinder -version | head -n 2
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    orffinder native Apptainer 镜像（bookworm-slim + micromamba 引导 bioconda）。
+    orffinder: 0.4.3（二进制 ORFfinder 来自 NCBI，位于 /opt/env/bin/ORFfinder）
+    调用方式：apptainer run orffinder.sif run -in <fasta> -out <file> -outfmt <int> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data orffinder.sif \
+        run -in /data/transcripts.fa -out /data/out/result.asn1 -outfmt 2 --start-codon 2 --min-length 30

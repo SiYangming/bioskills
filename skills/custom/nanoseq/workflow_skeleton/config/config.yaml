@@ -1,0 +1,51 @@
+samplesheet: "testdata/samplesheet_local.csv"
+output_dir: "test_results"
+genome_fasta: "test/modification_transcriptome_subset.fa"
+gtf_annotation: "test/modification_transcriptome_subset.gtf"
+
+exec_mode: "docker" # options: conda | docker | native
+enable_dorado: false
+
+dorado:
+  docker_image: "docker.1ms.run/nanoporetech/dorado:latest"
+  model: "rna004_130bps_sup@v5.1.0"
+  dorado_bin: "dorado"
+  exec_mode: "docker"
+
+minimap2:
+  docker_image: "quay.io/biocontainers/minimap2:2.30--h577a1d6_0"
+  minimap2_bin: "minimap2"
+  args: "-ax splice -uf -k14"
+  threads: 4
+
+samtools:
+  docker_image: "quay.io/biocontainers/samtools:1.23--h96c455f_0"
+  samtools_bin: "samtools"
+  threads: 4
+
+flair:
+  docker_image: "quay.io/biocontainers/flair:3.0.0b1--pyhdfd78af_0"
+  flair_bin: "flair"
+  args: ""
+  min_support: 3
+  end_window: 100
+  intpriming_threshold: 30
+  threads: 4
+
+stringtie:
+  docker_image: "quay.io/biocontainers/stringtie:3.0.3--h29c0135_0"
+  stringtie_bin: "stringtie"
+  args: "--conservative -L -R"
+  min_transcript_len: 200
+  threads: 4
+
+transdecoder:
+  docker_image: "quay.io/biocontainers/transdecoder:5.7.1--pl5321hdfd78af_2"
+  min_prot_len: 50
+  genetic_code: "1"
+  single_best: 1
+  threads: 20
+
+td2:
+  docker_image: "quay.io/biocontainers/td2:1.0.6--pyhdfd78af_0"
+

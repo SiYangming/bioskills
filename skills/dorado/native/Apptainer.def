@@ -1,0 +1,94 @@
+# dorado native Apptainer/Singularity 定义（bookworm-slim + 官方二进制下载路线）
+#
+# 路线：与 Dockerfile 一致 —— dorado 不在 Debian apt / bioconda，apt 只装运行时，
+#       curl 下载官方 Linux x64 静态二进制 tar.gz 到 /opt/dorado，软链到 /usr/local/bin。
+#
+# 构建：apptainer build dorado.sif Apptainer.def（可用 APPTAINER_BUILD_ARGS 传 DORADO_VERSION）
+# 运行：apptainer run dorado.sif basecall rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%arguments
+    DORADO_VERSION=0.9.1
+
+%labels
+    Maintainer bioskills
+    Software dorado
+    Version latest-v1.0
+    DoradoVersion {{ DORADO_VERSION }}
+    PkgRoute apt(runtime)+official dorado binary (cdn.oxfordnanoportal.com)
+
+%files
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    # 1) apt 最小运行时（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) 下载官方 dorado 静态二进制
+    mkdir -p /opt/dorado
+    curl -Ls "https://cdn.oxfordnanoportal.com/software/analysis/dorado-{{ DORADO_VERSION }}-linux-x64.tar.gz" \
+        | tar -xz -C /opt/dorado --strip-components=1
+    chmod +x /opt/dorado/bin/dorado
+    ln -sf /opt/dorado/bin/dorado /usr/local/bin/dorado
+    /usr/local/bin/dorado --version
+
+    # 3) 清理四连 + 删 curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/dorado/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保 dorado 二进制与驱动可用
+    set -eux
+    /usr/local/bin/dorado --version | head -n 1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    dorado native Apptainer 镜像（bookworm-slim + 官方二进制下载）。
+    dorado: latest（示例 pin {{ DORADO_VERSION }}；位于 /usr/local/bin/dorado）
+    调用方式：apptainer run dorado.sif <子命令> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data dorado.sif basecall \
+        rna004_130bps_sup@v5.1.0 /data/pod5/ --output-dir /data/out --emit-fastq
+    注：模型自动下载到 ~/.cache/dorado 或由 --model 指定目录，建议挂载缓存目录复用。

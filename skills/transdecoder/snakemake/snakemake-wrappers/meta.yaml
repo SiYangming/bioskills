@@ -1,0 +1,69 @@
+# transdecoder / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 官方 snakemake-wrappers 有 bio/transdecoder/{longorfs,predict} 两个 wrapper。
+# ---------------------------------------------------------------------------
+
+id: transdecoder_snakemake_wrappers
+version: "v3.13.0"
+software: transdecoder
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers 登记层 for transdecoder（bio/transdecoder/{longorfs,predict}）. 本目录仅说明，运行时靠 wrapper: 句柄解析。"
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程、复用中央 wrapper 缓存时（官方 bio/transdecoder/longorfs 与 predict 可用）。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：官方 bio/transdecoder/*/environment.yaml 的 conda pin。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  transdecoder: "5.7.1"
+  source: "bioconda transdecoder=5.7.1（bio/transdecoder/{longorfs,predict}/environment.yaml）"
+  note: "官方两个 wrapper（longorfs / predict）environment.yaml 均 pin transdecoder=5.7.1，与 native / nf-core 一致；切 wrapper tag 后请核对。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/transdecoder"
+  tag: "v3.13.0"
+  submodules:
+    - "longorfs"
+    - "predict"
+  submodules_note: >
+    2026-09-01 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/transdecoder
+    得到两个子目录：longorfs 与 predict。列表以官方在线目录为准，更新时重新抓取并刷新本字段。
+
+inputs:
+  input:
+    type: file
+    format: fasta
+    required: true
+    description: "输入转录本 FASTA"
+
+outputs:
+  output:
+    type: file
+    format: [pep, cds, gff3, bed]
+    description: "预测 CDS 产物（依子命令而定）"
+
+params:
+  extra:
+    type: string
+    default: ""
+    description: "TransDecoder 子命令额外参数（如 -m 50 -G Universal -S）"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/transdecoder/{longorfs,predict}"
+  rule_example: |
+    rule transdecoder_longorfs:
+        input:
+            "transcripts/{sample}.fa"
+        output:
+            directory("transdecoder/{sample}/longorfs")
+        params:
+            extra="-m 50 -G Universal -S"
+        threads: 4
+        wrapper:
+            "v3.13.0/bio/transdecoder/longorfs"

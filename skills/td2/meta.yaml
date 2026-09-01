@@ -1,0 +1,93 @@
+# td2 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# 实现路径结构：
+#   skills/<software>/
+#   ├── native/
+#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
+#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
+#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
+#           local/              # 自定义 Snakemake 实现（source_type: custom）
+# 命令逻辑迁移自 snakemake.smk/flrnaseq.smk/workflow/scripts/{td2_longorfs,td2_predict}.py
+# 与 workflow/rules/td2.smk、envs/td2.yaml、config/config.yaml 的 td2 段。
+# ---------------------------------------------------------------------------
+
+software: td2
+canonical: td2
+category: orf_prediction
+description: >
+  TD2 是 TransDecoder 的继任者（语法兼容），基于预训练蛋白模型（PSAURON 打分 + ORF 长度
+  极值分析）从转录本中识别编码区：TD2.LongOrfs 提取候选最长 ORF，
+  TD2.Predict 输出最终 CDS（pep/cds/gff3/bed），支持 MMseqs2 / BlastP / HMMER 证据保留。
+
+homepage: https://github.com/Markusjsommer/TD2
+license: MIT
+
+# 各实现支持的 td2 版本可能不同 —— 上游官方仓库的升级节奏通常快于 native 的锁定版本。
+# 版本差异在各实现的 meta.yaml 中同步记录；此处汇总便于做跨实现兼容性判断。
+software_versions:
+  - id: td2_native
+    td2: "1.0.6"
+    note: "CONDA 路线：debian:bookworm-slim + apt 运行时 + micromamba 引导 bioconda env（bioconda::td2=1.0.6）；二进制 TD2.LongOrfs / TD2.Predict。"
+  - id: td2_nextflow_nfcore
+    module_version: "master（2026-09-01 抓取；submodules: longorfs / predict）"
+    td2: "1.1.0"
+    source: "bioconda::td2=1.1.0（modules/nf-core/td2/{longorfs,predict}/environment.yml）"
+    note: "nf-core master 当前 pin td2=1.1.0（比 native 的 1.0.6 新）；若 nf-core 回落旧 tag 则可能回到 1.0.x。"
+  - id: td2_snakemake_wrappers
+    wrapper_tag: "v3.13.0"
+    td2: "官方无 wrapper（bio/td2 404）"
+    source: "—（snakemake-wrappers 仓库 bio/td2 目录不存在）"
+    note: "2026-09-01 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/td2 返回 404；Snakemake 场景请使用 td2_snakemake_local。"
+  - id: td2_nextflow_local
+    td2: "未固定（用户按 main.nf 中 conda/container 自行声明）"
+  - id: td2_snakemake_local
+    td2: "1.0.6（建议；规则迁移自 flrnaseq.smk/workflow/rules/td2.smk，conda 指向 bioconda::td2=1.0.6）"
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: td2_native
+    path: native
+    source_type: custom
+    type: native
+    version: "1.0.6-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+
+  - id: td2_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时（官方子模块 td2/longorfs 与 td2/predict）。
+
+  - id: td2_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块。
+
+  - id: td2_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+    note: "官方 snakemake-wrappers 暂无 bio/td2 wrapper（2026-09-01 抓取 404），本实现仅登记桥接层，实际请降级 td2_snakemake_local。"
+
+  - id: td2_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 td2.smk（迁移自 flrnaseq.smk 的真实规则）。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: td2_native

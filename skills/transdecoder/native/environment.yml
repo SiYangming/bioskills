@@ -1,0 +1,16 @@
+# transdecoder native Conda 环境配方
+# 创建：mamba env create -f environment.yml
+# 说明：transdecoder 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
+#      容器默认路线：Dockerfile / Apptainer.def 走 micromamba 引导本环境到 /opt/env。
+# 对齐 flrnaseq envs/transdecoder.yaml：transdecoder=5.7.1 + perl + parallel。
+name: transdecoder-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - transdecoder=5.7.1    # 提供二进制 TransDecoder.LongOrfs / TransDecoder.Predict
+  - perl                  # TransDecoder 运行时依赖（与 flrnaseq env 一致）
+  - parallel              # LongOrfs 内部并行依赖（GNU parallel）
+  - pyyaml>=6.0
+  - pip

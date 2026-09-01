@@ -1,0 +1,25 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+description: "Samplesheet validation schema"
+type: object
+properties:
+  samples:
+    type: object
+    additionalProperties:
+      type: object
+      properties:
+        group:
+          type: string
+        replicate:
+          type: [integer, string]
+        barcode:
+          type: [string, null]
+        input_file:
+          type: string
+        fasta:
+          type: string
+        gtf:
+          type: string
+      required:
+        - group
+        - replicate
+        - input_file

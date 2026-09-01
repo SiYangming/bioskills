@@ -1,0 +1,14 @@
+# flair native Conda 环境配方
+# 创建：mamba env create -f environment.yml
+# 说明：flair 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
+#      容器默认路线：Dockerfile / Apptainer.def 走 micromamba 引导本环境到 /opt/env。
+name: flair-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - flair=3.0.0b1      # 提供 flair / bam2Bed12 / identify_gene_isoform
+  - minimap2=2.30      # flair collapse 内部依赖（--mm2_args 比对）
+  - pyyaml>=6.0
+  - pip

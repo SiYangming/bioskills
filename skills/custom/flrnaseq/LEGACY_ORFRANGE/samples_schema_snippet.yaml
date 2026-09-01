@@ -1,0 +1,9 @@
+properties:
+  genome_fasta:
+    type: string
+  genome_gtf:
+    type: string
+
+required:
+  - genome_fasta
+  - genome_gtf

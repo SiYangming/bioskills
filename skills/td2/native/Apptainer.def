@@ -1,0 +1,97 @@
+# td2 native Apptainer/Singularity 定义（bookworm-slim + micromamba 引导 bioconda env）
+#
+# 路线：与 Dockerfile 一致 —— td2 不在 Debian apt，apt 只装运行时，
+#       curl 拉 micromamba 静态二进制，用 environment.yml 构建 /opt/env（bioconda td2=1.0.6）。
+#
+# 构建：apptainer build td2.sif Apptainer.def
+# 运行：apptainer run td2.sif longorfs -t transcripts.fa -O out --strand-specific
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software td2
+    Version 1.0.6-v1.0
+    Td2Version 1.0.6
+    PkgRoute apt(runtime)+micromamba(bioconda td2=1.0.6)
+
+%files
+    environment.yml /opt/environment.yml
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export MAMBA_ROOT_PREFIX=/opt/micromamba
+
+    set -eux
+
+    # 1) apt 最小运行时（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) micromamba 静态二进制
+    mkdir -p /opt/micromamba
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+        | tar -xvj -C /opt/micromamba bin/micromamba
+
+    # 3) 构建 /opt/env（bioconda td2=1.0.6）
+    /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml
+
+    # 4) 清理四连 + 删 curl / micromamba pkgs 缓存
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+    rm -rf /opt/micromamba/pkgs
+
+    # 版本断言
+    /opt/env/bin/TD2.Predict --version | grep -q '1\.0\.6'
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/env/bin:/opt/micromamba/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：确保二进制与驱动可用
+    set -eux
+    /opt/env/bin/TD2.LongOrfs --version | head -n 1
+    /opt/env/bin/TD2.Predict --version | head -n 1
+    /usr/bin/python3 /opt/skill/main.py --list-commands
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    td2 native Apptainer 镜像（bookworm-slim + micromamba 引导 bioconda）。
+    td2: 1.0.6（二进制 TD2.LongOrfs / TD2.Predict，位于 /opt/env/bin/）
+    调用方式：apptainer run td2.sif <子命令> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data td2.sif \
+        longorfs -t /data/transcripts.fa -O /data/out --strand-specific

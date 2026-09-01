@@ -1,0 +1,18 @@
+{
+  "software": "stringtie",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "MIT",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": null,
+    "note": "commit sha 以抓取时刻 modules/nf-core/stringtie/{stringtie,merge}/main.nf 为准；实际 install 时由 nf-core tools 写入最新值。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [
+    "stringtie",
+    "merge"
+  ],
+  "install_command": "nf-core modules install nf-core stringtie/stringtie && nf-core modules install nf-core stringtie/merge",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

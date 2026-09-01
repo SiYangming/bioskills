@@ -1,0 +1,14 @@
+# td2 native Conda 环境配方
+# 创建：mamba env create -f environment.yml
+# 说明：td2 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
+#      容器默认路线：Dockerfile / Apptainer.def 走 micromamba 引导本环境到 /opt/env。
+# 对齐 flrnaseq envs/td2.yaml：bioconda::td2=1.0.6。
+name: td2-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - td2=1.0.6           # 提供二进制 TD2.LongOrfs / TD2.Predict（依赖 psauron 等自动安装）
+  - pyyaml>=6.0
+  - pip

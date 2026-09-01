@@ -1,0 +1,26 @@
+properties:
+  orfanage_dir:
+    type: string
+  orfanage:
+    type: object
+    properties:
+      version:
+        type: string
+      docker_image:
+        type: string
+      orfanage_bin:
+        type: string
+      mode:
+        type: string
+      threads:
+        type: integer
+      extra_params:
+        type: string
+    additionalProperties: true
+  containers:
+    properties:
+      orfanage:
+        type: string
+
+required:
+  - orfanage_dir

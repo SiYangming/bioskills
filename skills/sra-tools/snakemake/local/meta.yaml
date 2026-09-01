@@ -1,0 +1,56 @@
+# sra-tools / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/
+#   batch_prefetch.sh（prefetch 下载）+ batch_sra_to_fastq.sh / batch_sra_to_fastq_parallel.sh
+#   （fastq-dump 转换），去掉串行 while 循环 / GNU parallel / 绝对路径（./sratoolkit.3.2.0-*/bin）依赖。
+# 适用场景：官方 snakemake-wrappers 只提供 fasterq-dump；prefetch / fastq-dump 走本规则。
+# ---------------------------------------------------------------------------
+
+id: sra-tools_snakemake_local
+version: "0.1.0"
+software: sra-tools
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rules for sra-tools (迁移自 nanoseq.sh/batch_prefetch.sh + batch_sra_to_fastq*.sh：prefetch/fasterq-dump/fastq-dump，官方 wrapper 缺失子模块时的执行路径)."
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要下载 SRA（prefetch）或用 fastq-dump 转换（官方 wrapper 缺失）时；fasterq-dump 已有官方 wrapper，可直接用 snakemake-wrappers。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+software_versions:
+  sra_tools: "latest（建议 pin 3.4.1）"
+  source: "自维护 sra_tools.smk（迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/batch_prefetch.sh + batch_sra_to_fastq*.sh；conda 建议 bioconda::sra-tools=3.4.1）"
+  note: "原脚本用 shell while 循环串行 + GNU parallel 并行 + 绝对路径（./sratoolkit.3.2.0-centos_linux64/bin/）；迁移后由 Snakemake 调度，prefetch 保留 -f yes -t http，dump 保留 --split-3 --gzip，fasterq-dump 注入 -e 线程。失败 SRR 列表由 Snakemake 重试机制覆盖，不再写 failed_*.txt。"
+
+inputs:
+  srr_list:
+    type: file
+    format: txt
+    required: true
+    description: "SRR accession 列表文件（每行一个，如 SRR_Acc_List.txt）"
+  sra:
+    type: file
+    format: sra
+    required: false
+    description: "本地 .sra 文件（dump 规则输入；路径 sra/{sample}/{sample}.sra）"
+
+outputs:
+  sra:
+    type: file
+    format: sra
+    description: "prefetch 下载的 SRA 文件（sra/{sample}/{sample}.sra）"
+  fastq:
+    type: file
+    format: [fastq, fastq.gz]
+    description: "dump 输出的 FASTQ（--gzip 时为 .fastq.gz；双端 --split-3 为 *_1/_2）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "sra_tools.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "skills/sra-tools/snakemake/local/sra_tools.smk"
+  conda_hint: "rule 内 conda 指向 envs/sra-tools.yaml（内容：bioconda::sra-tools=3.4.1）"

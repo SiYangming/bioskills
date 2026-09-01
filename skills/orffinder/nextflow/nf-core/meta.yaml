@@ -1,0 +1,64 @@
+# orffinder / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 注意：官方 nf-core/modules 目前【没有】modules/nf-core/orffinder（抓取 404），
+#       本目录仅登记说明层；实际执行请使用 orffinder_nextflow_local。
+# ---------------------------------------------------------------------------
+
+id: orffinder_nextflow_nfcore
+version: "master"
+software: orffinder
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core 登记层 for orffinder（官方 modules/nf-core/orffinder 缺失，submodules 为空；实际走 local）。"
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程时；官方 modules/nf-core/orffinder 缺失，请直接使用 orffinder_nextflow_local。"
+  recommendation_priority: "Low（官方模块不存在；本实现仅说明层，实际路由到 nextflow_local）。"
+
+# 版本对齐：官方 modules/nf-core/orffinder 不存在，无法从 environment.yml 取 conda pin。
+software_versions:
+  module_version: "官方无模块（modules/nf-core/orffinder 404）"
+  orffinder: "—"
+  source: "—（nf-core/modules 仓库 modules/nf-core/orffinder 目录不存在）"
+  note: "2026-09-01 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/orffinder 返回 404；
+         Nextflow 场景请使用 orffinder_nextflow_local（pin orffinder=0.4.3 或继承 native 容器）。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/orffinder"
+  submodules: []
+  submodules_note: >
+    官方 modules/nf-core/orffinder 目录不存在（2026-09-01 抓取 404），故 submodules 为空列表。
+    若未来官方新增该模块，请以 https://github.com/nf-core/modules/tree/master/modules/nf-core/orffinder
+    在线目录为准刷新；当前 Nextflow 场景请使用 orffinder_nextflow_local。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1' ]"
+  fasta:
+    type: file
+    format: fasta
+    required: true
+    description: "输入核酸 FASTA"
+
+outputs:
+  result:
+    type: file
+    description: "ORF 预测结果（outfmt 依参数而定）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "（官方模块缺失，暂无 include 语句；请使用 ../local/）"
+  include_pattern: "（官方模块缺失，暂无 include 语句；请使用 ../local/）"
+  container: "—（官方模块缺失；可参考 quay.io/preskaa/orffinder:0.4.3 或 native 容器）"
+  setup_hint: |
+    官方 nf-core 无 orffinder 模块：无法 nf modules install。
+    请在 ../local/ 编写自定义 process（source_type: custom、type: nextflow_local），
+    或降级使用 native 实现。

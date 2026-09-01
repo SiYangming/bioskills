@@ -1,0 +1,92 @@
+# custom / flrnaseq 复合流程元数据
+# ---------------------------------------------------------------------------
+# 流程：全长 RNA-seq 转录本 -> ORF 预测三工具并行
+#       transdecoder（LongOrfs/Predict）-> td2（TD2.LongOrfs/Predict）-> orffinder（ORFfinder）
+# 迁移来源：snakemake.smk/flrnaseq.smk（原 workflow/Snakefile + rules/{transdecoder,td2,orffinder}.smk）
+# 本流程为**编排层**：默认调用 skills/ 下各原子模块的 default_implementation（native）。
+# ---------------------------------------------------------------------------
+
+id: custom_flrnaseq
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "全长 RNA-seq ORF 预测流程编排：transdecoder -> td2 -> orffinder（含 docker/native/conda 三模式参考）"
+
+description: |
+  将原 /snakemake.smk/flrnaseq.smk 流程按「原子模块软件」拆分后重新编排：
+  1) transdecoder / td2 / orffinder 各自成为独立技能（native 实现迁移自原 workflow/scripts/*.py，
+     原始脚本留存于各模块 native/legacy/）；
+  2) 本目录只负责流程编排（stages 声明 + Python 编排器 + Snakemake 骨架模板）；
+  3) Snakemake 规则已迁移到各软件 snakemake/local/*.smk，
+     Docker 执行支持参考 flrnaseq 原 workflow/scripts/docker_wrapper.py 模式。
+
+agent_guidance:
+  when_to_use: "需要从全长转录本 FASTA 预测 ORF（TransDecoder / TD2 / ORFfinder 三路线对比）时使用；单工具调用请走各软件 native 实现。"
+  recommendation_priority: "Medium（复合流程编排层；单工具调用请走各软件 native）。"
+
+stages:
+  - id: transdecoder_longorfs
+    software: transdecoder
+    implementation: transdecoder_native
+    purpose: "TransDecoder.LongOrfs 提取候选 ORF（-m 50 -G Universal -S --complete_orfs_only）"
+  - id: transdecoder_predict
+    software: transdecoder
+    implementation: transdecoder_native
+    purpose: "TransDecoder.Predict 过滤/训练模型输出最终 ORF（默认 --no_refine_starts）"
+  - id: td2_longorfs
+    software: td2
+    implementation: td2_native
+    purpose: "TD2.LongOrfs 提取候选 ORF（-m 90 -M 90 -G 1 -S --alt-start --all-stopless）"
+  - id: td2_predict
+    software: td2
+    implementation: td2_native
+    purpose: "TD2.Predict 基于 PSAURON 打分输出 ORF（默认 --psauron-all-frame）"
+  - id: orffinder
+    software: orffinder
+    implementation: orffinder_native
+    purpose: "NCBI ORFfinder 输出 ORF（默认 outfmt=2 文本 ASN.1）"
+
+inputs:
+  samplesheet:
+    type: file
+    required: true
+    description: "样本表 CSV，至少含 sample 列与 long_read_fasta 列（全长转录本 FASTA 路径）"
+  outdir:
+    type: string
+    default: results
+    description: "输出根目录（01_1_TRANSDECODER / 01_2_TD2 / 03_ORFFINDER）"
+  threads:
+    type: integer
+    default: 8
+
+outputs:
+  transdecoder_pep:
+    path_pattern: "{outdir}/01_1_TRANSDECODER/{sample}/predict/{sample}.pep"
+  transdecoder_cds:
+    path_pattern: "{outdir}/01_1_TRANSDECODER/{sample}/predict/{sample}.cds"
+  transdecoder_gff3:
+    path_pattern: "{outdir}/01_1_TRANSDECODER/{sample}/predict/{sample}.gff3"
+  td2_pep:
+    path_pattern: "{outdir}/01_2_TD2/{sample}/predict/{sample}.pep"
+  td2_gff3:
+    path_pattern: "{outdir}/01_2_TD2/{sample}/predict/{sample}.gff3"
+  orffinder_out:
+    path_pattern: "{outdir}/03_ORFFINDER/{sample}.asn1"
+
+execution:
+  entrypoint: "python flrnaseq.py"
+  test_command: "python flrnaseq.py --list-stages"
+  dependencies_in_skills:
+    - transdecoder/native
+    - td2/native
+    - orffinder/native
+  workflow_skeleton:
+    snakemake: "workflow_skeleton/Snakefile.template"
+    nextflow: "workflow_skeleton/main.nf.template"
+  fallback_note: "orffinder 需 ORFfinder 二进制（NCBI/容器）；未安装时可用 transdecoder/td2 结果替代。"
+
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384

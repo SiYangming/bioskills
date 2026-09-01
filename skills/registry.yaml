@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-08-31T15:08:32+00:00'
+generated_at: '2026-09-01T00:46:35+00:00'
 skills:
 - software: bamtools
   canonical: bamtools
@@ -39,6 +39,44 @@ skills:
     path: bamtools/snakemake/snakemake-wrappers
     priority: Medium
     entrypoint: snakemake_rule
+- software: dorado
+  canonical: dorado
+  implementations:
+  - id: dorado_native
+    source_type: custom
+    impl: native
+    version: latest-v1.0
+    path: dorado/native
+    priority: High
+    entrypoint: python main.py
+  - id: dorado_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: dorado/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: dorado_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 0.0.0-placeholder
+    path: dorado/nextflow/nf-core
+    priority: Low
+    entrypoint: nextflow_include
+  - id: dorado_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: dorado/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: dorado_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: dorado/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
 - software: fastqc
   canonical: fastqc
   implementations:
@@ -76,6 +114,44 @@ skills:
     version: v3.13.0
     path: fastqc/snakemake/snakemake-wrappers
     priority: Medium
+    entrypoint: snakemake_rule
+- software: flair
+  canonical: flair
+  implementations:
+  - id: flair_native
+    source_type: custom
+    impl: native
+    version: 3.0.0b1-v1.0
+    path: flair/native
+    priority: High
+    entrypoint: python main.py
+  - id: flair_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: flair/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: flair_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: 0.0.0-placeholder
+    path: flair/nextflow/nf-core
+    priority: Low
+    entrypoint: nextflow_include
+  - id: flair_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: flair/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: flair_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: flair/snakemake/snakemake-wrappers
+    priority: Low
     entrypoint: snakemake_rule
 - software: gnu_sort
   canonical: gnu_sort
@@ -305,6 +381,44 @@ skills:
     path: minimap2/snakemake/snakemake-wrappers
     priority: Medium
     entrypoint: snakemake_rule
+- software: orffinder
+  canonical: orffinder
+  implementations:
+  - id: orffinder_native
+    source_type: custom
+    impl: native
+    version: 0.4.3-v1.0
+    path: orffinder/native
+    priority: High
+    entrypoint: python main.py
+  - id: orffinder_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: orffinder/nextflow/local
+    priority: Low→medium
+    entrypoint: nextflow_include
+  - id: orffinder_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: orffinder/nextflow/nf-core
+    priority: Low
+    entrypoint: nextflow_include
+  - id: orffinder_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: orffinder/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: orffinder_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: orffinder/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
 - software: pbccs
   canonical: pbccs
   implementations:
@@ -379,6 +493,158 @@ skills:
     impl: snakemake_wrappers
     version: v3.13.0
     path: samtools/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
+- software: sra-tools
+  canonical: sra-tools
+  implementations:
+  - id: sra-tools_native
+    source_type: custom
+    impl: native
+    version: 3.4.1-v1.0
+    path: sra-tools/native
+    priority: High
+    entrypoint: python main.py
+  - id: sra-tools_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: sra-tools/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: sra-tools_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: sra-tools/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: sra-tools_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: sra-tools/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: sra-tools_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: sra-tools/snakemake/snakemake-wrappers
+    priority: Medium
+    entrypoint: snakemake_rule
+- software: stringtie
+  canonical: stringtie
+  implementations:
+  - id: stringtie_native
+    source_type: custom
+    impl: native
+    version: 3.0.3-v1.0
+    path: stringtie/native
+    priority: High
+    entrypoint: python main.py
+  - id: stringtie_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: stringtie/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: stringtie_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: stringtie/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: stringtie_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: stringtie/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: stringtie_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: stringtie/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: td2
+  canonical: td2
+  implementations:
+  - id: td2_native
+    source_type: custom
+    impl: native
+    version: 1.0.6-v1.0
+    path: td2/native
+    priority: High
+    entrypoint: python main.py
+  - id: td2_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: td2/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: td2_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: td2/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: td2_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: td2/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: td2_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: td2/snakemake/snakemake-wrappers
+    priority: Low
+    entrypoint: snakemake_rule
+- software: transdecoder
+  canonical: transdecoder
+  implementations:
+  - id: transdecoder_native
+    source_type: custom
+    impl: native
+    version: 5.7.1-v1.0
+    path: transdecoder/native
+    priority: High
+    entrypoint: python main.py
+  - id: transdecoder_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: transdecoder/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: transdecoder_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: transdecoder/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: transdecoder_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: transdecoder/snakemake/local
+    priority: Medium
+    entrypoint: snakemake_rule
+  - id: transdecoder_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: transdecoder/snakemake/snakemake-wrappers
     priority: Medium
     entrypoint: snakemake_rule
 - software: ultra

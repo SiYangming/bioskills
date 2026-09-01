@@ -1,0 +1,97 @@
+# flair 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# 实现路径结构：
+#   skills/<software>/
+#   ├── native/
+#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
+#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
+#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
+#           local/              # 自定义 Snakemake 实现（source_type: custom）
+# ---------------------------------------------------------------------------
+
+software: flair
+canonical: flair
+category: transcriptome
+description: >
+  FLAIR（Full-Length Alternative Isoform analysis of RNA）是 Nanopore / PacBio
+  long-read RNA-seq 的 isoform 分析工具：bam2Bed12 转剪接结构、identify_gene_isoform
+  做基因注释、flair collapse 聚类去冗余生成一致性转录本（含 --trust_ends /
+  --remove_internal_priming / --stringent / --check_splice 等 direct RNA-seq 优化参数），
+  是 nanoseq 流程的转录本重建核心。
+
+homepage: https://github.com/BrooksLabUCSC/flair
+license: GPL-3.0-only
+
+# 各实现支持/可获得性说明：flair 不在 Debian bookworm apt 源，只能走 bioconda（micromamba 引导）。
+software_versions:
+  - id: flair_native
+    flair: "3.0.0b1"
+    source: "bioconda::flair=3.0.0b1（environment.yml 已 pin；容器走 bookworm-slim + micromamba 引导 /opt/env）"
+    note: "flair conda 包提供三个可执行：flair / bam2Bed12 / identify_gene_isoform；flair collapse 内部依赖 minimap2（environment.yml 一并 pin）。"
+  - id: flair_nextflow_nfcore
+    module_version: "—"
+    flair: "官方无模块（modules/nf-core/flair 404）"
+    source: "—"
+    note: "2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/flair 返回 404；Nextflow 场景请使用 flair_nextflow_local 或降级 native。"
+  - id: flair_snakemake_wrappers
+    wrapper_tag: "v3.13.0"
+    flair: "官方无 wrapper（bio/flair 404）"
+    source: "—"
+    note: "2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/flair 返回 404；Snakemake 场景请使用 flair_snakemake_local。"
+  - id: flair_nextflow_local
+    flair: "未固定（用户按 main.nf 中 conda/container 自行声明）"
+  - id: flair_snakemake_local
+    flair: "3.0.0b1"
+    source: "自维护 flair.smk（迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/run_flair_consensus.sh）"
+    note: "rule 内 conda 指向 bioconda::flair=3.0.0b1 + minimap2。"
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: flair_native
+    path: native
+    source_type: custom
+    type: native
+    version: "3.0.0b1-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+      覆盖 bam2bed12 / annotate / collapse 三段链路，自动注入线程。
+
+  - id: flair_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: ""
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时。
+    note: "nf-core 官方无 flair 模块（2026-09 抓取 404），本实现仅登记说明层，实际请走 flair_nextflow_local。"
+
+  - id: flair_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 子模块缺失（当前正是如此）或需要本地定制的 Nextflow 模块。
+
+  - id: flair_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+    note: "官方 snakemake-wrappers 暂无 bio/flair wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走 flair_snakemake_local。"
+
+  - id: flair_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 flair.smk。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: flair_native

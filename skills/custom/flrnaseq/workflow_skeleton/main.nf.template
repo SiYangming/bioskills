@@ -1,0 +1,21 @@
+// custom/flrnaseq — Nextflow DSL2 骨架模板（占位）
+// ---------------------------------------------------------------------------
+// 原 flrnaseq.smk 为 Snakemake 流程，无对应 nf-core 官方流程。
+// Nextflow 场景建议直接用各原子模块的 nextflow/local 实现：
+//   include { TRANSDECODER_LONGORFS } from './modules/local/transdecoder'
+//   include { TD2_PREDICT }           from './modules/local/td2'
+//   include { ORFFINDER }             from './modules/local/orffinder'
+// 或参考 nf-core/isoseq 的 ORF 预测部分（transdecoder 已在 nf-core/modules）。
+// ---------------------------------------------------------------------------
+
+workflow FLRNASEQ {
+    take:
+    ch_fasta   // Channel of [ meta, long_read_fasta ]
+
+    main:
+    TRANSDECODER_LONGORFS(ch_fasta)
+    TRANSDECODER_PREDICT(TRANSDECODER_LONGORFS.out.base_dir)
+    TD2_LONGORFS(ch_fasta)
+    TD2_PREDICT(TD2_LONGORFS.out.base_dir)
+    ORFFINDER(ch_fasta)
+}

@@ -1,0 +1,46 @@
+# flair / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 注意：nf-core 官方目前【没有】modules/nf-core/flair 模块（2026-09 抓取 404），
+#       本目录仅登记说明层；实际 Nextflow 场景请使用 flair_nextflow_local。
+# ---------------------------------------------------------------------------
+
+id: flair_nextflow_nfcore
+version: "0.0.0-placeholder"
+software: flair
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core 登记层 for flair（官方 modules/nf-core/flair 缺失，submodules 为空；实际走 local）。"
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程时；nf-core 官方无 flair 模块，请直接使用 flair_nextflow_local。"
+  recommendation_priority: "Low（官方模块不存在；本实现仅说明层，实际路由到 nextflow_local）。"
+
+software_versions:
+  module_version: "—"
+  flair: "官方无模块（modules/nf-core/flair 404）"
+  source: "—（nf-core/modules 仓库 modules/nf-core/flair 目录不存在）"
+  note: "2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/flair 返回 404；
+         Nextflow 场景请使用 flair_nextflow_local（main.nf 内 conda/container 建议 pin bioconda::flair=3.0.0b1）。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/flair"
+  submodules: []
+  submodules_note: >
+    官方 modules/nf-core/flair 目录不存在（2026-09 抓取 404），故 submodules 为空列表。
+    若未来官方新增该模块，请以 https://github.com/nf-core/modules/tree/master/modules/nf-core/flair
+    在线目录为准刷新；当前 Nextflow 场景请使用 flair_nextflow_local。
+
+inputs: {}
+outputs: {}
+
+execution:
+  mode: nextflow_include
+  include_statement: ""
+  include_pattern: ""
+  container: ""
+  setup_hint: |
+    nf-core 官方无 flair 模块；请使用 ../local/ 编写自定义 Nextflow process，
+    或在流程内直接声明容器：container 'quay.io/biocontainers/flair:3.0.0b1--pyhdfd78af_0'

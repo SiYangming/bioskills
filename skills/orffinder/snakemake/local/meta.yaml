@@ -1,0 +1,50 @@
+# orffinder / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则迁移自 snakemake.smk/flrnaseq.smk/workflow/rules/orffinder.smk，
+# 去掉对 Snakefile 顶部全局变量（SAMPLES / os / directory / config）的依赖：
+#   - SAMPLES 的 lambda 输入改为路径模板 long_read/{sample}.fasta
+#   - config 的 orffinder_dir / suffix_map 改为规则内输出路径模板
+#   - config 的 params 改为规则内显式默认值（与 flrnaseq config.yaml orffinder 段一致）
+#   - docker/container 分支移除，直接调用本地 ORFfinder 二进制（或 conda env）
+# ---------------------------------------------------------------------------
+
+id: orffinder_snakemake_local
+version: "0.1.0"
+software: orffinder
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rule for orffinder（迁移自 flrnaseq.smk/workflow/rules/orffinder.smk 的真实规则：NCBI ORFfinder 单步预测）."
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要 ORFfinder 预测 ORF 时；官方 bio/orffinder wrapper 不存在（404），本 rule 为 Snakemake 场景主路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+# 本实现实际运行的上游二进制版本 + 迁移来源
+software_versions:
+  orffinder: "0.4.3"
+  source: "自维护 orffinder.smk（迁移自 flrnaseq.smk/workflow/rules/orffinder.smk；conda 建议 orffinder=0.4.3）"
+  note: "原规则依赖 Snakefile 顶部的 SAMPLES / os / config；迁移后输入用路径模板 long_read/{sample}.fasta，参数内联（outfmt: 2，suffix_map: 0=_orf.fa, 1=_cds.fa, 2=.asn1, 3=.ft；extra_params: -s 2 -ml 30）。"
+
+inputs:
+  fasta:
+    type: file
+    format: fasta
+    required: true
+    description: "输入核酸 FASTA（路径模板 long_read/{sample}.fasta）"
+
+outputs:
+  result:
+    type: file
+    format: [fa, asn1, ft]
+    description: "ORF 预测结果（默认 outfmt=2 -> orffinder/{sample}.asn1；改 outfmt 时按 suffix_map 调整）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "orffinder.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "skills/orffinder/snakemake/local/orffinder.smk"
+  conda_hint: "规则内 conda 指向 envs/orffinder.yaml（内容：orffinder=0.4.3）"

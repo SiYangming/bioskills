@@ -1,0 +1,93 @@
+# transdecoder 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# 实现路径结构：
+#   skills/<software>/
+#   ├── native/
+#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
+#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
+#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
+#           local/              # 自定义 Snakemake 实现（source_type: custom）
+# 命令逻辑迁移自 snakemake.smk/flrnaseq.smk/workflow/scripts/{transdecoder_longorfs,transdecoder_predict}.py
+# 与 workflow/rules/transdecoder.smk、envs/transdecoder.yaml、config/config.yaml 的 transdecoder 段。
+# ---------------------------------------------------------------------------
+
+software: transdecoder
+canonical: transdecoder
+category: orf_prediction
+description: >
+  TransDecoder 是从转录本（全长 RNA-seq / Iso-Seq / Trinity 组装产物）中识别编码区（CDS）
+  的经典 de novo 工具：TransDecoder.LongOrfs 提取候选最长 ORF，
+  TransDecoder.Predict 基于序列组成模型（hexamer score + homology）评分并输出最终 CDS，
+  支持 Pfam / BlastP 证据保留（--retain_pfam_hits / --retain_blastp_hits）。
+
+homepage: https://github.com/TransDecoder/TransDecoder
+license: "Other（TransDecoder 自定义许可，SPDX NOASSERTION；见仓库 LICENSE 文件）"
+
+# 各实现支持的 transdecoder 版本可能不同 —— 上游官方仓库的升级节奏通常快于 native 的锁定版本。
+# 版本差异在各实现的 meta.yaml 中同步记录；此处汇总便于做跨实现兼容性判断。
+software_versions:
+  - id: transdecoder_native
+    transdecoder: "5.7.1"
+    note: "CONDA 路线：debian:bookworm-slim + apt 运行时 + micromamba 引导 bioconda env（bioconda::transdecoder=5.7.1）；二进制 TransDecoder.LongOrfs / TransDecoder.Predict。"
+  - id: transdecoder_nextflow_nfcore
+    module_version: "master（2026-09-01 抓取；submodules: longorf / predict）"
+    transdecoder: "5.7.1"
+    source: "bioconda::transdecoder=5.7.1（modules/nf-core/transdecoder/{longorf,predict}/environment.yml）"
+    note: "nf-core transdecoder 为两个子模块（longorf / predict），environment.yml 均 pin bioconda::transdecoder=5.7.1，与 native 一致。"
+  - id: transdecoder_snakemake_wrappers
+    wrapper_tag: "v3.13.0"
+    transdecoder: "5.7.1"
+    source: "bioconda transdecoder=5.7.1（bio/transdecoder/{longorfs,predict}/environment.yaml）"
+    note: "官方 snakemake-wrappers 有 bio/transdecoder/{longorfs,predict} 两个 wrapper，均 pin transdecoder=5.7.1，与 native 一致。"
+  - id: transdecoder_nextflow_local
+    transdecoder: "未固定（用户按 main.nf 中 conda/container 自行声明）"
+  - id: transdecoder_snakemake_local
+    transdecoder: "5.7.1（建议；规则迁移自 flrnaseq.smk/workflow/rules/transdecoder.smk，conda 指向 bioconda::transdecoder=5.7.1）"
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: transdecoder_native
+    path: native
+    source_type: custom
+    type: native
+    version: "5.7.1-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+
+  - id: transdecoder_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时（官方子模块 transdecoder/longorf 与 transdecoder/predict）。
+
+  - id: transdecoder_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块。
+
+  - id: transdecoder_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时（bio/transdecoder/longorfs 与 predict）。
+
+  - id: transdecoder_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失或需要本地定制的 Snakemake rule（迁移自 flrnaseq.smk 的真实规则）。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: transdecoder_native

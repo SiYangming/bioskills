@@ -1,0 +1,36 @@
+# custom/nanoseq — Snakemake 骨架模板
+# ---------------------------------------------------------------------------
+# 迁移自 snakemake.smk/nanoseq.smk（原 README 声明的 workflow/ 未随恢复保留，
+# 本模板按 nanoseq.sh/ 脚本逻辑重建）。include 指向各原子模块技能规则。
+# ---------------------------------------------------------------------------
+
+configfile: "config/config.yaml"
+
+# 各步骤规则来自原子模块技能
+include: "../../skills/minimap2/snakemake/local/minimap2_align.smk"
+include: "../../skills/samtools/snakemake/local/samtools.smk"   # 需启用 sort/index/flagstat
+include: "../../skills/flair/snakemake/local/flair.smk"
+include: "../../skills/stringtie/snakemake/local/stringtie.smk"
+include: "../../skills/transdecoder/snakemake/local/transdecoder.smk"
+include: "../../skills/td2/snakemake/local/td2.smk"
+include: "../../skills/dorado/snakemake/local/dorado.smk"        # 可选
+include: "../../skills/sra-tools/snakemake/local/sra_tools.smk"  # 可选
+
+# 输出目录（与原流程一致）
+ALIGN_DIR    = config.get("align_dir",    "results/01_MINIMAP2_ALIGN")
+FLAIR_DIR    = config.get("flair_dir",    "results/02_FLAIR_CONSENSUS")
+STRINGTIE_DIR = config.get("stringtie_dir", "results/03_STRINGTIE")
+TD_DIR       = config.get("td_dir",       "results/04.1_TRANSDECODER_ORF_PREDICTION")
+TD2_DIR      = config.get("td2_dir",      "results/04.2_TD2_ORF_PREDICTION")
+
+# 样本表解析（简化版）
+import pandas as pd
+
+_samples = pd.read_csv(config["samplesheet"], dtype={"sample": str}).set_index("sample", drop=False)
+SAMPLES = _samples
+
+rule all:
+    input:
+        expand(f"{FLAIR_DIR}/CONSENSUS_FASTA/{{sample}}.flair.collapse.fasta", sample=SAMPLES.index),
+        f"{STRINGTIE_DIR}/MERGED_GTF/stringtie_merged_nonredundant.gtf"
+    default_target: True

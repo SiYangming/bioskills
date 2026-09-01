@@ -1,0 +1,15 @@
+{
+  "software": "dorado",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "MIT",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": null,
+    "note": "nf-core 官方暂无 modules/nf-core/dorado 模块（2026-09 抓取 API 返回 404）。本 module.json 仅为占位登记；实际 Nextflow 场景请使用 skills/dorado/nextflow/local/。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [],
+  "install_command": "nf-core modules install nf-core dorado   # 官方不存在，此命令将失败；请改用本地 process",
+  "important": "本 module.json 仅作登记与引用；官方 dorado 模块缺失时，需在项目自身的 modules/ 下编写本地 process（container 建议 nanoporetech/dorado:latest）。"
+}
