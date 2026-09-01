@@ -1,0 +1,7 @@
+channels:
+  - yangmingsi
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - orffinder=0.4.3
