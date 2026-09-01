@@ -19,7 +19,7 @@ description: |
   1) transdecoder / td2 / orffinder 各自成为独立技能（native 实现迁移自原 workflow/scripts/*.py，
      原始脚本留存于各模块 native/legacy/）；
   2) 本目录只负责流程编排（stages 声明 + Python 编排器 + Snakemake 骨架模板）；
-  3) Snakemake 规则已迁移到各软件 snakemake/local/*.smk，
+  3) Snakemake 规则已迁移到各软件 snakemake/*.smk，
      Docker 执行支持参考 flrnaseq 原 workflow/scripts/docker_wrapper.py 模式。
 
 agent_guidance:

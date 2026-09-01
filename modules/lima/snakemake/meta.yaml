@@ -1,0 +1,68 @@
+# lima / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则迁移自 snakemake.smk/isoseq.smk/workflow/modules/lima/snakemake/lima.smk，
+# 去掉对 workflow/lib/helpers.py 的全局依赖，参数内联。
+# 适用场景：官方 snakemake-wrappers 无 bio/lima（当前正是如此）。
+# ---------------------------------------------------------------------------
+
+id: lima_snakemake_local
+version: "0.1.0"
+software: lima
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rule for lima（迁移自 isoseq.smk/workflow/modules/lima/snakemake/lima.smk，官方 wrapper 缺失时的执行路径）。"
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要 lima 去引物/拆分时；官方 bio/lima wrapper 不存在，本 rule 为 Snakemake 场景主路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+# 本实现实际运行的上游二进制版本 + 迁移来源
+software_versions:
+  lima: "2.9.0"
+  source: "自维护 lima.smk（迁移自 snakemake.smk/isoseq.smk/workflow/modules/lima/snakemake/lima.smk；conda 建议 bioconda::lima=2.9.0）"
+  note: "原 rule 依赖 workflow/lib/helpers.py 的 get_lima_input / docker_run / LIMA_DIR / LOG_DIR；迁移后输入用路径模板 ccs/{sample}/{sample}.chunk{n}.bam，docker 分支移除，直接调用 lima 二进制。"
+
+inputs:
+  bam:
+    type: file
+    format: bam
+    required: true
+    description: "输入 ccs BAM（路径模板 ccs/{sample}/{sample}.chunk{n}.bam）"
+  primers:
+    type: file
+    format: fasta
+    required: true
+    description: "引物 FASTA 文件（primers.fasta）"
+
+outputs:
+  bam:
+    type: file
+    format: bam
+    description: "去引物/拆分后的 BAM"
+  pbi:
+    type: file
+    format: pbi
+    description: "输出 BAM 的 PacBio 索引"
+  report:
+    type: file
+    format: txt
+    description: "逐 ZMW 报告（*.lima.report）"
+  summary:
+    type: file
+    format: txt
+    description: "过滤汇总（*.lima.summary）"
+  counts:
+    type: file
+    format: txt
+    description: "引物对计数（*.lima.counts）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "lima.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "modules/lima/snakemake/lima.smk"
+  conda_hint: "rule 内 conda 指向 envs/lima.yaml（内容：bioconda::lima=2.9.0）"

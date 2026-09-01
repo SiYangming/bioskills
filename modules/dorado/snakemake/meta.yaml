@@ -1,0 +1,50 @@
+# dorado / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则迁移自 snakemake.smk/nanoseq.smk/workflow/Snakefile
+# 的 DORADO_FAST5_TO_FASTQ + config.yaml dorado 段，去掉对脚本绝对路径的依赖。
+# 适用场景：官方 snakemake-wrappers 无 bio/dorado（当前正是如此）。
+# ---------------------------------------------------------------------------
+
+id: dorado_snakemake_local
+version: "0.1.0"
+software: dorado
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rules for dorado (迁移自 nanoseq Snakefile DORADO_FAST5_TO_FASTQ + config dorado 段：basecall/demux，官方 wrapper 缺失时的执行路径)."
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要 dorado basecalling（enable_dorado: true）时；官方 bio/dorado wrapper 不存在，本 rule 为 Snakemake 场景主路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+software_versions:
+  dorado: "latest（container 默认 docker.1ms.run/nanoporetech/dorado:latest）"
+  source: "自维护 dorado.smk（迁移自 snakemake.smk/nanoseq.smk/workflow/Snakefile DORADO_FAST5_TO_FASTQ；container 建议 nanoporetech/dorado:latest 或 docker.1ms.run 镜像）"
+  note: "原规则用 docker 模式跑 dorado basecaller（--estimate-poly-a 输出 FASTQ），enable_dorado: false 时整条链路被跳过；dorado 不在 bioconda，rule 用 container 而非 conda。basecall 模型默认 rna004_130bps_sup@v5.1.0（config.dorado.model）。"
+
+inputs:
+  pod5:
+    type: file
+    format: pod5
+    required: true
+    description: "输入 raw 信号文件（路径模板 {samples[sample].input_file}/{sample}.pod5）"
+
+outputs:
+  fastq:
+    type: file
+    format: fastq
+    description: "basecall 输出（01_DORADO_BASECALL/{sample}.fastq）"
+  demux_dir:
+    type: file
+    format: directory
+    description: "demux 输出（按 barcode 拆分目录）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "dorado.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "modules/dorado/snakemake/dorado.smk"
+  conda_hint: "dorado 不在 bioconda，rule 内用 container（默认 docker.1ms.run/nanoporetech/dorado:latest）；本地二进制场景可将 exec_mode 置为 native。"

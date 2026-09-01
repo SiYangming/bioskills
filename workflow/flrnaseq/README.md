@@ -20,7 +20,7 @@
 | TD2          | `modules/td2/native/`          | `python main.py longorfs/predict ...` |
 | ORFfinder    | `modules/orffinder/native/`    | `python main.py run ...`              |
 
-每个软件技能内同时提供 `nextflow/nf-core/`（说明层）、`snakemake/local/*.smk`（迁移规则）
+每个软件技能内同时提供 `nextflow/nf-core/`（说明层）、`snakemake/*.smk`（迁移规则）
 与 `native/legacy/`（原始 scripts 留存）。
 
 ## 用法
@@ -39,7 +39,7 @@ python flrnaseq/flrnaseq.py ... --real   # 真实执行
 ### 2. Snakemake
 
 参考 `workflow_skeleton/Snakefile.template`，各步骤规则已迁移到
-`modules/{transdecoder,td2,orffinder}/snakemake/local/*.smk`，直接 include 即可。
+`modules/{transdecoder,td2,orffinder}/snakemake/*.smk`，直接 include 即可。
 
 ### 3. Nextflow
 
@@ -57,7 +57,7 @@ python flrnaseq/flrnaseq.py ... --real   # 真实执行
 | 资产                  | 位置                                                                         | 说明                                                                                |
 | ------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | 原生 Python 实现        | 各模块 `native/legacy/*.py`                                                   | transdecoder\_longorfs/transdecoder\_predict/td2\_longorfs/td2\_predict/orffinder |
-| Snakemake 规则        | 各模块 `snakemake/local/*.smk`                                                | 迁移自原 workflow/rules/                                                              |
+| Snakemake 规则        | 各模块 `snakemake/*.smk`                                                | 迁移自原 workflow/rules/                                                              |
 | 单元测试                | `modules/transdecoder\|td2/native/test/unit/`                               | 原 .tests/unit（transdecoder\_longorfs/predict、td2\_predict 用例 + common/conftest）   |
 | 原流程骨架               | `workflow_skeleton/LEGACY_Snakefile`                                       | 原 workflow/Snakefile                                                              |
 | 流程 config + schemas | `workflow_skeleton/config/`                                                | 原 config/config.yaml + schemas/{config,samples}\_schema.yaml                      |

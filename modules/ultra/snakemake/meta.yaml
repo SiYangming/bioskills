@@ -1,0 +1,61 @@
+# ultra / snakemake / local 自维护规则元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则从 snakemake.smk/isoseq.smk/workflow/modules/ultra/snakemake/ultra.smk 迁移，
+# 已去掉对 workflow/lib/helpers.py 的全局依赖（值内联 / config 驱动）。
+# ---------------------------------------------------------------------------
+
+id: ultra_snakemake_local
+version: "0.1-v1.0"
+software: ultra
+type: snakemake_local
+source_type: custom
+
+summary: "Custom uLTRA Snakemake rules（prepare_genome / prepare_gtf / sort_gtf / ultra_index / ultra_align，自 isoseq.smk 迁移）。"
+
+agent_guidance:
+  when_to_use: "snakemake-wrappers 官方缺失（bio/ultra 404）时，Snakemake 流程直接使用本目录 ultra.smk。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景的主执行目标）。"
+
+software_versions:
+  ultra: "0.1"
+  deps: "minimap2 / namfinder / samtools（同 native；规则不锁版本，按调用方 PATH/conda/container 解析）"
+  source: "规则迁移自 snakemake.smk/isoseq.smk/workflow/modules/ultra/snakemake/ultra.smk（isoseq.py/ULTRA_align.py 命令语义）"
+  note: "与 native（bioconda ultra_bioinformatics=0.1）版本对齐；容器/conda 由调用方在 rule 上声明。"
+
+inputs:
+  fasta:
+    type: file
+    format: [fasta, fa, fa.gz]
+    description: "参考基因组 FASTA（prepare_genome / ultra_index 用）"
+  gtf:
+    type: file
+    format: [gtf, gtf.gz]
+    description: "参考注释 GTF（prepare_gtf / sort_gtf / ultra_index 用）"
+  reads:
+    type: file
+    format: [fa, fasta, fastq, fa.gz]
+    description: "输入 reads（ultra_align 用）"
+
+outputs:
+  genome_fa:
+    type: file
+    format: fasta
+    pattern: "{resources_dir}/{species}/genome.fa"
+  sorted_gtf:
+    type: file
+    format: gtf
+    pattern: "{resources_dir}/{species}/genes.sorted.gtf"
+  pickle_db:
+    type: file
+    format: [pickle, db]
+    description: "ultra_index 产物（INDEX/{species}/）"
+  bam:
+    type: file
+    format: bam
+    pattern: "{ultra_dir}/{sample}/{sample}.bam"
+
+execution:
+  mode: snakemake_rule
+  rule_files: ["ultra.smk"]
+  entrypoint: "include: ultra.smk（或用 use rule ... from rule_ultra）"
+  binary: "uLTRA"

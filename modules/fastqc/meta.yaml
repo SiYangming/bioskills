@@ -1,87 +1,59 @@
-# fastqc 软件级总览元数据
-# ---------------------------------------------------------------------------
-# 原则：
-#   canonical 目录名 = Bioconda / nf-core / Debian 统一的规范化软件名（fastqc）。
-#   implementations 固定 5 路实现，按类型 + 来源编排。
-#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
-# ---------------------------------------------------------------------------
-
 software: fastqc
 canonical: fastqc
 category: qc
-description: >
-  FastQC 是高通量测序原始 reads 的质量控制工具，输出 HTML 报告与 zip 结果包，
-  覆盖碱基质量、GC 含量、接头污染、重复序列、N 含量、kmer 过载等常见质控维度。
+description: 'FastQC 是高通量测序原始 reads 的质量控制工具，输出 HTML 报告与 zip 结果包， 覆盖碱基质量、GC 含量、接头污染、重复序列、N
+  含量、kmer 过载等常见质控维度。
 
+  '
 homepage: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 license: GPL-3.0-or-later
-
 implementations:
-  - id: fastqc_native
-    path: native
-    source_type: custom
-    type: native
-    version: "0.12.1-v1.0"
-    priority: high
-    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。自动注入 JVM 内存与线程优化。
-
-  - id: fastqc_nextflow_nfcore
-    path: nextflow/nf-core
-    source_type: official
-    type: nextflow_nfcore
-    version: "2.1.0"
-    priority: medium
-    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时。
-
-  - id: fastqc_nextflow_local
-    path: nextflow/local
-    source_type: custom
-    type: nextflow_local
-    version: ""
-    priority: low
-    when_to_use: nf-core 缺失 / 本地定制 FastQC process。
-
-  - id: fastqc_snakemake_wrappers
-    path: snakemake/snakemake-wrappers
-    source_type: official
-    type: snakemake_wrappers
-    version: "v3.13.0"
-    priority: medium
-    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
-
-  - id: fastqc_snakemake_local
-    path: snakemake/local
-    source_type: custom
-    type: snakemake_local
-    version: ""
-    priority: low
-    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule。
-
+- id: fastqc_native
+  path: native
+  source_type: custom
+  type: native
+  version: 0.12.1-v1.0
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。自动注入 JVM 内存与线程优化。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/fastqc
+    quay_biocontainers: quay.io/biocontainers/fastqc
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
+      镜像
+- id: fastqc_nextflow_nfcore
+  path: nextflow
+  source_type: official
+  type: nextflow_local
+  version: 2.1.0
+  priority: medium
+  when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时。
+- id: fastqc_snakemake_wrappers
+  path: snakemake
+  source_type: official
+  type: snakemake_local
+  version: v3.13.0
+  priority: medium
+  when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
 default_implementation: fastqc_native
-
-# ---------------------------------------------------------------------------
-# 版本差异声明：native / nf-core / snakemake-wrappers 的 fastqc 上游二进制版本可能不同
-# （尤其 Debian 官方 apt 暂无 fastqc，只能 Babraham zip 或 bioconda）。
-# 此字段让 Agent 在跨引擎迁移时一眼看到风险点。
-# ---------------------------------------------------------------------------
 software_versions:
   native:
-    fastqc: "0.12.1"
-    java:   "openjdk-17-jre-headless (apt bookworm)"
-    source: "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.12.1.zip"
-    note:   "bookworm apt 不提供 fastqc 二进制，故走官方 zip + apt JVM。版本与官方 Conda 对齐。"
+    fastqc: 0.12.1
+    java: openjdk-17-jre-headless (apt bookworm)
+    source: https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.12.1.zip
+    note: bookworm apt 不提供 fastqc 二进制，故走官方 zip + apt JVM。版本与官方 Conda 对齐。
   nextflow_nfcore:
-    fastqc:        "0.12.1"
-    module_version: "2.1.0"
-    source: "bioconda::fastqc=0.12.1（modules/nf-core/fastqc/environment.yml）"
-    note:   "Container: community.wave.seqera.io/library/fastqc:0.12.1--… 可能也为 0.12.1；升级 modules 时请同步刷新。"
+    fastqc: 0.12.1
+    module_version: 2.1.0
+    source: bioconda::fastqc=0.12.1（modules/nf-core/fastqc/environment.yml）
+    note: 'Container: community.wave.seqera.io/library/fastqc:0.12.1--… 可能也为 0.12.1；升级
+      modules 时请同步刷新。'
   nextflow_local:
-    fastqc: "（继承容器镜像，未固定；建议跟随 native 的 bookworm + Babraham zip）"
+    fastqc: （继承容器镜像，未固定；建议跟随 native 的 bookworm + Babraham zip）
   snakemake_wrappers:
-    fastqc:        "0.12.1"
-    wrapper_tag:   "v3.13.0"
-    wrapper_utils: "0.9.0"
-    source: "bioconda fastqc=0.12.1 + snakemake-wrapper-utils=0.9.0（bio/fastqc/environment.yaml）"
-    note:   "历史 tag < v3.13 的 environment.yaml 曾停留在 0.11.9 / 0.12.0；切 tag 后务必核对。"
+    fastqc: 0.12.1
+    wrapper_tag: v3.13.0
+    wrapper_utils: 0.9.0
+    source: bioconda fastqc=0.12.1 + snakemake-wrapper-utils=0.9.0（bio/fastqc/environment.yaml）
+    note: 历史 tag < v3.13 的 environment.yaml 曾停留在 0.11.9 / 0.12.0；切 tag 后务必核对。
   snakemake_local:
-    fastqc: "（继承容器镜像，未固定；建议跟随 native）"
+    fastqc: （继承容器镜像，未固定；建议跟随 native）

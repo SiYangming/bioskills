@@ -63,7 +63,7 @@ python nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识别
 | SRA 批处理脚本 | `modules/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
 | 比对脚本 | `modules/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
 | QC 脚本 | `modules/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
-| 原 workflow 快照（去重后） | `snakemake/Snakefile` + `snakemake/common.smk` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/local/ |
+| 原 workflow 快照（去重后） | `snakemake/Snakefile` + `snakemake/common.smk` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/ |
 | Docker 包装脚本 | `native/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
 | 汇总脚本 | `modules/samtools/native/legacy/alignment_summary.py` | 原 workflow/scripts/alignment_summary.py（flagstat 汇总，归位 samtools） |
 | 辅助脚本 | `native/scripts/samplesheet_group_summary.py` | 原 workflow/scripts/ |

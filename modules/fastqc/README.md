@@ -11,7 +11,7 @@ bioskills 软件级存档：[FastQC](https://www.bioinformatics.babraham.ac.uk/p
 | `fastqc_nextflow_nfcore`     | `nextflow/nf-core/`           | official| Medium | 标准 Nextflow 流程用官方模块 |
 | `fastqc_nextflow_local`      | `nextflow/local/`             | custom  | Low    | 官方模块不满足时占位 |
 | `fastqc_snakemake_wrappers`  | `snakemake/snakemake-wrappers/`| official| Medium | 标准 Snakemake 流程用官方 wrapper |
-| `fastqc_snakemake_local`     | `snakemake/local/`            | custom  | Low    | 官方 wrapper 不满足时占位 |
+| `fastqc_snakemake_local`     | `snakemake/`            | custom  | Low    | 官方 wrapper 不满足时占位 |
 
 ## 快速使用
 

@@ -1,7 +1,7 @@
 # gunzip native 自包含实现元数据
 # ---------------------------------------------------------------------------
 # source_type: custom —— 本地全量自维护（命令逻辑迁移自
-#   snakemake.smk/isoseq.smk/workflow/modules/gunzip/snakemake/local/gunzip.smk：gzip -cd <in.gz> > <out>）。
+#   snakemake.smk/isoseq.smk/workflow/modules/gunzip/snakemake/gunzip.smk：gzip -cd <in.gz> > <out>）。
 # ---------------------------------------------------------------------------
 
 id: gunzip_native

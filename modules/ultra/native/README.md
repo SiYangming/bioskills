@@ -1,7 +1,7 @@
 # ultra / native
 
 自包含的 uLTRA 驱动实现（`source_type: custom`），命令逻辑迁移自
-`snakemake.smk/isoseq.smk/isoseq.py/ULTRA_align.py` 与 `workflow/modules/ultra/snakemake/local/ultra.smk`。
+`snakemake.smk/isoseq.smk/isoseq.py/ULTRA_align.py` 与 `workflow/modules/ultra/snakemake/ultra.smk`。
 
 ## 能力
 

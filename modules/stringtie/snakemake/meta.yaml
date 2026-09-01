@@ -1,0 +1,59 @@
+# stringtie / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 规则迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/run_stringtie.sh，
+# 去掉 nohup/PID/LOCK 后台运行封装与 parallel 外部依赖，参数内联。
+# 适用场景：官方 snakemake-wrappers 无 bio/stringtie（当前正是如此）。
+# ---------------------------------------------------------------------------
+
+id: stringtie_snakemake_local
+version: "0.1.0"
+software: stringtie
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rules for stringtie (迁移自 nanoseq.sh/run_stringtie.sh 三段链路：assemble/fix_gtf/merge，官方 wrapper 缺失时的执行路径)."
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要 stringtie 转录本组装/合并时；官方 bio/stringtie wrapper 不存在，本 rule 为 Snakemake 场景主路径。"
+  recommendation_priority: "Medium（Snakemake 流程引擎场景；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+software_versions:
+  stringtie: "3.0.3"
+  source: "自维护 stringtie.smk（迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/run_stringtie.sh；conda 建议 bioconda::stringtie=3.0.3）"
+  note: "原脚本用 nohup 后台运行 + 绝对路径（./bin/stringtie-3.0.3.Linux_x86_64/stringtie）+ GNU parallel 并行；迁移后由 Snakemake 调度，assemble 保留 --conservative -L -R 长读模式参数，fix_gtf 用 awk 内联坐标修复。"
+
+inputs:
+  bam:
+    type: file
+    format: bam
+    required: true
+    description: "输入 sorted BAM（路径模板 alignment/{sample}.sorted.bam）"
+  gtf:
+    type: file
+    format: gtf
+    required: true
+    description: "参考注释 GTF"
+
+outputs:
+  assembled_gtf:
+    type: file
+    format: gtf
+    description: "assemble 输出（样本级 GTF）"
+  fixed_gtf:
+    type: file
+    format: gtf
+    description: "fix_gtf 输出（坐标修复 GTF）"
+  merged_gtf:
+    type: file
+    format: gtf
+    description: "merge 输出（非冗余合并 GTF）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "stringtie.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "modules/stringtie/snakemake/stringtie.smk"
+  conda_hint: "rule 内 conda 指向 envs/stringtie.yaml（内容：bioconda::stringtie=3.0.3）"

@@ -21,7 +21,7 @@ description: |
   1) 每个工具（pbccs/lima/isoseq3/bamtools/gstama/minimap2/ultra/gunzip/gnu_sort）
      成为独立的 modules/<software>/ 技能，各自含 native / nextflow / snakemake 实现；
   2) 本目录只负责**流程编排**（stages 声明 + Python 编排脚本 + 工作流骨架模板）；
-  3) Snakemake 规则已迁移到各软件技能的 snakemake/local/rule_*.smk，
+  3) Snakemake 规则已迁移到各软件技能的 snakemake/rule_*.smk，
      Nextflow 模块参考 nf-core/isoseq（modules/nf-core/{pbccs,lima,isoseq/refine,...}）。
 
 agent_guidance:

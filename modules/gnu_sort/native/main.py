@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """gnu_sort native 标准入口驱动。
 
-命令逻辑迁移自 snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/local/gnu_sort.smk：
+命令逻辑迁移自 snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/gnu_sort.smk：
   sort [args] <in> > <out.sorted>
 
 支持两种调用模式：

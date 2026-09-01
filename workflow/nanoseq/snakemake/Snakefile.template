@@ -7,14 +7,14 @@
 configfile: "config.yaml"
 
 # 各步骤规则来自原子模块技能
-include: "../../../modules/minimap2/snakemake/local/minimap2_align.smk"
-include: "../../../modules/samtools/snakemake/local/samtools.smk"   # 需启用 sort/index/flagstat
-include: "../../../modules/flair/snakemake/local/flair.smk"
-include: "../../../modules/stringtie/snakemake/local/stringtie.smk"
-include: "../../../modules/transdecoder/snakemake/local/transdecoder.smk"
-include: "../../../modules/td2/snakemake/local/td2.smk"
-include: "../../../modules/dorado/snakemake/local/dorado.smk"        # 可选
-include: "../../../modules/sra-tools/snakemake/local/sra_tools.smk"  # 可选
+include: "../../../modules/minimap2/snakemake/minimap2_align.smk"
+include: "../../../modules/samtools/snakemake/samtools.smk"   # 需启用 sort/index/flagstat
+include: "../../../modules/flair/snakemake/flair.smk"
+include: "../../../modules/stringtie/snakemake/stringtie.smk"
+include: "../../../modules/transdecoder/snakemake/transdecoder.smk"
+include: "../../../modules/td2/snakemake/td2.smk"
+include: "../../../modules/dorado/snakemake/dorado.smk"        # 可选
+include: "../../../modules/sra-tools/snakemake/sra_tools.smk"  # 可选
 
 # 输出目录（与原流程一致）
 ALIGN_DIR    = config.get("align_dir",    "results/01_MINIMAP2_ALIGN")

@@ -1,89 +1,60 @@
-# dorado 软件级总览元数据
-# ---------------------------------------------------------------------------
-# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
-# ---------------------------------------------------------------------------
-
 software: dorado
 canonical: dorado
 category: basecalling
-description: >
-  Dorado 是 Oxford Nanopore 官方的高精度 basecalling 工具：
-  dorado basecaller <model> <reads> 将 POD5/FAST5 原始信号转为 FASTQ（RNA 用
-  rna004_130bps_sup 等模型），dorado demux 按 barcode 拆分 reads，
-  是 nanoseq 流程的原始数据 basecalling 环节（enable_dorado 开关）。
+description: 'Dorado 是 Oxford Nanopore 官方的高精度 basecalling 工具： dorado basecaller <model>
+  <reads> 将 POD5/FAST5 原始信号转为 FASTQ（RNA 用 rna004_130bps_sup 等模型），dorado demux 按 barcode
+  拆分 reads， 是 nanoseq 流程的原始数据 basecalling 环节（enable_dorado 开关）。
 
+  '
 homepage: https://github.com/nanoporetech/dorado
 license: Oxford Nanopore Technologies PLC. 开源许可（NC 部分模型另有限制）
-
-# 各实现版本差异声明：dorado 不在 Debian apt，也不在 bioconda，
-# 只能走 nanoporetech/dorado 官方二进制（Linux x64）或官方 Docker 镜像。
 software_versions:
-  - id: dorado_native
-    dorado: "latest（官方 release，如 0.9.x/0.10.x；Dockerfile 用 ARG DORADO_VERSION 可 pin）"
-    source: "https://github.com/nanoporetech/dorado/releases（官方 Linux x64 静态二进制 tar.gz）"
-    note: "dorado 不在 Debian bookworm apt，也不在 bioconda；容器走 bookworm-slim + 官方二进制下载路线（非 micromamba）。"
-  - id: dorado_nextflow_nfcore
-    module_version: "—"
-    dorado: "官方无模块（modules/nf-core/dorado 404）"
-    source: "—"
-    note: "2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/dorado 返回 404；Nextflow 场景请使用 dorado_nextflow_local 或降级 native。"
-  - id: dorado_snakemake_wrappers
-    wrapper_tag: "v3.13.0"
-    dorado: "官方无 wrapper（bio/dorado 404）"
-    source: "—"
-    note: "2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dorado 返回 404；Snakemake 场景请使用 dorado_snakemake_local。"
-  - id: dorado_nextflow_local
-    dorado: "未固定（用户按 main.nf 中 container 自行声明；建议 nanoporetech/dorado:latest）"
-  - id: dorado_snakemake_local
-    dorado: "latest"
-    source: "自维护 dorado.smk（提炼自 nanoseq config.yaml dorado 段 + dorado 官方用法）"
-    note: "rule 内 container 建议 nanoporetech/dorado:latest 或本地 dorado 二进制。"
-
-# 可用实现清单（按推荐优先级排序）
+- id: dorado_native
+  dorado: latest（官方 release，如 0.9.x/0.10.x；Dockerfile 用 ARG DORADO_VERSION 可 pin）
+  source: https://github.com/nanoporetech/dorado/releases（官方 Linux x64 静态二进制 tar.gz）
+  note: dorado 不在 Debian bookworm apt，也不在 bioconda；容器走 bookworm-slim + 官方二进制下载路线（非
+    micromamba）。
+- id: dorado_nextflow_nfcore
+  module_version: —
+  dorado: 官方无模块（modules/nf-core/dorado 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/dorado
+    返回 404；Nextflow 场景请使用 dorado_nextflow_local 或降级 native。
+- id: dorado_snakemake_wrappers
+  wrapper_tag: v3.13.0
+  dorado: 官方无 wrapper（bio/dorado 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dorado
+    返回 404；Snakemake 场景请使用 dorado_snakemake_local。
+- id: dorado_nextflow_local
+  dorado: 未固定（用户按 main.nf 中 container 自行声明；建议 nanoporetech/dorado:latest）
+- id: dorado_snakemake_local
+  dorado: latest
+  source: 自维护 dorado.smk（提炼自 nanoseq config.yaml dorado 段 + dorado 官方用法）
+  note: rule 内 container 建议 nanoporetech/dorado:latest 或本地 dorado 二进制。
 implementations:
-  - id: dorado_native
-    path: native
-    source_type: custom
-    type: native
-    version: "latest-v1.0"
-    priority: high
-    when_to_use: >
-      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
-      覆盖 basecall / demux 子命令，自动注入线程（--device cuda:all 可选）。
+- id: dorado_native
+  path: native
+  source_type: custom
+  type: native
+  version: latest-v1.0
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖 basecall
+    / demux 子命令，自动注入线程（--device cuda:all 可选）。
 
-  - id: dorado_nextflow_nfcore
-    path: nextflow/nf-core
-    source_type: official
-    type: nextflow_nfcore
-    version: ""
-    priority: medium
-    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时。
-    note: "nf-core 官方无 dorado 模块（2026-09 抓取 404），本实现仅登记说明层，实际请走 dorado_nextflow_local。"
-
-  - id: dorado_nextflow_local
-    path: nextflow/local
-    source_type: custom
-    type: nextflow_local
-    version: ""
-    priority: low
-    when_to_use: nf-core 子模块缺失（当前正是如此）或需要本地定制的 Nextflow 模块。
-
-  - id: dorado_snakemake_wrappers
-    path: snakemake/snakemake-wrappers
-    source_type: official
-    type: snakemake_wrappers
-    version: "v3.13.0"
-    priority: medium
-    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
-    note: "官方 snakemake-wrappers 暂无 bio/dorado wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走 dorado_snakemake_local。"
-
-  - id: dorado_snakemake_local
-    path: snakemake/local
-    source_type: custom
-    type: snakemake_local
-    version: "0.1.0"
-    priority: low
-    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 dorado.smk。
-
-# 默认推荐路径（Agent 路由用）
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/dorado
+    quay_biocontainers: quay.io/biocontainers/dorado
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
+      镜像
+- id: dorado_snakemake_wrappers
+  path: snakemake
+  source_type: official
+  type: snakemake_local
+  version: v3.13.0
+  priority: medium
+  when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+  note: 官方 snakemake-wrappers 暂无 bio/dorado wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走
+    dorado_snakemake_local。
 default_implementation: dorado_native

@@ -1,89 +1,51 @@
-# samtools 软件级总览元数据
-# ---------------------------------------------------------------------------
-# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
-# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
-# 实现路径结构：
-#   modules/<software>/
-#   ├── native/
-#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
-#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
-#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
-#           local/              # 自定义 Snakemake 实现（source_type: custom）
-# ---------------------------------------------------------------------------
-
 software: samtools
 canonical: samtools
 category: alignment_utils
-description: >
-  samtools 是操作 SAM/BAM/CRAM 的高通量测序数据工具集，提供排序、索引、
-  统计、提取、转换、拼接、pileup 等核心能力，是绝大多数 NGS 流程的底座。
+description: 'samtools 是操作 SAM/BAM/CRAM 的高通量测序数据工具集，提供排序、索引、 统计、提取、转换、拼接、pileup 等核心能力，是绝大多数
+  NGS 流程的底座。
 
+  '
 homepage: http://www.htslib.org/
 license: MIT
-
-# 各实现支持的 samtools 版本可能不同 —— 上游官方仓库的升级节奏通常快于 native 的锁定版本。
-# 版本差异在各实现的 meta.yaml 中同步记录；此处汇总便于做跨实现兼容性判断。
 software_versions:
-  - id: samtools_native
-    samtools: "1.21"
-    note: "apt 打包 / Debian bookworm 默认可稳定取得；Dockerfile 与 Apptainer.def 已对应切到 apt 最小化安装。"
-  - id: samtools_nextflow_nfcore
-    module_version: "2.2.0"
-    samtools: "1.24"
-    source: "bioconda::samtools=1.24（modules/nf-core/samtools/*/environment.yml）"
-    note: "nf-core master 在 2026-07 起多数子模块已 bump 到 samtools=1.24；HPC/Cloud 使用 Wave 容器时请以对应子模块 meta 为准。"
-  - id: samtools_snakemake_wrappers
-    wrapper_tag: "v3.13.0"
-    samtools: "1.24"
-    source: "bioconda samtools=1.24 + snakemake-wrapper-utils=0.9.0（bio/samtools/*/environment.yaml）"
-    note: "与 nf-core 当前版本一致；若固定 wrapper tag < v3.13，samtools 可能回落 1.21–1.23。"
-  - id: samtools_nextflow_local
-    samtools: "未固定（用户按 main.nf 中 conda/container 自行声明）"
-  - id: samtools_snakemake_local
-    samtools: "未固定（用户按 rules/ 中 conda/container 自行声明）"
-
-# 可用实现清单（按推荐优先级排序）
+- id: samtools_native
+  samtools: '1.21'
+  note: apt 打包 / Debian bookworm 默认可稳定取得；Dockerfile 与 Apptainer.def 已对应切到 apt 最小化安装。
+- id: samtools_nextflow_nfcore
+  module_version: 2.2.0
+  samtools: '1.24'
+  source: bioconda::samtools=1.24（modules/nf-core/samtools/*/environment.yml）
+  note: nf-core master 在 2026-07 起多数子模块已 bump 到 samtools=1.24；HPC/Cloud 使用 Wave 容器时请以对应子模块
+    meta 为准。
+- id: samtools_snakemake_wrappers
+  wrapper_tag: v3.13.0
+  samtools: '1.24'
+  source: bioconda samtools=1.24 + snakemake-wrapper-utils=0.9.0（bio/samtools/*/environment.yaml）
+  note: 与 nf-core 当前版本一致；若固定 wrapper tag < v3.13，samtools 可能回落 1.21–1.23。
+- id: samtools_nextflow_local
+  samtools: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: samtools_snakemake_local
+  samtools: 未固定（用户按 rules/ 中 conda/container 自行声明）
 implementations:
-  - id: samtools_native
-    path: native
-    source_type: custom
-    type: native
-    version: "1.21-v1.0"
-    priority: high
-    when_to_use: >
-      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+- id: samtools_native
+  path: native
+  source_type: custom
+  type: native
+  version: 1.21-v1.0
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
 
-  - id: samtools_nextflow_nfcore
-    path: nextflow/nf-core
-    source_type: official
-    type: nextflow_nfcore
-    version: "2.2.0"
-    priority: medium
-    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时。
-
-  - id: samtools_nextflow_local
-    path: nextflow/local
-    source_type: custom
-    type: nextflow_local
-    version: ""
-    priority: low
-    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块。
-
-  - id: samtools_snakemake_wrappers
-    path: snakemake/snakemake-wrappers
-    source_type: official
-    type: snakemake_wrappers
-    version: "v3.13.0"
-    priority: medium
-    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
-
-  - id: samtools_snakemake_local
-    path: snakemake/local
-    source_type: custom
-    type: snakemake_local
-    version: ""
-    priority: low
-    when_to_use: snakemake-wrappers 缺失或需要本地定制的 Snakemake rule。
-
-# 默认推荐路径（Agent 路由用）
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/samtools
+    quay_biocontainers: quay.io/biocontainers/samtools
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
+      镜像
+- id: samtools_snakemake_wrappers
+  path: snakemake
+  source_type: official
+  type: snakemake_local
+  version: v3.13.0
+  priority: medium
+  when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
 default_implementation: samtools_native

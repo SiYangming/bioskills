@@ -63,14 +63,10 @@ bioskills/
     ├── registry.yaml            # 技能注册表（skill-cli scan 自动生成）
     ├── bin/skill-cli            # 管理 CLI：validate / scan / schema / run
     ├── samtools/                # 【原子技能】samtools
-    │   ├── meta.yaml            # 软件级总览
-    │   ├── native/              # 自包含实现（最高优先级）
-    │   ├── nextflow/
-    │   │   ├── nf-core/         # 官方 nf-core/modules 说明（不重写源码）
-    │   │   └── local/           # 自定义 Nextflow 模块占位
-    │   └── snakemake/
-    │       ├── snakemake-wrappers/  # 官方 snakemake-wrappers 说明
-    │       └── local/               # 自定义 Snakemake rule 占位
+    │   ├── meta.yaml            # 软件级总览（实现 + 容器/conda/github 链接）
+    │   ├── native/              # 自包含实现（最高优先级，经典脚本直接放 native/）
+    │   ├── nextflow/            # 有实际 Nextflow 实现才建（单层，官方信息记录 README）
+    │   └── snakemake/           # 有实际 Snakemake 规则才建（单层，官方信息记录 README）
     └── fastqc/                  # 更多原子技能…
 ├── workflow/                    # 【复合流程】完整流程（nanoseq / isoseq / flrnaseq）
 └── subworkflow/                 # 【复合流程】常用软件组合（fastp_bwa_samtools）

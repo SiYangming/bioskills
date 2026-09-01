@@ -10,7 +10,7 @@
    python main.py --list-commands   # 列出支持的子命令
 
 命令逻辑迁移自 snakemake.smk/isoseq.smk/isoseq.py/lima_analysis.py
-与 workflow/modules/lima/snakemake/local/lima.smk：lima <reads> <primers> <out> [-j N] [extra]。
+与 workflow/modules/lima/snakemake/lima.smk：lima <reads> <primers> <out> [-j N] [extra]。
 输出扩展名根据输入格式自动推断（bam/fasta.gz/fastq.gz/...）。
 """
 

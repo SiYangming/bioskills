@@ -1,88 +1,59 @@
-# stringtie 软件级总览元数据
-# ---------------------------------------------------------------------------
-# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
-# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
-# ---------------------------------------------------------------------------
-
 software: stringtie
 canonical: stringtie
 category: transcriptome
-description: >
-  StringTie 是长读/短读 RNA-seq 的转录本组装与定量工具：
-  stringtie <bam> 基于比对结果重构转录本（支持 --conservative -L -R 长读模式），
-  stringtie --merge 合并多样本 GTF 得到非冗余转录本集，
-  是 nanoseq 流程的转录本组装与合并核心（含坐标修复 fix_gtf 前处理）。
+description: 'StringTie 是长读/短读 RNA-seq 的转录本组装与定量工具： stringtie <bam> 基于比对结果重构转录本（支持
+  --conservative -L -R 长读模式）， stringtie --merge 合并多样本 GTF 得到非冗余转录本集， 是 nanoseq 流程的转录本组装与合并核心（含坐标修复
+  fix_gtf 前处理）。
 
+  '
 homepage: https://ccb.jhu.edu/software/stringtie/
 license: Artistic-2.0
-
-# 各实现支持的 stringtie 版本可能不同 —— 上游官方仓库的升级节奏通常快于 native 的锁定版本。
 software_versions:
-  - id: stringtie_native
-    stringtie: "3.0.3"
-    source: "bioconda::stringtie=3.0.3（environment.yml 已 pin；容器走 bookworm-slim + micromamba 引导 /opt/env）"
-    note: "stringtie 不在 Debian bookworm apt；3.0.3 与 nf-core 当前 pin 一致。"
-  - id: stringtie_nextflow_nfcore
-    module_version: "nf-core master（2026-09）"
-    stringtie: "3.0.3"
-    source: "bioconda::stringtie=3.0.3（modules/nf-core/stringtie/{stringtie,merge}/environment.yml）"
-    note: "nf-core 有 stringtie/stringtie 与 stringtie/merge 两个子模块，均 pin bioconda::stringtie=3.0.3。"
-  - id: stringtie_snakemake_wrappers
-    wrapper_tag: "v3.13.0"
-    stringtie: "官方无 wrapper（bio/stringtie 404）"
-    source: "—"
-    note: "2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/stringtie 返回 404；Snakemake 场景请使用 stringtie_snakemake_local。"
-  - id: stringtie_nextflow_local
-    stringtie: "未固定（用户按 main.nf 中 conda/container 自行声明）"
-  - id: stringtie_snakemake_local
-    stringtie: "3.0.3"
-    source: "自维护 stringtie.smk（迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/run_stringtie.sh）"
-    note: "rule 内 conda 指向 bioconda::stringtie=3.0.3。"
-
-# 可用实现清单（按推荐优先级排序）
+- id: stringtie_native
+  stringtie: 3.0.3
+  source: bioconda::stringtie=3.0.3（environment.yml 已 pin；容器走 bookworm-slim + micromamba
+    引导 /opt/env）
+  note: stringtie 不在 Debian bookworm apt；3.0.3 与 nf-core 当前 pin 一致。
+- id: stringtie_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  stringtie: 3.0.3
+  source: bioconda::stringtie=3.0.3（modules/nf-core/stringtie/{stringtie,merge}/environment.yml）
+  note: nf-core 有 stringtie/stringtie 与 stringtie/merge 两个子模块，均 pin bioconda::stringtie=3.0.3。
+- id: stringtie_snakemake_wrappers
+  wrapper_tag: v3.13.0
+  stringtie: 官方无 wrapper（bio/stringtie 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/stringtie
+    返回 404；Snakemake 场景请使用 stringtie_snakemake_local。
+- id: stringtie_nextflow_local
+  stringtie: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: stringtie_snakemake_local
+  stringtie: 3.0.3
+  source: 自维护 stringtie.smk（迁移自 snakemake.smk/nanoseq.smk/nanoseq.sh/run_stringtie.sh）
+  note: rule 内 conda 指向 bioconda::stringtie=3.0.3。
 implementations:
-  - id: stringtie_native
-    path: native
-    source_type: custom
-    type: native
-    version: "3.0.3-v1.0"
-    priority: high
-    when_to_use: >
-      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
-      覆盖 assemble / merge / fix_gtf 三段链路，自动注入线程。
+- id: stringtie_native
+  path: native
+  source_type: custom
+  type: native
+  version: 3.0.3-v1.0
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖 assemble
+    / merge / fix_gtf 三段链路，自动注入线程。
 
-  - id: stringtie_nextflow_nfcore
-    path: nextflow/nf-core
-    source_type: official
-    type: nextflow_nfcore
-    version: "master"
-    priority: medium
-    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时（nf-core 官方子模块 stringtie/stringtie + stringtie/merge）。
-
-  - id: stringtie_nextflow_local
-    path: nextflow/local
-    source_type: custom
-    type: nextflow_local
-    version: ""
-    priority: low
-    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块。
-
-  - id: stringtie_snakemake_wrappers
-    path: snakemake/snakemake-wrappers
-    source_type: official
-    type: snakemake_wrappers
-    version: "v3.13.0"
-    priority: medium
-    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
-    note: "官方 snakemake-wrappers 暂无 bio/stringtie wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走 stringtie_snakemake_local。"
-
-  - id: stringtie_snakemake_local
-    path: snakemake/local
-    source_type: custom
-    type: snakemake_local
-    version: "0.1.0"
-    priority: low
-    when_to_use: snakemake-wrappers 缺失（当前正是如此），使用自维护 stringtie.smk。
-
-# 默认推荐路径（Agent 路由用）
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/stringtie
+    quay_biocontainers: quay.io/biocontainers/stringtie
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
+      镜像
+- id: stringtie_snakemake_wrappers
+  path: snakemake
+  source_type: official
+  type: snakemake_local
+  version: v3.13.0
+  priority: medium
+  when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+  note: 官方 snakemake-wrappers 暂无 bio/stringtie wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走
+    stringtie_snakemake_local。
 default_implementation: stringtie_native

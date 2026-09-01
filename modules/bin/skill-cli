@@ -7,19 +7,17 @@
   schema        从 meta.yaml 导出 JSON Schema
   run           直接调用某个 native 技能
 
-目录模式（支持的实现路径形状）：
+目录模式（支持的实现路径形状，单层化）：
   modules/<sw>/native/meta.yaml
-  modules/<sw>/nextflow/nf-core/meta.yaml
-  modules/<sw>/nextflow/local/meta.yaml
-  modules/<sw>/snakemake/snakemake-wrappers/meta.yaml
-  modules/<sw>/snakemake/local/meta.yaml
-  modules/<sw>/custom/meta.yaml                        # 旧版兼容
-  modules/<sw>/official_*/meta.yaml                     # 旧版兼容
+  modules/<sw>/nextflow/meta.yaml          # 有实际 Nextflow 实现才建
+  modules/<sw>/snakemake/meta.yaml         # 有实际 Snakemake 规则才建
+  官方（nf-core / snakemake-wrappers）信息记录在各实现 README.md / 软件级 meta.yaml，
+  不建独立目录。
 
 示例：
   skill-cli scan
   skill-cli validate modules/samtools/native
-  skill-cli validate modules/samtools/nextflow/nf-core
+  skill-cli validate modules/samtools/snakemake
   skill-cli schema modules/samtools/native/meta.yaml
   skill-cli run samtools -- index sorted.bam
 """
@@ -66,18 +64,11 @@ def _impl_from_path(meta_path: Path) -> str:
     key = "/".join(tail)
     mapping = {
         "native": "native",
-        "nextflow/nf-core": "nextflow_nfcore",
-        "nextflow/local": "nextflow_local",
-        "snakemake/snakemake-wrappers": "snakemake_wrappers",
-        "snakemake/local": "snakemake_local",
+        "nextflow": "nextflow_local",
+        "snakemake": "snakemake_local",
     }
     if key in mapping:
         return mapping[key]
-    # 兼容旧目录名
-    if tail == ["official_nfcore"]:
-        return "nextflow_nfcore"
-    if tail == ["official_snakemake"]:
-        return "snakemake_wrappers"
     return "unknown"
 
 
@@ -85,14 +76,13 @@ def _meta_paths() -> list[Path]:
     """枚举全部实现级 meta.yaml（不含软件级 meta.yaml）。"""
     patterns = [
         "*/native/meta.yaml",
-        "*/nextflow/*/meta.yaml",
-        "*/snakemake/*/meta.yaml",
-        "*/official_*/meta.yaml",       # 兼容旧结构
+        "*/nextflow/meta.yaml",
+        "*/snakemake/meta.yaml",
     ]
     found: set[Path] = set()
     for pat in patterns:
         for p in SKILLS_ROOT.glob(pat):
-            # 过滤软件级 meta.yaml 与 custom 目录
+            # 过滤软件级 meta.yaml
             if not _is_impl_meta(p):
                 continue
             found.add(p.resolve())

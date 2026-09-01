@@ -1,7 +1,7 @@
 # gnu_sort / native
 
 自包含的 GNU sort 驱动实现（`source_type: custom`），命令逻辑迁移自
-`snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/local/gnu_sort.smk`（`sort [args] <in> > <out>.sorted`）。
+`snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/gnu_sort.smk`（`sort [args] <in> > <out>.sorted`）。
 
 ## 能力
 
@@ -58,4 +58,4 @@ bash test/run_test.sh
 ## 说明
 
 - 成功后会在输出文件同目录写 `versions.yml`（与 nf-core/gnu/sort 对齐）。
-- 与 isoseq.smk 对应关系：`sort` ← `workflow/modules/gnu_sort/snakemake/local/gnu_sort.smk`（`sort_gtf` 的通用版）。
+- 与 isoseq.smk 对应关系：`sort` ← `workflow/modules/gnu_sort/snakemake/gnu_sort.smk`（`sort_gtf` 的通用版）。

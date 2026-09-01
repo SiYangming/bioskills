@@ -1,0 +1,49 @@
+# orfanage / snakemake / local —— 自维护 Snakemake rule
+
+id: orfanage_snakemake_local
+version: "1.0.0"
+software: orfanage
+type: snakemake_local
+source_type: custom
+
+summary: "Custom Snakemake rule for orfanage（从 flrnaseq.smk/orfrange_archive/orfanage.smk 迁移，自包含）。"
+
+agent_guidance:
+  when_to_use: "snakemake-wrappers 官方缺失，Snakemake 场景使用本目录迁移规则。"
+  recommendation_priority: "Low（snakemake-wrappers 不可用；native 优先）。"
+  enabled: true
+
+software_versions:
+  orfanage: "1.2.0（bioconda::orfanage=1.2.0）"
+  source: "迁移自 flrnaseq.smk/orfrange_archive/orfanage.smk"
+  note: "rule 未固定 conda/container 时，由执行环境提供 orfanage 二进制。"
+
+inputs:
+  query_dir:
+    type: directory
+    format: [gff3]
+    required: true
+    description: "包含预测 GFF3 的目录（优先 *.transdecoder.gff3）"
+  reference:
+    type: file
+    format: [fasta]
+    required: false
+  templates:
+    type: string
+    required: false
+
+outputs:
+  orfanage_gtf:
+    type: file
+    format: gtf
+    description: "ORFanage 输出 GTF"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "orfanage.smk"
+  wrapper_template: ""
+  rule_example: |
+    include: "modules/orfanage/snakemake/orfanage.smk"
+    rule all:
+        input: "results/ORFANAGE/{sample}/orfanage.gtf"

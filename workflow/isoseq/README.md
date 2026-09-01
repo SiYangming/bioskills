@@ -31,7 +31,7 @@ subreads ──> [pbccs] ──> HiFi CCS ──> [lima] ──> 去引物/拆�
 | merge     | `modules/gstama/native/`   | `python main.py merge ...`        |
 
 每个软件技能内同时提供 `nextflow/nf-core/`（官方模块说明层）与
-`snakemake/local/rule_*.smk`（迁移自原流程的规则）实现。
+`snakemake/rule_*.smk`（迁移自原流程的规则）实现。
 
 ## 用法
 
@@ -56,7 +56,7 @@ python isoseq/isoseq.py ... --real
 ### 2. Snakemake
 
 参考 `workflow_skeleton/Snakefile.template`，各步骤规则已迁移到
-`modules/<sw>/snakemake/local/*.smk`（文件名无 `rule_` 前缀），直接 include 即可。
+`modules/<sw>/snakemake/*.smk`（文件名无 `rule_` 前缀），直接 include 即可。
 
 流程级示例配置已随模板保留在 `workflow_skeleton/config/`：
 

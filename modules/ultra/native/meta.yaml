@@ -1,7 +1,7 @@
 # ultra native 自包含实现元数据
 # ---------------------------------------------------------------------------
 # source_type: custom —— 本地全量自维护（命令逻辑迁移自
-#   snakemake.smk/isoseq.smk/isoseq.py/ULTRA_align.py + workflow/modules/ultra/snakemake/local/ultra.smk）。
+#   snakemake.smk/isoseq.smk/isoseq.py/ULTRA_align.py + workflow/modules/ultra/snakemake/ultra.smk）。
 # 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
 # ---------------------------------------------------------------------------
 

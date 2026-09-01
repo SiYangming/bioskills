@@ -84,3 +84,8 @@ nanoseq 流程中 dorado **无 shell 脚本**（`nanoseq.sh/` 下没有 dorado �
 
 * `legacy/README.md`（config 段说明）
 
+
+## 历史说明（来自原 legacy/README.md）
+
+nanoseq 流程中 dorado 无 shell 脚本（nanoseq.sh/ 下没有 dorado 脚本），
+仅通过 config 的 dorado 段配置 basecall 参数；native 实现见 main.py 的 basecall 子命令。

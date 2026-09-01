@@ -44,36 +44,28 @@ modules/
 ├── bin/                         # 技能库 CLI 管理工具（skill-cli validate / scan / schema / run）
 │
 ├── fastqc/                      # 【原子技能】软件归档主目录（canonical = bioconda/nf-core/Debian 统一名）
-│   ├── meta.yaml                # 软件级总览：implementations[5] 按优先级 + default_implementation + software_versions
+│   ├── meta.yaml                # 软件级总览：实际存在的实现 + default_implementation + software_versions + 容器/conda/github 链接
 │   │
 │   ├── native/                  # [自定义/最高优先级] Native 自包含（source_type=custom, type=native）
 │   │   ├── meta.yaml            # Schema + software_versions + environment + optimization + execution
 │   │   ├── main.py              # 标准入口驱动（参数校验 + 线程/内存/临时目录自动传参）
-│   │   ├── environment.yml      # Conda 环境（保留，离线 / 非容器场景备选）
-│   │   ├── Dockerfile           # Docker：debian:bookworm-slim + apt 默认路线 + 清理四连
-│   │   ├── Apptainer.def        # Apptainer：同一 apt 默认路线 + %test 版本号断言
+│   │   ├── *.py / *.sh          # 经典脚本直接放 native/ 根（不再分 legacy/）
+│   │   ├── environment.yml / Dockerfile / Apptainer.def   # 或仅在 meta.yaml 记录 quay.io/bioconda/github 链接
 │   │   ├── test/                # 最小自动化回归（generate_data.py + run_test.sh）
 │   │   └── README.md
 │   │
-│   ├── nextflow/
-│   │   ├── nf-core/             # [官方说明] nextflow_nfcore（source_type=official）
-│   │   │   ├── meta.yaml        #   submodules[] 与 modules/nf-core/<tool>/ 目录严格对齐 + software_versions
-│   │   │   ├── module.json      #   上游仓库映射 + pinned commit + install_command
-│   │   │   └── README.md        #   顶部强提示：仅说明层 / 真正执行需 nf modules install
-│   │   └── local/               # [自定义] nextflow_local（source_type=custom）
-│   │       ├── meta.yaml        #   未启用时 version="" 占位
-│   │       └── README.md
+│   ├── nextflow/                # [自定义] 有实际 Nextflow 实现才建（单层，不再分 nf-core/local）
+│   │   ├── main.nf.template 等  #   本地实现文件
+│   │   ├── meta.yaml            #   source_type=custom, type=nextflow_local
+│   │   └── README.md            #   官方 nf-core/modules 链接 + submodules + 版本差异
 │   │
-│   └── snakemake/
-│       ├── snakemake-wrappers/  # [官方说明] snakemake_wrappers（source_type=official）
-│       │   ├── meta.yaml        #   submodules[] 与 bio/<tool>/ 目录严格对齐 + software_versions
-│       │   ├── wrapper.py       #   本地桥接（不做官方源码重分发）
-│       │   └── README.md        #   顶部强提示：仅说明层 / 真正执行靠 Snakemake 运行时 wrapper: 句柄
-│       └── local/               # [自定义] snakemake_local（source_type=custom）
-│           ├── meta.yaml
-│           └── README.md
+│   └── snakemake/               # [自定义] 有实际 Snakemake 规则才建（单层）
+│       ├── *.smk                #   本地规则直接放这里
+│       ├── scripts/             #   规则配套脚本（可选）
+│       ├── meta.yaml            #   source_type=custom, type=snakemake_local
+│       └── README.md            #   官方 snakemake-wrappers 链接 + submodules + 版本差异
 │
-├── samtools/                    # 【黄金样例】submodules 抓官方目录 + software_versions 三方差异声明 + apt 最小化
+├── samtools/                    # 【黄金样例】software_versions 差异声明 + apt 最小化
 │   └── ...
 ├── bwa-mem2/                    # canonical 示例：Debian/Bioconda 统一 "bwa-mem2"，避免 bwa_mem2/bwa2 别名
 │   └── ...
