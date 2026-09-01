@@ -1,83 +1,105 @@
-# stringtie 自维护 Snakemake 规则
 # ---------------------------------------------------------------------------
-# 迁移自：snakemake.smk/nanoseq.smk/nanoseq.sh/run_stringtie.sh
-# 去掉 nohup/PID/LOCK 后台运行封装、绝对路径（./bin/stringtie-3.0.3.Linux_x86_64/stringtie）
-# 与 GNU parallel 依赖；三段链路拆为三个 rule，命令参数内联。
-# 使用前准备 envs/stringtie.yaml：
-#   channels: [conda-forge, bioconda]
-#   dependencies: [stringtie=3.0.3]
+# 规则迁移自 snakemake.smk/nanoseq.smk（原始 workflow/rules/）。
+# 注意：本规则为「原始完整版」，依赖流程级全局（config["output_dir"]、
+# SAMPLES、get_gtf/get_fastq/get_ref_fasta/get_runner 等，由流程 common.smk 提供）。
+# 组装完整流程时请 include 各模块规则 + 流程 common.smk。
 # ---------------------------------------------------------------------------
-
-# Step 1: stringtie 组装（long-read 模式，nanoseq 参数内联）
 rule stringtie_assemble:
     input:
-        bam="alignment/{sample}.sorted.bam",
-        gtf=config.get("gtf_annotation", "ref/gencode.v49.annotation.gtf")
+        bam = os.path.join(config["output_dir"], "01_MINIMAP2_ALIGN", "SORTED_BAM", "{sample}.sorted.bam"),
+        consensus = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "CONSENSUS_FASTA", "{sample}.flair.collapse.fasta"),
+        gtf = get_gtf
     output:
-        gtf="assembled/{sample}.stringtie.gtf"
+        gtf = temp(os.path.join(config["output_dir"], "03_STRINGTIE", "ASSEMBLED_GTF", "{sample}.stringtie.gtf"))
+    log:
+        os.path.join(config["output_dir"], "LOGS", "STRINGTIE_{sample}_stringtie.log")
     params:
-        stringtie_bin="stringtie",
-        min_transcript_len=200
-    threads: 8
+        threads = config["stringtie"]["threads"],
+        min_len = config["stringtie"]["min_transcript_len"],
+        args = config["stringtie"]["args"],
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["stringtie"]["docker_image"],
+        root_dir = os.getcwd(),
+        bin_path = config["stringtie"].get("stringtie_bin", "")
+    threads: config["stringtie"]["threads"]
     conda:
-        "envs/stringtie.yaml"
-    log:
-        "logs/stringtie/{sample}_stringtie.log"
+        "../envs/stringtie.yaml"
+    container:
+        config["stringtie"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.gtf})" "$(dirname {log})"
-        "{params.stringtie_bin}" {input.bam} \
-            --conservative -L -R \
-            -G {input.gtf} \
-            -o {output.gtf} \
-            -l {wildcards.sample} \
-            -m {params.min_transcript_len} \
-            -p {threads} >> {log} 2>&1
-        test -s {output.gtf}
+        OUTDIR="$(dirname {output.gtf})"
+        mkdir -p "$OUTDIR"
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd stringtie {input.bam} {params.args} -G {input.gtf} -o {output.gtf} -l {wildcards.sample} -m {params.min_len} -p {threads} > {log} 2>&1
+            VER=$(python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd stringtie --version 2>> {log} | head -n1 || echo unknown)
+        elif [ -n "{params.bin_path}" ]; then
+            "{params.bin_path}" {input.bam} {params.args} -G {input.gtf} -o {output.gtf} -l {wildcards.sample} -m {params.min_len} -p {threads} > {log} 2>&1
+            VER=$("{params.bin_path}" --version 2>> {log} | head -n1 || echo unknown)
+        else
+            stringtie {input.bam} {params.args} -G {input.gtf} -o {output.gtf} -l {wildcards.sample} -m {params.min_len} -p {threads} > {log} 2>&1
+            VER=$(stringtie --version 2>> {log} | head -n1 || echo unknown)
+        fi
+        echo "stringtie_version: $VER" >> {log}
         """
 
-# Step 2: 坐标修复（awk 内联，$4>$5 交换；纯文本，无需 stringtie）
-rule stringtie_fix_gtf:
+rule fix_gtf:
     input:
-        gtf="assembled/{sample}.stringtie.gtf"
+        gtf = os.path.join(config["output_dir"], "03_STRINGTIE", "ASSEMBLED_GTF", "{sample}.stringtie.gtf")
     output:
-        gtf="assembled/fixed/{sample}.stringtie.fixed.gtf"
-    threads: 2
+        fixed_gtf = os.path.join(config["output_dir"], "03_STRINGTIE", "ASSEMBLED_GTF", "FIXED_GTF", "{sample}.stringtie.fixed.gtf")
     log:
-        "logs/stringtie/{sample}_fix_gtf.log"
+        os.path.join(config["output_dir"], "LOGS", "STRINGTIE_{sample}_fix_gtf.log")
+    params:
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["stringtie"]["docker_image"],
+        root_dir = os.getcwd()
+    conda:
+        "../envs/stringtie.yaml"
+    container:
+        config["stringtie"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.gtf})" "$(dirname {log})"
-        awk -F'\\t' -v OFS='\\t' '/^#/{{print;next}} $4>$5{{t=$4;$4=$5;$5=t}} {{print}}' \
-            {input.gtf} > {output.gtf} 2>> {log}
-        test -s {output.gtf}
+        OUTDIR="$(dirname {output.fixed_gtf})"
+        mkdir -p "$OUTDIR"
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd bash -lc 'awk -F\"\\t\" -v OFS=\"\\t\" -f workflow/scripts/fix_gtf.awk {input.gtf} > {output.fixed_gtf}' 2> {log}
+        else
+            awk -F'\\t' -v OFS='\\t' -f workflow/scripts/fix_gtf.awk {input.gtf} > {output.fixed_gtf} 2> {log}
+        fi
         """
 
-# Step 3: stringtie --merge 多样本非冗余合并（GTF 列表由规则收集）
 rule stringtie_merge:
     input:
-        gtf_list="stringtie_gtf_list.txt",
-        gtf=config.get("gtf_annotation", "ref/gencode.v49.annotation.gtf")
+        gtfs = expand(os.path.join(config["output_dir"], "03_STRINGTIE", "ASSEMBLED_GTF", "FIXED_GTF", "{sample}.stringtie.fixed.gtf"), sample=SAMPLES.keys()),
+        gtf = config["gtf_annotation"]
     output:
-        gtf="merged/stringtie_merged_nonredundant.gtf"
-    params:
-        stringtie_bin="stringtie",
-        label="MSTRG",
-        min_transcript_len=200
-    threads: 4
-    conda:
-        "envs/stringtie.yaml"
+        merged_gtf = os.path.join(config["output_dir"], "03_STRINGTIE", "MERGED_GTF", "stringtie_merged_nonredundant.gtf"),
+        gtf_list = os.path.join(config["output_dir"], "03_STRINGTIE", "GTF_LIST.txt")
     log:
-        "logs/stringtie/stringtie_merge.log"
+        os.path.join(config["output_dir"], "LOGS", "STRINGTIE_stringtie_merge.log")
+    params:
+        min_len = config["stringtie"]["min_transcript_len"],
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["stringtie"]["docker_image"],
+        root_dir = os.getcwd(),
+        bin_path = config["stringtie"].get("stringtie_bin", "")
+    conda:
+        "../envs/stringtie.yaml"
+    container:
+        config["stringtie"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.gtf})" "$(dirname {log})"
-        find assembled/fixed -name "*.fixed.gtf" -size +0 > {input.gtf_list}
-        "{params.stringtie_bin}" --merge \
-            -G {input.gtf} \
-            -o {output.gtf} \
-            -l {params.label} \
-            -m {params.min_transcript_len} \
-            {input.gtf_list} >> {log} 2>&1
-        test -s {output.gtf}
+        ls {input.gtfs} > {output.gtf_list}
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd stringtie --merge -G {input.gtf} -o {output.merged_gtf} -l MSTRG -m {params.min_len} {output.gtf_list} > {log} 2>&1
+            VER=$(python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd stringtie --version 2>> {log} | head -n1 || echo unknown)
+        elif [ -n "{params.bin_path}" ]; then
+            "{params.bin_path}" --merge -G {input.gtf} -o {output.merged_gtf} -l MSTRG -m {params.min_len} {output.gtf_list} > {log} 2>&1
+            VER=$("{params.bin_path}" --version 2>> {log} | head -n1 || echo unknown)
+        else
+            stringtie --merge -G {input.gtf} -o {output.merged_gtf} -l MSTRG -m {params.min_len} {output.gtf_list} > {log} 2>&1
+            VER=$(stringtie --version 2>> {log} | head -n1 || echo unknown)
+        fi
+        echo "stringtie_version: $VER" >> {log}
         """

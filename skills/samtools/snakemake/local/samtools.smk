@@ -1,3 +1,9 @@
+# ---------------------------------------------------------------------------
+# 规则迁移自 snakemake.smk/nanoseq.smk（原始 workflow/rules/）。
+# 注意：本规则为「原始完整版」，依赖流程级全局（config["output_dir"]、
+# SAMPLES、get_gtf/get_fastq/get_ref_fasta/get_runner 等，由流程 common.smk 提供）。
+# 组装完整流程时请 include 各模块规则 + 流程 common.smk。
+# ---------------------------------------------------------------------------
 rule samtools_sort:
     input:
         sam = os.path.join(config["output_dir"], "01_MINIMAP2_ALIGN", "BAM", "{sample}.sam")

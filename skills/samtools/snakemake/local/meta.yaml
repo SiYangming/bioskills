@@ -1,29 +1,22 @@
-# samtools / snakemake / local 占位 meta.yaml
-# ---------------------------------------------------------------------------
-# 当需要自维护的 Snakemake rule（官方 wrapper 缺失或定制场景）时：
-#   1) 把 id/version/inputs/outputs/execution 补全
-#   2) 在同级目录编写 rule_<name>.smk / .py 文件
-# ---------------------------------------------------------------------------
-
+---
 id: samtools_snakemake_local
-version: "0.0.0-placeholder"
+version: 0.0.0-placeholder
 software: samtools
 type: snakemake_local
 source_type: custom
-
-summary: "Placeholder for custom samtools Snakemake rules (populate when needed)."
-
+summary: Placeholder for custom samtools Snakemake rules (populate when needed).
 agent_guidance:
-  when_to_use: "snakemake-wrappers 缺失，或需要本地定制 rule / 资源配置时使用。"
-  recommendation_priority: "Low（snakemake-wrappers 优先）。"
-  enabled: false  # 占位：未补 rule_*.smk / inputs/outputs 前，Agent 不得路由到此实现。
-
+  when_to_use: snakemake-wrappers 缺失，或需要本地定制 rule / 资源配置时使用。
+  recommendation_priority: Low（snakemake-wrappers 优先）。
+  enabled: false
 software_versions:
   status: placeholder
-  note: "本地 Snakemake 自维护规则尚未填充版本信息；实际启用时需按具体 rule 二进制来源补 samtools / htslib 版本与构建路线。"
-
+  note: 本地 Snakemake 自维护规则尚未填充版本信息；实际启用时需按具体 rule 二进制来源补 samtools / htslib 版本与构建路线。
 inputs: {}
 outputs: {}
 execution:
   mode: snakemake_rule
-  wrapper_template: ""
+  wrapper_template: ''
+  rule_files:
+  - samtools.smk
+  rule_example: 'include: "skills/samtools/snakemake/local/samtools.smk"'

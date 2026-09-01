@@ -1,97 +1,104 @@
-# flair 自维护 Snakemake 规则
 # ---------------------------------------------------------------------------
-# 迁移自：snakemake.smk/nanoseq.smk/nanoseq.sh/run_flair_consensus.sh
-# 去掉 nohup/PID/LOCK 后台运行封装与 $HOME/miniconda3 绝对路径依赖：
-#   - 三段链路拆为三个 rule：flair_bam2bed12 / flair_annotate / flair_collapse
-#   - 路径模板化：alignment/{sample}.sorted.bam -> bed12/ -> annotated/ -> consensus/
-#   - flair collapse 保留 direct RNA-seq 优化参数（--trust_ends 等，值内联）
-# 使用前准备 envs/flair.yaml：
-#   channels: [conda-forge, bioconda]
-#   dependencies: [flair=3.0.0b1, minimap2]
+# 规则迁移自 snakemake.smk/nanoseq.smk（原始 workflow/rules/）。
+# 注意：本规则为「原始完整版」，依赖流程级全局（config["output_dir"]、
+# SAMPLES、get_gtf/get_fastq/get_ref_fasta/get_runner 等，由流程 common.smk 提供）。
+# 组装完整流程时请 include 各模块规则 + 流程 common.smk。
 # ---------------------------------------------------------------------------
-
-# Step 1: BAM -> BED12（bam2Bed12 写 stdout）
-rule flair_bam2bed12:
+rule bam2bed12:
     input:
-        bam="alignment/{sample}.sorted.bam"
+        bam = os.path.join(config["output_dir"], "01_MINIMAP2_ALIGN", "SORTED_BAM", "{sample}.sorted.bam"),
+        summary = os.path.join(config["output_dir"], "01_MINIMAP2_ALIGN", "ALIGNMENT_STATS_SUMMARY.txt")
     output:
-        bed12="bed12/{sample}.bed12"
-    params:
-        bam2bed12_bin="bam2Bed12"
-    threads: 4
-    conda:
-        "envs/flair.yaml"
+        bed12 = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "BED12", "{sample}.bed12")
     log:
-        "logs/flair/{sample}_bam2bed12.log"
+        os.path.join(config["output_dir"], "LOGS", "FLAIR_CONSENSUS_{sample}_bam2bed12.log")
+    params:
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["flair"]["docker_image"],
+        root_dir = os.getcwd()
+    conda:
+        "../envs/flair.yaml"
+    container:
+        config["flair"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.bed12})" "$(dirname {log})"
-        "{params.bam2bed12_bin}" -i {input.bam} > {output.bed12} 2>> {log}
-        test -s {output.bed12}
+        OUTDIR="$(dirname {output.bed12})"
+        mkdir -p "$OUTDIR"
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd bash -lc 'bedtools bamtobed -bed12 -i {input.bam} | python3 workflow/scripts/bed12_add_trailing_commas.py > {output.bed12}' 2> {log}
+            VER=$(python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd bedtools --version 2>> {log} | head -n1 || echo unknown)
+        else
+            bedtools bamtobed -bed12 -i {input.bam} | python3 workflow/scripts/bed12_add_trailing_commas.py > {output.bed12} 2> {log}
+            VER=$(bedtools --version 2>> {log} | head -n1 || echo unknown)
+        fi
+        echo "bedtools_version: $VER" >> {log}
         """
 
-# Step 2: BED12 + GTF -> 带基因注释 BED（identify_gene_isoform）
 rule flair_annotate:
     input:
-        bed12="bed12/{sample}.bed12",
-        gtf=config.get("gtf_annotation", "ref/gencode.v49.annotation.gtf")
+        bed12 = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "BED12", "{sample}.bed12"),
+        gtf = get_gtf
     output:
-        annotated_bed="annotated/{sample}.annotated.bed"
-    params:
-        identify_bin="identify_gene_isoform"
-    threads: 4
-    conda:
-        "envs/flair.yaml"
+        annotated_bed = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "ANNOTATED_BED", "{sample}.annotated.bed")
     log:
-        "logs/flair/{sample}_flair_annotate.log"
+        os.path.join(config["output_dir"], "LOGS", "FLAIR_CONSENSUS_{sample}_flair_annotate.log")
+    params:
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["flair"]["docker_image"],
+        root_dir = os.getcwd()
+    conda:
+        "../envs/flair.yaml"
+    container:
+        config["flair"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.annotated_bed})" "$(dirname {log})"
-        "{params.identify_bin}" {input.bed12} {input.gtf} {output.annotated_bed} 2>> {log}
-        test -s {output.annotated_bed}
+        OUTDIR="$(dirname {output.annotated_bed})"
+        mkdir -p "$OUTDIR"
+        # identify_gene_isoform requires positional arguments: bed gtf outfilename
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd python3 -m flair.identify_gene_isoform {input.bed12} {input.gtf} {output.annotated_bed} > {log} 2>&1
+        else
+            python3 -m flair.identify_gene_isoform {input.bed12} {input.gtf} {output.annotated_bed} > {log} 2>&1
+        fi
         """
 
-# Step 3: flair collapse 聚类去冗余（direct RNA-seq 优化参数，值内联自 nanoseq config）
 rule flair_collapse:
     input:
-        annotated_bed="annotated/{sample}.annotated.bed",
-        genome=config.get("genome_fasta", "ref/hg38.fa"),
-        reads="fastq/{sample}.fastq.gz",
-        gtf=config.get("gtf_annotation", "ref/gencode.v49.annotation.gtf")
+        annotated_bed = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "ANNOTATED_BED", "{sample}.annotated.bed"),
+        fastq = get_fastq,
+        genome = get_ref_fasta,
+        gtf = get_gtf
     output:
-        fasta="consensus/{sample}.flair.collapse.fasta",
-        counts="consensus/{sample}.isoform.counts.txt"
-    params:
-        flair_bin="flair",
-        min_support=3,
-        end_window=100,
-        intpriming_threshold=30,
-        mm2_args="-I8g,--MD"
-    threads: 8
-    conda:
-        "envs/flair.yaml"
+        consensus = os.path.join(config["output_dir"], "02_FLAIR_CONSENSUS", "CONSENSUS_FASTA", "{sample}.flair.collapse.fasta")
     log:
-        "logs/flair/{sample}_flair_collapse.log"
+        os.path.join(config["output_dir"], "LOGS", "FLAIR_CONSENSUS_{sample}_flair_collapse.log")
+    params:
+        threads = config["flair"]["threads"],
+        args = config["flair"]["args"],
+        out_prefix = lambda wildcards, output: output.consensus.replace(".flair.collapse.fasta", ""),
+        exec_mode = config.get("exec_mode", "native"),
+        docker_image = config["flair"]["docker_image"],
+        root_dir = os.getcwd(),
+        bin_path = config["flair"].get("flair_bin", "")
+    threads: config["flair"]["threads"]
+    conda:
+        "../envs/flair.yaml"
+    container:
+        config["flair"]["docker_image"]
     shell:
         """
-        mkdir -p "$(dirname {output.fasta})" "$(dirname {log})"
-
-        "{params.flair_bin}" collapse \
-            -q {input.annotated_bed} \
-            -g {input.genome} \
-            -r {input.reads} \
-            -o "$(dirname {output.fasta})/{wildcards.sample}" \
-            -t {threads} \
-            -f {input.gtf} \
-            -s {params.min_support} \
-            -w {params.end_window} \
-            --trust_ends \
-            --remove_internal_priming \
-            --intprimingthreshold {params.intpriming_threshold} \
-            --stringent \
-            --check_splice \
-            --mm2_args={params.mm2_args} \
-            --quiet >> {log} 2>&1
-
-        test -s {output.fasta}
+        if [ "{params.exec_mode}" = "docker" ]; then
+            python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd flair collapse -q {input.annotated_bed} -g {input.genome} -r {input.fastq} -o {params.out_prefix} -t {threads} -f {input.gtf} {params.args} 2> {log}
+            VER=$(python3 workflow/scripts/docker_wrapper.py --image {params.docker_image} --volume {params.root_dir}:{params.root_dir} --workdir {params.root_dir} --cmd flair --version 2>> {log} | head -n1 || echo unknown)
+            cp {params.out_prefix}.isoforms.fa {output.consensus}
+        elif [ -n "{params.bin_path}" ]; then
+            "{params.bin_path}" collapse -q {input.annotated_bed} -g {input.genome} -r {input.fastq} -o {params.out_prefix} -t {threads} -f {input.gtf} {params.args} 2> {log}
+            VER=$("{params.bin_path}" --version 2>> {log} | head -n1 || echo unknown)
+            cp {params.out_prefix}.isoforms.fa {output.consensus}
+        else
+            flair collapse -q {input.annotated_bed} -g {input.genome} -r {input.fastq} -o {params.out_prefix} -t {threads} -f {input.gtf} {params.args} 2> {log}
+            VER=$(flair --version 2>> {log} | head -n1 || echo unknown)
+            cp {params.out_prefix}.isoforms.fa {output.consensus}
+        fi
+        echo "flair_version: $VER" >> {log}
         """

@@ -63,7 +63,7 @@ python skills/custom/flrnaseq/flrnaseq.py ... --real   # 真实执行
 | 流程 config + schemas | `workflow_skeleton/config/`                                                | 原 config/config.yaml + schemas/{config,samples}\_schema.yaml                      |
 | ORFanage 实现         | `skills/orfanage/`（独立模块）                                                   | 原 orfrange\_archive/ 已归位为 orfanage 技能（native/legacy 存原始文件）                        |
 | 批处理脚本               | `skills/td2/native/legacy/run_td2_orf_prediction.sh` + `LEGACY_run_smk.sh` | 原 flrnaseq.sh/run\_td2\_orf\_prediction.sh / run\_smk.sh                          |
-| Docker 包装脚本         | `workflow_skeleton/scripts/docker_wrapper.py`                             | 原 workflow/scripts/docker\_wrapper.py（docker/native/conda 三模式）                |
-| 原始 envs            | `workflow_skeleton/envs/`                                                  | 原 workflow/envs/{orffinder,python,td2,transdecoder}.yaml                          |
-| 原始规则               | `workflow_skeleton/LEGACY_RULES/`                                        | 原 workflow/rules/{common,orffinder,td2,transdecoder}.smk（完整原始版）                |
+| Docker 包装脚本         | `workflow_skeleton/scripts/docker_wrapper.py`                              | 原 workflow/scripts/docker\_wrapper.py（docker/native/conda 三模式）                    |
+| 原始 envs             | `workflow_skeleton/envs/`                                                  | 原 workflow/envs/{orffinder,python,td2,transdecoder}.yaml                          |
+| 原始规则                | `workflow_skeleton/LEGACY_RULES/`                                          | 原 workflow/rules/{common,orffinder,td2,transdecoder}.smk（完整原始版）                   |
 
