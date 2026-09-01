@@ -5,7 +5,7 @@
 # 也可用 nf-core/isoseq 的 Snakemake 迁移方案直接引用 snakemake-wrappers。
 # ---------------------------------------------------------------------------
 
-configfile: "config/config.yaml"
+configfile: "config.yaml"
 
 # 各步骤规则来自原子模块技能（已迁移原 isoseq.smk 的规则）
 include: "../../../modules/pbccs/snakemake/local/pbccs.smk"

@@ -6,11 +6,11 @@ from snakemake.utils import validate
 configfile: "config.yaml"
 
 # Validate configuration (optional, if schema exists)
-# validate(config, schema="config/config.schema.yaml")
+# validate(config, schema="config.yaml")
 
 # Parse samplesheet
 samplesheet_path = config.get("samplesheet", "test/samplesheet_local.csv")
-# validate(pd.read_csv(samplesheet_path), schema="config/samples.schema.yaml")
+# validate(pd.read_csv(samplesheet_path), schema="samples.schema.yaml")
 
 samples_df = pd.read_csv(samplesheet_path).fillna("")
 

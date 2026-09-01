@@ -1,0 +1,25 @@
+// workflow/nanoseq — Nextflow DSL2 骨架模板（占位）
+// ---------------------------------------------------------------------------
+// 迁移自 snakemake.smk/nanoseq.smk（Nanopore RNA-seq）。
+// 官方 nf-core/nanoseq 为独立仓库，本模板供本地组装参考：
+//   各原子模块见 modules/<sw>/nextflow/（local 或 nf-core 说明层）。
+// ---------------------------------------------------------------------------
+
+workflow NANOSEQ {
+    take:
+    ch_samplesheet   // [ meta, fastq 或 fast5 目录 ]
+
+    main:
+    // 可选前置：SRA 下载 / dorado 碱基识别（modules/sra-tools、modules/dorado）
+    // DORADO(ch_fast5, params.model)            // --with-dorado
+    MINIMAP2_ALIGN(ch_fastq, ch_reference)
+    SAMTOOLS_SORT(SAMTOOLS_SORT.in, params.samtools_sort_extra)
+    SAMTOOLS_INDEX(SAMTOOLS_SORT.out.bam)
+    SAMTOOLS_FLAGSTAT(SAMTOOLS_SORT.out.bam)
+    FLAIR_BAM2BED12(SAMTOOLS_SORT.out.bam)
+    FLAIR_ANNOTATE(FLAIR_BAM2BED12.out.bed12, ch_gtf)
+    FLAIR_COLLAPSE(FLAIR_ANNOTATE.out.annotated, ch_reference, ch_fastq, ch_gtf)
+    STRINGTIE_ASSEMBLE(SAMTOOLS_SORT.out.bam, ch_gtf)
+    STRINGTIE_MERGE(STRINGTIE_ASSEMBLE.out.gtf)
+    TRANSDECODER_ORF_PREDICTION(FLAIR_COLLAPSE.out.fasta)   // 或 TD2
+}
