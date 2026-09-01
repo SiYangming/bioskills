@@ -55,3 +55,4 @@ results/
 *.bed.gz
 *.html
 *.zip
+.DS_Store
