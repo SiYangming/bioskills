@@ -1,0 +1,98 @@
+# minimap2 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# 实现路径结构：
+#   modules/<software>/
+#   ├── native/
+#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
+#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
+#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
+#           local/              # 自定义 Snakemake 实现（source_type: custom）
+# ---------------------------------------------------------------------------
+
+software: minimap2
+canonical: minimap2
+category: alignment_utils
+description: >
+  minimap2 是通用的核酸序列比对工具，支持长读长（PacBio/ONT/Iso-Seq）与短读长、
+  基因组比对、转录组 splice-aware 比对、重叠群自比对（ava）等。
+  Iso-Seq 流程中用于把 polyA 清理后的 FLNC reads 比对到参考基因组。
+
+homepage: https://github.com/lh3/minimap2
+license: MIT
+
+# ---------------------------------------------------------------------------
+# 【必填】版本差异声明：native / nf-core / snakemake-wrappers 的上游二进制版本可能不同
+# （Debian apt 的 minimap2=2.24 vs bioconda 侧 2.28/2.30/2.31）。
+# 此字段让 Agent 在跨引擎迁移时一眼看到风险点。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    minimap2: "2.24"
+    build_route: "apt（debian:bookworm-slim，minimap2=2.24+dfsg-3）+ apt samtools（BAM 输出管线）"
+    source: "https://packages.debian.org/bookworm/minimap2"
+    note: "bookworm apt 仅提供 2.24，与 isoseq.smk 流程原配 2.28 有差异（2.24 足够本流程用途）；
+           若需完全对齐 2.28，可用 micromamba 装 bioconda::minimap2=2.28 并替换容器配方（见 native Dockerfile 注释）。"
+  nextflow_nfcore:
+    minimap2: "2.30"
+    module_version: "master@aa4e071（modules/nf-core/minimap2/align）"
+    source: "bioconda::minimap2=2.30 + bioconda::samtools=1.23.1（modules/nf-core/minimap2/align/environment.yml，2026-08 抓取）"
+    note: "早期 master pin 曾为 htslib=1.20 + minimap2=2.28 + samtools=1.20；nf-core 已 bump。"
+  nextflow_local:
+    minimap2: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    minimap2: "2.31"
+    wrapper_tag: "v3.13.0"
+    wrapper_utils: "0.9.0"
+    source: "bioconda minimap2=2.31 + samtools=1.24 + snakemake-wrapper-utils=0.9.0（bio/minimap2/aligner/environment.yaml）"
+    note: "bio/minimap2 仅有 aligner / index 两个 wrapper；切 wrapper tag 后务必核对版本。"
+  snakemake_local:
+    minimap2: "（继承 native 容器或显式 pin；未启用则写占位）"
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: minimap2_native
+    path: native
+    source_type: custom
+    type: native
+    version: "2.24-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标，
+      align 子命令输出 PAF 或 BAM（BAM 走 minimap2 | samtools sort | samtools view 管线）。
+
+  - id: minimap2_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master@aa4e071"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时。
+
+  - id: minimap2_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块。
+
+  - id: minimap2_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
+
+  - id: minimap2_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "1.0.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失或需要本地定制的 Snakemake rule。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: minimap2_native

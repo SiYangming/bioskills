@@ -3,7 +3,7 @@
 # 流程：subreads -> CCS(pbccs) -> 引物去除(lima) -> refine(isoseq3)
 #       -> BAM->FASTA(bamtools) -> polyA清理(gstama) -> 比对(minimap2/ultra)
 #       -> collapse(gstama) -> filelist(gstama) -> merge(gstama)
-# 本流程为**编排层**：默认调用 skills/ 下各原子模块的 default_implementation
+# 本流程为**编排层**：默认调用 modules/ 下各原子模块的 default_implementation
 # （通常是 native），也提供 Snakemake/Nextflow 骨架模板。
 # 迁移来源：snakemake.smk/isoseq.smk（原单体流程已拆分为原子模块技能）。
 # ---------------------------------------------------------------------------
@@ -19,13 +19,13 @@ summary: "PacBio Iso-Seq 全长转录组流程编排：pbccs -> lima -> isoseq3 
 description: |
   将原 /snakemake.smk/isoseq.smk 单体流程按「原子模块软件」拆分后重新编排：
   1) 每个工具（pbccs/lima/isoseq3/bamtools/gstama/minimap2/ultra/gunzip/gnu_sort）
-     成为独立的 skills/<software>/ 技能，各自含 native / nextflow / snakemake 实现；
+     成为独立的 modules/<software>/ 技能，各自含 native / nextflow / snakemake 实现；
   2) 本目录只负责**流程编排**（stages 声明 + Python 编排脚本 + 工作流骨架模板）；
   3) Snakemake 规则已迁移到各软件技能的 snakemake/local/rule_*.smk，
      Nextflow 模块参考 nf-core/isoseq（modules/nf-core/{pbccs,lima,isoseq/refine,...}）。
 
 agent_guidance:
-  when_to_use: "用户需要完整跑通 PacBio Iso-Seq 全长转录组（含双比对路径 minimap2 / uLTRA）时使用本编排；需要单步能力时直接调用 skills/<sw>/native/main.py。"
+  when_to_use: "用户需要完整跑通 PacBio Iso-Seq 全长转录组（含双比对路径 minimap2 / uLTRA）时使用本编排；需要单步能力时直接调用 modules/<sw>/native/main.py。"
   recommendation_priority: "Medium（复合流程编排层；单工具调用请走各软件 native 实现）。"
 
 stages:

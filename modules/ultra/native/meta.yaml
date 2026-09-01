@@ -1,0 +1,132 @@
+# ultra native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护（命令逻辑迁移自
+#   snakemake.smk/isoseq.smk/isoseq.py/ULTRA_align.py + workflow/modules/ultra/snakemake/local/ultra.smk）。
+# 对外暴露统一的 inputs/outputs/optimization Schema，供 Agent 与 CLI 复用。
+# ---------------------------------------------------------------------------
+
+id: ultra_native
+version: "0.1-v1.0"
+software: ultra
+type: native
+source_type: custom
+
+summary: "Self-contained uLTRA runner，覆盖 gunzip / index / align / sort 子命令，自动注入线程与 minimap2/namfinder/samtools 依赖路径。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现（uLTRA + minimap2 + namfinder + samtools 需在 PATH 或 conda env 中）。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: "ultra 子命令：gunzip|index|align|sort"
+  fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "参考基因组 FASTA（index 用；支持 .fa/.fasta，.gz 时自动先解压）"
+  gtf:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "参考注释 GTF（index 用；须先排序）"
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "参考基因组 FASTA（align 用；.gz 时自动先解压）"
+  reads:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "输入 reads（align 用，fasta/fastq；.gz 时自动先解压）"
+  index_dir:
+    type: string
+    required: false
+    cli_arg: positional
+    description: "uLTRA index 输出目录（align 用，含 *.pickle 与 *.db）"
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: "gunzip/sort 的输入文件（.gz 或 GTF）"
+  outdir:
+    type: string
+    required: false
+    cli_arg: "--outdir"
+    description: "输出目录（index/align/sort）"
+  output:
+    type: file
+    required: false
+    cli_arg: "-o"
+    description: "gunzip 输出文件路径（默认去掉 .gz 后缀）"
+  prefix:
+    type: string
+    required: false
+    cli_arg: "--prefix"
+    description: "输出前缀（align 的 BAM 名 / sort 的 .sorted.gtf 名）"
+  args:
+    type: string
+    required: false
+    cli_arg: "--args"
+    description: "透传附加参数（index 默认 --disable_infer；align 透传 uLTRA align；sort 透传 sort）"
+  args2:
+    type: string
+    required: false
+    cli_arg: "--args2"
+    description: "align 时透传给 samtools sort 的附加参数"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "--threads"
+    description: "线程数（align 注入 --t 与 samtools sort --threads）"
+
+outputs:
+  pickle_db:
+    type: file
+    format: [pickle, db]
+    description: "index 产物（*.pickle 与 *.db）"
+  bam:
+    type: file
+    format: bam
+    description: "align 产物（samtools sort 后的 BAM）"
+  sorted_gtf:
+    type: file
+    format: gtf
+    description: "sort 产物（<prefix>.sorted.gtf）"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "与 nf-core 对齐的版本文件"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: "{tmpdir}"
+  # 子命令级线程建议（index/align 为 CPU 密集，优先多线程）
+  per_subcommand_threads:
+    index: 8
+    align: 8
+    default: 4
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "uLTRA"
+
+software_versions:
+  ultra: "0.1"
+  ultra_bioinformatics: "0.1"
+  deps: "minimap2 / namfinder / samtools（同一 conda env）"
+  source: "bioconda::ultra_bioinformatics=0.1（Debian apt 无 ultra 包，容器走 apt 运行时 + micromamba 引导）"
+  note: "与 nf-core modules/nf-core/ultra/*/environment.yml 的 ultra_bioinformatics=0.1 对齐；nf-core 侧 samtools 为 1.17，本实现不锁定 samtools 版本（沿用调用方 PATH）。"

@@ -1,0 +1,72 @@
+# fastp / snakemake / local — 自维护 Snakemake rule
+# ---------------------------------------------------------------------------
+# source_type: custom —— 自包含规则（fastp.smk），不依赖官方 wrapper 缓存。
+# 命令对齐 native 与 subworkflow/fastp_bwa_samtools 编排器约定：
+#   fastp -i R1 [-I R2] -o out1 [-O out2] -h report.html -j report.json -w <threads>
+# ---------------------------------------------------------------------------
+
+id: fastp_snakemake_local
+version: "0.1.0"
+software: fastp
+type: snakemake_local
+source_type: custom
+
+summary: "Self-maintained Snakemake rule for fastp（fastp.smk：单/双端 FASTQ 质控 + 去接头 + HTML/JSON 报告，config['fastp'] 可选）."
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中需要 fastp 做质控/去接头时；官方 bio/fastp wrapper 已存在（见 ../snakemake-wrappers/），本 rule 用于离线 / 中央缓存不可用 / 需本地定制时。"
+  recommendation_priority: "Low（官方 wrapper 存在时优先 snakemake_wrappers；CLI/Agent 直调请走 native）。"
+  enabled: true
+
+# 本实现实际运行的上游二进制版本 + 迁移来源
+software_versions:
+  fastp: "0.24.0"
+  source: "自维护 fastp.smk（直接调用本地 fastp 二进制；conda 建议 bioconda::fastp=0.24.0）"
+  note: "fastp 0.20+ 线程参数为 -w/--thread（-t 已被 --trim_tail1 占用）；官方 bio/fastp environment.yaml 当前 pin 1.3.6，若与本地 0.24.0 混用注意参数兼容。"
+
+inputs:
+  r1:
+    type: file
+    format: fastq.gz
+    required: true
+    description: "输入 R1（路径模板 reads/{sample}_R1.fastq.gz）"
+  r2:
+    type: file
+    format: fastq.gz
+    required: true
+    description: "输入 R2（路径模板 reads/{sample}_R2.fastq.gz）"
+
+outputs:
+  out1:
+    type: file
+    format: fastq.gz
+    description: "清洗后 R1（results/fastp/{sample}_R1.clean.fastq.gz）"
+  out2:
+    type: file
+    format: fastq.gz
+    description: "清洗后 R2（results/fastp/{sample}_R2.clean.fastq.gz）"
+  html:
+    type: file
+    format: html
+    description: "HTML 质控报告（results/fastp/{sample}_fastp.html）"
+  json:
+    type: file
+    format: json
+    description: "JSON 质控报告（results/fastp/{sample}_fastp.json）"
+
+execution:
+  mode: snakemake_rule
+  rule_files:
+    - "fastp.smk"
+  include_hint: |
+    # 在 Snakefile 中：
+    include: "modules/fastp/snakemake/local/fastp.smk"
+    # 可选 config（config.yaml）：
+    # fastp:
+    #   adapter_sequence: "AGATCGGAAGAGCACACGTCTGA"
+    #   detect_adapter_for_pe: true
+    #   qualified_quality_phred: 15
+    #   unqualified_percent_limit: 40
+    #   length_required: 15
+    #   extra: "--cut_front --cut_tail --cut_right 1"
+  conda_hint: "规则内未硬编码 conda；如需隔离环境，添加 conda: \"envs/fastp.yaml\"（内容：bioconda::fastp=0.24.0）"

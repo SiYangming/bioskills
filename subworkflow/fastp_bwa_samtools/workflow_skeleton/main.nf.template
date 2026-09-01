@@ -1,5 +1,5 @@
 // subworkflow/fastp_bwa_samtools Nextflow DSL2 骨架（复制到真实项目中使用）
-// 假设已把 skills/<sw>/nextflow/nf-core 或 local 模块通过官方方式安装到 modules/
+// 假设已把 modules/<sw>/nextflow/nf-core 或 local 模块通过官方方式安装到 modules/
 nextflow.enable.dsl = 2
 
 include { FASTP    } from './modules/nf-core/fastp/main'

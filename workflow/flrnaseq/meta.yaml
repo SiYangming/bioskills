@@ -3,7 +3,7 @@
 # 流程：全长 RNA-seq 转录本 -> ORF 预测三工具并行
 #       transdecoder（LongOrfs/Predict）-> td2（TD2.LongOrfs/Predict）-> orffinder（ORFfinder）
 # 迁移来源：snakemake.smk/flrnaseq.smk（原 workflow/Snakefile + rules/{transdecoder,td2,orffinder}.smk）
-# 本流程为**编排层**：默认调用 skills/ 下各原子模块的 default_implementation（native）。
+# 本流程为**编排层**：默认调用 modules/ 下各原子模块的 default_implementation（native）。
 # ---------------------------------------------------------------------------
 
 id: custom_flrnaseq

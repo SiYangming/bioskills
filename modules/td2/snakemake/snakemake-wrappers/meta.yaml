@@ -1,0 +1,71 @@
+# td2 / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 注意：官方 snakemake-wrappers 目前【没有】bio/td2 wrapper（抓取 404），
+#       本目录仅登记桥接层；实际执行请使用 td2_snakemake_local（td2.smk）。
+# ---------------------------------------------------------------------------
+
+id: td2_snakemake_wrappers
+version: "v3.13.0"
+software: td2
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers 登记层 for td2（官方 bio/td2 缺失，submodules 为空；实际走 local）。"
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程时；官方 bio/td2 wrapper 缺失，请直接使用 td2_snakemake_local。"
+  recommendation_priority: "Low（官方 wrapper 不存在；本实现仅说明层，实际路由到 snakemake_local）。"
+
+# 版本对齐：官方 bio/td2 不存在，无法从 environment.yaml 取 conda pin。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  td2: "官方无 wrapper（bio/td2 404）"
+  source: "—（snakemake-wrappers 仓库 bio/td2 目录不存在）"
+  note: "2026-09-01 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/td2 返回 404；
+         Snakemake 场景请使用 td2_snakemake_local（td2.smk，pin bioconda::td2=1.0.6）。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/td2"
+  tag: "v3.13.0"
+  submodules: []
+  submodules_note: >
+    官方 bio/td2 目录不存在（2026-09-01 抓取 404），故 submodules 为空列表。
+    若未来官方新增该 wrapper，请以 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/td2
+    在线目录为准刷新；当前 Snakemake 场景请使用 td2_snakemake_local。
+
+inputs:
+  input:
+    type: file
+    format: fasta
+    required: true
+    description: "输入转录本 FASTA"
+
+outputs:
+  output:
+    type: file
+    format: [pep, cds, gff3, bed]
+    description: "预测 CDS 产物（依子命令而定）"
+
+params:
+  extra:
+    type: string
+    default: ""
+    description: "TD2 子命令额外参数（如 -m 90 -M 90 -G 1 -S）"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/td2/{subcommand}（官方缺失，占位）"
+  rule_example: |
+    # 官方 wrapper 缺失 —— 直接使用本仓库自维护 rule：
+    #   include: "modules/td2/snakemake/local/td2.smk"
+    rule td2_longorfs:
+        input:
+            "long_read/{sample}.fasta"
+        output:
+            directory("td2/{sample}/longorfs")
+        params:
+            extra="-m 90 -M 90 -G 1 -S --alt-start --all-stopless"
+        threads: 8
+        conda: "envs/td2.yaml"   # bioconda::td2=1.0.6

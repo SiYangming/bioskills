@@ -5,7 +5,7 @@
 #       -> TransDecoder/TD2 ORF 预测）
 # 迁移来源：snakemake.smk/nanoseq.smk（原以 nanoseq.sh/ shell 脚本为实际实现，
 #       README 声明的 workflow/ 未随恢复保留，本编排按脚本逻辑重建）
-# 本流程为**编排层**：默认调用 skills/ 下各原子模块的 default_implementation（native）。
+# 本流程为**编排层**：默认调用 modules/ 下各原子模块的 default_implementation（native）。
 # ---------------------------------------------------------------------------
 
 id: custom_nanoseq

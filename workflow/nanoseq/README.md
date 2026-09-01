@@ -20,13 +20,13 @@ fastq ──> [minimap2 align] -x splice -uf -k14 ──> BAM
 
 | 阶段 | 软件技能 | 主要入口 |
 |------|----------|----------|
-| SRA 下载（可选） | `skills/sra-tools/native/` | `python main.py prefetch / fasterq-dump ...` |
-| 碱基识别（可选） | `skills/dorado/native/` | `python main.py basecall ...` |
-| 比对 | `skills/minimap2/native/` | `python main.py align --bam ...` |
-| 排序/QC | `skills/samtools/native/` | `python main.py sort/index/flagstat ...` |
-| consensus | `skills/flair/native/` | `python main.py bam2bed12/annotate/collapse ...` |
-| 组装 | `skills/stringtie/native/` | `python main.py assemble/fix_gtf/merge ...` |
-| ORF 预测 | `skills/transdecoder|td2/native/` | `python main.py longorfs/predict ...` |
+| SRA 下载（可选） | `modules/sra-tools/native/` | `python main.py prefetch / fasterq-dump ...` |
+| 碱基识别（可选） | `modules/dorado/native/` | `python main.py basecall ...` |
+| 比对 | `modules/minimap2/native/` | `python main.py align --bam ...` |
+| 排序/QC | `modules/samtools/native/` | `python main.py sort/index/flagstat ...` |
+| consensus | `modules/flair/native/` | `python main.py bam2bed12/annotate/collapse ...` |
+| 组装 | `modules/stringtie/native/` | `python main.py assemble/fix_gtf/merge ...` |
+| ORF 预测 | `modules/transdecoder|td2/native/` | `python main.py longorfs/predict ...` |
 
 ## 用法
 
@@ -56,16 +56,16 @@ python nanoseq/nanoseq.py ... --with-dorado     # 启用碱基识别
 
 | 资产 | 位置 | 说明 |
 |------|------|------|
-| FLAIR 批处理脚本 | `skills/flair/native/legacy/run_flair_consensus.sh` | 原 nanoseq.sh 脚本 |
-| FLAIR 辅助脚本 | `skills/flair/native/legacy/bed12_add_trailing_commas.py` | 原 workflow/scripts/ |
-| StringTie 脚本 | `skills/stringtie/native/legacy/run_stringtie.sh` | 原 nanoseq.sh 脚本 |
-| StringTie 修复脚本 | `skills/stringtie/native/legacy/fix_gtf.awk` | 原 workflow/scripts/ |
-| SRA 批处理脚本 | `skills/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
-| 比对脚本 | `skills/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
-| QC 脚本 | `skills/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
+| FLAIR 批处理脚本 | `modules/flair/native/legacy/run_flair_consensus.sh` | 原 nanoseq.sh 脚本 |
+| FLAIR 辅助脚本 | `modules/flair/native/legacy/bed12_add_trailing_commas.py` | 原 workflow/scripts/ |
+| StringTie 脚本 | `modules/stringtie/native/legacy/run_stringtie.sh` | 原 nanoseq.sh 脚本 |
+| StringTie 修复脚本 | `modules/stringtie/native/legacy/fix_gtf.awk` | 原 workflow/scripts/ |
+| SRA 批处理脚本 | `modules/sra-tools/native/legacy/batch_*.sh` | prefetch/sra_to_fastq（含并行版） |
+| 比对脚本 | `modules/minimap2/native/legacy/run_alignment_bam.sh` | minimap2\|samtools 管线 |
+| QC 脚本 | `modules/samtools/native/legacy/alignment_stats.sh` | flagstat 汇总 |
 | 原 workflow 快照（去重后） | `workflow_skeleton/LEGACY_WORKFLOW/` | Snakefile + common.smk（唯一流程公共件）；软件规则已归位到各模块 snakemake/local/ |
 | Docker 包装脚本 | `workflow_skeleton/scripts/docker_wrapper.py` | 原 workflow/scripts/docker_wrapper.py |
-| 汇总脚本 | `skills/samtools/native/legacy/alignment_summary.py` | 原 workflow/scripts/alignment_summary.py（flagstat 汇总，归位 samtools） |
+| 汇总脚本 | `modules/samtools/native/legacy/alignment_summary.py` | 原 workflow/scripts/alignment_summary.py（flagstat 汇总，归位 samtools） |
 | 辅助脚本 | `workflow_skeleton/scripts/samplesheet_group_summary.py` | 原 workflow/scripts/ |
 | 单元测试 | `LEGACY_tests/test_docker_wrapper.py` | 原 tests/ |
 | 流程文档 | `LEGACY_README.md` + `LEGACY_run_workflow.sh` | 原 README.md / run_workflow.sh |

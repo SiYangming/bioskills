@@ -1,0 +1,88 @@
+# gnu_sort 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 原则：
+#   canonical 目录名与 nf-core 的 gnu/sort 模块、GNU coreutils sort 对应。
+#   implementations 固定 5 路实现，按类型 + 来源编排。
+#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
+# ---------------------------------------------------------------------------
+
+software: gnu_sort
+canonical: gnu_sort
+category: utility
+description: >
+  GNU coreutils 的 sort 程序：对文本行进行排序（支持 -k 键、-n 数值、-S 缓冲区、
+  --parallel 等），是 isoseq.smk 等流程中 GTF 按染色体+起始位点排序的基础工具
+  （sort -k1,1 -k4,4n）。
+
+homepage: https://www.gnu.org/software/coreutils/
+license: GPL-3.0-or-later
+
+implementations:
+  - id: gnu_sort_native
+    path: native
+    source_type: custom
+    type: native
+    version: "9.1-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。直接调用 GNU/系统 sort 二进制。
+
+  - id: gnu_sort_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时（modules/nf-core/gnu/sort 子模块）。
+
+  - id: gnu_sort_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 缺失 / 本地定制 sort process。
+
+  - id: gnu_sort_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: Snakemake 流程、复用中央 wrapper 缓存时（注意：官方暂缺 gnu sort wrapper，见下方说明）。
+
+  - id: gnu_sort_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "9.1-v1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 gnu_sort.smk）。
+
+default_implementation: gnu_sort_native
+
+# ---------------------------------------------------------------------------
+# 版本差异声明：native / nf-core / snakemake-wrappers 的 coreutils sort 上游版本可能不同
+# （Debian bookworm apt coreutils=9.1 vs nf-core conda coreutils=9.5）。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    gnu_sort: "9.1"
+    coreutils: "9.1"
+    build_route: "APT：Debian bookworm coreutils=9.1（binary: sort）"
+    source: "apt coreutils=9.1-1（Debian bookworm stable）"
+    note: "sort -k1,1 -k4,4n 等核心选项 GNU/BSD 均支持；--parallel 仅 GNU 提供（main.py 自动检测）。"
+  nextflow_nfcore:
+    gnu_sort: "9.5"
+    coreutils: "9.5"
+    module_version: "master（2026-08 抓取；install 时由 nf-core tools 写实际 commit）"
+    source: "conda-forge::coreutils=9.5（modules/nf-core/gnu/sort/environment.yml）"
+    note: "nf-core 拆分为 gnu/sort 与 gnu/split 两个子模块；本软件对应 gnu/sort（排序）。"
+  nextflow_local:
+    gnu_sort: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    gnu_sort: "无官方 wrapper"
+    wrapper_tag: "v3.13.0"
+    source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gnu → 404"
+    note: "snakemake-wrappers 官方 bio/ 目录无 gnu/sort（2026-08 核对）；必须降级使用 gnu_sort_snakemake_local。"
+  snakemake_local:
+    gnu_sort: "9.1（规则从 snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/local/gnu_sort.smk 迁移，sort <args> <in> > <out>.sorted）"

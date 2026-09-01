@@ -3,7 +3,7 @@
 
 可执行三种模式：
   a) --dry-run：仅打印 stage 命令（默认，避免依赖缺失）
-  b) --real：真的调用 skills/<sw>/native/main.py（需对应 native 构建完成）
+  b) --real：真的调用 modules/<sw>/native/main.py（需对应 native 构建完成）
   c) --list-stages：按 meta.yaml 列出 stages
 
 当前版本的目的是**演示 subworkflow/ 复合流程如何存档与调用原子技能**，不是真的跑完整 pipeline。
@@ -17,12 +17,12 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent / "skills"  # skills/
+_SKILLS_ROOT = _HERE.parent.parent / "modules"  # modules/
 _STAGES = ["fastp", "bwa-mem2", "samtools", "qc_optional"]
 
 
 def _stage_cmd(software: str, subcmd: list[str], threads: int) -> list[str]:
-    """按 skills/<sw>/native/main.py 形式构造命令列表。"""
+    """按 modules/<sw>/native/main.py 形式构造命令列表。"""
     native = _SKILLS_ROOT / software / "native" / "main.py"
     if not native.exists():
         return ["<MISSING>", str(native)] + subcmd
@@ -95,7 +95,7 @@ def main(argv=None):
     p.add_argument("--outdir", default="results")
     p.add_argument("--threads", type=int, default=8)
     p.add_argument("--dry-run", action="store_true", default=True, help="仅打印命令（默认）")
-    p.add_argument("--real", action="store_true", help="真实执行 skills/<sw>/native/main.py（需先构建对应软件）")
+    p.add_argument("--real", action="store_true", help="真实执行 modules/<sw>/native/main.py（需先构建对应软件）")
     p.add_argument("--list-stages", action="store_true")
     args = p.parse_args(argv)
 

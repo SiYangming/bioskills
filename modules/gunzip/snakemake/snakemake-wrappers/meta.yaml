@@ -1,0 +1,54 @@
+# gunzip / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# ⚠️ 官方 snakemake-wrappers 的 bio/gunzip 目录不存在（GitHub API 404，2026-08 核对），
+#    因此本目录是“已登记但官方缺失”的占位：wrapper 句柄不可解析，必须降级 ../local/。
+# ---------------------------------------------------------------------------
+
+id: gunzip_snakemake_wrappers
+version: "v3.13.0"
+software: gunzip
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers for gunzip（bio/gunzip 官方缺失 → 降级 ../local 的登记位）。"
+
+agent_guidance:
+  when_to_use: "Snakemake 流程中优先考虑官方 wrapper；但 bio/gunzip 官方不存在，应直接使用 gunzip_snakemake_local（gunzip.smk）。"
+  recommendation_priority: "Low（官方缺失；Snakemake 场景请走 gunzip_snakemake_local）。"
+
+software_versions:
+  wrapper_tag: "v3.13.0"
+  gunzip: "无官方 wrapper（bio/gunzip 404）"
+  source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gunzip → 404（2026-08）"
+  note: "snakemake-wrappers 官方 bio/ 目录无 gunzip（gzip 也未收录）；当前必须降级 gunzip_snakemake_local。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/gunzip"
+  tag: "v3.13.0"
+  submodules: []
+  submodules_note: >
+    https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gunzip 返回 404
+    （2026-08 核对），官方无任何 gunzip wrapper；执行层一律走 ../local/gunzip.smk。
+    若未来官方新增，以在线目录为准刷新本列表。
+
+inputs:
+  input:
+    type: file
+    format: [gz]
+    description: "待解压的 .gz 文件"
+
+outputs:
+  output:
+    type: file
+    description: "解压后的文件"
+
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/gunzip/{subcommand}（官方不存在，勿直接引用）"
+  rule_example: |
+    # 官方 wrapper 缺失：直接在 Snakefile 中
+    include: "modules/gunzip/snakemake/local/gunzip.smk"
+    # 或
+    use rule gunzip from rule_gunzip as gunzip

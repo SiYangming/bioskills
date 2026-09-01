@@ -2,14 +2,14 @@
 
 > 本文档是「每次新增/维护一个软件技能时必须遵守的标准」。
 > 按本规范构建可保证：目录一致、接口统一、Agent 可路由、可自动校验。
-> 参考实现：`skills/samtools/`（黄金样例：5 条实现路径全覆盖）。
+> 参考实现：`modules/samtools/`（黄金样例：5 条实现路径全覆盖）。
 
 ---
 
 ## 0. 一句话总览
 
 ```
-skills/<software>/
+modules/<software>/
 ├── meta.yaml                              # 软件级总览（列出所有实现 + 推荐优先级）
 ├── native/                                # [最高优先级] 本地自包含实现（source_type: custom, type: native）
 │   ├── meta.yaml                          #   含 inputs/outputs/environment/optimization/execution
@@ -39,7 +39,7 @@ skills/<software>/
         └── README.md
 ```
 
-复合流程与 `skills/` 平级，分**两层**：
+复合流程与 `modules/` 平级，分**两层**：
 
 - `workflow/<flow_name>/` —— **专门设计流程**：面向特定领域的完整流程（如 `nanoseq`、`isoseq`、`flrnaseq`），可引用 subworkflow 与各原子模块；
 - `subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `fastp_bwa_samtools`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用。
@@ -92,7 +92,7 @@ skills/<software>/
 
 ## 3. meta.yaml 字段规范
 
-### 3.1 软件级 `skills/<software>/meta.yaml`
+### 3.1 软件级 `modules/<software>/meta.yaml`
 
 ```yaml
 software: <canonical>          # 必填
@@ -277,7 +277,7 @@ class <Tool>Skill(base.SkillBase):
 |------|------|
 | `meta.yaml` | `type: nextflow_nfcore`、`source_type: official`；含 `source_reference.repository` 与 **`submodules[]` 列表（必须与官方目录 `modules/nf-core/<software>/` 子目录严格一致）**；含 `execution.include_statement` 与 `container`；必加 `software_versions{}` 段（对齐 nf-core 该软件的 `environment.yml` / Wave container pin） |
 | `module.json` | 上游仓库、tracked branch、pinned commit（占位亦可）、container registry、`install_command: "nf-core modules install <sw>/<sub>"` |
-| `README.md` | **（强提示三件套要求）** 子模块清单 + Nextflow DSL2 include 示例；**顶部必须显式声明**：「本目录仅为说明/Schema 挂载层，真正执行需使用 `nf-core modules install` 安装到项目自身的 `modules/nf-core/` 目录，不要直接 include skills/…/nextflow/nf-core 下的 main.nf」；并提示缺失时用 `../local/`；另附 `submodules[]` 更新时抓官方目录的 1 条 curl 命令样例 |
+| `README.md` | **（强提示三件套要求）** 子模块清单 + Nextflow DSL2 include 示例；**顶部必须显式声明**：「本目录仅为说明/Schema 挂载层，真正执行需使用 `nf-core modules install` 安装到项目自身的 `modules/nf-core/` 目录，不要直接 include modules/…/nextflow/nf-core 下的 main.nf」；并提示缺失时用 `../local/`；另附 `submodules[]` 更新时抓官方目录的 1 条 curl 命令样例 |
 
 ### snakemake/snakemake-wrappers/
 | 文件 | 要求 |
@@ -357,20 +357,20 @@ dependencies:
 
 ```bash
 # 1. 校验 5 个实现目录（含占位 local）
-python skills/bin/skill-cli validate skills/<software>/native
-python skills/bin/skill-cli validate skills/<software>/nextflow/nf-core
-python skills/bin/skill-cli validate skills/<software>/nextflow/local
-python skills/bin/skill-cli validate skills/<software>/snakemake/snakemake-wrappers
-python skills/bin/skill-cli validate skills/<software>/snakemake/local
+python modules/bin/skill-cli validate modules/<software>/native
+python modules/bin/skill-cli validate modules/<software>/nextflow/nf-core
+python modules/bin/skill-cli validate modules/<software>/nextflow/local
+python modules/bin/skill-cli validate modules/<software>/snakemake/snakemake-wrappers
+python modules/bin/skill-cli validate modules/<software>/snakemake/local
 
 # 2. 导出 JSON Schema（Agent 用）
-python skills/bin/skill-cli schema skills/<software>/native/meta.yaml
+python modules/bin/skill-cli schema modules/<software>/native/meta.yaml
 
 # 3. 重建全局 registry.yaml（自动扫描全库 meta.yaml）
-python skills/bin/skill-cli scan
+python modules/bin/skill-cli scan
 
 # 4. 跑 native 回归测试（需对应软件已安装）
-bash skills/<software>/native/test/run_test.sh
+bash modules/<software>/native/test/run_test.sh
 ```
 
 `skill-cli validate` 的硬性检查：
@@ -406,24 +406,24 @@ bash skills/<software>/native/test/run_test.sh
 
 构建一个新软件 `<tool>` 时，逐项确认：
 
-- [ ] 目录 `skills/<tool>/`，canonical 名全小写，`-` 分词（必须与 bioconda / nf-core / Debian 统一规范名一致）
-- [ ] `skills/<tool>/meta.yaml` 软件级总览：implementations（5 条路径，按优先级）+ default_implementation + **software_versions 差异声明**
-- [ ] `skills/<tool>/native/`：
+- [ ] 目录 `modules/<tool>/`，canonical 名全小写，`-` 分词（必须与 bioconda / nf-core / Debian 统一规范名一致）
+- [ ] `modules/<tool>/meta.yaml` 软件级总览：implementations（5 条路径，按优先级）+ default_implementation + **software_versions 差异声明**
+- [ ] `modules/<tool>/native/`：
   - [ ] `meta.yaml`（source_type=custom/type=native，inputs/outputs/environment/optimization/execution + **software_versions 段**）
   - [ ] `main.py`：继承 `SkillBase`，实现 `build_command`，支持 `--schema` / `--list-commands` / `--threads` / `--tmpdir`
   - [ ] `environment.yml`（保留，仅离线/非容器备选）、**`Dockerfile`（debian:bookworm-slim + apt 默认路线 + 清理四连）**、**`Apptainer.def`（同样 apt 路线）**，版本均与 software_versions 对齐
   - [ ] `test/generate_data.py` + `test/run_test.sh`，本机跑通
   - [ ] `README.md`
-- [ ] `skills/<tool>/nextflow/nf-core/`（三件套，type=nextflow_nfcore，source_type=official）：
+- [ ] `modules/<tool>/nextflow/nf-core/`（三件套，type=nextflow_nfcore，source_type=official）：
   - [ ] `submodules[]` 与 **`https://github.com/nf-core/modules/tree/master/modules/nf-core/<tool>/` 目录子项严格一致**
   - [ ] `software_versions{}` 对齐官方 `environment.yml` / Wave container
   - [ ] `README.md` **顶部写强提示**（说明层、不要直接 include、缺失时走 ../local/、附抓 submodules 的命令）
-- [ ] `skills/<tool>/nextflow/local/`（占位 meta.yaml + README，type=nextflow_local）
-- [ ] `skills/<tool>/snakemake/snakemake-wrappers/`（三件套，type=snakemake_wrappers）：
+- [ ] `modules/<tool>/nextflow/local/`（占位 meta.yaml + README，type=nextflow_local）
+- [ ] `modules/<tool>/snakemake/snakemake-wrappers/`（三件套，type=snakemake_wrappers）：
   - [ ] `submodules[]` 与 **`https://github.com/snakemake/snakemake-wrappers/tree/master/bio/<tool>/` 目录子项严格一致**
   - [ ] `software_versions{}` 对齐官方 `bio/<tool>/environment.yaml`
   - [ ] `README.md` **顶部写强提示**（说明层、wrapper 句柄解析、缺失时走 ../local/、附抓 submodules 的命令）
-- [ ] `skills/<tool>/snakemake/local/`（占位 meta.yaml + README，type=snakemake_local）
+- [ ] `modules/<tool>/snakemake/local/`（占位 meta.yaml + README，type=snakemake_local）
 - [ ] 实现 ID 严格遵守 §1：`<tool>_native` 等
 - [ ] **Dockerfile/Apptainer.def 已避免 miniconda 默认引入；Docker 示例命令写了 `-u $(id -u):$(id -g)`**
 - [ ] **native / nf-core / snakemake-wrappers 的 software_versions 三方差异已逐条核对**
@@ -435,7 +435,7 @@ bash skills/<software>/native/test/run_test.sh
 
 ## 11. 黄金样例
 
-**以 `skills/samtools/` 为参考**，它完整演示了：
+**以 `modules/samtools/` 为参考**，它完整演示了：
 - 软件级 meta.yaml 含 5 条实现登记（含 local 占位）
 - native main.py 的子命令分发、线程优先级、临时目录优化
 - 三种环境配方

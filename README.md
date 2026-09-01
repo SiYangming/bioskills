@@ -7,7 +7,7 @@
 | 特性 | 说明 |
 |------|------|
 | **双源并存架构** | 官方成熟模块（nf-core/modules、snakemake-wrappers）以「说明 + Schema + 引用」挂载；缺失/自定义模块在 `native/` 下自包含构建 |
-| **双层归档** | 原子技能按软件归档（`skills/<software>/`）；复合流程归档于 `workflow/<flow>/`（完整流程）与 `subworkflow/<组合名>/`（常用组合） |
+| **双层归档** | 原子技能按软件归档（`modules/<software>/`）；复合流程归档于 `workflow/<flow>/`（完整流程）与 `subworkflow/<组合名>/`（常用组合） |
 | **零外部网络依赖** | 自定义模块的代码、容器配方（Dockerfile/Apptainer.def）、Conda 环境、测试数据、Schema **全部本地化** |
 | **软件版本差异透明** | 每个软件的 `meta.yaml.software_versions` 字段**显式声明** native / nf-core / snakemake-wrappers 三路之间的版本差与构建路线 |
 | **apt 默认路线 & 容器最小化** | 容器统一使用 `debian:bookworm-slim + apt --no-install-recommends + 清理四连`（见「环境配方」小节），禁止默认引入 miniconda |
@@ -18,30 +18,30 @@
 ## 快速开始
 
 ```bash
-# 0. 环境：建议 Python 3.11+；原生非容器运行请自行 apt/Conda 装软件，或使用 skills/<tool>/native/ 下的 Docker/Apptainer。
+# 0. 环境：建议 Python 3.11+；原生非容器运行请自行 apt/Conda 装软件，或使用 modules/<tool>/native/ 下的 Docker/Apptainer。
 #    Docker 示例命令默认带 -u $(id -u):$(id -g)，避免输出文件属主污染。
 
 # 1. 查看已登记的技能与实现（registry.yaml）
-cat skills/registry.yaml
+cat modules/registry.yaml
 
 # 2. 校验 5 个实现目录（validate 详情 & 错误项 → AGENT.md §8 → ARCHITECTURE.md 第四节）
-python skills/bin/skill-cli validate skills/fastqc/native
-python skills/bin/skill-cli validate skills/fastqc/nextflow/nf-core
-python skills/bin/skill-cli validate skills/fastqc/nextflow/local
-python skills/bin/skill-cli validate skills/fastqc/snakemake/snakemake-wrappers
-python skills/bin/skill-cli validate skills/fastqc/snakemake/local
+python modules/bin/skill-cli validate modules/fastqc/native
+python modules/bin/skill-cli validate modules/fastqc/nextflow/nf-core
+python modules/bin/skill-cli validate modules/fastqc/nextflow/local
+python modules/bin/skill-cli validate modules/fastqc/snakemake/snakemake-wrappers
+python modules/bin/skill-cli validate modules/fastqc/snakemake/local
 
 # 3. 为 native 实现导出 JSON Schema（供 Agent 挂载 Function Calling / Tool Definition）
-python skills/bin/skill-cli schema skills/fastqc/native/meta.yaml
+python modules/bin/skill-cli schema modules/fastqc/native/meta.yaml
 # 官方说明层同样可导出（nf-core / snakemake-wrappers 的 meta.yaml）
-python skills/bin/skill-cli schema skills/fastqc/nextflow/nf-core/meta.yaml
+python modules/bin/skill-cli schema modules/fastqc/nextflow/nf-core/meta.yaml
 
 # 4. 直接调用 native 技能（要求宿主机具备 fastqc；若缺则用 docker run，例：）
-python skills/bin/skill-cli run samtools -- flagstat /path/to/sorted.bam
+python modules/bin/skill-cli run samtools -- flagstat /path/to/sorted.bam
 # docker run --rm -u $(id -u):$(id -g) -v "$PWD":/work -w /work bioskills/samtools:1.21  flagstat sorted.bam
 
-# 5. 重新扫描整个 skills/ 目录，重建全局 registry.yaml（新增/改动软件后必做）
-python skills/bin/skill-cli scan
+# 5. 重新扫描整个 modules/ 目录，重建全局 registry.yaml（新增/改动软件后必做）
+python modules/bin/skill-cli scan
 ```
 
 > 对应规范链接：
@@ -58,7 +58,7 @@ bioskills/
 ├── LICENSE                      # MIT
 ├── README.md                    # 本文件
 ├── .gitignore
-├── skills/
+├── modules/
     ├── base.py                  # Skill Runner 基类 + Schema 导出 + 资源探测
     ├── registry.yaml            # 技能注册表（skill-cli scan 自动生成）
     ├── bin/skill-cli            # 管理 CLI：validate / scan / schema / run
@@ -99,11 +99,11 @@ bioskills/
 - 测试与**环境配方默认路线（apt + bookworm-slim + 清理四连）**
 - 校验流程 + **新增软件 Checklist**（含 software_versions / apt / submodules 三条硬性检查）
 
-> ⚙️ **新增软件自动化 Skill（推荐）**：本仓库在 TRAE 会话中打开时会自动挂载「bioskills-package-standardizer」Skill（本地路径 `.trae/skills/bioskills-package-standardizer/SKILL.md`，**不入库**），
+> ⚙️ **新增软件自动化 Skill（推荐）**：本仓库在 TRAE 会话中打开时会自动挂载「bioskills-package-standardizer」Skill（本地路径 `.trae/modules/bioskills-package-standardizer/SKILL.md`，**不入库**），
 > 等价的标准清单见 [AGENT.md §10 新增软件 Checklist](AGENT.md#10-新增软件检查清单checklist) 与 [ARCHITECTURE.md §六.3 验收工具链](ARCHITECTURE.md#六-规范化实施步骤与里程碑)。
 
-参考黄金样例 `skills/samtools/`（三引擎五实现完整对照 + apt 最小化 + software_versions 差异声明）。
-参考第二个完整样例 `skills/fastqc/`（apt JVM + Babraham 官方 zip 路线示范、单 process / 单 wrapper 的 submodules 占位写法）。
+参考黄金样例 `modules/samtools/`（三引擎五实现完整对照 + apt 最小化 + software_versions 差异声明）。
+参考第二个完整样例 `modules/fastqc/`（apt JVM + Babraham 官方 zip 路线示范、单 process / 单 wrapper 的 submodules 占位写法）。
 参考复合流程骨架 [subworkflow/fastp_bwa_samtools/README.md](subworkflow/fastp_bwa_samtools/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [AGENT.md](AGENT.md)。
 
 ## 构建规范
@@ -114,7 +114,7 @@ bioskills/
 | 实现 ID 命名 | `<software>_<impl>` 严格 5 类：`fastqc_native` / `fastqc_nextflow_nfcore` / `fastqc_nextflow_local` / `fastqc_snakemake_wrappers` / `fastqc_snakemake_local` |
 | `source_type` | `official`（说明层，不重写源码）或 `custom`（自实现） |
 | `type` | 5 枚举之一：`native` / `nextflow_nfcore` / `nextflow_local` / `snakemake_wrappers` / `snakemake_local` |
-| **软件级 software_versions（必填）** | 在 `skills/<tool>/meta.yaml` 声明 native / nf-core / snakemake-wrappers / local 四路的版本差异与构建路线；用于跨引擎路由冲突检测。 |
+| **软件级 software_versions（必填）** | 在 `modules/<tool>/meta.yaml` 声明 native / nf-core / snakemake-wrappers / local 四路的版本差异与构建路线；用于跨引擎路由冲突检测。 |
 | **实现级 software_versions（必填）** | 在每个 `<impl>/meta.yaml` 写清「该实现真正会跑的二进制版本 + 来源」，不要与软件级总览重复。 |
 | **官方 submodules 对齐** | `nextflow/nf-core` → 与 `modules/nf-core/<tool>/` 目录 1:1；`snakemake/snakemake-wrappers` → 与 `bio/<tool>/` 目录 1:1。抓目录命令见 ARCHITECTURE.md §3.2。单 process/wrapper 也保留 1 条占位。 |
 | **Dockerfile 路线** | 默认 `FROM debian:bookworm-slim` + `apt-get install -y --no-install-recommends <pkgs>` + `autoremove/clean/rm apt lists tmp` + 构建期工具 purge；Docker 示例写 `-u $(id -u):$(id -g)`。禁止默认 miniconda。 |
@@ -134,7 +134,7 @@ bioskills/
 ### 版本差异写法示例
 
 ```yaml
-# skills/fastqc/meta.yaml ← 软件级
+# modules/fastqc/meta.yaml ← 软件级
 software_versions:
   native:
     fastqc: "0.12.1"

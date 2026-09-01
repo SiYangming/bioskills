@@ -1,0 +1,86 @@
+# gunzip 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 原则：
+#   canonical 目录名 = Bioconda / nf-core / Debian 统一的规范化软件名（gunzip）。
+#   implementations 固定 5 路实现，按类型 + 来源编排。
+#   software_versions：显式声明各路实现之间的版本差异，供 Agent 路由 / 人工比对。
+# ---------------------------------------------------------------------------
+
+software: gunzip
+canonical: gunzip
+category: utility
+description: >
+  gunzip 是 GNU gzip 的解压前端，将 .gz 压缩文件还原为原始内容（gzip -cd <in.gz> > <out>）。
+  本技能覆盖解压能力（native 子命令 gunzip），是 isoseq.smk 等流程中
+  参考基因组 / 注释 / reads 解压的基础工具。
+
+homepage: https://www.gnu.org/software/gzip/
+license: GPL-3.0-or-later
+
+implementations:
+  - id: gunzip_native
+    path: native
+    source_type: custom
+    type: native
+    version: "1.12-v1.0"
+    priority: high
+    when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。直接调用 gzip/gunzip 二进制。
+
+  - id: gunzip_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标 HPC/Cloud 时（单模块 modules/nf-core/gunzip）。
+
+  - id: gunzip_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 缺失 / 本地定制 gunzip process。
+
+  - id: gunzip_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: Snakemake 流程、复用中央 wrapper 缓存时（注意：官方暂缺 gunzip wrapper，见下方说明）。
+
+  - id: gunzip_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "1.12-v1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失 / 本地定制 rule（本技能已内置从 isoseq.smk 迁移的 gunzip.smk）。
+
+default_implementation: gunzip_native
+
+# ---------------------------------------------------------------------------
+# 版本差异声明：native / nf-core / snakemake-wrappers 的 gzip 上游二进制版本可能不同
+# （Debian bookworm apt gzip=1.12 vs nf-core conda gzip=1.13）。
+# ---------------------------------------------------------------------------
+software_versions:
+  native:
+    gunzip: "1.12"
+    build_route: "APT：Debian bookworm gzip=1.12（binary: gzip / gunzip）"
+    source: "apt gzip=1.12-1（Debian bookworm stable）"
+    note: "gzip -cd <in.gz> > <out> 解压语义；gunzip 为 gzip 的硬链接前端，无需单独安装。"
+  nextflow_nfcore:
+    gunzip: "1.13"
+    module_version: "master（2026-08 抓取；install 时由 nf-core tools 写实际 commit）"
+    source: "conda-forge::gzip=1.13（modules/nf-core/gunzip/environment.yml）"
+    note: "nf-core gunzip 为单模块（无子模块拆分）；环境另含 coreutils/grep/sed/tar/lbzip2。"
+  nextflow_local:
+    gunzip: "（继承 native 容器或显式 pin；未启用则写占位）"
+  snakemake_wrappers:
+    gunzip: "无官方 wrapper"
+    wrapper_tag: "v3.13.0"
+    source: "https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gunzip → 404"
+    note: "snakemake-wrappers 官方 bio/ 目录无 gunzip（2026-08 核对）；必须降级使用 gunzip_snakemake_local。"
+  snakemake_local:
+    gunzip: "1.12（规则从 snakemake.smk/isoseq.smk/workflow/modules/gunzip/snakemake/local/gunzip.smk 迁移，gzip -cd <in.gz> > <out>）"

@@ -8,16 +8,16 @@
 configfile: "config/config.yaml"
 
 # 各步骤规则来自原子模块技能（已迁移原 isoseq.smk 的规则）
-include: "../../../skills/pbccs/snakemake/local/pbccs.smk"
-include: "../../../skills/lima/snakemake/local/lima.smk"
-include: "../../../skills/isoseq3/snakemake/local/isoseq3.smk"
-include: "../../../skills/bamtools/snakemake/local/bamtools_convert.smk"
-include: "../../../skills/gstama/snakemake/local/gstama_polyacleanup.smk"
-include: "../../../skills/gstama/snakemake/local/gstama_collapse.smk"
-include: "../../../skills/gstama/snakemake/local/gstama_filelist.smk"
-include: "../../../skills/gstama/snakemake/local/gstama_merge.smk"
-include: "../../../skills/minimap2/snakemake/local/minimap2_align.smk"
-include: "../../../skills/ultra/snakemake/local/ultra.smk"
+include: "../../../modules/pbccs/snakemake/local/pbccs.smk"
+include: "../../../modules/lima/snakemake/local/lima.smk"
+include: "../../../modules/isoseq3/snakemake/local/isoseq3.smk"
+include: "../../../modules/bamtools/snakemake/local/bamtools_convert.smk"
+include: "../../../modules/gstama/snakemake/local/gstama_polyacleanup.smk"
+include: "../../../modules/gstama/snakemake/local/gstama_collapse.smk"
+include: "../../../modules/gstama/snakemake/local/gstama_filelist.smk"
+include: "../../../modules/gstama/snakemake/local/gstama_merge.smk"
+include: "../../../modules/minimap2/snakemake/local/minimap2_align.smk"
+include: "../../../modules/ultra/snakemake/local/ultra.smk"
 
 # 输出目录（与原流程一致，01..09 分阶段）
 PBCCS_DIR       = config.get("pbccs_dir",  "results/01PBCCS")

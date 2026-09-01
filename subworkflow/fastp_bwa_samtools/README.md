@@ -10,7 +10,7 @@
 ```
 subworkflow/fastp_bwa_samtools/
 ├── meta.yaml                    # 流程级元数据（stages / inputs / outputs）
-├── fastp_bwa_samtools.py          # 编排骨架：调用 skills/<sw>/native/main.py
+├── fastp_bwa_samtools.py          # 编排骨架：调用 modules/<sw>/native/main.py
 └── workflow_skeleton/
     ├── Snakefile.template       # Snakemake 规则模板
     └── main.nf.template         # Nextflow DSL2 模板
@@ -42,10 +42,10 @@ python subworkflow/fastp_bwa_samtools/fastp_bwa_samtools.py \
     --outdir /tmp/out --dry-run
 ```
 
-打印每个 stage 对应 skills 原生实现的命令（若 fastp / bwa-mem2 软件还未在 skills/ 中构建，会显示 `<MISSING>` 路径）。
+打印每个 stage 对应 skills 原生实现的命令（若 fastp / bwa-mem2 软件还未在 modules/ 中构建，会显示 `<MISSING>` 路径）。
 
 ## 如何把 subworkflow/<组合名> 变成“真正能跑”的流程
 
-1. 在 `skills/fastp/`、`skills/bwa-mem2/`、`skills/multiqc/` 补齐 native 三件套；
+1. 在 `modules/fastp/`、`modules/bwa-mem2/`、`modules/multiqc/` 补齐 native 三件套；
 2. 把 `--dry-run` 换成 `--real`，或直接改造 `workflow_skeleton/Snakefile.template`；
 3. 根据 HPC / LSF / Slurm / Kubernetes，加 Snakemake `--profile` 或 Nextflow 配置文件。

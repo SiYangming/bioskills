@@ -1,0 +1,49 @@
+# gstama / snakemake / snakemake-wrappers 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、桥接脚本与接口 Schema，不重写源码。
+# 本目录为说明 + Schema；真正执行需 Snakemake 运行时联网或本地缓存解析 wrapper 路径。
+# 注意：官方 snakemake-wrappers 仓库 **不存在** bio/gstama 目录（API 返回 404），
+#       因此本实现为「说明性空登记」——实际使用请降级 gstama_snakemake_local 或 gstama_native。
+# ---------------------------------------------------------------------------
+
+id: gstama_snakemake_wrappers
+version: "v3.13.0"
+software: gstama
+type: snakemake_wrappers
+source_type: official
+
+summary: "Official Snakemake Wrappers for gstama（官方 bio/gstama 不存在，空登记 + 降级指引）。"
+
+agent_guidance:
+  when_to_use: "组装 Snakemake 流程时注意：官方 bio/gstama 不存在（404），请直接使用 ../local/ 或 native。"
+  recommendation_priority: "Medium（登记占位；实际不可用，需降级 local/native）。"
+
+# 版本对齐：官方无 bio/gstama 目录，无 environment.yaml 可对齐；
+# 仅记录 wrapper 仓库 tag 作为引用基准，二进制版本以本地规则实际 pin 为准。
+software_versions:
+  wrapper_tag: "v3.13.0"
+  gstama: "（官方 bio/gstama 不存在，无 version 可对齐）"
+  source: "（无 environment.yaml——snakemake-wrappers 仓库 404）"
+  note: "wrapper: \"v3.13.0/bio/gstama/<sub>\" 解析会失败；必须使用 ../local/ 或 native 实现。"
+
+source_reference:
+  repository: "https://github.com/snakemake/snakemake-wrappers"
+  wrapper_base: "bio/gstama"
+  tag: "v3.13.0"
+  submodules: []
+  submodules_note: >
+    https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gstama 返回 404（2026-08 抓取），
+    官方不存在该 wrapper 目录；Snakemake 场景请使用 gstama_snakemake_local 或 gstama_native。
+
+inputs: {}
+outputs: {}
+params: {}
+execution:
+  mode: snakemake_rule
+  wrapper_template: "v3.13.0/bio/gstama/{subcommand}（官方不存在，解析必然失败）"
+  rule_example: |
+    # 官方 bio/gstama 不存在，请改用 ../local/ 的规则：
+    include: "modules/gstama/snakemake/local/gstama_polyacleanup.smk"
+    include: "modules/gstama/snakemake/local/gstama_collapse.smk"
+    include: "modules/gstama/snakemake/local/gstama_filelist.smk"
+    include: "modules/gstama/snakemake/local/gstama_merge.smk"

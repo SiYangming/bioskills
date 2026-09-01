@@ -18,7 +18,7 @@
 
 1. **软件与复合流程分层归档**：
    - **原子技能（Atomic Skill）**：顶级目录按照软件 Canonical Name 命名，规范统一小写（如 `samtools`, `bwa-mem2`, `fastqc`）。命名优先级：Debian 仓库名 > nf-core/modules 目录名 > Bioconda 名；冲突时在 meta.yaml 写清别名。
-   - **复合流程（Composite Workflow）**：涉及多软件串联的流程统一归档在 `workflow/`（完整流程）与 `subworkflow/`（常用组合）下，与 `skills/` 平级。
+   - **复合流程（Composite Workflow）**：涉及多软件串联的流程统一归档在 `workflow/`（完整流程）与 `subworkflow/`（常用组合）下，与 `modules/` 平级。
 2. **官方现有模块与自定义构建双轨制（Hybrid Sourcing Strategy）**：
    - **官方现有（Official-Annotated）**：对 `nf-core/modules` 或 `snakemake-wrappers` 中已有的成熟模块，在本地**只保留说明文档、校验 Schema、标准接口描述 (meta.yaml + 三件套)**，注明引用仓库与官方子模块清单，**不重写源码**。
    - **本地自定义（Custom-Native）**：官方缺少、或有特殊优化需求的模块，在 `native/` 目录下提供自包含构建（`main.py` + `Dockerfile`/`Apptainer.def`/`environment.yml` + `test/`）。
@@ -38,7 +38,7 @@
 > `official_nfcore/` / `official_snakemake/` 旧目录名废弃，统一改为 `nextflow/nf-core` / `nextflow/local` / `snakemake/snakemake-wrappers` / `snakemake/local`。
 
 ```
-skills/
+modules/
 ├── registry.yaml                # 动态生成的注册表索引缓存（整合 Native 与 官方 Wrapper）
 ├── base.py                      # Python Skill Runner 基类与 JSON Schema 导出工具
 ├── bin/                         # 技能库 CLI 管理工具（skill-cli validate / scan / schema / run）
@@ -82,7 +82,7 @@ skills/
 ```
 
 ```
-workflow/                         # 【复合流程层】完整流程，与 skills/ 平级；可引用 subworkflow 与原子模块
+workflow/                         # 【复合流程层】完整流程，与 modules/ 平级；可引用 subworkflow 与原子模块
 ├── nanoseq/                      # 例：Nanopore RNA-seq（SRA/dorado -> minimap2 -> samtools -> FLAIR -> StringTie -> ORF）
 ├── isoseq/                       # 例：PacBio Iso-Seq（CCS -> Lima -> Refine -> GSTAMA）
 └── flrnaseq/                     # 例：全长 RNA-seq ORF 预测（TransDecoder -> TD2 -> ORFfinder）
@@ -92,11 +92,11 @@ subworkflow/                      # 【复合流程层】常用软件组合：�
 ```
 
 > workflow/ 与 subworkflow/ 为复合流程层（编排器 + workflow_skeleton 模板 + legacy/testdata），
-> 与 skills/（原子技能）平级，不参与 skill-cli scan/validate。
+> 与 modules/（原子技能）平级，不参与 skill-cli scan/validate。
 
 ### 3.1 canonical 目录名（示例）
 
-| 软件（俗称）   | canonical（`skills/<canonical>/`） | 说明 |
+| 软件（俗称）   | canonical（`modules/<canonical>/`） | 说明 |
 |---|---|---|
 | Samtools       | `samtools`         | Debian / Bioconda / nf-core / snakemake-wrappers 完全一致 |
 | FastQC         | `fastqc`           | Bioconda `fastqc` / Babraham zip 小写统一 |
@@ -279,7 +279,7 @@ execution:
                               (是)                     (否)
                                │                        │
                   目标流程语言是什么？           直接调用 Native 自定义技能
-                ┌──────────────┴───────────────┐ （skills/<tool>/native/main.py）
+                ┌──────────────┴───────────────┐ （modules/<tool>/native/main.py）
             (Nextflow)                    (Snakemake)
                │                               │
     检查 nextflow_nfcore               检查 snakemake_wrappers

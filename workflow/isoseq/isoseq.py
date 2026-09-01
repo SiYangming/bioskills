@@ -7,10 +7,10 @@
 
 执行模式：
   a) --dry-run：仅打印每个 stage 将调用的命令（默认）
-  b) --real：真实调用 skills/<sw>/native/main.py（需对应工具已安装）
+  b) --real：真实调用 modules/<sw>/native/main.py（需对应工具已安装）
   c) --list-stages：按 meta.yaml 列出 stages
 
-编排原则：本脚本只做「流程串联」，每个 step 一律委托给 skills/<sw>/native/main.py，
+编排原则：本脚本只做「流程串联」，每个 step 一律委托给 modules/<sw>/native/main.py，
 不重复实现任何工具命令逻辑。
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent / "skills"  # skills/
+_SKILLS_ROOT = _HERE.parent.parent / "modules"  # modules/
 _DEFAULT_DIRS = {
     "pbccs": "01PBCCS",
     "lima": "02LIMA",
@@ -38,7 +38,7 @@ _DEFAULT_DIRS = {
 
 
 def _native_cmd(software: str, subcmd: list[str], threads: int | None = None) -> list[str]:
-    """构造 skills/<sw>/native/main.py 的调用命令。"""
+    """构造 modules/<sw>/native/main.py 的调用命令。"""
     native = _SKILLS_ROOT / software / "native" / "main.py"
     if not native.exists():
         return ["<MISSING>", str(native)] + subcmd
@@ -279,7 +279,7 @@ def main(argv=None):
     p.add_argument("--chunk-total", type=int, default=10, help="pbccs 分块总数")
     p.add_argument("--threads", type=int, default=8)
     p.add_argument("--dry-run", action="store_true", default=True, help="仅打印命令（默认）")
-    p.add_argument("--real", action="store_true", help="真实执行 skills/<sw>/native/main.py")
+    p.add_argument("--real", action="store_true", help="真实执行 modules/<sw>/native/main.py")
     p.add_argument("--list-stages", action="store_true")
     args = p.parse_args(argv)
 
