@@ -7,7 +7,7 @@
 | 特性 | 说明 |
 |------|------|
 | **双源并存架构** | 官方成熟模块（nf-core/modules、snakemake-wrappers）以「说明 + Schema + 引用」挂载；缺失/自定义模块在 `native/` 下自包含构建 |
-| **双层归档** | 原子技能按软件归档（`skills/<software>/`）；复合流程归档于 `skills/custom/<flow>/` |
+| **双层归档** | 原子技能按软件归档（`skills/<software>/`）；复合流程归档于 `custom/<flow>/` |
 | **零外部网络依赖** | 自定义模块的代码、容器配方（Dockerfile/Apptainer.def）、Conda 环境、测试数据、Schema **全部本地化** |
 | **软件版本差异透明** | 每个软件的 `meta.yaml.software_versions` 字段**显式声明** native / nf-core / snakemake-wrappers 三路之间的版本差与构建路线 |
 | **apt 默认路线 & 容器最小化** | 容器统一使用 `debian:bookworm-slim + apt --no-install-recommends + 清理四连`（见「环境配方」小节），禁止默认引入 miniconda |
@@ -105,7 +105,7 @@ bioskills/
 
 参考黄金样例 `skills/samtools/`（三引擎五实现完整对照 + apt 最小化 + software_versions 差异声明）。
 参考第二个完整样例 `skills/fastqc/`（apt JVM + Babraham 官方 zip 路线示范、单 process / 单 wrapper 的 submodules 占位写法）。
-参考复合流程骨架 [skills/custom/subworkflow/fastp_bwa_samtools/README.md](skills/custom/subworkflow/fastp_bwa_samtools/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [skills/custom/README.md](skills/custom/README.md)。
+参考复合流程骨架 [custom/subworkflow/fastp_bwa_samtools/README.md](custom/subworkflow/fastp_bwa_samtools/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [custom/README.md](custom/README.md)。
 
 ## 构建规范
 

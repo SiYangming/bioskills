@@ -39,7 +39,7 @@ skills/<software>/
         └── README.md
 ```
 
-复合流程统一放在 `skills/custom/` 下，分**两层**：
+复合流程统一放在 `custom/` 下，分**两层**：
 
 - `custom/workflow/<flow_name>/` —— **专门设计流程**：面向特定领域的完整流程（如 `nanoseq`、`isoseq`、`flrnaseq`），可引用 subworkflow 与各原子模块；
 - `custom/subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `fastp_bwa_samtools`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用。

@@ -1,0 +1,137 @@
+# fastp native 自包含实现元数据
+# ---------------------------------------------------------------------------
+# source_type: custom —— 本地全量自维护。
+# 二进制：fastp（bioconda::fastp=0.24.0，micromamba 引导 /opt/env）。
+# 命令逻辑对齐 custom/subworkflow/fastp_bwa_samtools 编排器的调用：
+#   python main.py run -i R1.fq.gz -o clean_R1.fq.gz -h report.html -j report.json
+# fastp 0.20+ 线程参数为 -w/--thread（-t 已被占用为 --trim_tail1，注意勿混用）。
+# ---------------------------------------------------------------------------
+
+id: fastp_native
+version: "0.24.0-v1.0"
+software: fastp
+type: native
+source_type: custom
+
+summary: "Self-contained fastp runner（run 子命令：单/双端 FASTQ 质控 + 去接头 + 报告），自动注入线程与临时目录优化，兼容 fastp_bwa_samtools 编排器调用约定。"
+
+agent_guidance:
+  when_to_use: "AI Agent Function Calling 或独立 Python/Shell CLI 调用时优先使用本实现；custom/subworkflow/fastp_bwa_samtools 的 fastp stage 即调用本实现。"
+  recommendation_priority: "High（非流程引擎场景的主执行目标）"
+
+# 本实现实际运行的上游二进制版本 + 构建来源
+software_versions:
+  fastp: "0.24.0"
+  binary: "fastp"
+  source: "bioconda::fastp=0.24.0（micromamba 引导的 /opt/env；environment.yml 已 pin）"
+  note: "fastp 不在 Debian bookworm apt，容器走 bookworm-slim + micromamba + bioconda 路线；注意 nf-core / snakemake-wrappers master 当前 pin 1.3.6（比本实现 0.24.0 新）。"
+
+# ---- 统一输入接口（JSON Schema 导出依据）-------------------------------- #
+inputs:
+  in1:
+    type: file
+    format: fastq.gz
+    required: true
+    cli_arg: "-i"
+    description: "输入 R1 FASTQ(.gz)"
+  out1:
+    type: file
+    format: fastq.gz
+    required: true
+    cli_arg: "-o"
+    description: "输出 R1 清洁 FASTQ(.gz)"
+  in2:
+    type: file
+    format: fastq.gz
+    required: false
+    cli_arg: "-I"
+    description: "输入 R2 FASTQ(.gz)（双端模式）"
+  out2:
+    type: file
+    format: fastq.gz
+    required: false
+    cli_arg: "-O"
+    description: "输出 R2 清洁 FASTQ(.gz)（双端模式）"
+  html:
+    type: file
+    format: html
+    required: false
+    cli_arg: "-h"
+    description: "HTML 质控报告路径"
+  json:
+    type: file
+    format: json
+    required: false
+    cli_arg: "-j"
+    description: "JSON 质控报告路径"
+  threads:
+    type: integer
+    default: 4
+    cli_arg: "--threads"
+    description: "fastp 线程数（fastp 0.20+ 映射为 -w/--thread，勿用 -t）"
+  adapter_sequence:
+    type: string
+    required: false
+    cli_arg: "--adapter_sequence"
+    description: "R1 3' 端接头序列（IUPAC 碱基；不指定时 fastp 自动检测）"
+  detect_adapter_for_pe:
+    type: boolean
+    default: false
+    cli_arg: "--detect_adapter_for_pe"
+    description: "双端模式通过 R1/R2 重叠分析检测接头（强烈建议 PE 开启）"
+  qualified_quality_phred:
+    type: integer
+    default: 15
+    cli_arg: "-q"
+    description: "合格碱基 phred 阈值（fastp 默认 15）"
+  unqualified_percent_limit:
+    type: integer
+    default: 40
+    cli_arg: "-u"
+    description: "read 中不合格碱基比例上限 %（fastp 默认 40）"
+  length_required:
+    type: integer
+    default: 15
+    cli_arg: "-l"
+    description: "最短 read 长度阈值（fastp 默认 15，低于则丢弃）"
+  extra_args:
+    type: string
+    required: false
+    description: "透传给 fastp 的额外参数（如 --cut_front --cut_tail --cut_right 1 --trim_poly_g），高级用法慎用"
+
+outputs:
+  out1:
+    type: file
+    format: fastq.gz
+    description: "清洗后 R1 FASTQ"
+  out2:
+    type: file
+    format: fastq.gz
+    description: "清洗后 R2 FASTQ（双端模式）"
+  html:
+    type: file
+    format: html
+    description: "HTML 质控报告"
+  json:
+    type: file
+    format: json
+    description: "JSON 质控报告（含过滤统计，可被后续流程消费）"
+
+# ---- 本地环境配方与性能优化（custom 模块独有）--------------------------- #
+environment:
+  conda: "environment.yml"
+  dockerfile: "Dockerfile"
+  apptainer_def: "Apptainer.def"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: "/tmp"
+  env_vars:
+    TMPDIR: "{tmpdir}"
+    PYTHONUNBUFFERED: "1"
+
+execution:
+  entrypoint: "python main.py"
+  test_command: "bash test/run_test.sh"
+  binary: "fastp"

@@ -1,0 +1,75 @@
+# fastp / nextflow / nf-core 说明模块
+# ---------------------------------------------------------------------------
+# source_type: official —— 仅保留说明、接口 Schema 与引用，不重写源码。
+# 本目录为说明 + Schema；真正执行需在项目内安装官方 nf-core 子模块。
+# ---------------------------------------------------------------------------
+
+id: fastp_nextflow_nfcore
+version: "master"
+software: fastp
+type: nextflow_nfcore
+source_type: official
+
+summary: "Official nf-core process for fastp (modules/nf-core/fastp：单/双端 FASTQ 质控、去接头、HTML/JSON 报告，单模块无子目录)."
+
+agent_guidance:
+  when_to_use: "组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时，直接 include FASTP 模块。"
+  recommendation_priority: "Medium（Nextflow 流程引擎场景使用；CLI/Agent 直调请走 native）。"
+
+# 版本对齐：本实现 meta.version 记录 nf-core/modules 跟踪分支；
+# fastp 上游二进制版本以模块 environment.yml 中的 conda pin 为准。
+software_versions:
+  module_version: "master（2026-09-01 抓取；submodules: fastp）"
+  fastp: "1.3.6"
+  source: "bioconda::fastp=1.3.6（modules/nf-core/fastp/environment.yml）"
+  note: "nf-core master 当前单模块 pin bioconda::fastp=1.3.6，比 native 的 0.24.0 新；跨引擎迁移时注意（0.20+ 线程参数为 -w/--thread），bump 模块后请同步刷新本文件。"
+
+source_reference:
+  repository: "https://github.com/nf-core/modules"
+  modules_base: "modules/nf-core/fastp"
+  submodules:
+    - "fastp"
+  submodules_note: >
+    2026-09-01 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/fastp
+    得到：environment.yml / main.nf / meta.yml / tests（无子目录，模块本体即 fastp）。
+    列表以官方在线目录为准，更新时重新抓取并刷新本字段。
+
+inputs:
+  meta:
+    type: map
+    description: "Groovy 样本元信息，如 [ id:'sample1' ]"
+  reads:
+    type: file
+    format: [fastq.gz, fastq]
+    required: true
+    description: "输入 reads：单个文件（SE）或 [R1, R2] 元组（PE）"
+
+outputs:
+  reads:
+    type: file
+    format: [fastq.gz, fastq]
+    description: "清洗后 reads（SE 或 R1/R2 元组）"
+  json:
+    type: file
+    format: json
+    description: "fastp JSON 质控报告"
+  html:
+    type: file
+    format: html
+    description: "fastp HTML 质控报告"
+  versions:
+    type: file
+    pattern: "versions.yml"
+    description: "nf-core 标准版本文件"
+
+execution:
+  mode: nextflow_include
+  include_statement: "include { FASTP } from './modules/nf-core/fastp/main'"
+  include_pattern: |
+    include { FASTP } from './modules/nf-core/fastp/main'
+  container: "community.wave.seqera.io（按模块 environment.yml 自动生成）"
+  setup_hint: |
+    在项目仓库根执行：
+      nf-core modules install nf-core fastp
+    本目录仅提供 include 参考与统一 Schema，不重写官方源码；
+    若官方缺失 / 需定制，请使用 ../local/。

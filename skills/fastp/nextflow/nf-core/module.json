@@ -1,0 +1,21 @@
+{
+  "software": "fastp",
+  "provider": "nf-core/modules",
+  "repository": "https://github.com/nf-core/modules",
+  "license": "MIT",
+  "upstream": {
+    "tracked_branch": "master",
+    "pinned_commit": {
+      "main.nf": "18e4e771ddb8eae4440cd32d5ae6c988c27b8d7e",
+      "environment.yml": "bc42bd4faa1ea70ca913c42d229ccb2d662521b4",
+      "meta.yml": "893ea042d9fb727bd59e61b425750c37a80a4fd3"
+    },
+    "note": "sha 为 2026-09-01 抓取 modules/nf-core/fastp 目录树的 blob sha；实际 install 时由 nf-core tools 写入最新值。"
+  },
+  "container_registry": "community.wave.seqera.io",
+  "submodules": [
+    "fastp"
+  ],
+  "install_command": "nf-core modules install nf-core fastp",
+  "important": "本 module.json 仅作登记与引用；真正运行需在项目自身的 modules/nf-core/ 目录执行 install。"
+}

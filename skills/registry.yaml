@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-01T01:53:04+00:00'
+generated_at: '2026-09-01T11:58:00+00:00'
 skills:
 - software: bamtools
   canonical: bamtools
@@ -76,6 +76,44 @@ skills:
     version: v3.13.0
     path: dorado/snakemake/snakemake-wrappers
     priority: Low
+    entrypoint: snakemake_rule
+- software: fastp
+  canonical: fastp
+  implementations:
+  - id: fastp_native
+    source_type: custom
+    impl: native
+    version: 0.24.0-v1.0
+    path: fastp/native
+    priority: High
+    entrypoint: python main.py
+  - id: fastp_nextflow_local
+    source_type: custom
+    impl: nextflow_local
+    version: 0.0.0-placeholder
+    path: fastp/nextflow/local
+    priority: Low
+    entrypoint: nextflow_include
+  - id: fastp_nextflow_nfcore
+    source_type: official
+    impl: nextflow_nfcore
+    version: master
+    path: fastp/nextflow/nf-core
+    priority: Medium
+    entrypoint: nextflow_include
+  - id: fastp_snakemake_local
+    source_type: custom
+    impl: snakemake_local
+    version: 0.1.0
+    path: fastp/snakemake/local
+    priority: Low
+    entrypoint: snakemake_rule
+  - id: fastp_snakemake_wrappers
+    source_type: official
+    impl: snakemake_wrappers
+    version: v3.13.0
+    path: fastp/snakemake/snakemake-wrappers
+    priority: Medium
     entrypoint: snakemake_rule
 - software: fastqc
   canonical: fastqc

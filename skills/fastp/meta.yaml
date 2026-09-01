@@ -1,0 +1,94 @@
+# fastp 软件级总览元数据
+# ---------------------------------------------------------------------------
+# 汇总本软件在技能库中的所有可用实现类型与推荐优先级。
+# 上层 Agent 通过本文件快速判断：该软件是否已收录、应优先走哪条实现路径。
+# 实现路径结构：
+#   skills/<software>/
+#   ├── native/
+#   ├── nextflow/nf-core/    # 官方 nf-core/modules（source_type: official）
+#   │       local/            # 自定义 Nextflow 模块（source_type: custom）
+#   └── snakemake/snakemake-wrappers/  # 官方 snakemake-wrappers（official）
+#           local/              # 自定义 Snakemake 实现（source_type: custom）
+# 被 custom/subworkflow/fastp_bwa_samtools 编排器引用（调用 native main.py run）。
+# ---------------------------------------------------------------------------
+
+software: fastp
+canonical: fastp
+category: qc
+description: >
+  fastp 是 DNA/RNA 短读段（Illumina）质控与预处理工具，支持接头自动检测与切除、
+  质量过滤、长度过滤、PolyG/PolyX 修剪、UMI 处理、重复序列标记与 QC 报告
+  （HTML + JSON），单/双端 FASTQ(gz) 一步完成清洗。
+
+homepage: https://github.com/OpenGene/fastp
+license: MIT
+
+# 各实现支持的 fastp 版本可能不同 —— 上游官方仓库的升级节奏通常快于 native 的锁定版本。
+# 版本差异在各实现的 meta.yaml 中同步记录；此处汇总便于做跨实现兼容性判断。
+# ⚠️ 2026-09-01 抓取：nf-core 与 snakemake-wrappers 官方均已 pin fastp=1.3.6
+#    （较 native 锁定的 0.24.0 新），跨引擎迁移时务必注意参数兼容性。
+software_versions:
+  - id: fastp_native
+    fastp: "0.24.0"
+    note: "CONDA 路线：fastp 不在 Debian bookworm apt，容器走 debian:bookworm-slim + micromamba 引导 bioconda env（bioconda::fastp=0.24.0 → /opt/env）；二进制 fastp。"
+  - id: fastp_nextflow_nfcore
+    module_version: "master（2026-09-01 抓取；submodules: fastp）"
+    fastp: "1.3.6"
+    source: "bioconda::fastp=1.3.6（modules/nf-core/fastp/environment.yml）"
+    note: "nf-core master 当前 pin fastp=1.3.6（比 native 的 0.24.0 新）；若 nf-core 回落旧 tag 则可能回到 0.2x。"
+  - id: fastp_snakemake_wrappers
+    wrapper_tag: "v3.13.0"
+    fastp: "1.3.6"
+    source: "bioconda fastp=1.3.6（bio/fastp/environment.yaml，无 snakemake-wrapper-utils 依赖）"
+    note: "与 nf-core 当前 pin 一致（1.3.6）；若固定 wrapper tag < v3.13，fastp 可能回落 0.2x。"
+  - id: fastp_nextflow_local
+    fastp: "未固定（用户按 main.nf 中 conda/container 自行声明）"
+  - id: fastp_snakemake_local
+    fastp: "0.24.0（建议；自维护 fastp.smk，conda 建议 bioconda::fastp=0.24.0）"
+
+# 可用实现清单（按推荐优先级排序）
+implementations:
+  - id: fastp_native
+    path: native
+    source_type: custom
+    type: native
+    version: "0.24.0-v1.0"
+    priority: high
+    when_to_use: >
+      非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+      custom/subworkflow/fastp_bwa_samtools 编排器即调用本实现的 run 子命令。
+
+  - id: fastp_nextflow_nfcore
+    path: nextflow/nf-core
+    source_type: official
+    type: nextflow_nfcore
+    version: "master"
+    priority: medium
+    when_to_use: 组装 Nextflow DSL2 流程、目标为 HPC/Cloud 时（官方子模块 fastp，单模块）。
+
+  - id: fastp_nextflow_local
+    path: nextflow/local
+    source_type: custom
+    type: nextflow_local
+    version: ""
+    priority: low
+    when_to_use: nf-core 子模块缺失或需要本地定制的 Nextflow 模块（当前官方已存在，占位）。
+
+  - id: fastp_snakemake_wrappers
+    path: snakemake/snakemake-wrappers
+    source_type: official
+    type: snakemake_wrappers
+    version: "v3.13.0"
+    priority: medium
+    when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时（官方 bio/fastp 存在，单 wrapper）。
+
+  - id: fastp_snakemake_local
+    path: snakemake/local
+    source_type: custom
+    type: snakemake_local
+    version: "0.1.0"
+    priority: low
+    when_to_use: snakemake-wrappers 缺失（未启用）或需要本地定制规则时，使用自维护 fastp.smk。
+
+# 默认推荐路径（Agent 路由用）
+default_implementation: fastp_native

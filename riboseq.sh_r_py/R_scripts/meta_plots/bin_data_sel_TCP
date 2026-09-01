@@ -1,0 +1,113 @@
+#load packages----
+# 加载所需 R 包。----
+library(tidyverse)
+
+#read in common variables----
+# 读取通用变量配置。----
+source("common_variables.R")
+
+#set the threshold for the average CDS counts a transcript has to have across all samples for it to be included
+# 设置纳入分析所需的平均 CDS 计数阈值（跨所有样本的均值）。
+min_counts <- 50
+
+#set the thresholds for region lengths
+# 设置各区域长度阈值。
+UTR5_min_len <- 25
+CDS_min_len <- 300
+UTR3_min_len <- 0
+
+# region_cutoffs 向量按 5'UTR、CDS、3'UTR 顺序给出最小长度。
+region_cutoffs <- c(UTR5_min_len, CDS_min_len, UTR3_min_len)
+
+#read in functions----
+# 读取用于分箱与归一化的辅助函数。----
+source("binning_Sel-RiboSeq_functions.R")
+
+#read in data----
+# 读入转录本区域长度信息（此处示例为人类转录组；如用其他物种需修改）。----
+region_lengths_dir <- "path/to/file" # add the path to the file here
+region_lengths <- read_csv(file = file.path(region_lengths_dir, "gencode.v38.pc_transcripts_region_lengths.csv"), col_names = c("transcript", "UTR5_len", "CDS_len", "UTR3_len")) # this is for human transcriptome, will need to alter if using a different species
+
+#read in the CDS counts to use to filter the data
+# 使用以下 for 循环读入 CDS 计数并根据平均计数筛选转录本。----
+#the following for loop reads in each final CDS counts file and renames the counts column by the sample name and saves each data frame to a list
+data_list <- list()
+for (sample in disome_60nt_sample_names) {
+  df <- read_csv(file = file.path(parent_dir, "Analysis/CDS_counts", paste0(sample, "_pc_final_counts_all_frames.csv")), col_names = T)
+  colnames(df) <- c("transcript", sample)
+  data_list[[sample]] <- df
+}
+
+#extract transcript IDs to keep----
+# 提取需要保留的转录本 ID。----
+# 1) 使用 reduce 合并所有样本的计数；
+# 2) 去除含 NA 的转录本（对应某样本 0 计数）；
+# 3) 去除平均计数低于 min_counts 的转录本；
+# 4) 根据长度阈值过滤过短的 UTR/CDS；
+# 5) 提取最终保留的转录本 ID。
+data_list %>%
+  reduce(full_join, by = "transcript") %>%
+  column_to_rownames("transcript") %>%
+  drop_na() %>%
+  filter(rowMeans(.) >= min_counts) %>%
+  rownames_to_column("transcript") %>%
+  inner_join(region_lengths, by = "transcript") %>%
+  filter(UTR5_len >= UTR5_min_len & CDS_len >= CDS_min_len & UTR3_len >= UTR3_min_len) %>%
+  pull(transcript) -> filtered_transcripts
+
+#read in counts data----
+# 读取用于绘制 Sel-RiboSeq meta 图的计数，并进行 CPM 归一化。----
+#read in csvs using parLapply (parallel version of lapply)
+counts_list <- list()
+for (sample in disome_60nt_sample_names) {
+  
+  #extract the condition and replicate from the sample name (this may need to be edited depending on how your sample names are structured)
+  # 从样本名中提取条件与重复信息（需根据具体命名规则调整）。
+  condition <- disome_60nt_sample_info$condition[disome_60nt_sample_info$sample == sample]
+  replicate <- disome_60nt_sample_info$replicate[disome_60nt_sample_info$sample == sample]
+  
+  #get all the csv file names from the directory and filter
+  # 读取计数文件，过滤到目标转录本，并追加条件与重复信息后进行归一化。
+  read_csv(file = file.path(parent_dir, "Counts_files/csv_files", paste0(sample, "_pc_final_leading_counts.csv"))) %>%
+    filter(transcript %in% filtered_transcripts) %>%
+    mutate(condition = rep(condition),
+           replicate = rep(replicate)) %>%
+    normalise_data() -> counts_list[[sample]]
+}
+
+#return to parent directory
+# 切换回父目录。
+setwd(parent_dir)
+
+#check counts list looks OK
+# 粗略检查一个样本的数据结构是否合理。
+summary(counts_list[[1]])
+head(counts_list[[1]])
+
+#sanity check----
+# 数据合理性检查：每个样本内所有转录本 CPM 之和应为 1,000,000。
+sum_sample_counts <- function(df) {
+  df %>%
+    summarise(summed_counts = sum(CPM)) -> df2
+  
+  return(df2)
+}
+
+lapply(counts_list, sum_sample_counts)
+
+#bin all data----
+# 对所有转录本的信号进行区域分箱（5'UTR / CDS / 3'UTR）。----
+binned_list <- lapply(counts_list, bin_data, region_lengths = region_lengths, region_cutoffs = region_cutoffs, bins = c(25,50,25))
+summary(binned_list[[1]])
+head(binned_list[[1]])
+
+#single nt----
+# 基于单核苷酸分辨率生成 meta profile。----
+single_nt_list <- lapply(counts_list, splice_single_nt, region_lengths = region_lengths)
+summary(single_nt_list[[1]])
+head(single_nt_list[[1]])
+
+#save lists----
+# 将分箱结果和单核苷酸结果保存为 R 对象以供后续绘图脚本使用。----
+save(file = file.path(parent_dir, "Counts_files/R_objects/disome_60nt_binned_list.Rdata"), binned_list)
+save(file = file.path(parent_dir, "Counts_files/R_objects/disome_60nt_single_nt_list.Rdata"), single_nt_list)
