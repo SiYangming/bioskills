@@ -39,7 +39,16 @@ skills/<software>/
         └── README.md
 ```
 
-复合流程（多软件串联）统一放在 `skills/custom/<flow_name>/`。
+复合流程统一放在 `skills/custom/` 下，分**两层**：
+
+- `custom/workflow/<flow_name>/` —— **专门设计流程**：面向特定领域的完整流程（如 `nanoseq`、`isoseq`、`flrnaseq`），可引用 subworkflow 与各原子模块；
+- `custom/subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `fastp_bwa_samtools`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用。
+
+每个流程目录含 `meta.yaml`（stages/inputs/outputs）、入口编排脚本、`workflow_skeleton/`（模板）与 `README.md`。
+
+**目录扁平化**：`workflow_skeleton/` 下的辅助文件尽量放根级（`config.yaml`、`common.smk`、脚本等），避免 `config/`/`rules/` 等多级子目录；仅当同层文件确实过多时才建子目录。
+
+**脚本归位**：流程中出现的辅助脚本先判断归属——专属于某软件（如 samtools flagstat 汇总脚本）→ 归位到该软件 `native/legacy/` 或 `snakemake/local/`；流程级通用脚本（docker_wrapper、samplesheet 处理）→ 保留在流程 `workflow_skeleton/` 下。
 
 ---
 
@@ -53,7 +62,7 @@ skills/<software>/
 | 实现 ID | `<software>_<impl>`，全小写下划线 | `samtools_native`、`samtools_nextflow_nfcore`、`samtools_snakemake_local` |
 | `type` 枚举（5 个） | `native` · `nextflow_nfcore` · `nextflow_local` · `snakemake_wrappers` · `snakemake_local` | — |
 | `source_type` 枚举 | `official`（说明层）· `custom`（自实现） | — |
-| 复合流程 | `custom/<flow_name>/`，flow_name 全小写下划线 | `custom/dna_seq_align_qc` |
+| 复合流程 | `custom/workflow/<flow_name>/` 或 `custom/subworkflow/<组合名>/`，全小写下划线 | `custom/workflow/nanoseq`、`custom/subworkflow/fastp_bwa_samtools` |
 
 **实现 ID ↔ type ↔ 路径 对照（必须一一对应）：**
 

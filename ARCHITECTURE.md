@@ -80,9 +80,13 @@ skills/
 ├── custom_tool_x/               # 官方不存在的全新自定义软件；仍保留 5 路目录（local/可占位）
 │   └── ...
 │
-└── custom/                      # 【复合技能】多软件组合的常用小流程
-    ├── dna_seq_align_qc/        # 例：Fastp + BWA + Samtools 基因组比对与质控链
-    └── rna_seq_quant/
+└── custom/                      # 【复合技能】两层：workflow/（专门流程）+ subworkflow/（常用组合）
+    ├── workflow/                # 专门设计流程：面向特定领域的完整流程，可引用 subworkflow 与原子模块
+    │   ├── nanoseq/             # 例：Nanopore RNA-seq（SRA/dorado -> minimap2 -> samtools -> FLAIR -> StringTie -> ORF）
+    │   ├── isoseq/              # 例：PacBio Iso-Seq（CCS -> Lima -> Refine -> GSTAMA）
+    │   └── flrnaseq/            # 例：全长 RNA-seq ORF 预测（TransDecoder -> TD2 -> ORFfinder）
+    └── subworkflow/             # 常用软件组合：可复用小流程，供 workflow 引用或独立调用
+        └── fastp_bwa_samtools/  # 例：Fastp + BWA + Samtools 基因组比对与质控链
 ```
 
 ### 3.1 canonical 目录名（示例）

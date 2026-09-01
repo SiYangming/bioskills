@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent  # skills/
+_SKILLS_ROOT = _HERE.parent.parent.parent  # skills/
 _DEFAULT_DIRS = {
     "pbccs": "01PBCCS",
     "lima": "02LIMA",

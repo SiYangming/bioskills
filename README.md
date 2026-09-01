@@ -62,8 +62,9 @@ bioskills/
     ├── base.py                  # Skill Runner 基类 + Schema 导出 + 资源探测
     ├── registry.yaml            # 技能注册表（skill-cli scan 自动生成）
     ├── bin/skill-cli            # 管理 CLI：validate / scan / schema / run
-    ├── custom/                  # 【复合流程】多软件小流程（Composite Skills）
-    │   └── dna_seq_align_qc/    # 示例：fastp + bwa + samtools
+    ├── custom/                  # 【复合流程】workflow/（专门流程）+ subworkflow/（常用组合）
+    │   ├── workflow/            # 专门设计流程（nanoseq / isoseq / flrnaseq）
+    │   └── subworkflow/         # 常用软件组合（fastp_bwa_samtools 等）
     ├── samtools/                # 【原子技能】samtools
     │   ├── meta.yaml            # 软件级总览
     │   ├── native/              # 自包含实现（最高优先级）
@@ -104,7 +105,7 @@ bioskills/
 
 参考黄金样例 `skills/samtools/`（三引擎五实现完整对照 + apt 最小化 + software_versions 差异声明）。
 参考第二个完整样例 `skills/fastqc/`（apt JVM + Babraham 官方 zip 路线示范、单 process / 单 wrapper 的 submodules 占位写法）。
-参考复合流程骨架 [skills/custom/dna_seq_align_qc/README.md](skills/custom/dna_seq_align_qc/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [skills/custom/README.md](skills/custom/README.md)。
+参考复合流程骨架 [skills/custom/subworkflow/fastp_bwa_samtools/README.md](skills/custom/subworkflow/fastp_bwa_samtools/README.md)（多软件 stages 声明、`--dry-run`/`--list-stages` 编排器、Snakefile / Nextflow 模板）及目录说明 [skills/custom/README.md](skills/custom/README.md)。
 
 ## 构建规范
 

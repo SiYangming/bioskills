@@ -1,10 +1,10 @@
-# custom / dna_seq_align_qc 最小复合流程示例元数据
+# custom / fastp_bwa_samtools 最小复合流程示例元数据
 #
 # 流程：fastp 去接头 -> bwa-mem2 比对 -> samtools sort/index -> QC（可选）
 # 本示例为 **骨架 + 编排脚本**：不内置具体软件实现，
 # 默认调用 skills/ 下对应软件的 default_implementation（通常是 native）。
 
-id: custom_dna_seq_align_qc
+id: custom_fastp_bwa_samtools
 version: "0.1.0"
 category: custom
 type: custom_workflow
@@ -15,7 +15,7 @@ summary: "最小 DNA 短读比对 + 排序 + 质控串联示例：fastp -> bwa-m
 description: |
   作为“复合流程如何在 custom/ 下按 AGENT.md 存档”的可参考样例：
   1) meta.yaml 声明 stages / inputs / outputs；
-  2) 提供一个可执行 Python 编排器 dna_seq_align_qc.py，通过 skills/<sw>/native/main.py 调用相应 native 实现；
+  2) 提供一个可执行 Python 编排器 fastp_bwa_samtools.py，通过 skills/<sw>/native/main.py 调用相应 native 实现；
   3) 提供 workflow_skeleton/ 下 Snakefile / main.nf 模板，便于实际项目改造。
 
 agent_guidance:
@@ -77,8 +77,8 @@ outputs:
     path_pattern: "{outdir}/fastp/{sample_id}_fastp.html"
 
 execution:
-  entrypoint: "python dna_seq_align_qc.py"
-  test_command: "python dna_seq_align_qc.py --help"
+  entrypoint: "python fastp_bwa_samtools.py"
+  test_command: "python fastp_bwa_samtools.py --help"
   dependencies_in_skills:
     - fastp/native
     - bwa-mem2/native   # 尚未提供，仅占位

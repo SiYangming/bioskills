@@ -1,8 +1,8 @@
 # 复合技能（Composite Skills）目录
 #
-# 归档多软件串联的常用小流程，每个子目录是一个自包含流程：
-#   custom/<flow_name>/{meta.yaml, main.py, ...}
+# 分两层归档多软件流程：
+#   custom/workflow/<flow_name>/     专门设计流程（如 nanoseq / isoseq / flrnaseq）
+#   custom/subworkflow/<组合名>/      常用软件组合（如 fastp_bwa_samtools）
 #
-# 示例规划：
-#   custom/dna_seq_align_qc/   Fastp + BWA + Samtools 比对与质控链
-#   custom/rna_seq_quant/      STAR/HISAT2 + featureCounts 定量链
+# 每个流程目录含 {meta.yaml, 编排脚本, workflow_skeleton/, README.md}。
+# 详见 custom/README.md 与 AGENT.md。

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""dna_seq_align_qc: 最小复合流程骨架（fastp -> bwa-mem2 mem -> samtools sort/index）
+"""fastp_bwa_samtools: 最小复合流程骨架（fastp -> bwa-mem2 mem -> samtools sort/index）
 
 可执行三种模式：
   a) --dry-run：仅打印 stage 命令（默认，避免依赖缺失）
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_SKILLS_ROOT = _HERE.parent.parent  # skills/
+_SKILLS_ROOT = _HERE.parent.parent.parent  # skills/
 _STAGES = ["fastp", "bwa-mem2", "samtools", "qc_optional"]
 
 
@@ -87,7 +87,7 @@ def run_stages(args, real: bool):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description="custom/dna_seq_align_qc — 最小复合流程骨架")
+    p = argparse.ArgumentParser(description="custom/fastp_bwa_samtools — 最小复合流程骨架")
     p.add_argument("--sample-id", required=True)
     p.add_argument("--reads-r1", required=True)
     p.add_argument("--reads-r2")
@@ -100,12 +100,12 @@ def main(argv=None):
     args = p.parse_args(argv)
 
     if args.list_stages:
-        print(json.dumps({"id": "custom_dna_seq_align_qc", "stages": _STAGES}, ensure_ascii=False, indent=2))
+        print(json.dumps({"id": "custom_fastp_bwa_samtools", "stages": _STAGES}, ensure_ascii=False, indent=2))
         return 0
 
     Path(args.outdir).mkdir(parents=True, exist_ok=True)
     mode = "real" if args.real else "dry-run"
-    print(f"# custom_dna_seq_align_qc ({mode}) sample={args.sample_id}")
+    print(f"# custom_fastp_bwa_samtools ({mode}) sample={args.sample_id}")
     run_stages(args, real=args.real)
     return 0
 

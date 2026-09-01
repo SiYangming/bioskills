@@ -3,7 +3,7 @@ import os
 from snakemake.utils import validate
 
 # Parse configuration
-configfile: "config/config.yaml"
+configfile: "config.yaml"
 
 # Validate configuration (optional, if schema exists)
 # validate(config, schema="config/config.schema.yaml")

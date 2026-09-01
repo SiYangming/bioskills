@@ -1,4 +1,4 @@
-# custom / dna_seq_align_qc
+# custom / fastp_bwa_samtools
 
 最小的短读 DNA 复合流程示例骨架，用来演示 **skills/custom/<flow_name>/ 目录如何存档一个常见组合工作流**。
 
@@ -8,9 +8,9 @@
 ## 组成
 
 ```
-skills/custom/dna_seq_align_qc/
+skills/custom/fastp_bwa_samtools/
 ├── meta.yaml                    # 流程级元数据（stages / inputs / outputs）
-├── dna_seq_align_qc.py          # 编排骨架：调用 skills/<sw>/native/main.py
+├── fastp_bwa_samtools.py          # 编排骨架：调用 skills/<sw>/native/main.py
 └── workflow_skeleton/
     ├── Snakefile.template       # Snakemake 规则模板
     └── main.nf.template         # Nextflow DSL2 模板
@@ -34,7 +34,7 @@ reads_R1,R2 ──► fastp (trim + QC)
 ## 快速体验（dry-run，无外部依赖）
 
 ```bash
-python skills/custom/dna_seq_align_qc/dna_seq_align_qc.py \
+python skills/custom/fastp_bwa_samtools/fastp_bwa_samtools.py \
     --sample-id s001 \
     --reads-r1 /tmp/s001_R1.fq.gz \
     --reads-r2 /tmp/s001_R2.fq.gz \
