@@ -148,3 +148,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/stringtie/overview
+- **Docker**：`docker pull quay.io/biocontainers/stringtie:3.0.3--h29c0135_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/stringtie%3A3.0.3--h29c0135_0
+- 安装方式（本地）：`mamba create -n stringtie -c conda-forge -c bioconda stringtie=3.0.3`

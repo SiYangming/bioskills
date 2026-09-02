@@ -9,14 +9,14 @@ homepage: https://github.com/Markusjsommer/TD2
 license: MIT
 software_versions:
 - id: td2_native
-  td2: 1.0.6
-  note: CONDA 路线：debian:bookworm-slim + apt 运行时 + micromamba 引导 bioconda env（bioconda::td2=1.0.6）；二进制
+  td2: 1.0.7
+  note: CONDA 路线：debian:bookworm-slim + apt 运行时 + micromamba 引导 bioconda env（bioconda::td2=1.0.7）；二进制
     TD2.LongOrfs / TD2.Predict。
 - id: td2_nextflow_nfcore
   module_version: 'master（2026-09-01 抓取；submodules: longorfs / predict）'
   td2: 1.1.0
   source: bioconda::td2=1.1.0（modules/nf-core/td2/{longorfs,predict}/environment.yml）
-  note: nf-core master 当前 pin td2=1.1.0（比 native 的 1.0.6 新）；若 nf-core 回落旧 tag 则可能回到
+  note: nf-core master 当前 pin td2=1.1.0（比 native 的 1.0.7 新）；若 nf-core 回落旧 tag 则可能回到
     1.0.x。
 - id: td2_snakemake_wrappers
   wrapper_tag: v3.13.0
@@ -27,13 +27,13 @@ software_versions:
 - id: td2_nextflow_local
   td2: 未固定（用户按 main.nf 中 conda/container 自行声明）
 - id: td2_snakemake_local
-  td2: 1.0.6（建议；规则迁移自 flrnaseq.smk/workflow/rules/td2.smk，conda 指向 bioconda::td2=1.0.6）
+  td2: 1.0.7（建议；规则迁移自 flrnaseq.smk/workflow/rules/td2.smk，conda 指向 bioconda::td2=1.0.7）
 implementations:
 - id: td2_native
   path: native
   source_type: custom
   type: native
-  version: 1.0.6-v1.0
+  version: 1.0.7-v1.0
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
 

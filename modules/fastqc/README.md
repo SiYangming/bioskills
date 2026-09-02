@@ -100,3 +100,10 @@ dependencies:
   - conda-forge::perl
   - conda-forge::coreutils
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/fastqc/overview
+- **Docker**：`docker pull quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/fastqc%3A0.12.1--hdfd78af_0
+- 安装方式（本地）：`mamba create -n fastqc -c conda-forge -c bioconda fastqc=0.12.1`

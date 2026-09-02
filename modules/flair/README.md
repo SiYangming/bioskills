@@ -156,3 +156,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/flair/overview
+- **Docker**：`docker pull quay.io/biocontainers/flair:3.0.1--pyhdfd78af_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/flair%3A3.0.1--pyhdfd78af_0
+- 安装方式（本地）：`mamba create -n flair -c conda-forge -c bioconda flair=3.0.1`

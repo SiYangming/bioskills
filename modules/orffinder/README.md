@@ -156,3 +156,8 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+官方 biocontainers 无 ORFfinder；使用社区镜像 quay.io/preskaa/orffinder:0.4.3 或本地 conda/源码（NCBI ORFfinder）
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/orffinder/overview

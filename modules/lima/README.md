@@ -142,3 +142,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/lima/overview
+- **Docker**：`docker pull quay.io/biocontainers/lima:2.13.0--h9ee0642_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/lima%3A2.13.0--h9ee0642_0
+- 安装方式（本地）：`mamba create -n lima -c conda-forge -c bioconda lima=2.13.0`

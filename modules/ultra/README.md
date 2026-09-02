@@ -170,3 +170,10 @@ dependencies:
   - pip:
       - -e .  # 若把 native/ 打包为可安装包（可选）
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/ultra/overview
+- **Docker**：`docker pull quay.io/biocontainers/ultra:1.2.1--h9948957_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/ultra%3A1.2.1--h9948957_0
+- 安装方式（本地）：`mamba create -n ultra -c conda-forge -c bioconda ultra=1.2.1`

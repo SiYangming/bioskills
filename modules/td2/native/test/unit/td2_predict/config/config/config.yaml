@@ -46,8 +46,8 @@ transdecoder:
 
 td2:
   # Displayed version tag for reference
-  version: "1.0.6"
-  docker_image: "quay.io/biocontainers/td2:1.0.6--pyhdfd78af_0"
+  version: "1.0.7"
+  docker_image: "quay.io/biocontainers/td2:1.0.7--pyhdfd78af_0"
   td2_longorfs_bin: "TD2.LongOrfs"
   td2_predict_bin: "TD2.Predict"
 

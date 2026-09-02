@@ -69,3 +69,10 @@ dependencies:
   - orfanage=1.2.0
   - pyyaml>=6.0
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/orfanage/overview
+- **Docker**：`docker pull quay.io/biocontainers/orfanage:1.2.0--heaafb18_2`
+- **Singularity**：https://depot.galaxyproject.org/singularity/orfanage%3A1.2.0--heaafb18_2
+- 安装方式（本地）：`mamba create -n orfanage -c conda-forge -c bioconda orfanage=1.2.0`

@@ -149,3 +149,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/isoseq3/overview
+- **Docker**：`docker pull quay.io/biocontainers/isoseq3:4.0.0--h9ee0642_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/isoseq3%3A4.0.0--h9ee0642_0
+- 安装方式（本地）：`mamba create -n isoseq3 -c conda-forge -c bioconda isoseq3=4.0.0`

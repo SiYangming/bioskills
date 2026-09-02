@@ -103,6 +103,8 @@ gs-tama（tama_* 脚本与 tama-py3 库）**必须使用 1.0.4 版本，其他�
 - 来源：<https://github.com/SiYangming/gs-tama>
 - 安装：`mamba create -n gstama -c conda-forge -c bioconda gs-tama=1.0.4`
 - 容器：quay.io/biocontainers/gs-tama:1.0.4
+- **官方 Bioconda 容器**（仅到 1.0.3）：`docker pull quay.io/biocontainers/gs-tama:1.0.3--hdfd78af_0`（⚠️ 必须用 1.0.4 时需按 https://github.com/SiYangming/gs-tama 自行构建）
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/gs-tama/overview
 - 仓库内 tama-py3/ 参考库来自该仓库 1.0.4；被误删时可用 `git clone --branch 1.0.4 https://github.com/SiYangming/gs-tama` 重新获取。
 
 

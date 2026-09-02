@@ -111,3 +111,10 @@ dependencies:
   - pip:
       - -e .  # 若把 native/ 打包为可安装包（可选）
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/samtools/overview
+- **Docker**：`docker pull quay.io/biocontainers/samtools:1.21--h96c455f_1`
+- **Singularity**：https://depot.galaxyproject.org/singularity/samtools%3A1.21--h96c455f_1
+- 安装方式（本地）：`mamba create -n samtools -c conda-forge -c bioconda samtools=1.21`

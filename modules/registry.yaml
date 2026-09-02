@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-02T01:47:26+00:00'
+generated_at: '2026-09-02T02:51:12+00:00'
 modules:
 - software: bamtools
   canonical: bamtools
@@ -304,7 +304,7 @@ modules:
     source_type: custom
     impl: native
     path: native
-    version: 1.0.6-v1.0
+    version: 1.0.7-v1.0
     priority: High
     entrypoint: ''
   - id: td2_snakemake_wrappers

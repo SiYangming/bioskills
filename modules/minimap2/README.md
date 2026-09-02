@@ -163,3 +163,11 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/minimap2/overview
+- **Docker（最新）**：`docker pull quay.io/biocontainers/minimap2:2.31--h118bc1c_0`
+- **Singularity（最新）**：https://depot.galaxyproject.org/singularity/minimap2%3A2.31--h118bc1c_0
+- 安装方式（本地）：`mamba create -n minimap2 -c conda-forge -c bioconda minimap2=2.31`
+- 注：流程原配版本见上文（minimap2 历史版本），本链接为 bioconda 最新容器。

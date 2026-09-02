@@ -132,3 +132,10 @@ dependencies:
   - pip:
       - -e .  # 若把 native/ 打包为可安装包（可选）
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/gnu_sort/overview
+- **Docker**：`docker pull quay.io/biocontainers/coreutils:9.11`
+- **Singularity**：https://depot.galaxyproject.org/singularity/coreutils%3A9.11
+- 安装方式（本地）：`mamba create -n gnu_sort -c conda-forge -c bioconda gnu_sort=9.11`

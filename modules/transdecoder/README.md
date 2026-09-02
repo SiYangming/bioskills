@@ -164,3 +164,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/transdecoder/overview
+- **Docker**：`docker pull quay.io/biocontainers/transdecoder:6.0.0--pl5321hdfd78af_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/transdecoder%3A6.0.0--pl5321hdfd78af_0
+- 安装方式（本地）：`mamba create -n transdecoder -c conda-forge -c bioconda transdecoder=6.0.0`

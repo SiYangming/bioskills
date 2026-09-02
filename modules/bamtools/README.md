@@ -156,3 +156,11 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/bamtools/overview
+- **Docker（最新）**：`docker pull quay.io/biocontainers/bamtools:2.5.3--he132191_0`
+- **Singularity（最新）**：https://depot.galaxyproject.org/singularity/bamtools%3A2.5.3--he132191_0
+- 安装方式（本地）：`mamba create -n bamtools -c conda-forge -c bioconda bamtools=2.5.3`
+- 注：流程原配版本见上文（bamtools 历史版本），本链接为 bioconda 最新容器。

@@ -151,3 +151,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/sra-tools/overview
+- **Docker**：`docker pull quay.io/biocontainers/sra-tools:3.4.1--2_linux_64`
+- **Singularity**：https://depot.galaxyproject.org/singularity/sra-tools%3A3.4.1--2_linux_64
+- 安装方式（本地）：`mamba create -n sra-tools -c conda-forge -c bioconda sra-tools=3.4.1`

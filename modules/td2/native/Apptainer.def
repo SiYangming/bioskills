@@ -1,7 +1,7 @@
 # td2 native Apptainer/Singularity 定义（bookworm-slim + micromamba 引导 bioconda env）
 #
 # 路线：与 Dockerfile 一致 —— td2 不在 Debian apt，apt 只装运行时，
-#       curl 拉 micromamba 静态二进制，用 environment.yml 构建 /opt/env（bioconda td2=1.0.6）。
+#       curl 拉 micromamba 静态二进制，用 environment.yml 构建 /opt/env（bioconda td2=1.0.7）。
 #
 # 构建：apptainer build td2.sif Apptainer.def
 # 运行：apptainer run td2.sif longorfs -t transcripts.fa -O out --strand-specific
@@ -12,9 +12,9 @@ From: debian:bookworm-slim
 %labels
     Maintainer bioskills
     Software td2
-    Version 1.0.6-v1.0
-    Td2Version 1.0.6
-    PkgRoute apt(runtime)+micromamba(bioconda td2=1.0.6)
+    Version 1.0.7-v1.0
+    Td2Version 1.0.7
+    PkgRoute apt(runtime)+micromamba(bioconda td2=1.0.7)
 
 %files
     environment.yml /opt/environment.yml
@@ -46,7 +46,7 @@ From: debian:bookworm-slim
     curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
         | tar -xvj -C /opt/micromamba bin/micromamba
 
-    # 3) 构建 /opt/env（bioconda td2=1.0.6）
+    # 3) 构建 /opt/env（bioconda td2=1.0.7）
     /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml
 
     # 4) 清理四连 + 删 curl / micromamba pkgs 缓存
@@ -91,7 +91,7 @@ From: debian:bookworm-slim
 
 %help
     td2 native Apptainer 镜像（bookworm-slim + micromamba 引导 bioconda）。
-    td2: 1.0.6（二进制 TD2.LongOrfs / TD2.Predict，位于 /opt/env/bin/）
+    td2: 1.0.7（二进制 TD2.LongOrfs / TD2.Predict，位于 /opt/env/bin/）
     调用方式：apptainer run td2.sif <子命令> [options]
     挂载示例：apptainer run -B $PWD:/data -H /data td2.sif \
         longorfs -t /data/transcripts.fa -O /data/out --strand-specific

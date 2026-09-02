@@ -183,3 +183,10 @@ dependencies:
   - pyyaml>=6.0
   - pip
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/fastp/overview
+- **Docker**：`docker pull quay.io/biocontainers/fastp:1.3.6--h43da1c4_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/fastp%3A1.3.6--h43da1c4_0
+- 安装方式（本地）：`mamba create -n fastp -c conda-forge -c bioconda fastp=1.3.6`

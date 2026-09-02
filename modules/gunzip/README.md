@@ -121,3 +121,10 @@ dependencies:
   - pip:
       - -e .  # 若把 native/ 打包为可安装包（可选）
 ```
+
+## 容器与 Conda 链接
+
+- **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/gunzip/overview
+- **Docker**：`docker pull quay.io/biocontainers/gzip:1.11`
+- **Singularity**：https://depot.galaxyproject.org/singularity/gzip%3A1.11
+- 安装方式（本地）：`mamba create -n gunzip -c conda-forge -c bioconda gunzip=1.11`
