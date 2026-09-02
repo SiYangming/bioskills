@@ -10,30 +10,30 @@
 
 ```
 modules/<software>/
-├── meta.yaml                              # 软件级总览（列出实际存在的实现 + 推荐优先级 + 容器/conda/github 链接）
-├── native/                                # [最高优先级] 本地自包含实现（source_type: custom, type: native）
-│   ├── meta.yaml                          #   含 inputs/outputs/environment/optimization/execution
+├── meta.yaml                              # 【唯一 meta】软件级 + 实现级合并：implementations / software_versions
+│                                          #   / inputs / outputs / environment / optimization / execution
+├── README.md                              # 合并各实现用法（native/snakemake/nextflow 章节）+ 容器/conda 链接 + 安装方式
+├── native/                                # [本地实现] source_type: custom, type: native
 │   ├── main.py                            #   继承 base.SkillBase 的标准入口驱动
-│   ├── *.py / *.sh                        #   经典脚本直接放 native/ 根（不再分 legacy/ 子目录）
-│   ├── environment.yml / Dockerfile / Apptainer.def   # 或仅在 meta.yaml 记录 quay.io/bioconda/github 链接
+│   ├── *.py / *.sh                        #   本地运行脚本（与流程无关的经典脚本直接放 native/ 根）
+│   ├── Dockerfile / Apptainer.def         #   容器构建 recipe（保留）
 │   ├── test/{generate_data.py,run_test.sh}
-│   └── README.md
-│
-├── nextflow/                              # 有实际 Nextflow 实现才建（单层，不再分 nf-core/local）
-│   ├── main.nf.template 等实现文件
-│   ├── meta.yaml                          #   source_type: custom, type: nextflow_local
-│   └── README.md                          #   官方 nf-core/modules 链接与 submodules 记录（如有）
-│
-└── snakemake/                             # 有实际 Snakemake 规则才建（单层，不再分 snakemake-wrappers/local）
-    ├── *.smk                              #   自定义规则直接放这里
-    ├── scripts/                           #   规则配套脚本（如 bed12_add_trailing_commas.py）
-    ├── meta.yaml                          #   source_type: custom, type: snakemake_local
-    └── README.md                          #   官方 snakemake-wrappers 链接与 submodules 记录（如有）
+│   └── （不再有 meta.yaml / README.md / environment.yml —— 已并入软件级）
+├── snakemake/                             # [Snakemake 实现] source_type: custom, type: snakemake_local
+│   ├── *.smk                              #   本地规则
+│   ├── scripts/                           #   规则配套 wrapper 脚本（如 td2_longorfs.py）
+│   ├── *.yaml                             #   snakemake conda env（如有）
+│   └── （官方 snakemake-wrappers 信息记录在软件级 README/software_versions）
+└── nextflow/                              # [Nextflow 实现] 有实际实现才建（fastqc 有 main.nf.template）
+    ├── 实现文件（main.nf.template 等）
+    └── （官方 nf-core 信息记录在软件级 README/software_versions）
 ```
 
-> **官方信息（nf-core / snakemake-wrappers）不建独立目录**：官方有模块时，
-> 在对应实现目录的 `README.md` 记录官方链接、submodules 与版本差异（`software_versions`），
-> 本地实现直接放 `nextflow/` / `snakemake/` 单层目录。
+> **要点**：
+> - 每个软件**只有一个 meta.yaml**（modules/<sw>/meta.yaml）与**一个 README.md**，不再按实现拆分；
+> - 官方实现（nf-core / snakemake-wrappers）不建目录，其链接、submodules、版本差异记录在软件级 README 与 `software_versions`；
+> - `native/` 保留 Dockerfile/Apptainer.def 与本地运行脚本；conda 环境与容器信息记录到软件级 README（安装方式只记本地安装，anaconda/容器已有环境仅记录链接）；
+> - 环境文件（conda env yaml）按引擎放置：snakemake/ 下的 `*.yaml`、nextflow 用 container（`environment.yaml` 与 snakemake 可共享）。
 
 复合流程与 `modules/` 平级，分**两层**：
 

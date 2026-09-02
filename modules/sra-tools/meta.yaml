@@ -55,3 +55,88 @@ implementations:
   when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时。
   note: 官方 bio/sra-tools 目前只有 fasterq-dump 一个 wrapper；prefetch/fastq-dump 请走 sra-tools_snakemake_local。
 default_implementation: sra-tools_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: sra-tools 子命令：prefetch|fasterq-dump|fastq-dump
+  srr_id:
+    type: string
+    required: false
+    cli_arg: positional
+    description: SRA accession（如 SRR12345678；prefetch/fasterq-dump 使用）
+  sra_file:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 本地 .sra 文件（fastq-dump 使用；fasterq-dump 也可用）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: -O
+    description: 输出目录（prefetch 的下载目录 / dump 的 FASTQ 输出目录）
+  output:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出文件名/前缀（fasterq-dump 使用）
+  split_3:
+    type: boolean
+    default: true
+    cli_arg: --split-3
+    description: 双端数据拆分为 *_1/*_2 + 未配对（nanoseq 脚本默认）
+  gzip:
+    type: boolean
+    default: true
+    cli_arg: --gzip
+    description: 输出 .fastq.gz（fastq-dump 原生支持；fasterq-dump 3.x 亦支持）
+  prefetch_options:
+    type: string
+    default: -f yes -t http
+    cli_arg: positional
+    description: prefetch 附加选项（nanoseq 默认 -f yes -t http：强制重下 + HTTP 协议）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -e
+    description: 线程数（fasterq-dump 自动注入 -e）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 sra-tools 子命令的额外参数（高级用法，慎用）
+outputs:
+  sra:
+    type: file
+    format: sra
+    description: prefetch 下载的 SRA 文件（<outdir>/<srr_id>/<srr_id>.sra）
+  fastq:
+    type: file
+    format: fastq
+    description: fasterq-dump / fastq-dump 输出的 FASTQ（--gzip 时为 .fastq.gz）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    fasterq-dump: 8
+    fastq-dump: 4
+    prefetch: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: prefetch
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/sra-tools/snakemake/sra_tools.smk"
+
+    '
+  snakemake_rules:
+  - sra_tools.smk

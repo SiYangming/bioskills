@@ -43,27 +43,23 @@ modules/
 ├── base.py                      # Python Skill Runner 基类与 JSON Schema 导出工具
 ├── bin/                         # 技能库 CLI 管理工具（skill-cli validate / scan / schema / run）
 │
-├── fastqc/                      # 【原子技能】软件归档主目录（canonical = bioconda/nf-core/Debian 统一名）
-│   ├── meta.yaml                # 软件级总览：实际存在的实现 + default_implementation + software_versions + 容器/conda/github 链接
+├── fastqc/                      # 【原子技能】软件归档主目录（单 meta.yaml + 单 README 模式）
+│   ├── meta.yaml                # 【唯一 meta】implementations + software_versions + inputs/outputs/environment/optimization/execution
+│   ├── README.md                # 合并各实现用法 + 容器/conda 链接 + 安装方式
 │   │
-│   ├── native/                  # [自定义/最高优先级] Native 自包含（source_type=custom, type=native）
-│   │   ├── meta.yaml            # Schema + software_versions + environment + optimization + execution
-│   │   ├── main.py              # 标准入口驱动（参数校验 + 线程/内存/临时目录自动传参）
-│   │   ├── *.py / *.sh          # 经典脚本直接放 native/ 根（不再分 legacy/）
-│   │   ├── environment.yml / Dockerfile / Apptainer.def   # 或仅在 meta.yaml 记录 quay.io/bioconda/github 链接
-│   │   ├── test/                # 最小自动化回归（generate_data.py + run_test.sh）
-│   │   └── README.md
+│   ├── native/                  # [本地实现] type=native
+│   │   ├── main.py              # 标准入口驱动
+│   │   ├── *.py / *.sh          # 本地运行脚本（经典脚本直接放 native/ 根）
+│   │   ├── Dockerfile / Apptainer.def   # 容器构建 recipe
+│   │   └── test/                # 最小自动化回归（generate_data.py + run_test.sh）
 │   │
-│   ├── nextflow/                # [自定义] 有实际 Nextflow 实现才建（单层，不再分 nf-core/local）
-│   │   ├── main.nf.template 等  #   本地实现文件
-│   │   ├── meta.yaml            #   source_type=custom, type=nextflow_local
-│   │   └── README.md            #   官方 nf-core/modules 链接 + submodules + 版本差异
+│   ├── snakemake/               # [Snakemake 实现] type=snakemake_local
+│   │   ├── *.smk                # 本地规则
+│   │   ├── scripts/             # 规则配套 wrapper 脚本（可选）
+│   │   └── *.yaml               # snakemake conda env（可选）
 │   │
-│   └── snakemake/               # [自定义] 有实际 Snakemake 规则才建（单层）
-│       ├── *.smk                #   本地规则直接放这里
-│       ├── scripts/             #   规则配套脚本（可选）
-│       ├── meta.yaml            #   source_type=custom, type=snakemake_local
-│       └── README.md            #   官方 snakemake-wrappers 链接 + submodules + 版本差异
+│   └── nextflow/                # [Nextflow 实现] 有实际实现才建（如 fastqc 的 main.nf.template）
+│       └── 实现文件
 │
 ├── samtools/                    # 【黄金样例】software_versions 差异声明 + apt 最小化
 │   └── ...

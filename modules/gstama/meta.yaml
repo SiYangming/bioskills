@@ -54,3 +54,129 @@ implementations:
   priority: medium
   when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时（注意：官方 bio/gstama 不存在，实际需降级 local/native）。
 default_implementation: gstama_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gstama 子命令：polyacleanup|collapse|filelist|merge
+  fasta:
+    type: file
+    required: false
+    format:
+    - fasta
+    - fa
+    description: polyacleanup 的输入 FLNC FASTA / collapse 的参考基因组 FASTA
+  bam:
+    type: file
+    required: false
+    format:
+    - bam
+    description: collapse 的输入比对 BAM（建议已排序）
+  bed_dir:
+    type: string
+    required: false
+    description: filelist 的 collapse bed 目录（递归匹配 *.bed）
+  filelist:
+    type: file
+    required: false
+    description: merge 的输入 filelist TSV（filelist 子命令产出）
+  outdir:
+    type: string
+    required: false
+    description: 输出目录（默认当前目录）
+  prefix:
+    type: string
+    required: false
+    description: 输出前缀（polyacleanup 默认 <fasta 名>_tama；collapse/merge 默认从输入文件名推断；filelist
+      默认取 bed 目录名）
+  cap:
+    type: string
+    required: false
+    cli_arg: --cap
+    description: filelist 的 cap 列：capped|no_cap（Iso-Seq 默认 no_cap）
+  order:
+    type: string
+    required: false
+    cli_arg: --order
+    description: filelist 的 order 列（三元 'start,junction,end'；文件名含 chunk<N> 时自动生成）
+  pattern:
+    type: string
+    required: false
+    description: filelist 的 bed 匹配模式（默认 *.bed，支持 **/ 递归）
+  args:
+    type: string
+    required: false
+    description: 透传给 TAMA 脚本的附加参数（如 collapse 的 -x no_cap -a 100 ...）
+  bam_input:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -b BAM
+    description: collapse 输入为 BAM（默认 true）；false 时用 -b SAM
+  samtools_bin:
+    type: string
+    required: false
+    description: collapse 时注入 PATH 的 samtools 可执行路径（tama_collapse.py 内部调用）
+  tama_script:
+    type: string
+    required: false
+    description: polyacleanup 使用的 tama_flnc_polya_cleanup.py 路径（默认从 PATH 解析）
+  tama_collapse_script:
+    type: string
+    required: false
+    description: collapse 使用的 tama_collapse.py 路径（默认从 PATH 解析）
+  tama_merge_script:
+    type: string
+    required: false
+    description: merge 使用的 tama_merge.py 路径（默认从 PATH 解析）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（契约字段；TAMA 脚本单线程，不实际注入）
+outputs:
+  cleaned_fasta:
+    type: file
+    format: fasta.gz
+    description: polyacleanup 输出（<prefix>.fa.gz）
+  polya_report:
+    type: file
+    format: txt.gz
+    description: polyacleanup 输出（<prefix>_polya_flnc_report.txt.gz）
+  tails:
+    type: file
+    format: fasta.gz
+    description: polyacleanup 输出（<prefix>_tails.fa.gz）
+  collapsed_bed:
+    type: file
+    format: bed
+    description: collapse 输出的去冗余转录本（*_collapsed.bed）
+  filelist_tsv:
+    type: file
+    format: tsv
+    description: filelist 输出的 TSV（<prefix>.tsv）
+  merged_bed:
+    type: file
+    format: bed
+    description: merge 输出的合并转录本注释
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    collapse: 4
+    merge: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: ''
+  snakemake_rules:
+  - gstama_polyacleanup.smk
+  - gstama_collapse.smk
+  - gstama_filelist.smk
+  - gstama_merge.smk

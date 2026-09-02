@@ -2,23 +2,22 @@
 """bioskills 技能库管理 CLI。
 
 子命令：
-  scan          扫描 modules/ 下所有 meta.yaml，重建 registry.yaml
-  validate      校验某实现目录的 meta.yaml 结构与字段
+  scan          扫描 modules/ 下所有软件级 meta.yaml，重建 registry.yaml
+  validate      校验某个软件目录的 meta.yaml（含 implementations 目录存在性）
   schema        从 meta.yaml 导出 JSON Schema
   run           直接调用某个 native 技能
 
-目录模式（支持的实现路径形状，单层化）：
-  modules/<sw>/native/meta.yaml
-  modules/<sw>/nextflow/meta.yaml          # 有实际 Nextflow 实现才建
-  modules/<sw>/snakemake/meta.yaml         # 有实际 Snakemake 规则才建
-  官方（nf-core / snakemake-wrappers）信息记录在各实现 README.md / 软件级 meta.yaml，
-  不建独立目录。
+结构（单 meta.yaml 模式）：
+  modules/<sw>/meta.yaml              # 唯一 meta：软件级 + 实现级合并
+  modules/<sw>/README.md              # 合并各实现用法（native/snakemake/nextflow）
+  modules/<sw>/native/                # 本地实现（main.py + 本地脚本 + Dockerfile/Apptainer.def + test）
+  modules/<sw>/snakemake/             # Snakemake 实现（*.smk + scripts/ + env yaml）
+  modules/<sw>/nextflow/              # Nextflow 实现（有实际实现才建）
 
 示例：
   skill-cli scan
-  skill-cli validate modules/samtools/native
-  skill-cli validate modules/samtools/snakemake
-  skill-cli schema modules/samtools/native/meta.yaml
+  skill-cli validate modules/samtools
+  skill-cli schema modules/samtools/meta.yaml
   skill-cli run samtools -- index sorted.bam
 """
 
@@ -37,15 +36,12 @@ import yaml  # noqa: E402
 
 REGISTRY = SKILLS_ROOT / "registry.yaml"
 
-REQUIRED_FIELDS = ("id", "version", "software", "type", "source_type")
 SOURCE_TYPES = ("official", "custom")
-# 新枚举：native + 两种引擎下的官方/自定义 2x2
 IMPL_TYPES = (
     "native",
-    "nextflow_nfcore", "nextflow_local",
-    "snakemake_wrappers", "snakemake_local",
-    # 旧值兼容（validate 时仍接受，但新目录不再使用）
-    "nfcore_module", "snakemake_wrapper",
+    "nextflow_local", "snakemake_local",
+    # 旧值兼容（validate 时仍接受）
+    "nextflow_nfcore", "snakemake_wrappers", "nfcore_module", "snakemake_wrapper",
 )
 
 
@@ -54,80 +50,37 @@ def _load_meta(path: Path) -> dict:
         return yaml.safe_load(fh) or {}
 
 
-def _impl_from_path(meta_path: Path) -> str:
-    """根据 meta.yaml 相对路径推断 impl 类型名（供扫描兜底）。"""
-    rel = meta_path.relative_to(SKILLS_ROOT).as_posix()   # <sw>/<impl...>/meta.yaml
-    parts = rel.split("/")
-    if len(parts) < 3:
-        return "unknown"
-    tail = parts[1:-1]  # 去掉 <sw> 与 meta.yaml
-    key = "/".join(tail)
-    mapping = {
-        "native": "native",
-        "nextflow": "nextflow_local",
-        "snakemake": "snakemake_local",
-    }
-    if key in mapping:
-        return mapping[key]
-    return "unknown"
+def _software_meta_paths() -> list[Path]:
+    """枚举全部软件级 meta.yaml（modules/<sw>/meta.yaml）。"""
+    return sorted(SKILLS_ROOT.glob("*/meta.yaml"))
 
 
-def _meta_paths() -> list[Path]:
-    """枚举全部实现级 meta.yaml（不含软件级 meta.yaml）。"""
-    patterns = [
-        "*/native/meta.yaml",
-        "*/nextflow/meta.yaml",
-        "*/snakemake/meta.yaml",
-    ]
-    found: set[Path] = set()
-    for pat in patterns:
-        for p in SKILLS_ROOT.glob(pat):
-            # 过滤软件级 meta.yaml
-            if not _is_impl_meta(p):
-                continue
-            found.add(p.resolve())
-    return sorted(found)
-
-
-def _is_impl_meta(meta_path: Path) -> bool:
-    """排除软件级 meta.yaml（直接在 modules/<sw>/meta.yaml）和 custom 目录。"""
-    rel = meta_path.relative_to(SKILLS_ROOT).as_posix()
-    depth = rel.count("/")
-    if depth < 2:
-        return False  # modules/x/meta.yaml 是软件级
-    top = rel.split("/", 2)[1]
-    if top == "custom":
-        return False  # 复合流程由 custom/* 目录管理
-    return True
-
-
-def _entry_from_meta(meta_path: Path) -> dict:
+def _entries_from_meta(meta_path: Path) -> list[dict]:
+    """从软件级 meta.yaml 的 implementations 展开 registry 条目。"""
     meta = _load_meta(meta_path)
-    software = meta.get("software") or meta_path.relative_to(SKILLS_ROOT).parts[0]
-    impl = meta.get("type") or _impl_from_path(meta_path)
-    source = meta.get("source_type", "official" if impl in ("nextflow_nfcore", "snakemake_wrappers") else "custom")
-    guid = meta.get("agent_guidance", {}) or {}
-    priority = guid.get("recommendation_priority", "")
-    if not priority:
-        priority = "High" if impl == "native" else "Medium" if source == "official" else "Low"
-    exec_meta = meta.get("execution", {}) or {}
-    entrypoint = exec_meta.get("entrypoint") or exec_meta.get("mode") or ""
-    return {
-        "id": meta.get("id", f"{software}_{impl}"),
-        "software": software,
-        "source_type": source,
-        "impl": impl,
-        "version": meta.get("version", ""),
-        "path": str(meta_path.parent.relative_to(SKILLS_ROOT)),
-        "priority": str(priority).split("（", 1)[0].strip().capitalize(),  # 取括号前英文
-        "entrypoint": entrypoint,
-    }
+    software = meta.get("canonical") or meta.get("software") or meta_path.parent.name
+    entries: list[dict] = []
+    for impl in meta.get("implementations", []) or []:
+        p = impl.get("path", "")
+        ex = impl.get("execution") or {}
+        entries.append({
+            "id": impl.get("id", f"{software}_{impl.get('type', '')}"),
+            "software": software,
+            "source_type": impl.get("source_type", "custom"),
+            "impl": impl.get("type", ""),
+            "path": p,
+            "version": impl.get("version", ""),
+            "priority": str(impl.get("priority", "")).capitalize(),
+            "entrypoint": ex.get("entrypoint", "") if isinstance(ex, dict) else "",
+        })
+    return entries
 
 
 def cmd_scan(_: argparse.Namespace) -> int:
-    entries = [_entry_from_meta(p) for p in _meta_paths()]
+    entries: list[dict] = []
+    for mp in _software_meta_paths():
+        entries += _entries_from_meta(mp)
 
-    # 按 software 聚合
     aggregated: dict[str, dict] = {}
     for e in entries:
         sw = e.pop("software")
@@ -147,34 +100,31 @@ def cmd_scan(_: argparse.Namespace) -> int:
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
+    """validate modules/<sw>：校验软件级 meta.yaml + implementations 目录。"""
     meta_path = Path(args.dir) / "meta.yaml"
     if not meta_path.exists():
         print(f"[ERROR] 未找到 {meta_path}", file=sys.stderr)
         return 1
     meta = _load_meta(meta_path)
     errors: list[str] = []
-    for f in REQUIRED_FIELDS:
+    for f in ("software", "description", "implementations", "default_implementation"):
         if f not in meta:
             errors.append(f"缺少必填字段: {f}")
-    if meta.get("source_type") not in SOURCE_TYPES:
-        errors.append(f"source_type 必须是 {SOURCE_TYPES} 之一")
-    if meta.get("type") not in IMPL_TYPES:
-        errors.append(f"type 必须是 {IMPL_TYPES} 之一")
-
-    # custom 来源的实现都必须声明执行方式
-    if meta.get("source_type") == "custom":
-        for f in ("execution",):
-            if f not in meta:
-                errors.append(f"custom 实现缺少字段: {f}")
-        # native 需要额外字段 / main.py 存在
-        if meta.get("type") == "native":
-            for f in ("environment",):
-                if f not in meta:
-                    errors.append(f"native 实现缺少字段: {f}")
-            if not (Path(args.dir) / "main.py").exists():
-                errors.append("native 目录缺少 main.py")
-            if not (Path(args.dir) / "test" / "run_test.sh").exists():
-                errors.append("native 目录缺少 test/run_test.sh")
+    for impl in meta.get("implementations", []) or []:
+        if impl.get("type") not in IMPL_TYPES:
+            errors.append(f"implementation type 非法: {impl.get('type')}（必须是 {IMPL_TYPES} 之一）")
+        if impl.get("source_type") not in SOURCE_TYPES:
+            errors.append(f"implementation source_type 非法: {impl.get('source_type')}")
+        d = Path(args.dir) / impl.get("path", "")
+        if not d.is_dir():
+            errors.append(f"implementation 目录不存在: {impl.get('path')}")
+            continue
+        # native 需要 main.py + test
+        if impl.get("type") == "native":
+            if not (d / "main.py").exists():
+                errors.append(f"native 目录缺少 main.py: {d}")
+            if not (d / "test" / "run_test.sh").exists():
+                errors.append(f"native 目录缺少 test/run_test.sh: {d}")
 
     if errors:
         print("[FAIL] " + meta_path.as_posix(), file=sys.stderr)
@@ -210,8 +160,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("scan", help="重建 registry.yaml").set_defaults(func=cmd_scan)
 
-    pv = sub.add_parser("validate", help="校验实现目录的 meta.yaml 结构")
-    pv.add_argument("dir", help="实现目录（如 modules/samtools/native 或 modules/samtools/nextflow/nf-core）")
+    pv = sub.add_parser("validate", help="校验软件目录的 meta.yaml 与实现结构")
+    pv.add_argument("dir", help="软件目录（如 modules/samtools）")
     pv.set_defaults(func=cmd_validate)
 
     ps = sub.add_parser("schema", help="从 meta.yaml 导出 JSON Schema")

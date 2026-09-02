@@ -53,3 +53,117 @@ software_versions:
     lima: 2.9.0
     source: 自维护 lima.smk（迁移自 snakemake.smk/isoseq.smk/workflow/modules/lima/snakemake/lima.smk）
     note: rule 内 conda 指向 bioconda::lima=2.9.0；二进制 lima。
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: lima 子命令：lima（唯一核心命令）
+  reads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入 reads 文件（bam/fasta/fasta.gz/fastq/fastq.gz）
+  primers:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 引物 FASTA 文件（*.fasta）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输出文件路径（扩展名由输入格式推断；默认 <outdir>/<prefix>.<ext>）
+  outdir:
+    type: string
+    required: false
+    cli_arg: -d
+    description: 输出目录（缺省为输入文件所在目录）
+  prefix:
+    type: string
+    required: false
+    description: 输出前缀（默认从 reads 文件名推断）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -j
+    description: 线程数（自动注入）
+  isoseq:
+    type: boolean
+    default: false
+    cli_arg: --isoseq
+    description: Iso-Seq 模式（末端识别优化，Iso-Seq 流程推荐）
+  peek_guess:
+    type: boolean
+    default: false
+    cli_arg: --peek-guess
+    description: peek 模式猜测引物对
+  min_score:
+    type: float
+    required: false
+    cli_arg: --min-score
+    description: 最小比对得分阈值
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 lima 的额外参数（高级用法，慎用）
+outputs:
+  demux:
+    type: file
+    format:
+    - bam
+    - fasta
+    - fastq
+    description: 去引物/拆分后的 reads（格式与输入一致）
+  pbi:
+    type: file
+    format: pbi
+    description: BAM 输出时的 PacBio 索引
+  counts:
+    type: file
+    format: txt
+    description: 引物对计数表（*.counts）
+  report:
+    type: file
+    format: txt
+    description: 逐 ZMW 报告（*.report）
+  summary:
+    type: file
+    format: txt
+    description: 过滤汇总（*.summary）
+  json:
+    type: file
+    format: json
+    description: 元数据 json（*.json）
+  xml:
+    type: file
+    format: xml
+    description: DataSet xml（*.xml）
+  clips:
+    type: file
+    format: fasta
+    description: 剪切的引物序列（*.clips）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    lima: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: lima
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/lima/snakemake/lima.smk"
+
+    '
+  snakemake_rules:
+  - lima.smk

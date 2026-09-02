@@ -52,3 +52,129 @@ implementations:
   priority: medium
   when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时（官方 bio/fastp 存在，单 wrapper）。
 default_implementation: fastp_native
+inputs:
+  in1:
+    type: file
+    format: fastq.gz
+    required: true
+    cli_arg: -i
+    description: 输入 R1 FASTQ(.gz)
+  out1:
+    type: file
+    format: fastq.gz
+    required: true
+    cli_arg: -o
+    description: 输出 R1 清洁 FASTQ(.gz)
+  in2:
+    type: file
+    format: fastq.gz
+    required: false
+    cli_arg: -I
+    description: 输入 R2 FASTQ(.gz)（双端模式）
+  out2:
+    type: file
+    format: fastq.gz
+    required: false
+    cli_arg: -O
+    description: 输出 R2 清洁 FASTQ(.gz)（双端模式）
+  html:
+    type: file
+    format: html
+    required: false
+    cli_arg: -h
+    description: HTML 质控报告路径
+  json:
+    type: file
+    format: json
+    required: false
+    cli_arg: -j
+    description: JSON 质控报告路径
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: fastp 线程数（fastp 0.20+ 映射为 -w/--thread，勿用 -t）
+  adapter_sequence:
+    type: string
+    required: false
+    cli_arg: --adapter_sequence
+    description: R1 3' 端接头序列（IUPAC 碱基；不指定时 fastp 自动检测）
+  detect_adapter_for_pe:
+    type: boolean
+    default: false
+    cli_arg: --detect_adapter_for_pe
+    description: 双端模式通过 R1/R2 重叠分析检测接头（强烈建议 PE 开启）
+  qualified_quality_phred:
+    type: integer
+    default: 15
+    cli_arg: -q
+    description: 合格碱基 phred 阈值（fastp 默认 15）
+  unqualified_percent_limit:
+    type: integer
+    default: 40
+    cli_arg: -u
+    description: read 中不合格碱基比例上限 %（fastp 默认 40）
+  length_required:
+    type: integer
+    default: 15
+    cli_arg: -l
+    description: 最短 read 长度阈值（fastp 默认 15，低于则丢弃）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 fastp 的额外参数（如 --cut_front --cut_tail --cut_right 1 --trim_poly_g），高级用法慎用
+outputs:
+  out1:
+    type: file
+    format: fastq.gz
+    description: 清洗后 R1 FASTQ
+  out2:
+    type: file
+    format: fastq.gz
+    description: 清洗后 R2 FASTQ（双端模式）
+  html:
+    type: file
+    format: html
+    description: HTML 质控报告
+  json:
+    type: file
+    format: json
+    description: JSON 质控报告（含过滤统计，可被后续流程消费）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fastp
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/fastp/snakemake/fastp.smk"
+
+    # 可选 config（config.yaml）：
+
+    # fastp:
+
+    #   adapter_sequence: "AGATCGGAAGAGCACACGTCTGA"
+
+    #   detect_adapter_for_pe: true
+
+    #   qualified_quality_phred: 15
+
+    #   unqualified_percent_limit: 40
+
+    #   length_required: 15
+
+    #   extra: "--cut_front --cut_tail --cut_right 1"
+
+    '
+  snakemake_rules:
+  - fastp.smk

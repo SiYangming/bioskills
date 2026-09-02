@@ -52,3 +52,50 @@ software_versions:
   snakemake_local:
     gnu_sort: 9.1（规则从 snakemake.smk/isoseq.smk/workflow/modules/gnu_sort/snakemake/gnu_sort.smk
       迁移，sort <args> <in> > <out>.sorted）
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gnu_sort 子命令：sort
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入文件（文本/SAM/GTF/BED 等）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件路径（默认 <input>.sorted）
+  args:
+    type: string
+    required: false
+    cli_arg: --args
+    description: 透传 sort 附加参数（如 -k1,1 -k4,4n、-n、-S 2G、--parallel 8）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（检测到 GNU coreutils 时注入 --parallel=N；BSD sort 忽略）
+outputs:
+  sorted_file:
+    type: file
+    description: 排序后的输出文件
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    sort: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: sort
+  snakemake_rules:
+  - gnu_sort.smk

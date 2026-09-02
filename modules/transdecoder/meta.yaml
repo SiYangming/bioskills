@@ -53,3 +53,118 @@ implementations:
   priority: medium
   when_to_use: 组装 Snakemake 流程、复用中央 wrapper 缓存时（bio/transdecoder/longorfs 与 predict）。
 default_implementation: transdecoder_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: transdecoder 子命令：longorfs | predict
+  input:
+    type: file
+    required: true
+    cli_arg: -t
+    description: 输入转录本 FASTA（支持 .gz 时由驱动自动解压到 tmpdir）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: -O
+    description: 输出目录（默认取输入文件所在目录）
+  gene_trans_map:
+    type: file
+    required: false
+    cli_arg: --gene_trans_map
+    description: gene-to-transcript 映射文件（LongOrfs；可选）
+  min_protein_length:
+    type: integer
+    default: 50
+    cli_arg: -m
+    description: 最小蛋白长度（aa），LongOrfs 过滤用（flrnaseq 默认 -m 50）
+  genetic_code:
+    type: string
+    default: Universal
+    cli_arg: -G
+    description: 遗传密码表（Universal / Candida / Yeast 等，见 TransDecoder 文档）
+  strand_specific:
+    type: boolean
+    default: false
+    cli_arg: -S
+    description: 仅分析正义链（strand-specific，top strand only）
+  complete_orfs_only:
+    type: boolean
+    default: false
+    cli_arg: --complete_orfs_only
+    description: 仅保留同时含起始与终止密码子的完整 ORF
+  retain_pfam_hits:
+    type: file
+    required: false
+    cli_arg: --retain_pfam_hits
+    description: hmmscan Pfam domain table（Predict 证据保留）
+  retain_blastp_hits:
+    type: file
+    required: false
+    cli_arg: --retain_blastp_hits
+    description: blastp -outfmt 6 结果（Predict 证据保留）
+  single_best_only:
+    type: boolean
+    default: false
+    cli_arg: --single_best_only
+    description: 每个转录本仅保留单一最佳 ORF
+  no_refine_starts:
+    type: boolean
+    default: false
+    cli_arg: --no_refine_starts
+    description: 禁用起始密码子精修（flrnaseq predict 默认 --no_refine_starts）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --cpu
+    description: 线程数（Predict 用 --cpu 注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 TransDecoder 的额外参数（高级用法，慎用）
+outputs:
+  pep:
+    type: file
+    format: fasta
+    description: 预测蛋白序列（<prefix>.transdecoder.pep）
+  cds:
+    type: file
+    format: fasta
+    description: 预测 CDS 核酸序列（<prefix>.transdecoder.cds）
+  gff3:
+    type: file
+    format: gff3
+    description: CDS 注释（<prefix>.transdecoder.gff3）
+  bed:
+    type: file
+    format: bed
+    description: CDS 区间（<prefix>.transdecoder.bed）
+  transdecoder_dir:
+    type: directory
+    description: LongOrfs 中间目录（<prefix>.transdecoder_dir/，含 longest_orfs.pep/cds/gff3）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 8
+    longorfs: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: TransDecoder.Predict
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/transdecoder/snakemake/transdecoder.smk"
+
+    '
+  snakemake_rules:
+  - transdecoder.smk

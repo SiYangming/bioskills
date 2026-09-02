@@ -57,3 +57,86 @@ software_versions:
     note: 历史 tag < v3.13 的 environment.yaml 曾停留在 0.11.9 / 0.12.0；切 tag 后务必核对。
   snakemake_local:
     fastqc: （继承容器镜像，未固定；建议跟随 native）
+inputs:
+  reads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入 FASTQ（支持 .fastq / .fq / .fastq.gz / .fq.gz，多个文件可用多入参）
+  outdir:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出目录（默认 ./fastqc_results）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入）
+  extract:
+    type: boolean
+    default: true
+    cli_arg: --extract
+    description: 自动解压结果 zip
+  noextract:
+    type: boolean
+    default: false
+    cli_arg: --noextract
+    description: 不自动解压 zip
+  nogroup:
+    type: boolean
+    default: false
+    cli_arg: --nogroup
+    description: 禁用按碱基位置分组（更慢但更精确）
+  format:
+    type: string
+    required: false
+    cli_arg: -f
+    description: 强制输入格式（bam/sam/bam_mapped/sam_mapped/fastq/fastq_bismark）
+  contaminants:
+    type: file
+    required: false
+    cli_arg: -c
+    description: 自定义污染序列列表
+  adapters:
+    type: file
+    required: false
+    cli_arg: -a
+    description: 自定义接头序列列表
+  kmers:
+    type: integer
+    required: false
+    cli_arg: -k
+    description: k-mer 长度（2-10，默认 7）
+  java_mem_mb:
+    type: integer
+    default: 8192
+    description: JVM 最大堆内存（MB，通过 JAVA_OPTS 注入）
+outputs:
+  html_report:
+    type: file
+    format: html
+    path_pattern: '{outdir}/{basename}_fastqc.html'
+    description: FastQC HTML 报告
+  zip_result:
+    type: file
+    format: zip
+    path_pattern: '{outdir}/{basename}_fastqc.zip'
+    description: FastQC 结果 zip 包（含每个模块的原始数据）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    JAVA_OPTS: -Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fastqc
+  nextflow_note: 本地 Nextflow 实现见 nextflow/（官方 nf-core 信息见 README）

@@ -1,8 +1,0 @@
-name: orfanage-native
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - python=3.11
-  - orfanage=1.2.0
-  - pyyaml>=6.0

@@ -58,3 +58,82 @@ implementations:
   note: 官方 snakemake-wrappers 暂无 bio/dorado wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走
     dorado_snakemake_local。
 default_implementation: dorado_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: dorado 子命令：basecall|demux
+  model:
+    type: string
+    required: true
+    cli_arg: positional
+    description: basecall 模型（如 rna004_130bps_sup@v5.1.0 / 本地模型目录）
+  reads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入 raw 信号目录或文件（POD5/FAST5，basecall）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件/目录（basecall 用 --output-dir；demux 用 --output-dir）
+  emit_fastq:
+    type: boolean
+    default: true
+    cli_arg: --emit-fastq
+    description: 输出 FASTQ（basecall；nanoseq 默认开启）
+  device:
+    type: string
+    required: false
+    cli_arg: --device
+    description: 计算设备（cuda:all / cuda:0 / cpu；默认自动）
+  demux_kit:
+    type: string
+    required: false
+    cli_arg: --kit-name
+    description: demux 的 barcode 试剂盒名（如 SQK-RNA004-24）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --num-workers
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 dorado 的额外参数（高级用法，慎用）
+outputs:
+  fastq:
+    type: file
+    format: fastq
+    description: basecall 输出的 FASTQ 文件
+  demuxed_fastq:
+    type: file
+    format: fastq
+    description: demux 输出的拆分 FASTQ（按 barcode）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    basecall: 8
+    demux: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: dorado
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/dorado/snakemake/dorado.smk"
+
+    '
+  snakemake_rules:
+  - dorado.smk

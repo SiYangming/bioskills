@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-01T16:08:26+00:00'
+generated_at: '2026-09-02T01:47:26+00:00'
 modules:
 - software: bamtools
   canonical: bamtools
@@ -7,344 +7,344 @@ modules:
   - id: bamtools_native
     source_type: custom
     impl: native
+    path: native
     version: 2.5.2-v1.0
-    path: bamtools/native
     priority: High
-    entrypoint: python main.py
-  - id: bamtools_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: bamtools_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 1.0.0
-    path: bamtools/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: dorado
   canonical: dorado
   implementations:
   - id: dorado_native
     source_type: custom
     impl: native
+    path: native
     version: latest-v1.0
-    path: dorado/native
     priority: High
-    entrypoint: python main.py
-  - id: dorado_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: dorado_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: dorado/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: fastp
   canonical: fastp
   implementations:
   - id: fastp_native
     source_type: custom
     impl: native
+    path: native
     version: 0.24.0-v1.0
-    path: fastp/native
     priority: High
-    entrypoint: python main.py
-  - id: fastp_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: fastp_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: fastp/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: fastqc
   canonical: fastqc
   implementations:
   - id: fastqc_native
     source_type: custom
     impl: native
+    path: native
     version: 0.12.1-v1.0
-    path: fastqc/native
     priority: High
-    entrypoint: python main.py
-  - id: fastqc_nextflow_local
-    source_type: custom
+    entrypoint: ''
+  - id: fastqc_nextflow_nfcore
+    source_type: official
     impl: nextflow_local
-    version: 0.0.0-placeholder
-    path: fastqc/nextflow
-    priority: Low
-    entrypoint: nextflow_include
-  - id: fastqc_snakemake_local
-    source_type: custom
+    path: nextflow
+    version: 2.1.0
+    priority: Medium
+    entrypoint: ''
+  - id: fastqc_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.0.0-placeholder
-    path: fastqc/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: flair
   canonical: flair
   implementations:
   - id: flair_native
     source_type: custom
     impl: native
+    path: native
     version: 3.0.0b1-v1.0
-    path: flair/native
     priority: High
-    entrypoint: python main.py
-  - id: flair_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: flair_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: flair/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: gnu_sort
   canonical: gnu_sort
   implementations:
   - id: gnu_sort_native
     source_type: custom
     impl: native
+    path: native
     version: 9.1-v1.0
-    path: gnu_sort/native
     priority: High
-    entrypoint: python main.py
-  - id: gnu_sort_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: gnu_sort_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 9.1-v1.0
-    path: gnu_sort/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: 'include: gnu_sort.smk（或用 use rule gnu_sort from rule_gnu_sort）'
+    entrypoint: ''
 - software: gstama
   canonical: gstama
   implementations:
   - id: gstama_native
     source_type: custom
     impl: native
-    version: 1.0.3-v1.0
-    path: gstama/native
+    path: native
+    version: 1.0.4-v1.0
     priority: High
-    entrypoint: python main.py
-  - id: gstama_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: gstama_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 1.0.0
-    path: gstama/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: gunzip
   canonical: gunzip
   implementations:
   - id: gunzip_native
     source_type: custom
     impl: native
+    path: native
     version: 1.12-v1.0
-    path: gunzip/native
     priority: High
-    entrypoint: python main.py
-  - id: gunzip_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: gunzip_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 1.12-v1.0
-    path: gunzip/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: 'include: gunzip.smk（或用 use rule gunzip from rule_gunzip）'
+    entrypoint: ''
 - software: isoseq3
   canonical: isoseq3
   implementations:
   - id: isoseq3_native
     source_type: custom
     impl: native
+    path: native
     version: 4.0.0-v1.0
-    path: isoseq3/native
     priority: High
-    entrypoint: python main.py
-  - id: isoseq3_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: isoseq3_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: isoseq3/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: lima
   canonical: lima
   implementations:
   - id: lima_native
     source_type: custom
     impl: native
+    path: native
     version: 2.9.0-v1.0
-    path: lima/native
     priority: High
-    entrypoint: python main.py
-  - id: lima_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: lima_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: lima/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: minimap2
   canonical: minimap2
   implementations:
   - id: minimap2_native
     source_type: custom
     impl: native
+    path: native
     version: 2.24-v1.0
-    path: minimap2/native
     priority: High
-    entrypoint: python main.py
-  - id: minimap2_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: minimap2_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 1.0.0
-    path: minimap2/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: orfanage
   canonical: orfanage
   implementations:
   - id: orfanage_native
     source_type: custom
     impl: native
+    path: native
     version: 1.2.0-v1.0
-    path: orfanage/native
     priority: High
-    entrypoint: python main.py
-  - id: orfanage_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: orfanage_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 1.0.0
-    path: orfanage/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: ''
+    priority: Medium
+    entrypoint: ''
 - software: orffinder
   canonical: orffinder
   implementations:
   - id: orffinder_native
     source_type: custom
     impl: native
+    path: native
     version: 0.4.3-v1.0
-    path: orffinder/native
     priority: High
-    entrypoint: python main.py
-  - id: orffinder_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: orffinder_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: orffinder/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: pbccs
   canonical: pbccs
   implementations:
   - id: pbccs_native
     source_type: custom
     impl: native
+    path: native
     version: 6.4.0-v1.0
-    path: pbccs/native
     priority: High
-    entrypoint: python main.py
-  - id: pbccs_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: pbccs_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: pbccs/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: samtools
   canonical: samtools
   implementations:
   - id: samtools_native
     source_type: custom
     impl: native
+    path: native
     version: 1.21-v1.0
-    path: samtools/native
     priority: High
-    entrypoint: python main.py
-  - id: samtools_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: samtools_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.0.0-placeholder
-    path: samtools/snakemake
-    priority: Low
-    entrypoint: snakemake_rule
+    path: snakemake
+    version: v3.13.0
+    priority: Medium
+    entrypoint: ''
 - software: sra-tools
   canonical: sra-tools
   implementations:
   - id: sra-tools_native
     source_type: custom
     impl: native
+    path: native
     version: 3.4.1-v1.0
-    path: sra-tools/native
     priority: High
-    entrypoint: python main.py
-  - id: sra-tools_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: sra-tools_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: sra-tools/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: stringtie
   canonical: stringtie
   implementations:
   - id: stringtie_native
     source_type: custom
     impl: native
+    path: native
     version: 3.0.3-v1.0
-    path: stringtie/native
     priority: High
-    entrypoint: python main.py
-  - id: stringtie_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: stringtie_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: stringtie/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: td2
   canonical: td2
   implementations:
   - id: td2_native
     source_type: custom
     impl: native
+    path: native
     version: 1.0.6-v1.0
-    path: td2/native
     priority: High
-    entrypoint: python main.py
-  - id: td2_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: td2_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: td2/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: transdecoder
   canonical: transdecoder
   implementations:
   - id: transdecoder_native
     source_type: custom
     impl: native
+    path: native
     version: 5.7.1-v1.0
-    path: transdecoder/native
     priority: High
-    entrypoint: python main.py
-  - id: transdecoder_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: transdecoder_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1.0
-    path: transdecoder/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: snakemake_rule
+    entrypoint: ''
 - software: ultra
   canonical: ultra
   implementations:
   - id: ultra_native
     source_type: custom
     impl: native
+    path: native
     version: 0.1-v1.0
-    path: ultra/native
     priority: High
-    entrypoint: python main.py
-  - id: ultra_snakemake_local
-    source_type: custom
+    entrypoint: ''
+  - id: ultra_snakemake_wrappers
+    source_type: official
     impl: snakemake_local
-    version: 0.1-v1.0
-    path: ultra/snakemake
+    path: snakemake
+    version: v3.13.0
     priority: Medium
-    entrypoint: 'include: ultra.smk（或用 use rule ... from rule_ultra）'
+    entrypoint: ''

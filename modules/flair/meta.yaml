@@ -60,3 +60,136 @@ implementations:
   note: 官方 snakemake-wrappers 暂无 bio/flair wrapper（2026-09 抓取 404），本实现仅登记桥接层，实际请走
     flair_snakemake_local。
 default_implementation: flair_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: flair 子命令：bam2bed12|annotate|collapse
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 主输入文件（bam2bed12 的 sorted BAM / annotate 的 bed12 / collapse 的 annotated
+      bed）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输出文件（annotate 的 annotated bed；collapse 的输出前缀 prefix）
+  gtf:
+    type: file
+    required: false
+    cli_arg: -f
+    description: 参考注释 GTF（annotate/collapse 使用）
+  genome:
+    type: file
+    required: false
+    cli_arg: -g
+    description: 参考基因组 FASTA（collapse 使用）
+  reads:
+    type: file
+    required: false
+    cli_arg: -r
+    description: 原始 reads FASTQ/FASTA（collapse 使用）
+  prefix:
+    type: string
+    required: false
+    description: collapse 输出前缀（默认 <sample>，生成 <prefix>.flair.collapse.fasta 等）
+  min_support:
+    type: integer
+    default: 3
+    cli_arg: -s
+    description: 最小 read 支持数（collapse）
+  end_window:
+    type: integer
+    default: 100
+    cli_arg: -w
+    description: 3'/5' 端窗口大小（collapse）
+  intpriming_threshold:
+    type: integer
+    default: 30
+    cli_arg: --intprimingthreshold
+    description: 内部加尾修剪阈值（collapse，配合 --remove_internal_priming）
+  trust_ends:
+    type: boolean
+    default: true
+    cli_arg: --trust_ends
+    description: 信任 read 末端（collapse）
+  remove_internal_priming:
+    type: boolean
+    default: true
+    cli_arg: --remove_internal_priming
+    description: 去除内部加尾（collapse）
+  stringent:
+    type: boolean
+    default: true
+    cli_arg: --stringent
+    description: 严格模式（collapse）
+  check_splice:
+    type: boolean
+    default: true
+    cli_arg: --check_splice
+    description: 检查剪接位点（collapse）
+  mm2_args:
+    type: string
+    default: -I8g,--MD
+    cli_arg: --mm2_args
+    description: minimap2 参数（collapse，逗号分隔无空格）
+  quiet:
+    type: boolean
+    default: true
+    cli_arg: --quiet
+    description: 安静模式（collapse）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 flair 子命令的额外参数（高级用法，慎用）
+outputs:
+  bed12:
+    type: file
+    format: bed12
+    description: bam2bed12 产生的 BED12 文件
+  annotated_bed:
+    type: file
+    format: bed
+    description: annotate 产生的带基因注释 BED 文件
+  collapse_fasta:
+    type: file
+    format: fasta
+    description: collapse 产生的一致性转录本 FASTA（<prefix>.flair.collapse.fasta）
+  counts:
+    type: file
+    format: txt
+    description: collapse 产生的 isoform 计数文件
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    collapse: 8
+    bam2bed12: 4
+    annotate: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: flair
+  snakemake_include_hint: '# 在 Snakefile 中：
+
+    include: "modules/flair/snakemake/flair.smk"
+
+    '
+  snakemake_rules:
+  - flair.smk
