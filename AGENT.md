@@ -51,6 +51,20 @@ modules/<software>/
 
 ---
 
+## 容器与 Conda 包查找规则（必须遵守，按顺序查找）
+
+为软件登记容器与 conda 包时，按以下顺序查找，**全部找不到才标记为「无官方/社区镜像」**：
+
+1. **Docker Hub**：`docker pull <org>/<sw>:<tag>`
+2. **docker.1ms.run（国内加速）**：`docker.1ms.run/<org>/<sw>:<tag>`（如 `docker.1ms.run/nanoporetech/dorado:latest`）
+3. **quay.io / biocontainers 频道**：`quay.io/biocontainers/<sw>:<ver>--<build>`（bioconda 自动构建，tag 含版本+build）
+4. **quay.io / bioinfortools 频道**：`quay.io/bioinfortools/<sw>:<ver>`（如 `quay.io/bioinfortools/gs-tama:1.0.4`）
+5. **bioconda 频道 conda 包**：https://anaconda.org/channels/bioconda/packages/<sw>
+6. **YangmingSi 频道 conda 包**：https://anaconda.org/channels/YangmingSi/packages/<sw>（个人维护频道，如 gs-tama=1.0.4）
+
+以上均无 → 判断为无，并在 README「容器与 Conda 链接」记录替代方案（社区镜像 / 源码构建 / 上游 github 链接）。
+
+
 ## 1. 命名约定（必须遵守）
 
 | 项 | 规则 | 示例 |

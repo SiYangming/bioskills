@@ -42,8 +42,10 @@ implementations:
 
     '
   container_ref:
-    bioconda: https://anaconda.org/bioconda/gstama
-    quay_biocontainers: quay.io/biocontainers/gstama
+    bioconda: https://anaconda.org/channels/bioconda/packages/gs-tama
+    yangmingsi_conda: https://anaconda.org/channels/YangmingSi/packages/gs-tama（1.0.4）
+    quay_biocontainers: quay.io/biocontainers/gs-tama:1.0.3--hdfd78af_0（官方仅到 1.0.3）
+    quay_bioinfortools: quay.io/bioinfortools/gs-tama:1.0.4（1.0.4 官方容器）
     install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
       镜像
 - id: gstama_snakemake_wrappers

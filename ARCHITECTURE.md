@@ -82,6 +82,10 @@ subworkflow/                      # 【复合流程层】常用软件组合：�
 > workflow/ 与 subworkflow/ 为复合流程层（native 编排脚本 + nextflow 文件 + snakemake 配置 + legacy/testdata），
 > 与 modules/（原子技能）平级，不参与 skill-cli scan/validate。
 
+### 容器与 Conda 包查找规则（简要）
+
+按序查找：Docker Hub → docker.1ms.run（国内加速）→ quay.io/biocontainers → quay.io/bioinfortools → bioconda 频道 → YangmingSi 频道；全部找不到才判为无。
+
 ### 3.1 canonical 目录名（示例）
 
 | 软件（俗称）   | canonical（`modules/<canonical>/`） | 说明 |
