@@ -1,0 +1,61 @@
+#load libraries
+library(tidyverse)
+library(tximport)
+
+#read in common variables
+source("common_variables.R")
+
+#read in transcript and gene IDs
+transcript_to_gene_ID_dir <- file.path(fasta_dir, "GENCODE", genome_version, "transcript_info")
+gene_ids_file <- file.path(transcript_to_gene_ID_dir, paste0("gencode.", genome_version, ".pc_transcripts_gene_IDs.csv"))
+
+if (!file.exists(gene_ids_file)) {
+  # Look for any file ending in gene_IDs.csv in that dir
+  found_files <- list.files(transcript_to_gene_ID_dir, pattern = "gene_IDs.csv$", full.names = TRUE)
+  if (length(found_files) > 0) {
+    gene_ids_file <- found_files[1]
+    message("Using found gene IDs file: ", gene_ids_file)
+  } else {
+    stop("Could not find gene IDs file in ", transcript_to_gene_ID_dir)
+  }
+}
+
+transcript_to_gene_ID <- read_csv(file = gene_ids_file, col_names = c("transcript", "gene", "gene_sym"))
+
+#create a vector of rsem isoform file names
+rsem_dir <- file.path(parent_dir, 'rsem')
+files <- file.path(rsem_dir, paste0(Total_sample_names, ".isoforms.results"))
+names(files) <- Total_sample_names
+
+#read in rsem isoform files
+isoform_expression <- tximport(files, type = "rsem", txOut = TRUE)
+
+#extract tpms
+isoform_tpm <- as.data.frame(isoform_expression$abundance)
+isoform_tpm %>%
+  rownames_to_column("transcript") -> isoform_tpm
+
+#write out tpm values
+write_csv(file = file.path(parent_dir, "Analysis/DESeq2_output/tpms.csv"), isoform_tpm)
+
+#calculate mean tpm
+isoform_tpm %>%
+  column_to_rownames("transcript") -> isoform_tpm
+isoform_tpm$mean_tpm <- rowMeans(isoform_tpm)
+
+#calculate most abundant transcript across all samples
+isoform_tpm %>%
+  rownames_to_column("transcript") %>%
+  inner_join(transcript_to_gene_ID, by = "transcript") %>%
+  group_by(gene) %>%
+  top_n(n = 1, wt = mean_tpm) %>%
+  sample_n(size = 1) %>% #some genes (particularly those with 0 counts) will have more than one transcript with the joint highest tpm, so we therefore select the transcript by random for these genes
+  select(transcript, gene, gene_sym) -> most_abundant_transcripts
+
+#check for no duplicates
+nrow(most_abundant_transcripts) == n_distinct(most_abundant_transcripts$gene)
+
+#write out as csv
+write_csv(file = file.path(parent_dir, "Analysis/most_abundant_transcripts/most_abundant_transcripts_IDs.csv"), most_abundant_transcripts)
+write.table(file = file.path(parent_dir, "Analysis/most_abundant_transcripts/most_abundant_transcripts.txt"), most_abundant_transcripts$transcript, row.names = F, col.names = F, quote = F)
+

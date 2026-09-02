@@ -1,0 +1,24 @@
+name: R_analysis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-tidyverse
+  - bioconductor-deseq2
+  - bioconductor-tximport
+  - bioconductor-fgsea
+  - bioconductor-rrvgo
+  - bioconductor-glimma
+  - bioconductor-vsn
+  - r-gridextra
+  - r-viridis
+  - r-ggrepel
+  - r-rsample
+  - r-xgboost
+  - r-gbm
+  - r-caret
+  - r-pdp
+  - r-lime
+  - r-h2o

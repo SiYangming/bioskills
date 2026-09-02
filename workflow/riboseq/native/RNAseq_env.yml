@@ -1,0 +1,20 @@
+name: RNAseq
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - biopython
+  - cutadapt
+  - umi_tools
+  - rsem
+  - samtools
+  - bowtie2
+  - bbmap
+  - star
+  - fastqc
+  - tbb
+  - r-base
+  - r-tidyverse
+  - bioconductor-tximport

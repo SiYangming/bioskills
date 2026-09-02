@@ -1,0 +1,16 @@
+name: RiboSeq
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - biopython
+  - pysam
+  - cutadapt
+  - umi_tools
+  - bbmap
+  - samtools
+  - fastqc
+  - r-base
+  - r-tidyverse
