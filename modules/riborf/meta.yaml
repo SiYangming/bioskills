@@ -1,0 +1,150 @@
+software: riborf
+canonical: riborf
+category: orf_prediction
+description: 'RibORF（2.0）是核糖体图谱（Ribo-seq）翻译 ORF 鉴定管线（Zhe Ji 实验室）：以 perl
+  子脚本串成「去接头 → ORF 注释 → read 分布质控 → offset 校正 → 翻译 ORF 预测（SVM/logistic
+  → merge 合并」的完整流程，输入校正后 RPF 比对与候选 ORF（genePred）后输出各 ORF 的预测翻译
+  概率与 ROC 统计。以多 perl 脚本分发，无单一主程序；本模块以 perl 驱动各子命令。
+  '
+homepage: https://github.com/zhejilab/RibORF
+license: GPL-3.0-only（以 RibORF.2.0/LICENSE 为准；conda recipe 曾记 MIT，与上游不符）
+software_versions:
+- id: riborf_native
+  riborf: '2.0'
+  build_route: 无官方 biocontainer（quay.io/biocontainers/riborf 不存在）→ conda(YangmingSi) /
+    bioinfortools 社区镜像（riborf:2.1）/ 自建配方（native/Dockerfile，含 shebang 修复）
+  source: https://github.com/zhejilab/RibORF（RibORF.2.0/ 目录）+ https://anaconda.org/channels/YangmingSi/packages/riborf/overview
+  note: 'RibORF 上游无 tag/release（git master，版本以 RibORF.2.0 目录为准=2.0）。YangmingSi 频道
+    conda 包 riborf（recipe 归档于 native/conda-recipe，linux-64/osx-arm64）；bioinfortools 镜像 tag 2.1
+    即含 shebang/执行权限修复的打包版（软件本体仍 2.0）。依赖 perl + bowtie2/tophat/R(r-e1071)/samtools/bedtools。'
+- id: riborf_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/riborf 404）
+  riborf: —
+  source: —（nf-core/modules 仓库 modules/nf-core/riborf 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/riborf
+    返回 404；Nextflow 场景以 native/（perl 驱动 + 容器）为兜底。
+- id: riborf_snakemake_wrappers
+  riborf: 官方无 wrapper（bio/riborf 404）
+  source: —（snakemake-wrappers 仓库 bio/riborf 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/riborf
+    返回 404；Snakemake 场景以 native/（perl 驱动 + 容器）为兜底。
+- id: riborf_nextflow_local
+  riborf: "未启用（官方缺失时在 main.nf 中按 native 容器声明 perl 步骤）"
+- id: riborf_snakemake_local
+  riborf: "未启用（需要时用 shell: 调 native/main.py <subcommand>）"
+implementations:
+- id: riborf_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    子命令对应 RibORF 2.0 的 6 个 perl 子脚本（remove_adapter / orfannotate / read_dist /
+    offset_correct / riborf / merge_orf），自动解析 PATH / $RIBORF_HOME 中的脚本。'
+  container_ref:
+    yangmingsi: https://anaconda.org/channels/YangmingSi/packages/riborf/overview（conda install -c
+      YangmingSi riborf；recipe 归档于 native/conda-recipe/{linux-64,osx-arm64}/meta.yaml）
+    bioinfortools: quay.io/bioinfortools/riborf:2.1（社区镜像，tag 2.1=含 shebang 修复的打包版）
+    github: https://github.com/zhejilab/RibORF（源码；native/install.sh 走 git 部署路线）
+    install_hint: 容器 docker pull quay.io/bioinfortools/riborf:2.1（README 环境安装 §2）；
+      无官方 biocontainer → native/ 保留自建 Dockerfile 兜底
+default_implementation: riborf_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: riborf 子命令：remove_adapter|orfannotate|read_dist|offset_correct|riborf|merge_orf
+  fastq:
+    type: file
+    required: false
+    description: remove_adapter 的输入 FASTQ
+  adapter:
+    type: string
+    required: false
+    description: remove_adapter 的 3' 接头前 10nt（如 CTGTAGGCAC）
+  genome:
+    type: file
+    required: false
+    description: orfannotate 的基因组 FASTA
+  genepred:
+    type: file
+    required: false
+    description: orfannotate/read_dist 的转录本 genePred 注释（候选/编码 ORF 注释）
+  input_sam:
+    type: file
+    required: false
+    description: read_dist/offset_correct/riborf/merge_orf 的比对 SAM（riborf 需 offset 校正后）
+  offset_params:
+    type: file
+    required: false
+    description: offset_correct 的校正参数文件（两列：read 长度、offset 距离）
+  candidate_orf:
+    type: file
+    required: false
+    description: riborf 的候选 ORF genePred（orfannotate 产物）
+  predicted_orfs:
+    type: string
+    required: false
+    description: merge_orf 的预测 ORF genePred，多文件用 ~ 分隔
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件或输出目录（依子命令而定）
+  start_codons:
+    type: string
+    required: false
+    cli_arg: -s
+    description: orfannotate 起始密码子集合，/ 分隔（默认 ATG/CTG/GTG/TTG/ACG）
+  read_lengths:
+    type: string
+    required: false
+    cli_arg: -d
+    description: read_dist 指定 RPF 长度，逗号分隔
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 perl 子脚本的额外参数（高级用法，慎用）
+outputs:
+  trimmed_fastq:
+    type: file
+    format: fastq
+    description: remove_adapter 产物（去接头后 reads）
+  candidate_orf_files:
+    type: file
+    description: orfannotate 产物：candidateORF.genepred.txt + candidateORF.fa
+  read_dist_plots:
+    type: file
+    format: pdf
+    description: read_dist 质控图（plot.readDist.*.pdf）与数值表（read.dist.*.txt）
+  corrected_sam:
+    type: file
+    format: sam
+    description: offset_correct 产物（校正后 SAM）
+  prediction_results:
+    type: file
+    description: riborf 产物（pred.pvalue.parameters.txt / stat.cutoff.txt / ROC 图等）
+  merged_orfs:
+    type: file
+    description: merge_orf 产物（retained/filtered.ORF.genepred.txt）
+environment:
+  dockerfile: Dockerfile
+  note: 官方渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）无 riborf → 保留自建配方
+    native/Dockerfile（miniconda 底座：perl/bowtie2/tophat/r-base/r-e1071/samtools/bedtools +
+    RibORF.2.0 源码部署）；同时登记 quay.io/bioinfortools/riborf:2.1 社区镜像与 YangmingSi conda 包。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    RIBORF_HOME: '{tmpdir}'
+  per_subcommand_threads:
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: perl
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 riborf 官方子模块
+    （2026-09 核实 404），Nextflow/Snakemake 场景以 native perl 驱动为兜底。

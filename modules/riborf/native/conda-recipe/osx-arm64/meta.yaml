@@ -1,0 +1,66 @@
+{% set name = "riborf" %}
+{% set version = "2.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+# 关键新增：指定依赖查找频道，解决生物信息学包找不到的问题
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+source:
+  git_url: https://github.com/zhejilab/RibORF.git
+
+build:
+  # 1. 移除 noarch: generic（核心修改：noarch与具体架构互斥，无法指定osx-arm64）
+  number: 1
+  # 2. 核心修改：指定仅构建osx-arm64架构，两种兼容写法任选其一（推荐第一种，兼容性更强）
+  # 写法1：通过skip条件跳过所有非osx-arm64架构
+  # skip: true  # [not osx_arm64]
+  # 写法2：直接指定目标架构（conda-build >=3.20 支持）
+  target_platform: osx-arm64
+  script: |
+    # 1. 创建bin目录（确保目录存在，避免复制失败）
+    mkdir -p $PREFIX/bin
+    # 2. 复制RibORF 2.0的所有文件到conda的bin目录
+    cp -r $SRC_DIR/RibORF.2.0/* $PREFIX/bin/
+    # 3. 为所有.pl脚本添加perl shebang头（解决执行权限问题）
+    for pl_file in $PREFIX/bin/*.pl; do
+      # 检查脚本是否已存在shebang，避免重复添加
+      if ! head -1 "$pl_file" | grep -q "^#!/usr/bin/env perl"; then
+        # 3. 使用通用的临时文件方法添加 shebang，避免 sed 在不同平台上的差异
+        mv "$pl_file" "${pl_file}.tmp"
+        echo "#!/usr/bin/env perl" > "$pl_file"
+        cat "${pl_file}.tmp" >> "$pl_file"
+        rm "${pl_file}.tmp"
+      fi
+    done
+    # 4. 赋予所有.pl脚本执行权限
+    chmod +x $PREFIX/bin/*.pl
+
+requirements:
+  host:
+    - git  # 用于克隆GitHub仓库源码
+    - conda-forge::perl==5.32.1
+    - numpy 1.26  # 修正原文件错误：numpy不能放在requirements根节点，移入host更合理
+  run:
+    - conda-forge::perl==5.32.1
+    - bowtie2
+    - tophat
+    - r-base
+    - r-e1071  # SVM模型依赖，bioconda频道可获取
+    - samtools
+    - bedtools
+
+about:
+  home: https://github.com/zhejilab/RibORF
+  license: MIT
+  license_file: LICENSE  # 明确指定许可证文件（若仓库有）
+  summary: 'Tool for identifying translated open reading frames using ribosome profiling'
+  description: |
+    RibORF is a comprehensive pipeline for identifying translated open reading frames (ORFs)
+    from ribosome profiling (Ribo-seq) data. It includes steps of adapter trimming, rRNA removal,
+    read alignment, offset correction, and ORF prediction.

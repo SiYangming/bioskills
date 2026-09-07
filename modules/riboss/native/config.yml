@@ -1,0 +1,36 @@
+# RIBOSS运行时配置文件
+# 可根据实际需求调整参数，程序运行时会读取这些配置
+
+# 输入输出路径配置
+input:
+  rna_seq_long: "./data/long_reads/"       # 长读长RNA-seq数据目录
+  rna_seq_short: "./data/short_reads/"     # 短读长RNA-seq数据目录
+  ribo_profiling: "./data/ribo_profiles/"  # 核糖体图谱数据目录
+  reference_genome: "./reference/genome.fa"# 参考基因组路径
+  annotation: "./reference/annotation.gtf" # 基因注释文件路径
+
+output:
+  base_dir: "./results"                    # 结果输出根目录
+  bed_files: "./results/bed"               # BED格式文件输出目录
+  reports: "./results/reports"             # 报告文件输出目录
+  logs: "./results/logs"                   # 日志文件输出目录
+
+# 分析参数配置
+analysis:
+  threads: 8                               # 并行线程数
+  min_coverage: 5                          # 最小覆盖度阈值
+  triplet_periodicity: True                # 是否分析三联体周期性
+  blast_enabled: False                     # 是否启用BLASTP分析
+  blast_db: "./blast_db/swissprot"         # BLAST数据库路径
+  fdr_threshold: 0.05                      # 显著性阈值（FDR）
+
+# 可视化配置
+visualization:
+  plot_format: "pdf"                       # 图表输出格式（pdf/png/svg）
+  dpi: 300                                 # 图表分辨率
+  color_scheme: "default"                  # 配色方案
+
+# 日志配置
+logging:
+  level: "INFO"                            # 日志级别（DEBUG/INFO/WARNING/ERROR）
+  file: "riboss_run.log"                   # 日志文件名

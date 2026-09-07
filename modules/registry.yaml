@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-07T03:14:22+00:00'
+generated_at: '2026-09-07T09:56:14+00:00'
 modules:
 - software: bamtools
   canonical: bamtools
@@ -309,6 +309,36 @@ modules:
     path: snakemake
     version: 6.4.0
     priority: Medium
+    entrypoint: ''
+- software: r_matrixeqtl
+  canonical: r_matrixeqtl
+  implementations:
+  - id: r_matrixeqtl_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '2.3'
+    priority: High
+    entrypoint: ''
+- software: riborf
+  canonical: riborf
+  implementations:
+  - id: riborf_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '2.0'
+    priority: High
+    entrypoint: ''
+- software: riboss
+  canonical: riboss
+  implementations:
+  - id: riboss_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '0.46'
+    priority: High
     entrypoint: ''
 - software: rsem
   canonical: rsem

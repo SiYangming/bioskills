@@ -401,6 +401,26 @@ class <Tool>Skill(base.SkillBase):
 
 * 宿主机运行 main.py：conda/mamba 装工具（`mamba create -n <env> -c conda-forge -c bioconda <software>=<版本>`）或 docker run 官方镜像。
 
+### 自建 conda 包配方（native/conda-recipe/，按平台分目录）
+
+官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org，见 §0 查找规则 1–3）无该软件
+conda 包、需发布自建包到个人频道（如 **YangmingSi**）时，conda-build 配方**按平台分目录归档**：
+
+```
+native/conda-recipe/
+├── linux-64/meta.yaml       # linux x64 构建配方
+└── osx-arm64/meta.yaml      # Apple Silicon 构建配方（仅该平台受支持时建）
+```
+
+* 每个**受支持平台**一个独立 `meta.yaml`，平台目录名即 conda-build 目标平台（`linux-64` / `osx-arm64` …）；
+  平台差异就地调整（如 `noarch: generic`、`target_platform`、source URL、依赖 pin），**不用单个 meta 硬塞多平台**；
+  上游仅分发单平台（如 NCBI ORFfinder 仅 linux-i64、riboss 官方仅 Linux）→ 只建对应平台目录，并在配方头注写明理由；
+* 重建发布：`conda build conda-recipe/linux-64`（或 `osx-arm64`）→ `anaconda upload ...`；
+* 登记：软件级 `software_versions.native.source` 写 anaconda 页面
+  （`https://anaconda.org/channels/YangmingSi/packages/<sw>/overview`），`container_ref.yangmingsi` 与 README
+  「容器与 Conda 链接」记录配方路径与版本；`native/environment.yml` / `snakemake/*.yaml` 可引用该频道直装；
+* 实例：`orffinder`（linux-64）、`riborf`（linux-64 + osx-arm64）、`riboss`（linux-64）三模块已按此归位（2026-09）。
+
 ### 宿主安装方式登记（conda + Homebrew + 官方二进制）
 
 > 容器/镜像判定顺序不变（bioconda → quay.io/biocontainers → depot.galaxyproject.org，见上）；本小节只管**宿主机本地安装方式**的登记，对应 README「### 1. Conda / brew（包管理器安装）」与「### 4. 二进制包安装」两个小节。

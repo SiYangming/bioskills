@@ -40,6 +40,8 @@
 
    * **自建兜底（仅查无官方维护）**：目前如 gstama / orfanage / dorado / gnu_sort / gunzip（dorado 官方仅 GitHub 二进制）才保留自建配方：**`debian:bookworm-slim + apt --no-install-recommends`** + 清理四连 + `%test` 版本断言；自建兜底**禁止默认引入 miniconda/micromamba**。Docker 运行一律带 `-u $(id -u):$(id -g)`。
 
+   * **自建 conda 频道包（native/conda-recipe/）**：官方 1–3 渠道无 conda 包且需发布自建频道（如 YangmingSi）时，配方按平台分目录归档（`native/conda-recipe/<platform>/meta.yaml`，每平台独立 meta、仅受支持平台建目录；重建 `conda build` + `anaconda upload` 发布）。实例：orffinder（linux-64）、riborf（linux-64+osx-arm64）、riboss（linux-64），细则见 AGENT.md §7。
+
    * **snakemake/ 集成层（td2 式）**：wrapper 与 env yaml 平铺 `snakemake/` 根，`.smk` 同目录相对引用（禁 `../envs|scripts`、`envs/`、`scripts/` 幽灵引用）；多子命令软件每 rule 一 `.smk`、config 驱动可独立运行；wrapper 统一注入两级到 `modules/` 共享 `docker_wrapper.py`；建议配 `snakemake/test/` 静态自检。**执行指令选择**：单条命令用官方 `wrapper:` 句柄（如 `"0.0.8/bio/samtools/index"`）或 `shell:`，需逻辑（多步/条件/产物搬运）用 `script:`，同一 rule 内互斥。细则与自查见 AGENT.md「snakemake 集成层规范」。
 
    * 驱动层（`main.py`）必须处理线程调度、内存上限、流管道化、临时目录挂载与清理。

@@ -176,4 +176,5 @@ dependencies:
 - **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/orffinder/overview
 - **YangmingSi 频道（自建，仅裸 ORFfinder 二进制）**：https://anaconda.org/channels/YangmingSi/packages/orffinder/overview
   - 安装：`conda install -c YangmingSi orffinder=0.4.3`
-  - 配方归档：`native/conda-recipe/meta.yaml`（conda build 重建后 anaconda upload 即发布到该频道）
+  - 配方归档：`native/conda-recipe/linux-64/meta.yaml`（仅 linux-64；NCBI 无 macOS ORFfinder 二进制。
+    `conda build conda-recipe/linux-64` 重建后 anaconda upload 即发布到该频道）

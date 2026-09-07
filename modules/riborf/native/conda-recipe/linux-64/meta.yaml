@@ -1,0 +1,59 @@
+{% set name = "riborf" %}
+{% set version = "2.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+# 关键新增：指定依赖查找频道，解决生物信息学包找不到的问题
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+source:
+  git_url: https://github.com/zhejilab/RibORF.git
+
+build:
+  noarch: generic  # 平台无关，保持小巧
+  number: 0
+  script: |
+    # 1. 创建bin目录（确保目录存在，避免复制失败）
+    mkdir -p $PREFIX/bin
+    # 2. 复制RibORF 2.0的所有文件到conda的bin目录
+    cp -r $SRC_DIR/RibORF.2.0/* $PREFIX/bin/
+    # 3. 为所有.pl脚本添加perl shebang头（解决执行权限问题）
+    for pl_file in $PREFIX/bin/*.pl; do
+      # 检查脚本是否已存在shebang，避免重复添加
+      if ! head -1 "$pl_file" | grep -q "^#!/usr/bin/env perl"; then
+        # sed -i '' '1i#!/usr/bin/env perl' "$pl_file"  # Mac系统用sed -i ''，Linux用sed -i
+        sed -i '1i#!/usr/bin/env perl' "$pl_file"  # Mac系统用sed -i ''，Linux用sed -i
+      fi
+    done
+    # 4. 赋予所有.pl脚本执行权限
+    chmod +x $PREFIX/bin/*.pl
+
+requirements:
+  host:
+    - git  # 用于克隆GitHub仓库源码
+    - perl
+  run:
+    - perl
+    - bowtie2
+    - tophat
+    - r-base
+    - r-e1071  # SVM模型依赖，bioconda频道可获取
+    - samtools
+    - bedtools
+  numpy:
+    - 1.26
+
+about:
+  home: https://github.com/zhejilab/RibORF
+  license: MIT
+  license_file: LICENSE  # 明确指定许可证文件（若仓库有）
+  summary: 'Tool for identifying translated open reading frames using ribosome profiling'
+  description: |
+    RibORF is a comprehensive pipeline for identifying translated open reading frames (ORFs)
+    from ribosome profiling (Ribo-seq) data. It includes steps of adapter trimming, rRNA removal,
+    read alignment, offset correction, and ORF prediction.

@@ -1,0 +1,144 @@
+software: riboss
+canonical: riboss
+category: orf_prediction
+description: 'RiboSS（0.46）整合长/短读 RNA-seq 与核糖体图谱（Ribo-seq）发现非注释区新的翻译
+  事件（Lim & Brown 等，Brief Bioinform 2025）：转录组参考引导组装（StringTie）→ 原核 operon /
+  真核 ORF 预测（riboss.orfs）→ RPF 比对与丰度定量（STAR/Salmon/riboprofiler）→ 非规范 ORF
+  相对规范 ORF 的翻译潜力比较（G 检验/Boschloo，riboss.riboss），输出 BED12/genePred/bigGenePred
+  轨道。以 Python 包分发（无独立 CLI）；本模块把稳定函数入口封装为原子子命令。
+  '
+homepage: https://github.com/lcscs12345/riboss
+license: MIT
+software_versions:
+- id: riboss_native
+  riboss: '0.46'
+  python: '>=3.12,<3.13'
+  build_route: 无官方 biocontainer（quay.io/biocontainers/riboss 不存在）→ conda(YangmingSi) /
+    bioinfortools 社区镜像（riboss:0.46）/ 自建配方（native/Dockerfile）
+  source: https://github.com/lcscs12345/riboss（setup.py __version__=0.46）+ https://anaconda.org/channels/YangmingSi/packages/riboss/overview
+  note: 'Python 包依赖链重（biopython/numpy/pandas/scipy/pysam/pyfaidx/pyranges/bedtools/bowtie2/
+    samtools/salmon/star/fastp/rseqc/matplotlib/seaborn/pyside6 等，见 recipe 与上游 environment.yml）。
+    YangmingSi 频道 conda 包 riboss（recipe 归档于 native/conda-recipe）；bioinfortools 镜像 tag 0.46
+    与上游 __version__ 一致。'
+- id: riboss_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/riboss 404）
+  riboss: —
+  source: —（nf-core/modules 仓库 modules/nf-core/riboss 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/riboss
+    返回 404；Nextflow 场景以 native/（python 驱动 + 容器）为兜底。
+- id: riboss_snakemake_wrappers
+  riboss: 官方无 wrapper（bio/riboss 404）
+  source: —（snakemake-wrappers 仓库 bio/riboss 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/riboss
+    返回 404；Snakemake 场景以 native/（python 驱动 + 容器）为兜底。
+- id: riboss_nextflow_local
+  riboss: 未启用（官方缺失时在 main.nf 中按 native 容器声明 python 步骤）
+- id: riboss_snakemake_local
+  riboss: "未启用（需要时用 shell: 调 native/main.py <subcommand>）"
+implementations:
+- id: riboss_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.46"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    子命令委托 run_riboss.py（translate / orf_finder / transcriptome_assembly），以当前解释器执行，
+    要求 riboss 已装入当前环境。'
+  container_ref:
+    yangmingsi: https://anaconda.org/channels/YangmingSi/packages/riboss/overview（conda install -c
+      YangmingSi riboss=0.46；recipe 归档于 native/conda-recipe/linux-64/meta.yaml）
+    bioinfortools: quay.io/bioinfortools/riboss:0.46（社区镜像）
+    github: https://github.com/lcscs12345/riboss（上游源码；environment.yml 见仓库）
+    install_hint: 容器 docker pull quay.io/bioinfortools/riboss:0.46（README 环境安装 §2）；
+      无官方 biocontainer → native/ 保留自建 Dockerfile 兜底
+default_implementation: riboss_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: riboss 子命令：translate|orf_finder|transcriptome_assembly
+  seq:
+    type: string
+    required: false
+    description: translate 的核酸序列（如 ATGGTCTGA → MV）
+  annotation:
+    type: file
+    required: false
+    description: orf_finder 的基因注释（GTF/GFF3/BED/genePred）
+  tx:
+    type: file
+    required: false
+    description: orf_finder 的转录本 FASTA
+  outdir:
+    type: string
+    required: false
+    description: 输出目录（orf_finder / transcriptome_assembly；默认 .）
+  ncrna:
+    type: boolean
+    default: false
+    description: orf_finder 是否不移除非编码 RNA 转录本
+  start_codons:
+    type: string
+    required: false
+    description: orf_finder 起始密码子列表，逗号分隔（默认 ATG,CTG,GTG,TTG）
+  superkingdom:
+    type: string
+    required: false
+    description: transcriptome_assembly 物种域：Archaea|Bacteria|Eukaryota
+  genome:
+    type: file
+    required: false
+    description: transcriptome_assembly 基因组 FASTA
+  long_reads:
+    type: file
+    required: false
+    description: transcriptome_assembly 长读比对 BAM（PacBio/ONT）
+  short_reads:
+    type: file
+    required: false
+    description: transcriptome_assembly 短读比对 BAM（混合组装，可选）
+  strandness:
+    type: string
+    required: false
+    description: 链特异性 rf/fr（--short-reads 时使用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（assembly 透传 StringTie -p）
+outputs:
+  protein:
+    type: string
+    description: translate 的氨基酸输出
+  orf_pkl:
+    type: file
+    format: pkl
+    description: orf_finder 产物 <outdir>/<ann.stem>.orf_finder.pkl.gz 及 .transcripts.fa/.cds_range.txt
+  assembly_gtf:
+    type: file
+    format: gtf
+    description: transcriptome_assembly 的 StringTie GTF
+  assembly_fasta:
+    type: file
+    format: fasta
+    description: transcriptome_assembly 的转录本 FASTA（bedtools getfasta 产物）
+environment:
+  dockerfile: Dockerfile
+  note: 官方渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）无 riboss → 保留自建配方
+    native/Dockerfile（miniconda 底座 + upstream environment.yml 建 env + pip install -e .）；
+    同时登记 quay.io/bioinfortools/riboss:0.46 社区镜像与 YangmingSi conda 包。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    transcriptome_assembly: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: python3
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 riboss 官方子模块
+    （2026-09 核实 404），Nextflow/Snakemake 场景以 native python 驱动为兜底。

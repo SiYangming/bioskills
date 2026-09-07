@@ -1,0 +1,146 @@
+software: r_matrixeqtl
+canonical: r_matrixeqtl
+category: expression_qtl
+description: 'Matrix eQTL 是用于超大规模 eQTL（expression quantitative trait loci）关联分析的
+  R 包：以基因型（SNP）与基因表达矩阵为输入，基于大矩阵运算一次完成基因×SNP 的线性 / ANOVA 回归
+  关联检验，支持协变量校正、cis/trans 分区（分别设定 p 值阈值与 FDR）、异方差/相关误差模型等。
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动 Matrix_eQTL_main() 完成分析。
+  conda / 容器包名规范名为 r-matrixeqtl（目录名沿用仓库历史下划线形态 r_matrixeqtl）。
+  '
+homepage: https://cran.r-project.org/package=MatrixEQTL
+license: LGPL-3
+software_versions:
+- id: r_matrixeqtl_native
+  r-matrixeqtl: '2.3'
+  r: R >= 4.2（自建 rocker/r-ver 镜像；官方老镜像为 R 3.3/3.4）
+  build_route: 官方镜像过旧（quay.io/biocontainers/r-matrixeqtl 仅 2.1.1/R3.3.1）→ 保留自建 rocker
+    镜像（native/Dockerfile+Apptainer.def，MatrixEQTL 2.3，可装到当前 CRAN 2.4）
+  source: https://anaconda.org/channels/r/packages/r-matrixeqtl/overview + CRAN MatrixEQTL 源码
+  note: '官方 biocontainer（quay.io/biocontainers/r-matrixeqtl:2.1.1--r3.3.1_0）与 galaxyproject
+    （2.1.1--r3.4.1_0）仅老版 R；新 R（4.2+）请用 native/ 自建镜像或 CRAN 直装。CRAN 于 2026-09
+    发布 2.4，R install.packages() 将装到 2.4；本模块默认登记 2.3（自建镜像验证版），两者接口一致。'
+- id: r_matrixeqtl_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/r-matrixeqtl 404）
+  r-matrixeqtl: —
+  source: —（nf-core/modules 仓库 modules/nf-core/r-matrixeqtl 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/r-matrixeqtl
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 容器）为兜底。
+- id: r_matrixeqtl_snakemake_wrappers
+  r-matrixeqtl: 官方无 wrapper（bio/r-matrixeqtl 404）
+  source: —（snakemake-wrappers 仓库 bio/r-matrixeqtl 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/r-matrixeqtl
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。
+- id: r_matrixeqtl_nextflow_local
+  r-matrixeqtl: "未启用（官方缺失时按 native 容器在 main.nf 中声明 Rscript 步骤）"
+- id: r_matrixeqtl_snakemake_local
+  r-matrixeqtl: "未启用（需要时用 shell: 调 native/main.py analyze 或 run_matrixeqtl.R）"
+implementations:
+- id: r_matrixeqtl_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行 run_matrixeqtl.R，调用 MatrixEQTL::Matrix_eQTL_main 完成
+    eQTL 关联分析（线性/ANOVA/线性交叉模型 + 可选 cis 分区）。'
+  container_ref:
+    quay_biocontainers: quay.io/biocontainers/r-matrixeqtl（仅 2.1.1/R3.3，官方旧镜像，见 README）
+    galaxyproject: depot.galaxyproject.org/singularity/r-matrixeqtl:2.1.1--r3.4.1_0（官方旧镜像）
+    r_channel: https://anaconda.org/channels/r/packages/r-matrixeqtl/overview（anaconda r 频道）
+    self_built: native/Dockerfile + Apptainer.def（rocker/r-ver:4.5.2 + MatrixEQTL，新版替代，推荐）
+    install_hint: 宿主机直接 R install.packages('MatrixEQTL')（见 README/native/install.sh）；
+      容器 docker pull 自建镜像或官方旧镜像（README 环境安装 §2/§3）
+default_implementation: r_matrixeqtl_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: r_matrixeqtl 子命令：analyze（唯一核心命令）
+  snps:
+    type: file
+    required: true
+    description: 基因型矩阵（样本×SNP，Tab 分隔；首行列名/首列 SNP id，值如 0/1/2）
+  gene:
+    type: file
+    required: true
+    description: 基因表达矩阵（样本×基因，Tab 分隔；首行列名/首列 gene id，列顺序与 snps 一致）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 关联分析显著结果输出文件（significant eQTL 行：SNP、gene、statistic、p-value、FDR；
+      cis 启用时另写 <output>.cis）。与 output_prefix 二者必居其一。
+  output_prefix:
+    type: string
+    required: false
+    description: 输出前缀（cis+trans 双输出：<prefix>_eQTL_trans.txt、cis 启用时另写
+      <prefix>_eQTL_cis.txt）。与 output 二者必居其一。
+  covariates:
+    type: file
+    required: false
+    description: 协变量矩阵（样本×协变量；列顺序与 snps/gene 一致；不填则不校正）
+  model:
+    type: string
+    required: false
+    default: linear
+    description: 回归模型：linear（加性线性，t 检验）| anova（加性+显性）| linear_cross（线性×协变量）
+  pv_threshold:
+    type: float
+    required: false
+    default: 1e-5
+    description: 全距离/trans 关联显著性阈值 pvOutputThreshold
+  pv_threshold_cis:
+    type: float
+    required: false
+    default: 0
+    description: cis 关联阈值（>0 时启用 cis 分区，需提供 snpspos/genepos）
+  cis_dist:
+    type: integer
+    required: false
+    default: 1000000
+    cli_arg: --cis-dist
+    description: cis 窗口（bp）：SNP 与基因距离 ≤ 该值视为 local 配对（默认 1e6）
+  snpspos:
+    type: file
+    required: false
+    description: SNP 位置表（snpid、chr、pos），启用 cis 分区时必填
+  genepos:
+    type: file
+    required: false
+    description: 基因位置表（geneid、chr、left、right），启用 cis 分区时必填
+  slice_size:
+    type: integer
+    required: false
+    default: 2000
+    description: SlicedData 分片大小（基因/SNP 大矩阵的内存分块读入）
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认，R 驱动按物理核数-1 自动检测）或正整数（透传 BLAS 线程）
+outputs:
+  result:
+    type: file
+    format: txt
+    description: 显著 eQTL 结果表（含 SNP/gene/statistic/p-value/FDR 列），trans 与 cis 分行输出
+environment:
+  container_official: quay.io/biocontainers/r-matrixeqtl（官方镜像仅 2.1.1/R3.3，R 版本过旧）
+  note: 官方 biocontainer 仅老版 R → 本模块保留自建配方（native/Dockerfile + Apptainer.def，
+    rocker/r-ver:4.5.2 + MatrixEQTL 2.3）作为推荐容器路线；宿主机 R>=4.2 亦可直接 install.packages('MatrixEQTL')。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 r-matrixeqtl 官方
+    子模块（2026-09 核实 404），Nextflow/Snakemake 场景以 native Rscript 驱动为兜底。

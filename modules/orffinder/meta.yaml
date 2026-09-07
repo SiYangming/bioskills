@@ -43,7 +43,7 @@ implementations:
     quay_biocontainers: 官方 biocontainers 无 ORFfinder（quay.io/biocontainers/orffinder 不存在，2026-09 核实 401/404）
     preskaa_orffinder: quay.io/preskaa/orffinder:0.4.3（作者组织官方镜像，tag 0.4.3，2026-09 核实存在）
     yangmingsi: https://anaconda.org/channels/YangmingSi/packages/orffinder/overview（自建频道：conda install -c
-      YangmingSi orffinder=0.4.3；recipe 归档于 native/conda-recipe/meta.yaml，重建后 anaconda upload 发布）
+      YangmingSi orffinder=0.4.3；recipe 归档于 native/conda-recipe/linux-64/meta.yaml，重建后 anaconda upload 发布）
     install_hint: 宿主机 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器直接 docker pull
       quay.io/preskaa/orffinder:0.4.3（README 环境安装 §2）；自建 recipe（native/Dockerfile+Apptainer.def）供 main.py 驱动
       备选
