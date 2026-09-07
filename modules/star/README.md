@@ -8,8 +8,11 @@
 
 # star / native
 
-自包含的 STAR 驱动实现（`source_type: custom`）。官方镜像优先（bioconda → quay.io/biocontainers → depot.galaxyproject.org 已有 star 官方镜像），本地不再维护 Dockerfile/Apptainer.def。
-注意：STAR 可执行文件名为 `STAR`；native 与 riboseq 流程统一 2.7.11b（bioconda 包 `star` / quay.io/biocontainers），历史锚点 2.7.10b（Debian apt 曾打包为 rna-star）仍可由 conda 安装，差异见文末「版本差异声明」。
+STAR（Spliced Transcripts Alignment to a Reference）是超快速的 RNA-seq 剪接比对工具，基于 uncompressed suffix array 算法，比对速度快、剪接位点检测灵敏度高，支持发现新剪接位点与融合基因，是目前 RNA-seq 分析的主流比对器之一（官网：<https://github.com/alexdobin/STAR>）。本目录为自包含的 STAR 驱动实现（`source_type: custom`）。
+
+**文档**：https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+
+官方镜像优先（bioconda → quay.io/biocontainers → depot.galaxyproject.org 已有 star 官方镜像），本地不再维护 Dockerfile/Apptainer.def；STAR 可执行文件名为 `STAR`。native 与 riboseq 流程统一 2.7.11b（bioconda 包 `star` / quay.io/biocontainers），历史锚点 2.7.10b（Debian apt 曾打包为 rna-star）仍可由 conda 安装，差异见文末「版本差异声明」。
 
 ## 能力
 
@@ -20,17 +23,9 @@
 
 ## 快速开始
 
-### 1. 安装环境
+> 安装 STAR 的四种方式（conda / docker / apptainer / 官方 release 源码编译）见下方「环境安装」节；以下 CLI 与自省命令在宿主机已装工具的环境执行。
 
-```bash
-# 途径 1：conda（宿主机直跑 main.py；HPC 无 root 场景；配方见文末「Conda 环境」节）
-mamba env create -f environment.yml
-conda activate star-native
-# 途径 2：官方容器（bioconda 官方镜像，只含 STAR 工具；用法见第 4 节）
-docker pull quay.io/biocontainers/star:2.7.11b--h5ca1c30_8
-```
-
-### 2. CLI 调用
+### 1. CLI 调用
 
 ```bash
 # 建索引（参考 FASTA -> genomeDir/ 下的 Genome/SA/SAindex；含 GTF 时生成剪接位点索引）
@@ -44,38 +39,149 @@ python main.py align --genome-dir genomeDir -U single.fq.gz -o out.sam \
     --out-sam-type SAM --threads 4
 ```
 
-### 3. Agent / Schema 自省
+### 2. Agent / Schema 自省
 
 ```bash
 python main.py --schema              # 输出 JSON Schema
 python main.py --list-commands       # 列出支持的子命令
 ```
 
-### 4. 容器运行（官方镜像优先，不维护本地配方）
-
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制：
-
-```bash
-# Docker：工具直跑（官方镜像内只含 STAR，main.py 驱动在宿主机运行）
-docker pull quay.io/biocontainers/star:2.7.11b--h5ca1c30_8        # 与 riboseq 流程一致；tag 见 quay 页面
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/star:2.7.11b--h5ca1c30_8 \
-  index /data/refs.fa /data/genomeDir --genome-sa-index-nbases 5 --threads 8
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/star:2.7.11b--h5ca1c30_8 \
-  align --genome-dir /data/genomeDir -1 /data/r1.fq.gz -2 /data/r2.fq.gz \
-  -o /data/out.bam --threads 8
-
-# Singularity/Apptainer
-apptainer pull star.sif docker://quay.io/biocontainers/star:2.7.11b--h5ca1c30_8
-# 或直链 depot.galaxyproject.org/singularity/star%3A2.7.11b--h5ca1c30_8（与 quay 同 build tag）
-```
-
-> 容器内为原生工具入口；需要 Schema/自省/参数注入时在**宿主机**（conda env 装 star）运行 `python main.py <subcommand> ...`。
-
-### 5. 测试
+### 3. 测试
 
 ```bash
 bash test/run_test.sh
 ```
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑（容器内只含 STAR，无 python 驱动）。
+
+### 1. Conda / brew（包管理器安装）
+
+```bash
+mamba create -n star-native -c conda-forge -c bioconda star=2.7.11b
+conda activate star-native
+STAR --version    # 验证（可执行文件名为 STAR）
+```
+
+```bash
+# 或用 Homebrew（macOS / Linux；STAR 在 homebrew-core 的公式名为 rna-star）
+brew install rna-star    # 当前 2.7.11b，与上方 bioconda 一致
+STAR --version           # 断言
+```
+
+> 完整离线配方（含 python=3.11 / pyyaml，可另存为 star-native.yml（离线兜底），在线直接 mamba create -n star-native -c conda-forge -c bioconda star=2.7.11b）见文末「Conda 环境」节（name: star-native）；历史锚点 2.7.10b（apt 包名 rna-star）见「版本差异声明」。
+
+### 2. Docker（官方镜像）
+
+```bash
+docker pull quay.io/biocontainers/star:2.7.11b--h5ca1c30_8    # 与 riboseq 流程一致；tag 见 quay 页面
+# 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data \
+    quay.io/biocontainers/star:2.7.11b--h5ca1c30_8 \
+    STAR --runMode genomeGenerate --genomeDir /data/genomeDir \
+    --genomeFastaFiles /data/refs.fa --sjdbGTFfile /data/ann.gtf --runThreadN 8
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data \
+    quay.io/biocontainers/star:2.7.11b--h5ca1c30_8 \
+    STAR --runMode alignReads --genomeDir /data/genomeDir \
+    --readFilesIn /data/r1.fq.gz /data/r2.fq.gz --outSAMtype BAM SortedByCoordinate --runThreadN 8
+```
+
+容器内为原生 STAR 入口；需要 Schema/自省/参数注入时在**宿主机**（conda env 装 star）运行 `python main.py <subcommand> ...`。
+
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换；等价直链见文末「容器与 Conda 链接」）：
+
+```bash
+apptainer pull star.sif docker://depot.galaxyproject.org/singularity/star:2.7.11b--h5ca1c30_8
+apptainer run -B "$PWD":/data -H /data star.sif \
+    STAR --runMode alignReads --genomeDir /data/genomeDir \
+    --readFilesIn /data/r1.fq.gz /data/r2.fq.gz --outSAMtype BAM SortedByCoordinate --runThreadN 8
+```
+
+### 4. 二进制包安装（官方 release 源码编译，无 conda / docker 依赖）
+
+* **GitHub release**：<https://github.com/alexdobin/STAR/releases>
+
+官方 release 分发源码包（无预编译二进制），编译生成 STAR 可执行文件（需支持 C++11 的编译器）：
+
+```bash
+wget https://github.com/alexdobin/STAR/releases/download/2.7.11b/STAR_2.7.11b.zip -P ~/software/
+cd ~/software && unzip STAR_2.7.11b.zip && cd STAR-2.7.11b/source    # 解压目录名以实际为准
+make STAR -j 8
+mkdir -p ~/software/STAR-2.7.11b/bin && cp STAR ~/software/STAR-2.7.11b/bin/
+echo 'export PATH=$PATH:~/software/STAR-2.7.11b/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# 验证安装
+STAR --version
+```
+
+> 💡 **编译说明**：STAR 编译需要支持 C++11 的编译器。CentOS 6 默认的 gcc 版本较老，可能需要先升级 gcc 或使用预编译的二进制版本。
+
+## 实战示例：RNA-seq 建索引 → 比对 → 批量定量
+
+STAR 基于 uncompressed suffix array，比对速度快且剪接位点检测灵敏度高，支持发现新剪接位点与融合基因，是 RNA-seq 主流比对器之一；等价能力由 `native/main.py` 的 `index` / `align` 子命令提供（见上「快速开始」）。以下为原生 `STAR` CLI 直接调用（版本与 native 2.7.11b 一致）。
+
+### 1. 构建基因组索引（含剪接位点数据库）
+
+```bash
+# --sjdbOverhang = 读长 - 1（150 bp 读长取 149）
+STAR --runThreadN 8 \
+     --runMode genomeGenerate \
+     --genomeDir star_index \
+     --genomeFastaFiles genome.fasta \
+     --sjdbGTFfile genome.gtf \
+     --sjdbOverhang 149
+```
+
+### 2. 双端比对 + 链信息 + 基因定量
+
+```bash
+STAR --runThreadN 8 \
+     --genomeDir star_index \
+     --readFilesIn sample_1.fastq sample_2.fastq \
+     --outFileNamePrefix sample. \
+     --outSAMtype BAM SortedByCoordinate \
+     --outSAMstrandField intronMotif \
+     --quantMode GeneCounts
+# 产物 sample.Aligned.sortedByCoord.out.bam；--quantMode GeneCounts 额外输出 sample.ReadsPerGene.out.tab
+```
+
+### 3. 批量比对多个样品
+
+```bash
+for f in *.1.fastq
+do
+    s=${f/.1.fastq/}
+    echo "STAR --runThreadN 8 --genomeDir star_index \
+--readFilesIn ${s}.1.fastq ${s}.2.fastq \
+--outFileNamePrefix ${s}. --outSAMtype BAM SortedByCoordinate \
+--outSAMstrandField intronMotif --quantMode GeneCounts"
+done > command.star.list
+
+# 生成命令列表后逐条执行，或用 xargs / ParaFly 等按行并行
+xargs -P 2 -a command.star.list -I CMD bash -c "CMD"
+```
+
+### 4. 参数说明
+
+| 参数 | 说明 |
+|------|------|
+| `--runThreadN N` | 线程数 |
+| `--runMode genomeGenerate` | 构建索引模式 |
+| `--genomeDir` | 索引目录（构建输出 / 比对输入） |
+| `--genomeFastaFiles` | 参考基因组 FASTA |
+| `--sjdbGTFfile` | 注释 GTF，用于构建剪接位点数据库 |
+| `--sjdbOverhang` | 读长 - 1（150 bp 读长取 149） |
+| `--readFilesIn` | 输入 reads（SE 一个 / PE 两个文件） |
+| `--outFileNamePrefix` | 输出文件前缀 |
+| `--outSAMtype BAM SortedByCoordinate` | 输出按坐标排序的 BAM |
+| `--outSAMstrandField intronMotif` | 记录链方向信息（链特异性文库） |
+| `--quantMode GeneCounts` | 同时输出基因水平计数 |
+
+> STAR 内存占用较大（人类基因组索引约需 30 GB 内存），内存有限的环境可考虑 HISAT2 等替代。
 
 ## 性能优化约定
 
@@ -174,7 +280,7 @@ include { STAR_GENOMEGENERATE }  from '../modules/nf-core/star/genomegenerate/ma
 
 ```yaml
 # star native Conda 环境配方（HPC 无 root / 非容器兜底）
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 star-native.yml 后 mamba env create -f star-native.yml；在线推荐上方 mamba create 直装命令
 name: star-native
 channels:
   - conda-forge

@@ -163,7 +163,7 @@ outputs:
     format: bed
     description: merge 输出的合并转录本注释
 environment:
-  conda: environment.yml
+  # conda: —（容器走 apt 装依赖 + 源码构建，无独立 conda env 文件；本地安装用 mamba create / 个人频道 YangmingSi）
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
 optimization:

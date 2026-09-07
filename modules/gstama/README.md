@@ -26,7 +26,7 @@ Iso-Seq 链路：`bamtools convert` → `polyacleanup` → `minimap2 align` → 
 ### 1. 安装环境
 
 ```bash
-mamba env create -f environment.yml
+mamba create -n gstama-native -c conda-forge -c bioconda gs-tama=1.0.4 samtools=1.21
 conda activate gstama-native
 ```
 
@@ -188,7 +188,7 @@ rule all:
 
 ```yaml
 # gstama native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 gstama-native.yml 后 mamba env create -f gstama-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：apt 无 gs-tama 包，本环境为唯一 Conda 兜底；Docker/Apptainer 用 micromamba 引导同款 env。
 name: gstama-native
 channels:

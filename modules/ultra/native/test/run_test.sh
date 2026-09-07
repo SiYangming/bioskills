@@ -42,7 +42,7 @@ if command -v uLTRA >/dev/null 2>&1 && command -v samtools >/dev/null 2>&1 \
     echo "==> ultra index/align 执行断言全部通过"
 else
     echo "==> [5-6/6] [SKIP] uLTRA/minimap2/namfinder/samtools 未全部安装，跳过 index/align 执行断言"
-    echo "    安装：mamba env create -f environment.yml && conda activate ultra-native"
+    echo "    安装：mamba create -n ultra-native -c conda-forge -c bioconda ultra_bioinformatics minimap2 samtools && conda activate ultra-native"
 fi
 
 echo "ALL TESTS PASSED"

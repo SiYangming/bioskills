@@ -23,7 +23,7 @@
 
 ```bash
 # 途径 1：conda（宿主机直跑 main.py；HPC 无 root 场景；配方见文末「Conda 环境」节）
-mamba env create -f environment.yml   # native/ 不随仓库存放 environment.yml，按文末配方自建
+mamba create -n rsem-native -c conda-forge -c bioconda rsem=1.3.3 bowtie2=2.5.4   # native/ 不随仓库存放 environment.yml，按文末配方自建
 conda activate rsem-native
 # 途径 2：官方容器（bioconda 官方镜像，只含 rsem 工具；用法见第 4 节）
 docker pull quay.io/biocontainers/rsem:<tag>     # tag 见 quay 页面（示例 1.3.3--pl5321h077b44d_12）
@@ -83,6 +83,69 @@ bash test/run_test.sh    # 本机无 rsem 时自省链路通过即可；装 rsem
 - **临时目录**：通过 `TMPDIR`（`meta.yaml.optimization.env_vars`，占位符 `{tmpdir}`）注入，避免污染工作目录。
 - **内存**：通过 `meta.yaml.optimization.default_mem_mb` 声明，供上层调度器读取。
 
+
+## 实战示例：Trinity de novo 组装后的 RSEM 定量
+
+RSEM 除直接以 `rsem-prepare-reference` / `rsem-calculate-expression` 运行（见上「快速开始」）外，最常见的教学用法是作为 Trinity 组装流程的定量步骤被批量调用：Trinity 自带 `align_and_estimate_abundance.pl` 会在内部串起「RSEM 建索引 + 逐样本定量」，并对每个样本输出 `RSEM.isoforms.results` / `RSEM.genes.results`。以下示例为 **bowtie** 比对路线（与官方 bio/rsem wrapper 口径一致）；需要 bowtie2 路线时改用 `rsem-prepare-reference --bowtie2` 与 `rsem-calculate-expression --bowtie2`（见上「快速开始」）。`get_Trinity_gene_to_trans_map.pl` / `align_and_estimate_abundance.pl` 位于 Trinity 安装目录的 `util/` 下，请将该目录加入 `PATH` 或按实际安装位置用全路径调用。
+
+### 1. 生成基因-转录本映射并构建 RSEM 参考索引
+
+无参考注释的 de novo 场景需由 Trinity 组装结果（FASTA）先生成基因-转录本映射文件，供 RSEM 基因水平汇总使用：
+
+```bash
+mkdir -p exp_cal && cd exp_cal
+ln -s ../Trinity.fasta ./
+
+# 生成基因-转录本映射文件（gene_trans_map）
+get_Trinity_gene_to_trans_map.pl Trinity.fasta > Trinity.fasta.gene_trans_map
+
+# 构建 RSEM 参考索引（--prep_reference；内部调用 rsem-prepare-reference）
+align_and_estimate_abundance.pl --transcripts Trinity.fasta --est_method RSEM \
+    --output_dir . --aln_method bowtie --prep_reference \
+    --gene_trans_map Trinity.fasta.gene_trans_map
+```
+
+### 2. 批量计算表达量（逐样本）
+
+```bash
+for i in `ls ../*.1.fastq`
+do
+    s=${i/*\//}
+    s=${s/.1.fastq/}
+    align_and_estimate_abundance.pl --transcripts Trinity.fasta --seqType fq \
+        --left ../$s.1.fastq --right ../$s.2.fastq --SS_lib_type RF \
+        --est_method RSEM --aln_method bowtie --thread_count 8 \
+        --gene_trans_map Trinity.fasta.gene_trans_map --output_dir $s &> $s.log
+done
+```
+
+### 3. 整理结果并合并表达量矩阵
+
+每个样本的输出目录内含 `RSEM.isoforms.results`（转录本水平）与 `RSEM.genes.results`（基因水平）定量结果，可先提到同一层再汇总：
+
+```bash
+# 把各样本的 isoforms 结果复制到当前目录
+for i in `ls */RSEM.isoforms.results`
+do
+    x=${i/\/RSEM/}
+    cp $i $x
+done
+
+# 多样本汇总为 count/TPM 表达量矩阵（Trinity 工具，--out_prefix 可分别生成基因/转录本矩阵）
+abundance_estimates_to_matrix.pl --est_method RSEM --out_prefix genes ../exp_cal/*.genes.results
+abundance_estimates_to_matrix.pl --est_method RSEM --out_prefix isoforms ../exp_cal/*.isoforms.results
+```
+
+### 4. 参数说明
+
+| 参数 | 说明 |
+|------|------|
+| `--est_method` | 表达量估计方法：RSEM 或 eXpress |
+| `--aln_method` | 比对方法：bowtie 或 bowtie2 |
+| `--SS_lib_type` | 链特异性文库类型：RF 表示 fr-firststrand |
+| `--prep_reference` | 先构建参考序列索引 |
+| `--gene_trans_map` | 基因-转录本映射文件（基因水平汇总必需） |
+| `--thread_count` | 线程数 |
 
 ---
 
@@ -199,7 +262,7 @@ include { RSEM_PREPAREREFERENCE } from '../modules/nf-core/rsem/preparereference
 
 ```yaml
 # rsem native Conda 环境配方（HPC 无 root / 非容器兜底）
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 rsem-native.yml 后 mamba env create -f rsem-native.yml；在线推荐上方 mamba create 直装命令
 name: rsem-native
 channels:
   - conda-forge

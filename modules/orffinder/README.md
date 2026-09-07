@@ -50,9 +50,21 @@ conda activate orffinder-native
 
 ### 2. Docker
 
+官方（作者组织）镜像直拉即可，无需本地构建（2026-09 核实 tag 存在）：
+
 ```bash
-docker build -t bioskills/orffinder:0.4.3-v1.0 -f Dockerfile .
+docker pull quay.io/preskaa/orffinder:0.4.3
+# preskaa 镜像直接以 ORFfinder 二进制运行（无本仓库 main.py 驱动）：
 # 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/preskaa/orffinder:0.4.3 \
+    ORFfinder -in transcripts.fa -out out/result.asn1 -outfmt 2 -start 2 -minlen 30
+```
+
+需要 main.py 统一驱动（自省/Schema/run 子命令）时再用本地自建镜像（可选，见 native/Dockerfile）：
+
+```bash
+cd native && docker build -t bioskills/orffinder:0.4.3-v1.0 -f Dockerfile . && cd ..
 docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
     bioskills/orffinder:0.4.3-v1.0 \
     run -in transcripts.fa -out out/result.asn1 -outfmt 2 --start-codon 2 --min-length 30
@@ -125,7 +137,7 @@ include: "modules/orffinder/snakemake/orffinder.smk"
 
 ```yaml
 # snakemake/orffinder.yaml
-channels: [yangmingsi, bioconda, conda-forge, defaults]
+channels: [yangmingsi, bioconda, conda-forge]
 dependencies:
   - orffinder=0.4.3
 ```
@@ -141,23 +153,27 @@ dependencies:
 ## Conda 环境（离线 / 非容器兜底备选）
 
 ```yaml
-# orffinder native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# orffinder native Conda 环境配方（native/environment.yml；与 snakemake/orffinder.yaml 频道一致）
+# 离线兜底：可另存为 orffinder-native.yml 后 mamba env create -f orffinder-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：orffinder 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
+#      orffinder=0.4.3 由 YangmingSi 自建频道提供（裸 ORFfinder 二进制，配方 native/conda-recipe/meta.yaml，
+#      NCBI 官方二进制 + libuv/libnghttp2 依赖）；python/pyyaml 供 main.py 驱动（自省/Schema）。
 #      容器默认路线：Dockerfile / Apptainer.def 走 micromamba 引导本环境到 /opt/env。
-# 环境：orffinder=0.4.3（二进制 ORFfinder 来自 NCBI）。
 name: orffinder-native
 channels:
-  - conda-forge
+  - yangmingsi
   - bioconda
+  - conda-forge
 dependencies:
   - python=3.11
-  - orffinder=0.4.3      # 提供二进制 ORFfinder
+  - orffinder=0.4.3
   - pyyaml>=6.0
-  - pip
 ```
 
 ## 容器与 Conda 链接
 
 官方 biocontainers 无 ORFfinder；使用社区镜像 quay.io/preskaa/orffinder:0.4.3 或本地 conda/源码（NCBI ORFfinder）
 - **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/orffinder/overview
+- **YangmingSi 频道（自建，仅裸 ORFfinder 二进制）**：https://anaconda.org/channels/YangmingSi/packages/orffinder/overview
+  - 安装：`conda install -c YangmingSi orffinder=0.4.3`
+  - 配方归档：`native/conda-recipe/meta.yaml`（conda build 重建后 anaconda upload 即发布到该频道）

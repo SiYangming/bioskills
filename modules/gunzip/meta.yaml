@@ -79,7 +79,7 @@ outputs:
     type: file
     description: 解压后的原始文件
 environment:
-  conda: environment.yml
+  # conda: —（容器走 apt 装 gzip，无独立 conda env 文件；本地安装见 README「Conda / brew」用 mamba create）
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
 optimization:

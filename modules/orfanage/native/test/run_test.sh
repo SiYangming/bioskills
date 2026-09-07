@@ -34,6 +34,7 @@ python -c "
 import sys; sys.path.insert(0, '$NATIVE')
 import main as m
 skill = m.OrfanageSkill()
+skill._resolve_binary = lambda: 'orfanage'   # 未装二进制时也验证 argv 构造（不触碰真实可执行）
 cmd = skill.build_command('run', query='$WORK/query.gff3', output='$WORK/o.gtf',
                           reference='$WORK/ref.fa', templates=['$WORK/tpl.fa'],
                           rescue=True, use_id=True, minlen=30, threads=2)

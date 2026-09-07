@@ -16,9 +16,9 @@ implementations:
   when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI）首选。
   container_ref:
     bioconda: https://anaconda.org/bioconda/orfanage
-    quay_biocontainers: quay.io/biocontainers/orfanage
-    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
-      镜像
+    quay_biocontainers: quay.io/biocontainers/orfanage:1.2.0--heaafb18_2（2026-09 核实存在；depot.galaxyproject.org 同 tag 预构建 sif：https://depot.galaxyproject.org/singularity/orfanage%3A1.2.0--heaafb18_2）
+    install_hint: 宿主机 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器直接 docker pull
+      quay.io/biocontainers/orfanage:1.2.0--heaafb18_2（README「容器」节）；自建 recipe（native/Dockerfile+Apptainer.def）供 main.py 驱动备选
 - id: orfanage_snakemake_local
   path: snakemake
   source_type: custom

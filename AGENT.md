@@ -14,6 +14,7 @@ modules/<software>/
 │                                          #   / inputs / outputs / environment / optimization / execution
 ├── README.md                              # 合并各实现用法（native/snakemake/nextflow 章节）+ 容器/conda 链接 + 安装方式
 ├── native/                                # [本地实现] source_type: custom, type: native
+│   ├── install.sh                         #   native 本地安装脚本（现代规范：conda/官方 release 双路线；README「安装方式」见下）
 │   ├── main.py                            #   继承 base.SkillBase 的标准入口驱动
 │   ├── *.py / *.sh                        #   本地运行脚本（与流程无关的经典脚本直接放 native/ 根）
 │   ├── Dockerfile / Apptainer.def         #   容器构建 recipe（可选：仅查无官方镜像时提供）
@@ -35,7 +36,7 @@ modules/<software>/
 >
 > * 官方实现（nf-core / snakemake-wrappers）不建目录，其链接、submodules、版本差异记录在软件级 README 与 `software_versions`；
 >
-> * `native/` = main.py + 本地脚本 + test（**官方镜像优先**：bioconda → quay.io/biocontainers → depot.galaxyproject.org 有官方维护 → 不维护 Dockerfile/Apptainer.def，meta.yaml 登记 `container_official`；查无官方才保留自建配方）；conda 环境与容器信息记录到软件级 README（安装方式只记本地安装，anaconda/官方镜像已有环境仅记录链接）；
+> * `native/` = main.py + 本地脚本 + test（**官方镜像优先**：bioconda → quay.io/biocontainers → depot.galaxyproject.org 有官方维护 → 不维护 Dockerfile/Apptainer.def，meta.yaml 登记 `container_official`；查无官方才保留自建配方）；conda 环境与容器信息记录到软件级 README（安装方式记本地安装：conda/brew/官方二进制 + 引用 native/install.sh；anaconda/官方镜像已有环境仅记录链接）；
 >
 > * 环境文件（conda env yaml）按引擎放置：snakemake/ 下的 `*.yaml`、nextflow 用 container（`environment.yaml` 与 snakemake 可共享）。
 >
@@ -313,6 +314,26 @@ class <Tool>Skill(base.SkillBase):
 
 ***
 
+## 4.5 native/install.sh 本地安装脚本契约（现代规范）
+
+> `modules/<sw>/native/install.sh` 为宿主机本地一键安装脚本（§1 目录树 `native/` 下的现代规范组件；官方镜像优先语境下，宿主机装工具仍可走脚本自动化）。参考实现：`modules/stringtie/native/install.sh`。现代规范三要素：
+
+* **a) 默认 `--method auto` 双路线**：检测到 mamba/conda → 创建 bioconda 独立环境（`mamba/conda create -y -n <env> -c conda-forge -c bioconda <sw>=<版本>`，版本取 meta.yaml `software_versions.native` 所记值）；无 conda 且本平台有官方二进制 → 官方 GitHub release / 官网二进制解压部署到**用户前缀**（默认 `~/software/<sw>-<ver>`，无需 root、不写 `/opt/biosoft`）。
+
+* **b) 参数契约**：至少支持 `--version` / `--prefix` / `--method auto|conda|binary` / `--conda-env` / `--profile` / `--force` / `--no-path-update` / `--help`（`--force`：conda 环境已存在时删除重建；`--no-path-update`：不写 shell profile）。
+
+* **c) 默认版本与版本断言**：默认版本与 meta.yaml `software_versions.native` 对齐；内嵌该默认版本的官方 sha256（Linux / OSX 各一份）；`--version` 覆盖为非默认版本时**跳过内嵌校验并打印提示**；安装完成后必须断言 `<binary> --version`，输出 grep 命中版本号方为成功。
+
+* **d) bash 坑**：`$VAR` 后紧跟全角字符（如 `）`）会被 bash 误并入变量名导致 unbound variable，一律写 `${VAR}`。
+
+* **e) 清理**：失败/中断用 `trap cleanup EXIT` 兜底；成功路径末尾**显式清理并置空**（EXIT 钩子判空跳过），避免双重清理误删正在使用的文件。
+
+* **f) 平台守卫**：官方二进制仅覆盖 linux-x64 / macos-x64（`uname -s`/`uname -m` 判定）；其余平台打印提示改走 conda 路线（`--method auto` 无 conda 时直接报错退出）。
+
+* **g) 测试**：conda 模式实装断言（`conda run -n <env> <binary> --version`）；binary 模式可本机 Rosetta（`arch -x86_64 bash install.sh`）或 Linux 容器验证。
+
+***
+
 ## 5. 官方实现登记契约（并入软件级 meta.yaml / README，不建目录）
 
 **官方已有实现一律不单独建目录**（见 §2 统一规则）。登记信息统一落在：
@@ -376,7 +397,41 @@ class <Tool>Skill(base.SkillBase):
 
 * README「容器与 Conda 链接」登记官方镜像及 tag；`native/` 不维护 Dockerfile/Apptainer.def；
 
+* Apptainer 官方镜像路线：galaxyproject 已预构建 sif，**直接拉取**（`apptainer pull <sw>.sif docker://depot.galaxyproject.org/singularity/<sw>:<tag>`；等价直链 <https://depot.galaxyproject.org/singularity/<sw>%3A<tag>>），**无需**本地从 quay docker 镜像转换；README「### 3. Apptainer」登记此直拉命令及 tag（tag 与 quay.io/biocontainers 互通）；
+
 * 宿主机运行 main.py：conda/mamba 装工具（`mamba create -n <env> -c conda-forge -c bioconda <software>=<版本>`）或 docker run 官方镜像。
+
+### 宿主安装方式登记（conda + Homebrew + 官方二进制）
+
+> 容器/镜像判定顺序不变（bioconda → quay.io/biocontainers → depot.galaxyproject.org，见上）；本小节只管**宿主机本地安装方式**的登记，对应 README「### 1. Conda / brew（包管理器安装）」与「### 4. 二进制包安装」两个小节。
+
+* **conda（bioconda）**：`mamba create -n <env> -c conda-forge -c bioconda <software>=<版本>`（版本与 meta `software_versions` 对齐，见下「environment.yml」），写 README conda 块；
+
+* **Homebrew（brew）**：brew 仅作宿主安装登记，**不参与容器镜像判定**（brew 不是容器来源）。判定两源：
+
+  * homebrew-core：`https://formulae.brew.sh/api/formula/<sw>.json`（或 `brew search <sw>`），命中即免 tap，`brew install <sw>` 后 `--version` 断言；
+
+  * brewsci/bio tap：`https://github.com/brewsci/homebrew-bio/tree/master/Formula`（或 `brew search brewsci/bio/<sw>`），命中需先 `brew tap brewsci/bio` 再安装；
+
+  * ⚠️ **同名异义核对**：同名公式必须核对 desc 确为生物信息软件（或确为该软件版本）后才登记（如 core `lima`=Linux 虚拟机、core `star`=归档器）；brew 当前版本与 meta `software_versions` 不一致 → 注释标注「brew 当前 <ver>，与 meta 登记 <ver> 略有差异（以 formula 为准）」；两源均无 → README 不写 brew 块（仅 conda / 官方容器 / 官方二进制）。
+
+* **官方二进制**：官方 GitHub release / 官网预编译资产（无预编译资产 → 引用官方源码 tag 归档），部署到用户前缀 `~/software/<sw>-<ver>`（无需 root，禁 `/opt/biosoft`、`/home/train` 教学硬编码），写 README「### 4. 二进制包安装」；一键路线直接引用 `native/install.sh`（契约见 §4.5）。
+
+### README「环境安装」标准结构（官方镜像优先，不维护本地配方）
+
+> README 环境安装节统一标题 **「## 环境安装（官方镜像优先，不维护本地配方）」**，结构一句化（参考 `modules/stringtie/README.md`）：
+
+* 首行写官方已维护说明（官方渠道 bioconda → quay → depot 已维护 → 直接拉官方镜像运行工具二进制，`main.py` 驱动在宿主机跑）；随后编号小节：
+
+  1. **Conda / brew（包管理器安装）**：conda 块后并列 brew 块（判定/登记规则见上「宿主安装方式登记」）；
+
+  2. **Docker（官方镜像）**：quay.io/biocontainers tag；`docker run` 必须含 `-u $(id -u):$(id -g)`（避免产物归 root）；
+
+  3. **Apptainer**：depot 预构建 sif 直拉（`apptainer pull <sw>.sif docker://depot.galaxyproject.org/singularity/<sw>:<tag>`），无需本地从 quay docker 转换；
+
+  4. **二进制包安装**：官方当前可用 URL（GitHub release / 官网）；无预编译资产 → tag 源码归档；路径用户目录 `~/software/<sw>-<ver>`，禁 `/opt/biosoft`、`/home/train` 教学硬编码；可提示一键走 `native/install.sh`（§4.5）。
+
+* README 亦可含「实战示例」教程节：典型批量用法（bash 循环等）+ 参数表 + 与 `native/main.py` 子命令的桥接句。
 
 ### environment.yml（Conda — 仅 native 保留作离线 / 非容器场景备选）
 
@@ -502,6 +557,8 @@ bash modules/<software>/native/test/run_test.sh
 
   * [ ] `main.py`：继承 `SkillBase`，实现 `build_command`，支持 `--schema` / `--list-commands` / `--threads` / `--tmpdir`
 
+  * [ ] `native/install.sh`：现代规范双路线（conda / 官方二进制，契约见 §4.5）；默认版本对齐 meta `software_versions.native`，安装后 `<binary> --version` 断言
+
   * [ ] `environment.yml`（保留，仅离线/非容器备选）
 
   * [ ] **容器路线（官方镜像优先）**：官方已有（bioconda → quay.io/biocontainers → depot.galaxyproject.org）→ meta.yaml 登记 `container_official` + `software_versions.native.build_route=official biocontainer`，README 登记镜像/tag，**native/ 不维护 Dockerfile/Apptainer.def**；查无官方（如 gstama/orfanage/dorado/gnu\_sort/gunzip）→ 才提供 **`Dockerfile`（debian:bookworm-slim + apt --no-install-recommends + 清理四连）** 与 **`Apptainer.def`（同 apt 路线 + %test）**，版本均与 software\_versions 对齐
@@ -522,6 +579,10 @@ bash modules/<software>/native/test/run_test.sh
 * [ ] 实现 ID 严格遵守 §1：`<tool>_native` 等
 
 * [ ] **meta 容器登记二选一**：官方已有 → 必填 `container_official` + `build_route=official biocontainer`（无配方文件）；查无官方 → 必含 Dockerfile/Apptainer.def 自建配方；**自建兜底时避免 miniconda/micromamba 默认引入；所有 Docker 示例命令（官方或自建镜像）都写** **`-u $(id -u):$(id -g)`**
+
+* [ ] **brew 公式存在性已查**（homebrew-core `https://formulae.brew.sh/api/formula/<tool>.json` / brewsci/bio `https://github.com/brewsci/homebrew-bio/tree/master/Formula` 两源；⚠️ 同名异义核对 desc，如 core `lima`=虚拟机、core `star`=归档器）；存在 → README「### 1. Conda / brew」conda 块后登记 brew 块并注释标注与 meta 的版本差异；两源均无 → 不写 brew（brew 仅宿主登记，不参与容器镜像判定）
+
+* [ ] **Apptainer 登记为 depot 预构建 sif 直拉**（有官方 tag 时：README「### 3. Apptainer」写 `apptainer pull <tool>.sif docker://depot.galaxyproject.org/singularity/<tool>:<tag>`，无需本地从 quay docker 转换）
 
 * [ ] **native / nf-core / snakemake-wrappers 的 software\_versions 三方差异已逐条核对**
 

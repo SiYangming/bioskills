@@ -46,7 +46,7 @@ RUN set -eux; \
         | tar -xvj -C /opt/micromamba bin/micromamba; \
     /opt/micromamba/bin/micromamba --version
 
-# 3) 用 environment.yml 构建 /opt/env（bioconda orffinder=0.4.3）
+# 3) 用 environment.yml 构建 /opt/env（orffinder=0.4.3，yangmingsi 频道优先）
 COPY environment.yml /opt/environment.yml
 RUN set -eux; \
     /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml; \

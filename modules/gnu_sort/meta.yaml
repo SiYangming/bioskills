@@ -81,7 +81,7 @@ outputs:
     type: file
     description: 排序后的输出文件
 environment:
-  conda: environment.yml
+  # conda: —（容器走 apt 装 coreutils，无独立 conda env 文件；本地安装见 README「Conda / brew」用 mamba create）
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
 optimization:

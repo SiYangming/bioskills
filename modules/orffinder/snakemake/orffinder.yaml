@@ -1,7 +1,11 @@
+# orffinder snakemake rule 用 conda 环境（snakemake/orffinder.yaml）
+# 频道顺序与 native/environment.yml 对齐：yangmingsi（自建裸 ORFfinder 包，配方
+# native/conda-recipe/meta.yaml）优先，其次 bioconda/conda-forge。
+# 说明：wrapper（orffinder.py）由 snakemake 宿主 python 运行，故本环境只装
+#       ORFfinder 二进制（orffinder=0.4.3），不重复装 python/pyyaml。
 channels:
   - yangmingsi
   - bioconda
   - conda-forge
-  - defaults
 dependencies:
   - orffinder=0.4.3

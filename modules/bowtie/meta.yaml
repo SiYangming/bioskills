@@ -1,0 +1,125 @@
+software: bowtie
+canonical: bowtie
+category: alignment_utils
+description: 'bowtie（v1）是 Bowtie 系列的早期版本，超快速、内存高效的短 reads 比对工具，
+  基于 FM-Index 将 reads 无 gap 地比对到长参考序列，适合 50bp 以下短序列的精确比对；
+  bowtie-build 建立 .ebwt 索引族，bowtie 输出 SAM。v1 已属 legacy 工具，不支持 gapped /
+  剪接比对，多数新场景建议改用 bowtie2（见 README「与 bowtie2 的区别」）。
+  '
+homepage: http://bowtie-bio.sourceforge.net/index.shtml
+license: Artistic-2.0
+software_versions:
+- id: bowtie_native
+  bowtie: '1.3.1'
+  build_route: official biocontainer（quay.io/biocontainers/bowtie / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bowtie
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bowtie=1.3.1 由 bioconda 官方提供（官方容器 quay.io/biocontainers/bowtie:1.3.1--hb82490e_11，
+    2026-06 build；bowtie v1 上游无官方 Dockerfile，由 biocontainer 自动构建覆盖）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 bowtie=1.3.1，或 native/install.sh 双路线（conda / 官方 release zip）。'
+- id: bowtie_nextflow_nfcore
+  module_version: nf-core master（2026-09 抓取）
+  bowtie: '1.3.1'
+  source: bioconda::bowtie=1.3.1（modules/nf-core/bowtie/{align,build}/environment.yml，含
+    htslib=1.21、samtools=1.21）
+  note: '参考信息：本模块未建 nextflow/ 目录；nf-core 官方有 bowtie/align 与 bowtie/build 两个
+    子模块（2026-09 在线核实），组装 Nextflow 流程时用 nf-core modules install 安装（见 README）。'
+- id: bowtie_snakemake_wrappers
+  bowtie: 官方无 wrapper（bio/bowtie 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/bowtie
+    返回 404（bio/ 目录下仅有 bowtie2）；Snakemake 场景暂无官方 wrapper 可登记，需要时以
+    bowtie_native 为兜底（或参照 bowtie2 模块自建本地规则）。'
+implementations:
+- id: bowtie_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.3.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    index(=bowtie-build) 建 .ebwt 索引族、align(=bowtie) 无 gap 短读比对（SE/PE），自动注入 --threads 与 TMPDIR；
+    容器走官方镜像（quay.io/biocontainers/bowtie，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bowtie
+    quay_biocontainers: quay.io/biocontainers/bowtie
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bowtie=1.3.1；容器可用
+      quay.io/biocontainers/bowtie:1.3.1--hb82490e_11 镜像（bioconda 自动构建，见 README「容器与 Conda 链接」）
+default_implementation: bowtie_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: bowtie 子命令：index|align（index=bowtie-build，align=bowtie）
+  reference:
+    type: file
+    required: false
+    cli_arg: positional
+    description: index 的参考序列 FASTA（可多文件，用逗号分隔路径）
+  index_base:
+    type: string
+    required: false
+    cli_arg: positional
+    description: index 输出索引 basename（生成 .1.ebwt … .rev.2.ebwt）
+  index:
+    type: string
+    required: false
+    cli_arg: -x
+    description: align 的 bowtie 索引 basename（不含 .1.ebwt 后缀）
+  reads1:
+    type: file
+    required: false
+    cli_arg: -1
+    description: 双端 reads mate1（FASTQ/FASTA，可 .gz）
+  reads2:
+    type: file
+    required: false
+    cli_arg: -2
+    description: 双端 reads mate2（FASTQ/FASTA，可 .gz）
+  reads:
+    type: file
+    required: false
+    cli_arg: -U
+    description: 单端 reads（FASTQ/FASTA，可 .gz；bowtie v1 原生无 -U，由驱动转为位置参数）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: align 的 SAM 输出文件（默认 stdout；bowtie v1 用 -S 标志 + 末尾 <hit> 位置参数写文件）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入；index 建议 8，bowtie-build 默认 1）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 bowtie / bowtie-build 的额外参数（高级用法，慎用）
+outputs:
+  ebwt_index:
+    type: file
+    format: ebwt
+    description: index 产物：<basename>.{1,2,3,4,rev.1,rev.2}.ebwt 索引族
+  sam_file:
+    type: file
+    format: sam
+    description: align 产物：SAM 比对结果（无 gap）
+environment:
+  container_official: quay.io/biocontainers/bowtie（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bowtie v1 上游无官方 Dockerfile，由 quay.io/biocontainers/bowtie 自动构建提供），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 bowtie。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    index: 8
+    align: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: bowtie
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core bowtie（align/build）与 snakemake-wrappers
+    缺失情况见 README 与 software_versions（组装 Nextflow 时 nf-core modules install）

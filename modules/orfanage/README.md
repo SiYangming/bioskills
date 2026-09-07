@@ -24,9 +24,22 @@ python main.py --list-commands
 
 ## 容器
 
+官方镜像（biocontainers，2026-09 核实 tag 存在）直拉即可；galaxyproject 亦有预构建 sif：
+
 ```bash
-docker build -t bioskills/orfanage:1.2.0-v1.0 -f Dockerfile .
+docker pull quay.io/biocontainers/orfanage:1.2.0--heaafb18_2
 # 必须 -u $(id -u):$(id -g)，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/orfanage:1.2.0--heaafb18_2 \
+    orfanage --help
+# Apptainer：depot.galaxyproject.org 预构建 sif 直拉
+apptainer pull orfanage.sif docker://depot.galaxyproject.org/singularity/orfanage:1.2.0--heaafb18_2
+```
+
+需要本仓库 main.py 统一驱动（自省/Schema/run 子命令）时再本地自建（可选，见 native/Dockerfile）：
+
+```bash
+cd native && docker build -t bioskills/orfanage:1.2.0-v1.0 -f Dockerfile . && cd ..
 docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data bioskills/orfanage:1.2.0-v1.0 \
     run --query in.gff3 --output out.gtf --reference ref.fa tpl.fa
 ```

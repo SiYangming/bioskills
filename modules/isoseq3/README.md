@@ -34,34 +34,88 @@ python main.py --list-commands
 
 子命令 `refine` 支持 `--threads` / `--tmpdir` 运行期覆盖。
 
-## 环境安装（三选一）
+## 实战示例：Iso-Seq 全长转录本流程中的 refine（lima 产物 → FLNC reads）
 
-### 1. Conda（HPC 无 root / 离线兜底）
+IsoSeq3 是 PacBio 官方提供的全长转录本（Iso-Seq）分析工具，用于分析 PacBio 长读长测序获得的全长转录本序列；完整流程为 ccs → lima → refine → cluster → polish 五步：ccs 将 subreads 聚合成高准确率共识序列，lima 去除测序引物与 barcode，refine 去除 polyA 尾和嵌合体序列、得到全长非嵌合（FLNC）reads，cluster 将相似的 FLNC reads 聚类生成全长转录本序列，polish 再用 subreads 对转录本序列进行修正、提高序列准确性（本模块聚焦 refine 一步，等价能力见上「用法」的 `refine` 子命令）：
+
+```
+subreads.bam → ccs → ccs.bam → lima → lima.bam → refine → flnc.bam → cluster → unpolished.bam → polish → polished.bam
+```
+
+### 1. refine 去除 polyA 尾与人工连接体
+
+lima 按引物对拆分后每个片段各一个 BAM，refine 可一次通配传入（`*lima*.bam`），去除 polyA 尾与人工连接体，得到全长非嵌合（FLNC）reads：
 
 ```bash
-mamba env create -f environment.yml   # name: isoseq3-native
+isoseq3 refine sample*lima*.bam barcoded_primers.fasta sample.flnc.bam --require-polya
+```
+
+- 输入：lima 拆分产物 BAM（可多个）+ 引物 FASTA（与 lima 同款）
+- 输出：`sample.flnc.bam`（及同前缀 `.pbi` / `.consensusreadset.xml` / `.filter_summary.report.json` / `.report.csv`，见上「功能」）
+- `--require-polya`：仅保留检测到 polyA 尾的 reads（本模块默认开启）
+
+### 2. 后续 cluster / polish（同属 isoseq3 套件，refine 的典型下游）
+
+FLNC reads 经聚类生成全长转录本序列，再用原始 subreads 校正：
+
+```bash
+# 对 FLNC reads 聚类，得到全长转录本序列信息
+isoseq3 cluster sample.flnc.bam unpolished.bam --verbose
+
+# 用 subreads 对转录本序列进行修正，提高序列准确性
+isoseq3 polish unpolished.bam sample.subreads.bam polished.bam
+```
+
+> cluster / polish 为 isoseq3 套件的其余子命令，不在本模块 `native/main.py` 的 refine 子命令范围内；refine 产物（FLNC BAM）可直接作为其输入。
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。
+
+### 1. Conda（宿主机直跑 main.py / HPC 无 root）
+
+```bash
+mamba create -n isoseq3-native -c conda-forge -c bioconda isoseq=4.0.0   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate isoseq3-native
 ```
 
-### 2. Docker（官方镜像直拉，不维护本地 Dockerfile）
+### 2. Docker（官方镜像）
 
 ```bash
-docker pull quay.io/biocontainers/isoseq3:<tag>        # tag 见 quay 页面（或文末「容器与 Conda 链接」）
+docker pull quay.io/biocontainers/isoseq3:4.0.0--h9ee0642_0
 # 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
-docker run --rm -u $(id -u):$(id -g) -v $PWD:/data quay.io/biocontainers/isoseq3:<tag> \
-    isoseq3 refine -j 8 /data/in.bam /data/primers.fasta /data/out.bam
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/isoseq3:4.0.0--h9ee0642_0 isoseq3 refine -j 8 \
+    /data/in.bam /data/primers.fasta /data/out.bam
 ```
 
-### 3. Apptainer / Singularity（官方镜像直拉，不维护本地 Apptainer.def）
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换）：
 
 ```bash
-apptainer pull isoseq3.sif docker://quay.io/biocontainers/isoseq3:<tag>
-# 或直链 depot.galaxyproject.org/singularity/isoseq3%3A<tag>（与 quay 同 build tag）
-apptainer run -B $PWD:/data -H /data isoseq3.sif \
-    isoseq3 refine -j 8 /data/in.bam /data/primers.fasta /data/out.bam
+# galaxyproject 预构建 sif（等价直链见文末「容器与 Conda 链接」）
+apptainer pull isoseq3.sif docker://depot.galaxyproject.org/singularity/isoseq3:4.0.0--h9ee0642_0
+apptainer run -B $PWD:/data -H /data isoseq3.sif isoseq3 refine -j 8 \
+    /data/in.bam /data/primers.fasta /data/out.bam
 ```
 
-> 官方镜像内为原生 isoseq3 入口（仅工具，无 main.py）；需要 Schema/自省/参数注入时在**宿主机**（已装 isoseq3 或 conda env）运行 `python main.py refine ...`。
+### 4. 二进制包安装（官方 release，无 conda / docker 依赖）
+
+isoseq3 属 PacBio IsoSeq 套件（conda 包名 isoseq，二进制 isoseq3），官方以 **conda（bioconda）为主要分发**，GitHub release 亦提供预编译二进制：
+
+* **官方 GitHub**：<https://github.com/PacificBiosciences/IsoSeq>（release 附预编译二进制）
+
+* **Bioconda 页面**：<https://anaconda.org/channels/bioconda/packages/isoseq3/overview>
+
+```bash
+# conda 安装（官方推荐分发；包名 isoseq，提供二进制 isoseq3）
+mamba create -n isoseq3 -c conda-forge -c bioconda isoseq=4.0.0
+conda activate isoseq3
+isoseq3 refine --help   # 验证安装
+```
+
+> 官方镜像/conda 包内为原生 isoseq3 入口（仅工具，无 main.py）；需要 Schema/自省/参数注入时在**宿主机**（conda env，见上）运行 `python main.py refine ...`（见「用法」）。
 
 ## 测试
 
@@ -132,7 +186,7 @@ bash test/run_test.sh   # 合成最小 BAM；isoseq3 未安装时退化为 argv 
 
 ```yaml
 # isoseq3 native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 isoseq3-native.yml 后 mamba env create -f isoseq3-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：isoseq（PacBio IsoSeq 套件，binary isoseq3）不在 Debian bookworm apt；
 #      本文件是 Conda 兜底（HPC 无 root / 离线场景）。
 #      容器默认路线：官方镜像优先（quay.io/biocontainers/isoseq3），不再维护 Dockerfile/Apptainer.def。
@@ -152,4 +206,4 @@ dependencies:
 - **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/isoseq3/overview
 - **Docker**：`docker pull quay.io/biocontainers/isoseq3:4.0.0--h9ee0642_0`
 - **Singularity**：https://depot.galaxyproject.org/singularity/isoseq3%3A4.0.0--h9ee0642_0
-- 安装方式（本地）：`mamba create -n isoseq3 -c conda-forge -c bioconda isoseq3=4.0.0`
+- 安装方式（本地）：`mamba create -n isoseq3 -c conda-forge -c bioconda isoseq=4.0.0`（包名 isoseq，提供二进制 isoseq3）

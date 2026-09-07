@@ -8,6 +8,8 @@
 
 # bamtools / native
 
+BamTools 是处理 BAM 格式文件的高通量测序工具集（C++ 库 + 命令行工具），提供格式转换（convert）、统计（stats/count）、过滤（filter）、索引（index）、排序（sort）等核心能力。官网：<https://github.com/pezmaster31/bamtools>
+
 自包含的 bamtools 驱动实现（`source_type: custom`）。
 
 ## 能力
@@ -25,14 +27,7 @@
 
 ## 快速开始
 
-### 1. 安装环境
-
-```bash
-mamba env create -f environment.yml
-conda activate bamtools-native
-```
-
-### 2. CLI 调用
+### 1. CLI 调用
 
 ```bash
 python main.py convert --bam refine.bam --outdir flnc --format fasta --prefix sample
@@ -41,7 +36,7 @@ python main.py sort --bam in.bam --out sorted.bam --threads 8
 python main.py index --bam sorted.bam
 ```
 
-### 3. Agent / Schema 自省
+### 2. Agent / Schema 自省
 
 ```bash
 python main.py --schema              # 输出 JSON Schema
@@ -49,24 +44,7 @@ python main.py --list-commands       # 列出支持的子命令
 python main.py convert --bam x.bam --dry-run   # 只打印构建出的命令
 ```
 
-### 4. 容器运行（官方镜像优先，不维护本地配方）
-
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制：
-
-```bash
-# Docker：工具直跑（官方镜像内只含 bamtools，main.py 驱动在宿主机运行）
-docker pull quay.io/biocontainers/bamtools:<tag>        # tag 见 quay 页面
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/bamtools:<tag> \
-  convert -format fasta -in /data/refine.bam -out /data/sample.fasta
-
-# Singularity/Apptainer
-apptainer pull bamtools.sif docker://quay.io/biocontainers/bamtools:<tag>
-# 或直链 depot.galaxyproject.org/singularity/bamtools%3A<tag>（与 quay 同 build tag）
-```
-
-> 容器内为原生工具入口；需要 Schema/自省/参数注入时在**宿主机**（已装 bamtools 或 conda env）运行 `python main.py <subcommand> ...`。
-
-### 5. 测试
+### 3. 测试
 
 ```bash
 bash test/run_test.sh
@@ -74,6 +52,72 @@ bash test/run_test.sh
 
 测试数据由 `test/generate_data.py` 用纯 Python 标准库动态生成合法 BGZF/BAM，
 不依赖 samtools/pysam。
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。
+
+### 1. Conda / brew（包管理器安装）
+
+```bash
+mamba create -n bamtools -c conda-forge -c bioconda bamtools=2.5.2
+conda activate bamtools
+bamtools --version
+```
+
+```bash
+# 或用 Homebrew（macOS / Linux；公式在 homebrew-core，无需额外 tap）
+# brew 当前 2.5.3，与 meta 登记 2.5.2 略有差异（版本以 formula 为准）
+brew install bamtools
+bamtools --version   # 断言
+```
+
+> 宿主机直跑 `python main.py`（convert / count / stats / header / index / sort 子命令）亦可使用文末「Conda 环境」节配方建环境（`name: bamtools-native`，含 python/pyyaml，bamtools 同为 2.5.2）。
+
+### 2. Docker（官方镜像）
+
+```bash
+docker pull quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2
+# 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2 \
+    convert -format fasta -in /data/refine.bam -out /data/sample.fasta
+```
+
+> 容器内为原生工具入口；需要 Schema/自省/参数注入时在**宿主机**（已装 bamtools 或 conda env）运行 `python main.py <subcommand> ...`。
+> native 固定 2.5.2（quay.io/biocontainers/bamtools:2.5.2--hdcf5f25_2，流程原配 tag）；bioconda 最新 2.5.3 容器 tag 见文末「容器与 Conda 链接」。
+
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换）：
+
+```bash
+apptainer pull bamtools.sif docker://depot.galaxyproject.org/singularity/bamtools:2.5.2--hdcf5f25_2
+apptainer run -B $PWD:/data -H /data bamtools.sif \
+    convert -format fasta -in /data/refine.bam -out /data/sample.fasta
+```
+
+### 4. 二进制包安装（官方源码编译 / apt，无 conda / docker 依赖）
+
+* **GitHub Releases**：<https://github.com/pezmaster31/bamtools/releases>（官方仅分发源码 tar.gz，需 cmake + g++ 编译安装）
+
+```bash
+# 源码编译（以 v2.5.2 为例；需系统已装 cmake 与 g++）
+wget https://github.com/pezmaster31/bamtools/archive/v2.5.2.tar.gz -P ~/software/
+tar zxf ~/software/v2.5.2.tar.gz -C ~/software/
+cd ~/software/bamtools-2.5.2/
+mkdir -p build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/software/bamtools
+make -j 4
+make install
+echo 'export PATH=$PATH:~/software/bamtools/bin/' >> ~/.bashrc
+source ~/.bashrc
+
+# 验证安装
+bamtools --version
+```
+
+> Debian / Ubuntu 亦可直接 `sudo apt install bamtools`（发行版仓库自带，版本以 apt 源为准）。
 
 ## 版本说明
 
@@ -156,7 +200,7 @@ bamtools:
 
 ```yaml
 # bamtools native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 bamtools-native.yml 后 mamba env create -f bamtools-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：容器走官方镜像（quay.io/biocontainers/bamtools），不再维护本地配方；
 #      本文件仅作 HPC 无 root 场景 / 非容器场景的 Conda 兜底。
 name: bamtools-native

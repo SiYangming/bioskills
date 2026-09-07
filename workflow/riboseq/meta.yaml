@@ -3,9 +3,8 @@
 # 流程：核糖体足迹分析（Ribo-seq / RPF）+ 配套总 RNA-seq（Totals）
 #       本地实现两种：经典 Shell+Python+R 脚本（Bushell-lab 思路，native/）与 Snakemake 重构（snakemake/，自定义）。
 #       （官方 nf-core/riboseq 与运行方式见 README「执行方式 C」，不建本地目录）
-# 迁移来源：
-#   - Snakemake 重构：由本仓库原 riboseq.sh_r_py/riboseq.smk 子模块迁移（出处仓库已删除）
-#   - 经典脚本上游：github.com/Bushell-lab/Ribo-seq（native/ 脚本由此整理）
+# 出处与形态：
+#   - 经典脚本整理自 github.com/Bushell-lab/Ribo-seq（native/ 脚本）
 # ---------------------------------------------------------------------------
 
 id: custom_riboseq
@@ -17,7 +16,7 @@ source_type: custom
 summary: "Ribo-seq（RPF）+ Totals RNA-seq 流程编排：fastqc -> cutadapt -> umi_tools -> bowtie2/STAR/bbmap 比对 -> samtools -> RSEM -> 经典 Python 计数 / R 下游分析"
 
 description: |
-  将原 riboseq.smk（源自 Bushell-lab/Ribo-seq 经典脚本的 Snakemake 重构）按「原子模块软件」拆分后重新编排：
+  将源自 Bushell-lab/Ribo-seq 经典脚本的 Snakemake 重构，按「原子模块软件」拆分后重新编排：
   1) 上游处理（fastqc / cutadapt / umi_tools）、比对（rnaseq: bowtie2 转录组 + STAR 基因组；riboseq: bbmap rRNA->tRNA->转录组）、
      samtools 排序索引、RSEM 定量，各自拆分为 modules/<sw> 原子技能并在其 snakemake/ 下维护规则；
      UMI extract/dedup 阶段可复用 subworkflow/umi_tools_extract_dedup（native 编排与 Snakemake 聚合接线见 riboseq.md）；
@@ -134,5 +133,6 @@ software_versions:
   rnaseq_aligner: "bowtie2（转录组）/ STAR（基因组，可选）"
   riboseq_aligner: "bbmap"
   upstream: "https://github.com/Bushell-lab/Ribo-seq"
-  smk_refactor: "本地迁移（原 riboseq.sh_r_py/riboseq.smk 子模块，出处仓库已删除；Snakemake 集成内容并入 workflow/riboseq/riboseq.md「执行方式 B」）"
+  
+  _refactor: ""
   note: "各工具版本差异见对应 modules/<sw>/meta.yaml 的 software_versions 段。"

@@ -16,7 +16,7 @@
    python main.py --list-commands   # 列出支持的子命令
 
 运行前提：PATH 中可解析 uLTRA、samtools、minimap2、namfinder（conda env：
-  mamba env create -f environment.yml && conda activate ultra-native）。
+  mamba create -n ultra-native -c conda-forge -c bioconda ultra_bioinformatics minimap2 samtools）。
 """
 
 from __future__ import annotations

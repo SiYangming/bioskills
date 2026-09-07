@@ -28,7 +28,7 @@
 docker pull quay.io/biocontainers/bbmap:<tag>        # tag 见文末「容器与 Conda 链接」
 # 路线 B：本机二进制（macOS/Linux 包管理或官方 zip，见文末链接）
 # 路线 C：conda 兜底（HPC 无 root 时）
-mamba env create -f environment.yml   # 配方见文末「Conda 环境」节
+mamba create -n bbmap-native -c conda-forge -c bioconda bbmap=39.52   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate bbmap-native
 ```
 
@@ -178,7 +178,7 @@ include { BBMAP_ALIGN } from '../modules/nf-core/bbmap/align/main'
 
 ```yaml
 # bbmap native Conda 环境配方（HPC 无 root / 非容器兜底）
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 bbmap-native.yml 后 mamba env create -f bbmap-native.yml；在线推荐上方 mamba create 直装命令
 name: bbmap-native
 channels:
   - conda-forge

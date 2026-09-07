@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-04T12:46:39+00:00'
+generated_at: '2026-09-07T03:14:22+00:00'
 modules:
 - software: bamtools
   canonical: bamtools
@@ -34,6 +34,16 @@ modules:
     path: snakemake
     version: '39.52'
     priority: Medium
+    entrypoint: ''
+- software: bowtie
+  canonical: bowtie
+  implementations:
+  - id: bowtie_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.3.1
+    priority: High
     entrypoint: ''
 - software: bowtie2
   canonical: bowtie2
@@ -238,6 +248,16 @@ modules:
     path: snakemake
     version: '2.31'
     priority: Medium
+    entrypoint: ''
+- software: ncbi-datasets-cli
+  canonical: ncbi-datasets-cli
+  implementations:
+  - id: ncbi-datasets-cli_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 18.36.0
+    priority: High
     entrypoint: ''
 - software: orfanage
   canonical: orfanage

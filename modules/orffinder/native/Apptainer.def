@@ -14,7 +14,7 @@ From: debian:bookworm-slim
     Software orffinder
     Version 0.4.3-v1.0
     OrffinderVersion 0.4.3
-    PkgRoute apt(runtime)+micromamba(bioconda orffinder=0.4.3)
+    PkgRoute apt(runtime)+micromamba(yangmingsi orffinder=0.4.3)
 
 %files
     environment.yml /opt/environment.yml
@@ -46,7 +46,7 @@ From: debian:bookworm-slim
     curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
         | tar -xvj -C /opt/micromamba bin/micromamba
 
-    # 3) 构建 /opt/env（bioconda orffinder=0.4.3）
+    # 3) 构建 /opt/env（orffinder=0.4.3，yangmingsi 频道优先）
     /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/environment.yml
 
     # 4) 清理四连 + 删 curl / micromamba pkgs 缓存

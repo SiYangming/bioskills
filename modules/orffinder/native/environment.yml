@@ -1,0 +1,16 @@
+# orffinder native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）/ 容器构建（Dockerfile、Apptainer.def
+#       micromamba create -f 均 COPY 本文件到 /opt/env）共用。
+# 版本对齐：modules/orffinder/meta.yaml software_versions.native orffinder=0.4.3。
+# orffinder 来源：YangmingSi 个人频道（自建裸 ORFfinder 二进制包，配方见同目录
+#       native/conda-recipe/meta.yaml；NCBI 官方二进制 + libuv/libnghttp2 运行依赖，
+#       Debian apt 无 orffinder）；python/pyyaml 供 main.py 驱动（自省/Schema）。
+name: orffinder-native
+channels:
+  - yangmingsi
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.11
+  - orffinder=0.4.3
+  - pyyaml>=6.0

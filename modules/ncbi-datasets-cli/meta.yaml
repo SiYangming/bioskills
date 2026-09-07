@@ -1,0 +1,160 @@
+software: ncbi-datasets-cli
+canonical: ncbi-datasets-cli
+category: data_access
+description: 'NCBI Datasets 官方命令行工具（datasets，附赠兄弟工具 dataformat）：按 accession /
+  taxon 批量下载基因组与注释（genome/gff3/gbff/rna/cds/protein 等），自动打包 zip 并校验，
+  免去手工 FTP 拼路径；summary 输出元数据 JSON，dataformat 转 TSV。官方 GitHub
+  https://github.com/ncbi/datasets，release 二进制 v18.36.0。
+  '
+homepage: https://github.com/ncbi/datasets
+license: Public Domain
+software_versions:
+- id: ncbi-datasets-cli_native
+  datasets: '18.36.0'
+  build_route: 官方 GitHub release 二进制 / conda-forge（无 brew；官方容器 quay.io/biocontainers 滞后 14.26.0）
+  source: GitHub release https://github.com/ncbi/datasets/releases/download/v18.36.0/<plat>.cli.package.zip（plat
+    = linux-amd64/linux-arm64/darwin-amd64/darwin-arm64/windows-amd64）；NCBI ftp LATEST
+    https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/LATEST/linux-amd64/datasets
+  note: '2026-09 核实：conda 在 conda-forge（ncbi-datasets-cli=18.36.0，linux/osx/win × 64/arm64；
+    早期误记「bioconda 404 即无 conda」，实为包在 conda-forge 而非 bioconda）、Homebrew core/brewsci/bio 无公式、
+    nf-core modules 与 snakemake-wrappers 均无官方子模块/wrapper（404）→ 官方无 brew/nf-core/snakemake-wrappers；
+    官方容器 quay.io/biocontainers/ncbi-datasets-cli:14.26.0 存在但版本滞后于上游 18.36.0
+    （新参数可能缺失；宿主机 conda-forge 与 release 二进制同 18.36.0 不受此限）；
+    release assets 无公开 sha256 → binary 下载后不做校验（conda 路线由 conda-forge 校验）。'
+- id: ncbi-datasets-cli_nextflow_nfcore
+  datasets: 官方无子模块（modules/nf-core/ncbi-datasets-cli 404）
+  source: —
+  note: '2026-09 抓取 nf-core modules 目录无 ncbi-datasets-cli（上游数据获取一般走 sratools 等子模块）；
+    不建目录、不登记 official implementation，Nextflow 场景请以 ncbi-datasets-cli_native 为兜底。'
+- id: ncbi-datasets-cli_snakemake_wrappers
+  datasets: 官方无 wrapper（bio/ncbi-datasets-cli 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ncbi-datasets-cli
+    返回 404；Snakemake 场景请以 ncbi-datasets-cli_native 为兜底（直接 shell 调 datasets）。'
+implementations:
+- id: ncbi-datasets-cli_native
+  path: native
+  source_type: custom
+  type: native
+  version: '18.36.0'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    两个并列子命令：datasets（download：datasets download genome accession/taxon --include genome/gff3/gbff 等；
+    summary：datasets summary genome accession/taxon）与 dataformat（dataformat tsv genome --package <zip> 转 TSV）。
+    本模块仅 native 一路（conda 在 conda-forge；官方无 brew/nf-core/snakemake-wrappers）。
+    '
+  container_ref:
+    conda_forge: 官方 conda 包在 conda-forge（ncbi-datasets-cli=18.36.0；2026-09 修正早期「bioconda 无包」误判）
+    quay_biocontainers: quay.io/biocontainers/ncbi-datasets-cli
+    install_hint: 宿主机两条路线（native/install.sh）：conda（-c conda-forge ncbi-datasets-cli=<ver>）或官方
+      GitHub release 二进制（默认 ~/software/datasets-<ver>）；brew 无公式；容器官方镜像
+      quay.io/biocontainers/ncbi-datasets-cli:14.26.0（版本滞后于 18.36.0，见 README「容器与 Conda 链接」）
+default_implementation: ncbi-datasets-cli_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ncbi-datasets-cli 子命令（两个并列工具）：datasets（二级 download/summary，见 action）|
+      dataformat（fmt/report_type + selector 转 TSV）| help'
+  action:
+    type: string
+    required: false
+    description: datasets 的二级动作：download | summary（仅 subcommand=datasets 时使用）
+  accession:
+    type: string
+    required: false
+    cli_arg: positional
+    description: NCBI accession（如 GCF_000001405.39；datasets download/summary 与 dataformat 用；可逗号或空格分隔多个）
+  taxon:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 物种名/NCBI Taxonomy ID（如 Homo sapiens 或 9606；与 accession/package 三选一）
+  include:
+    type: string
+    default: genome,gff3
+    cli_arg: --include
+    description: datasets download 的数据类型（genome/gff3/gbff/rna/cds/protein/seq-report，逗号分隔）
+  dehydrated:
+    type: boolean
+    default: false
+    cli_arg: --dehydrated
+    description: download 仅取清单脱水包（含 fetch.txt，需 datasets rehydrate 回水）；dataformat 亦支持对脱水目录操作
+  output_file:
+    type: string
+    required: false
+    cli_arg: --filename
+    description: datasets download 输出 zip 文件名（默认 ncbi_dataset.zip）
+  json_lines:
+    type: boolean
+    default: false
+    cli_arg: --as-json-lines
+    description: datasets summary 输出 JSON Lines（默认紧凑 JSON）
+  report:
+    type: string
+    required: false
+    cli_arg: --report
+    description: datasets summary 附加数据报告（如 assembly_stats）
+  package:
+    type: string
+    required: false
+    cli_arg: --package
+    description: dataformat 的输入 zip（datasets download 产物；与 accession/taxon 三选一）
+  fmt:
+    type: string
+    default: tsv
+    description: dataformat 输出格式（默认 tsv）
+  report_type:
+    type: string
+    default: genome
+    description: dataformat 数据类型（默认 genome；gene / protein / virus 等）
+  fields:
+    type: string
+    required: false
+    cli_arg: --fields
+    description: dataformat 的 TSV 字段列表（逗号分隔）
+  threads:
+    type: integer
+    default: 2
+    cli_arg: --threads
+    description: 线程数（驱动层占位；datasets 自身并发下载，无需 -p 透传）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 datasets/dataformat 的额外参数（高级用法，慎用）
+outputs:
+  ncbi_dataset_zip:
+    type: file
+    format: zip
+    description: datasets download 产物 ncbi_dataset.zip（解压含 ncbi_dataset/data/<acc>/*.fna / *.gff
+      与 assembly_data_report.jsonl；--dehydrated 时含 fetch.txt）
+  summary_json:
+    type: file
+    format: json
+    description: datasets summary 产物（stdout 单条 JSON 或 --as-json-lines 的 JSON Lines；可再交 dataformat 转 TSV）
+  dataformat_table:
+    type: file
+    format: tsv
+    description: dataformat 输出 TSV 表（stdout；--fields 控制列，默认取该 report 的推荐字段）
+environment:
+  container_official: quay.io/biocontainers/ncbi-datasets-cli（官方镜像 tag 14.26.0；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: '官方容器存在但版本滞后（14.26.0 vs 上游 release 18.36.0）；宿主机 conda 走 conda-forge
+    （18.36.0，与上游一致，2026-09 核实）或官方 GitHub release 二进制（native/install.sh auto 双路线）；
+    brew 无公式；本地不再维护 Dockerfile/Apptainer.def（官方镜像已覆盖）。'
+optimization:
+  default_cpus: 2
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    download: 2
+    summary: 1
+    default: 2
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: datasets
+  nextflow_note: '官方 nf-core / snakemake-wrappers 均无 ncbi-datasets-cli（2026-09 核实 404）：
+    不建目录、不登记 official implementation，需要时直接调用 ncbi-datasets-cli_native（见 software_versions）。'

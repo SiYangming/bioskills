@@ -112,7 +112,7 @@ outputs:
     format: fastq
     description: demux 输出的拆分 FASTQ（按 barcode）
 environment:
-  conda: environment.yml
+  # conda: —（容器走 apt 运行时 + 官方 GitHub 二进制，无独立 conda env 文件；本地安装用官方二进制/容器）
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
 optimization:

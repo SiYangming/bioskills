@@ -34,6 +34,10 @@
 
    * **官方镜像优先（默认）**：凡软件在 **bioconda → quay.io/biocontainers → depot.galaxyproject.org** 有官方维护镜像 → `native/` **不维护 Dockerfile/Apptainer.def**；meta.yaml（`environment.container_official` + `software_versions.native.build_route=official biocontainer`）与 README 登记官方镜像及 tag；native `main.py` 驱动在宿主机运行（conda/mamba 装工具），或 docker run 官方镜像直跑工具。
 
+   * **宿主安装方式（README 记录）与容器路线并行**：conda/mamba、Homebrew（homebrew-core / brewsci/bio tap）、官方 release 二进制/源码，一键脚本为 `native/install.sh`。
+
+   * **官方 release 二进制为兜底分发**：GitHub release 无预编译资产（如 TransDecoder 纯 Perl、STAR 源码）时，二进制小节写 tag 源码归档或官网下载（如 NCBI sdk 版本化目录），并注明平台限制（如 CentOS 官方包仅到某版本）。
+
    * **自建兜底（仅查无官方维护）**：目前如 gstama / orfanage / dorado / gnu_sort / gunzip（dorado 官方仅 GitHub 二进制）才保留自建配方：**`debian:bookworm-slim + apt --no-install-recommends`** + 清理四连 + `%test` 版本断言；自建兜底**禁止默认引入 miniconda/micromamba**。Docker 运行一律带 `-u $(id -u):$(id -g)`。
 
    * **snakemake/ 集成层（td2 式）**：wrapper 与 env yaml 平铺 `snakemake/` 根，`.smk` 同目录相对引用（禁 `../envs|scripts`、`envs/`、`scripts/` 幽灵引用）；多子命令软件每 rule 一 `.smk`、config 驱动可独立运行；wrapper 统一注入两级到 `modules/` 共享 `docker_wrapper.py`；建议配 `snakemake/test/` 静态自检。**执行指令选择**：单条命令用官方 `wrapper:` 句柄（如 `"0.0.8/bio/samtools/index"`）或 `shell:`，需逻辑（多步/条件/产物搬运）用 `script:`，同一 rule 内互斥。细则与自查见 AGENT.md「snakemake 集成层规范」。
@@ -62,10 +66,11 @@ modules/
 │
 ├── fastqc/                      # 【原子技能】软件归档主目录（单 meta.yaml + 单 README 模式）
 │   ├── meta.yaml                # 【唯一 meta】implementations + software_versions + inputs/outputs/environment/optimization/execution
-│   ├── README.md                # 合并各实现用法 + 容器/conda 链接 + 安装方式
+│   ├── README.md                # 合并各实现用法 + 容器/conda/brew 链接 + 安装方式（conda/brew/官方二进制 + native/install.sh）
 │   │
 │   ├── native/                  # [本地实现] type=native
 │   │   ├── main.py              # 标准入口驱动
+│   │   ├── install.sh           # native 本地安装脚本（宿主一键安装：conda 优先 / 官方 release 二进制兜底）
 │   │   ├── *.py / *.sh          # 本地运行脚本（经典脚本直接放 native/ 根）
 │   │   ├── Dockerfile / Apptainer.def   # 容器构建 recipe（可选：仅查无官方镜像时提供）
 │   │   └── test/                # 最小自动化回归（generate_data.py + run_test.sh）
@@ -112,6 +117,8 @@ subworkflow/                      # 【复合流程层】常用软件组合：�
 ### 容器与 Conda 包查找规则（简要）
 
 **官方镜像优先**：按序判定官方维护：bioconda → quay.io/biocontainers → depot.galaxyproject.org；官方渠道全无 → 判为「无官方维护」→ 自建配方（apt 最小化兜底）。补充渠道（Docker Hub / docker.1ms.run 国内加速 / quay.io/bioinfortools / YangmingSi 频道）仅登记备用，不作「官方维护」判定。
+
+**宿主安装方式登记（README 记录，与容器判定并行但互不参与）**：容器/镜像判定顺序不变；宿主安装方式登记含 Homebrew——判定 homebrew-core（formulae.brew.sh/api/formula/<sw>.json，免 tap）与 brewsci/bio（GitHub brewsci/homebrew-bio Formula 目录，需 `brew tap brewsci/bio`）；⚠️ 同名异义必须核对 desc（core lima = Linux 虚拟机、core star = Standard tap archiver 此类），确认确为该生物软件后再登记；版本与 meta `software_versions` 不一致时注释标注；brew 只用于 README 宿主安装登记，不参与容器镜像判定。
 
 ### 3.1 canonical 目录名（示例）
 
@@ -279,11 +286,19 @@ execution:
 | --- | --- | --- |
 | 环境路线（默认判定） | **官方已有（bioconda → quay.io/biocontainers → depot.galaxyproject.org 任一）→ 登记 container_official，不维护配方**：meta.yaml 记 `environment.container_official` + `software_versions.native.build_route=official biocontainer`，README 记镜像/tag | 查无官方维护（如 gstama / orfanage / dorado / gnu_sort / gunzip）→ 保留自建配方 |
 | 基础 OS 镜像 | 官方路线：无自建镜像（docker run 官方镜像） | 自建兜底：`debian:bookworm-slim`；dorado 官方仅 GitHub 二进制 → apt 运行时 + GitHub 二进制布署 |
-| 包管理器路线 | `official biocontainer`：宿主机 conda/mamba 装工具跑 native main.py | 自建兜底：`apt-get install --no-install-recommends` 优先；软件本体缺再「apt 运行时 + 官方二进制/源码」；**禁止默认引入 miniconda/micromamba** |
+| 包管理器路线 | 官方路线：宿主机 conda/mamba 或 Homebrew 装工具跑 native main.py | 自建兜底：`apt-get install --no-install-recommends` 优先；软件本体缺再「apt 运行时 + 官方二进制/源码」；**禁止默认引入 miniconda/micromamba** |
 | 清理（四连，缺一不可） | 官方路线：无本地构建 | 自建兜底必须：`apt-get autoremove -y` + `apt-get clean` + `rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*` + 构建期工具（curl/wget/dpkg-dev） `purge` |
 | Docker 运行示例 | `docker run --rm -u $(id -u):$(id -g) -v "$PWD":/work -w /work <官方或自建镜像> <args>` | CI root 运行亦允许，但 README/AGENT.md 文档示例必须写 `-u` 参数，避免用户输出文件被 root 持有。 |
-| Apptainer | 官方路线：不提供 Apptainer.def（只登记官方 tag） | 自建兜底：`Bootstrap: docker; From: debian:bookworm-slim`；`%post` 同 apt 最小化 + 清理四连；`%test` 必须断言 `<binary> --version` |
+| Apptainer | 官方路线：不维护本地 Apptainer.def，直接拉取 galaxyproject 预构建 sif：`apptainer pull docker://depot.galaxyproject.org/singularity/<sw>:<tag>`（等价直链 `depot.galaxyproject.org/singularity/<sw>%3A<tag>`） | 自建兜底：`Bootstrap: docker; From: debian:bookworm-slim`；`%post` 同 apt 最小化 + 清理四连；`%test` 必须断言 `<binary> --version` |
 | `software_versions.native` 字段 | 必填 `build_route` 与 `source`：默认 `official biocontainer`（source=anaconda.org/bioconda/<sw>） | 自建兜底写 `apt` / `apt + babraham zip` / `apt + github tarball` / `apt + 源码编译`；不要只写 "Conda/bioconda"，除非已显式自建走 bioconda。 |
+
+> **README 环境安装标准结构**（README「环境安装」节模板，编号 1-4；对应 stringtie README 1-4 节）：
+> `## 环境安装（官方镜像优先，不维护本地配方）`
+> 1. **Conda / brew**：conda 配方（environment.yml）或 Homebrew 公式（homebrew-core / brewsci/bio，见上「宿主安装方式登记」）；亦可用 `native/install.sh` 一键安装。
+> 2. **Docker**：官方镜像直跑，运行一律带 `-u $(id -u):$(id -g)`（避免产物归 root）。
+> 3. **Apptainer**：depot 预构建 sif 直拉（`apptainer pull docker://depot.galaxyproject.org/singularity/<sw>:<tag>`），不本地转换/构建。
+> 4. **二进制包安装**：官方 release 二进制，解压到用户目录 `~/software` 并加 PATH（无需 root）。
+> README 可另含「实战示例」教程节（典型批量用法 + 参数表 + `main.py` 桥接句）。
 
 ***
 

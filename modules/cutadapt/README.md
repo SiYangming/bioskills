@@ -9,6 +9,8 @@
 
 # cutadapt / native 自包含实现
 
+cutadapt 从高通量测序 reads 中去除接头（adapter）、引物、poly-A 等不需要的序列：二代测序建库时若插入片段短于读长，read 末端会读入 adapter 序列，需在下游分析前修剪；支持 SE/PE、5'/3'/anywhere 接头定位、质量修剪（-q）、长度过滤（-m/-M）、NextSeq 特殊质量修剪（--nextseq-trim），并支持 gz/bz2/xz 压缩格式（按扩展名自动识别），是 RNA-seq / 小 RNA / riboseq 等流程最常用的 read 预处理工具。官网：<https://cutadapt.readthedocs.io/>
+
 基于 cutadapt CLI 的 Python 驱动包装（`source_type: custom`）。按 **cutadapt 实际 CLI** 暴露参数（`-a/-g/-b/-q/-m/-M/-o/-p/--cores/--nextseq-trim`），自动注入线程与临时目录：
 
 | 子命令 | 说明 | 线程 |
@@ -41,22 +43,58 @@ python main.py --schema              # 输出 JSON Schema
 python main.py --list-commands       # 列出支持的子命令
 ```
 
-## 容器运行（官方镜像优先，不维护本地配方）
+## 环境安装（官方镜像优先，不维护本地配方）
 
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制：
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。
+
+### 1. Conda / brew（包管理器安装）
 
 ```bash
-# Docker：工具直跑（官方镜像内只含 cutadapt，main.py 驱动在宿主机运行）
-docker pull quay.io/biocontainers/cutadapt:<tag>        # tag 见文末「容器与 Conda 链接」（如 5.2--py312hfabe715_2）
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/cutadapt:<tag> \
-    cutadapt -a AACCGGTT -o /data/out.fastq /data/in.fastq
+mamba create -n cutadapt -c conda-forge -c bioconda cutadapt=5.2
+conda activate cutadapt
+cutadapt --version
+```
 
-# Singularity/Apptainer
-apptainer pull cutadapt.sif docker://quay.io/biocontainers/cutadapt:<tag>
-# 或直链 depot.galaxyproject.org/singularity/cutadapt%3A<tag>（与 quay 同 build tag）
+```bash
+# 或用 Homebrew（macOS / Linux；公式在 homebrew-core，无需额外 tap）
+brew install cutadapt
+cutadapt --version   # 断言
+```
+
+> 宿主机直跑 `python main.py`（trim / adapter-removal 子命令）亦可使用文末「Conda 环境」节配方建环境（`name: cutadapt-native`，含 python/pyyaml，cutadapt 同为 5.2）。
+
+### 2. Docker（官方镜像）
+
+```bash
+docker pull quay.io/biocontainers/cutadapt:5.2--py312hfabe715_2
+# 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/cutadapt:5.2--py312hfabe715_2 \
+    cutadapt -a AACCGGTT -o /data/out.fastq /data/in.fastq
 ```
 
 > 容器内为原生工具入口（cutadapt）；需要 Schema/自省/参数注入（trim / adapter-removal 子命令）时在**宿主机**（conda 装 cutadapt）运行 `python main.py <subcommand> ...`。
+
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换）：
+
+```bash
+apptainer pull cutadapt.sif docker://depot.galaxyproject.org/singularity/cutadapt:5.2--py312hfabe715_2
+apptainer run -B $PWD:/data -H /data cutadapt.sif \
+    cutadapt -a AACCGGTT -o /data/out.fastq /data/in.fastq
+```
+
+### 4. 二进制包安装（pip / PyPI 官方分发，无容器依赖）
+
+cutadapt 是纯 Python 工具（依赖 Python 3.9+），官方分发以 PyPI 为主：
+
+```bash
+python -m pip install cutadapt==5.2
+
+# 验证安装
+cutadapt --version
+```
 
 ## 运行测试
 
@@ -65,6 +103,52 @@ bash test/run_test.sh
 ```
 
 > 本机未装 cutadapt 时只跑驱动自省（`--list-commands` / `--schema`），脚本结尾 `ALL TESTS PASSED`。
+
+## 实战示例：接头去除的参数体系与典型用法
+
+cutadapt 支持 FASTA/FASTQ 及 gz/bz2/xz 压缩格式（按扩展名自动识别），SE/PE 均可修剪；运行统计报告输出到 stderr。以下为原生 cutadapt CLI 的参数体系；等价能力由 `native/main.py` 的 `trim` / `adapter-removal` 子命令提供（见上「CLI 用法示例」）。
+
+### 1. 接头定位语法（作用于 R1 / SE；R2 用对应大写参数）
+
+| 参数 | 说明 |
+|------|------|
+| `-a ADAPTER` | 3' 端接头：搜索 read 3' 端及其下游的接头并切除（默认至少 3 bp 重合即识别） |
+| `-a ADAPTER$` | 锚定 3'：仅当接头位于 read 最末端时才修剪 |
+| `-g ADAPTER` | 5' 端接头：接头出现在 5' 端即切除（常见于接头降解） |
+| `-g ^ADAPTER` | 锚定 5'：仅当接头位于 read 开头才修剪（可容忍开头少量插入错配） |
+| `-b ADAPTER` | anywhere：read 任意位置出现即修剪 |
+| `-a FWD...REV` | 联合接头：两接头及其之间序列一并切除 |
+| `-e ERR` | 接头匹配错误率上限；`--no-indels` 关闭插入/缺失错误容许 |
+
+对应 R2（reverse）的大小写参数：`-A`（同 `-a`）、`-G`（同 `-g`）、`-B`（同 `-b`）；`-U` 对应 `-u`。一条 read 同时出现多个接头时，以最左侧的接头为准修剪。
+
+### 2. Read 修饰与长度 / 质量过滤（trim 子命令）
+
+| 参数 | 说明 |
+|------|------|
+| `-u N`（`--cut`） | 无条件切除 5' 端 N bp（`-u -5` 切 3' 端 5 bp） |
+| `-q [5'cutoff,]3'cutoff` | 质量修剪（算法同 BWA）：单值作用于 3' 端；`-q 15,0` 表示 5' 端阈值 15、3' 端不修剪 |
+| `-l N`（`--length`） | 从 3' 端将 read 截短至 N bp |
+| `-m N` / `-M N` | 丢弃修剪后短于 N / 长于 N bp 的 read |
+| `--too-short-output F` / `--too-long-output F` | 过短 / 过长 read 不丢弃，单独输出到 F |
+| `--untrimmed-output F` | 未找到接头的 read 单独输出到 F |
+| `--discard-trimmed` / `--discard-untrimmed` | 分别丢弃找到接头 / 未找到接头的 read |
+
+同一条命令中多类操作按固定顺序执行：`--cut` → `-q` → 接头修剪（`-a/-g/-b` 等）→ `--length`；`-m/-M` 等过滤作用于上述处理完成后。
+
+### 3. 双端配对修剪与统计报告
+
+```bash
+# 小写参数作用于 R1（forward），大写作用于 R2（reverse）；-o/-p 为两个配对输出
+cutadapt -a ADAPTER_FWD -A ADAPTER_REV \
+    -o out.1.fastq -p out.2.fastq reads.1.fastq reads.2.fastq \
+    2> cutadapt.report.txt
+
+# 不使用 -o 时：修剪结果写 stdout，统计报告写 stderr，可分别重定向 / 管道
+cutadapt -a AACCGGTT input.fastq > output.fastq 2> report.txt
+```
+
+使用 `-p` 时 cutadapt 会校验两个文件是否配对（read 数不一致或文件名不匹配即报错）；read 名中的 `/1`、`/2` 后缀在配对检查中被忽略。
 
 ---
 

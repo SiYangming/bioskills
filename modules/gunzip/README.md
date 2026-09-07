@@ -21,7 +21,7 @@
 ### 1. 安装环境
 
 ```bash
-mamba env create -f environment.yml
+mamba create -n gunzip-native -c conda-forge gzip=1.12
 conda activate gunzip-native
 ```
 
@@ -109,7 +109,7 @@ snakemake -s modules/gunzip/snakemake/gunzip.smk \
 
 ```yaml
 # gunzip native Conda 环境配方（兜底：离线 / 非容器场景）
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 gunzip-native.yml 后 mamba env create -f gunzip-native.yml；在线推荐上方 mamba create 直装命令
 # 注意：gzip 在 conda-forge（非 bioconda）。
 name: gunzip-native
 channels:

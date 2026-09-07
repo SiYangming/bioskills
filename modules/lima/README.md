@@ -33,34 +33,81 @@ python main.py --list-commands
 
 子命令 `lima` 支持 `--threads` / `--tmpdir` 运行期覆盖。
 
-## 环境安装（三选一）
+## 实战示例：Iso-Seq 流程中的引物去除与 barcode 拆分
 
-### 1. Conda（HPC 无 root / 离线兜底）
+lima 是 PacBio 的条形码拆分与引物去除工具（Iso-Seq 流程的第二步，ccs → lima → isoseq3 refine），用于去除测序引物序列和 barcode 信息：承接 ccs 产物，按引物 FASTA 去除测序引物与 barcode、并按引物对拆分 reads（等价能力见上「用法」的 `lima` 子命令）。
+
+### 1. 准备引物 FASTA（同时含 5' 引物与 3' 引物）
+
+引物文件需同时给出 5' 端引物与 3' 端引物（3' 引物按反向互补序列记录，lima 据此识别 reads 两端并成对拆分）。NEB / Clontech SMART 建库试剂盒的典型序列：
 
 ```bash
-mamba env create -f environment.yml   # name: lima-native
+echo '>NEB_5p
+GCAATGAAGTCGCAGGGTTGGG
+>Clontech_5p
+AAGCAGTGGTATCAACGCAGAGTACATGGGG
+>NEB_Clontech_3p
+GTACTCTGCGTTGATACCACTGCTT' > barcoded_primers.fasta
+```
+
+### 2. 去引物 + 拆分 barcode（Iso-Seq 模式）
+
+```bash
+lima sample.ccs.bam barcoded_primers.fasta sample.lima.bam --isoseq --no-pbi --peek-guess
+```
+
+`--isoseq` / `--peek-guess` 说明见上「功能」；`--no-pbi` 表示不生成 `.pbi` 索引（后续不需要按坐标回看 BAM 时更省时省空间）。产物 `sample.lima.bam` 及按引物对拆分的各片段 BAM，即为 isoseq3 refine 的输入。
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。
+
+### 1. Conda（宿主机直跑 main.py / HPC 无 root）
+
+```bash
+mamba create -n lima-native -c conda-forge -c bioconda lima=2.9.0   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate lima-native
 ```
 
-### 2. Docker（官方镜像直拉，不维护本地 Dockerfile）
+### 2. Docker（官方镜像）
 
 ```bash
-docker pull quay.io/biocontainers/lima:<tag>        # tag 见 quay 页面（或文末「容器与 Conda 链接」）
+docker pull quay.io/biocontainers/lima:2.9.0--h9ee0642_0
 # 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
-docker run --rm -u $(id -u):$(id -g) -v $PWD:/data quay.io/biocontainers/lima:<tag> \
-    lima --isoseq /data/reads.bam /data/primers.fasta /data/demux.bam
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/lima:2.9.0--h9ee0642_0 lima --isoseq \
+    /data/reads.bam /data/primers.fasta /data/demux.bam
 ```
 
-### 3. Apptainer / Singularity（官方镜像直拉，不维护本地 Apptainer.def）
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换）：
 
 ```bash
-apptainer pull lima.sif docker://quay.io/biocontainers/lima:<tag>
-# 或直链 depot.galaxyproject.org/singularity/lima%3A<tag>（与 quay 同 build tag）
-apptainer run -B $PWD:/data -H /data lima.sif \
-    lima --isoseq /data/reads.bam /data/primers.fasta /data/demux.bam
+# galaxyproject 预构建 sif（等价直链见文末「容器与 Conda 链接」）
+apptainer pull lima.sif docker://depot.galaxyproject.org/singularity/lima:2.9.0--h9ee0642_0
+apptainer run -B $PWD:/data -H /data lima.sif lima --isoseq \
+    /data/reads.bam /data/primers.fasta /data/demux.bam
 ```
 
-> 官方镜像内为原生 lima 入口（仅工具，无 main.py）；需要 Schema/自省/参数注入时在**宿主机**（已装 lima 或 conda env）运行 `python main.py lima ...`。
+### 4. 二进制包安装（官方 release，无 conda / docker 依赖）
+
+lima 是 PacBio 官方工具（The PacBio Barcode Demultiplexer and Primer Remover），官方以 **conda（bioconda）为主要分发**，GitHub release 亦提供预编译二进制（lima.tar.gz）：
+
+* **官方文档**：<https://lima.how/>
+
+* **官方 GitHub**：<https://github.com/PacificBiosciences/barcoding>（release 附预编译二进制）
+
+* **Bioconda 页面**：<https://anaconda.org/channels/bioconda/packages/lima/overview>
+
+```bash
+# conda 安装（官方推荐分发）
+mamba create -n lima -c conda-forge -c bioconda lima=2.9.0
+conda activate lima
+lima --version   # 验证安装
+```
+
+> 官方镜像/conda 包内为原生 lima 入口（仅工具，无 main.py）；需要 Schema/自省/参数注入时在**宿主机**（conda env，见上）运行 `python main.py lima ...`（见「用法」）。
 
 ## 测试
 
@@ -133,7 +180,7 @@ snakemake -s modules/lima/snakemake/lima.smk \
 
 ```yaml
 # lima native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 lima-native.yml 后 mamba env create -f lima-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：lima 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
 #      容器默认路线：官方镜像优先（quay.io/biocontainers/lima），不再维护 Dockerfile/Apptainer.def。
 name: lima-native
@@ -150,6 +197,6 @@ dependencies:
 ## 容器与 Conda 链接
 
 - **Bioconda 页面**：https://anaconda.org/channels/bioconda/packages/lima/overview
-- **Docker**：`docker pull quay.io/biocontainers/lima:2.13.0--h9ee0642_0`
-- **Singularity**：https://depot.galaxyproject.org/singularity/lima%3A2.13.0--h9ee0642_0
-- 安装方式（本地）：`mamba create -n lima -c conda-forge -c bioconda lima=2.13.0`
+- **Docker**：`docker pull quay.io/biocontainers/lima:2.9.0--h9ee0642_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/lima%3A2.9.0--h9ee0642_0
+- 安装方式（本地）：`mamba create -n lima -c conda-forge -c bioconda lima=2.9.0`

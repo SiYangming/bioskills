@@ -45,7 +45,7 @@ python main.py --list-commands
 ### 1. Conda（HPC 无 root / 离线兜底）
 
 ```bash
-mamba env create -f environment.yml   # name: dorado-native（仅 python 驱动；dorado 二进制需单独下载）
+mamba create -n dorado-native -c conda-forge python=3.11 "pyyaml>=6.0" pip   # 或文末「Conda 环境」配方另存为 yml 离线使用
 # dorado 官方二进制（不在 bioconda）：
 curl -Ls https://cdn.oxfordnanoportal.com/software/analysis/dorado-<ver>-linux-x64.tar.gz | tar -xz
 export PATH=$PWD/dorado-<ver>-linux-x64/bin:$PATH
@@ -159,7 +159,7 @@ dorado:
 
 ```yaml
 # dorado native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 dorado-native.yml 后 mamba env create -f dorado-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：dorado 不在 Debian apt、不在 bioconda；官方只提供静态二进制（Linux x64）。
 #      本文件仅安装 python 驱动依赖（pyyaml）；dorado 二进制需单独下载：
 #        curl -Ls https://cdn.oxfordnanoportal.com/software/analysis/dorado-<ver>-linux-x64.tar.gz | tar -xz

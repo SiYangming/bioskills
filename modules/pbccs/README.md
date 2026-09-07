@@ -41,7 +41,7 @@ python main.py --list-commands
 ### 1. Conda（HPC 无 root / 离线兜底）
 
 ```bash
-mamba env create -f environment.yml   # name: pbccs-native
+mamba create -n pbccs-native -c conda-forge -c bioconda pbccs=6.4.0   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate pbccs-native
 ```
 
@@ -137,7 +137,7 @@ bash test/run_test.sh   # 无需真实 subreads BAM；ccs 未安装时退化为 
 
 ```yaml
 # pbccs native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 pbccs-native.yml 后 mamba env create -f pbccs-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：pbccs 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
 #      容器默认路线：官方镜像优先（quay.io/biocontainers/pbccs），不再维护 Dockerfile/Apptainer.def。
 name: pbccs-native

@@ -10,6 +10,8 @@
 
 自包含的 uLTRA 驱动实现（`source_type: custom`），命令逻辑对应 `native/ULTRA_align.py`（历史实现，见下）与正式入口 `native/main.py`；Snakemake 规则见下方独立章节。
 
+uLTRA 是长读长转录组 reads（PacBio Iso-Seq / ONT）的剪接比对工具：以 GTF 外显子注释为引导，基于 minimap2 预过滤 + NAM（maximal exact matches）外显子连接搜索完成 splice alignment，对小外显子比对尤其准确；核心能力为 index（GTF 转录组索引）与 align（reads → SAM），运行时依赖 minimap2 / namfinder / samtools（bioconda 包名 `ultra_bioinformatics`，二进制 `uLTRA`）。
+
 ## 能力
 
 | 子命令 | 说明 | 线程 |
@@ -23,14 +25,7 @@
 
 ## 快速开始
 
-### 1. 安装环境
-
-```bash
-mamba env create -f environment.yml
-conda activate ultra-native
-```
-
-### 2. CLI 调用
+### 1. CLI 调用
 
 ```bash
 # 解压参考/reads
@@ -43,37 +38,81 @@ python main.py index genome.fa genes.sorted.gtf idx_dir
 python main.py align genome.fa reads.fa aln_dir --index idx_dir --prefix sample --threads 8
 ```
 
-### 3. Agent / Schema 自省
+### 2. Agent / Schema 自省
 
 ```bash
 python main.py --schema              # 输出 JSON Schema
 python main.py --list-commands       # 列出支持的子命令
 ```
 
-### 4. 容器运行（官方镜像优先，不维护本地配方）
-
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制：
-
-```bash
-# Docker：工具直跑（官方镜像内只含 uLTRA，main.py 驱动在宿主机运行）
-docker pull quay.io/biocontainers/ultra_bioinformatics:<tag>        # tag 见 quay 页面
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/ultra_bioinformatics:<tag> \
-  index /data/genome.fa /data/genes.sorted.gtf /data/idx_dir --args "--disable_infer"
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/ultra_bioinformatics:<tag> \
-  align /data/genome.fa /data/reads.fa /data/aln --index /data/idx_dir --prefix sample --threads 8
-
-# Singularity/Apptainer
-apptainer pull ultra.sif docker://quay.io/biocontainers/ultra_bioinformatics:<tag>
-# 或直链 depot.galaxyproject.org/singularity/ultra_bioinformatics%3A<tag>（与 quay 同 build tag）
-```
-
-> 容器内为原生工具入口；需要 Schema/自省/参数注入时在**宿主机**（已装 uLTRA + minimap2/namfinder/samtools 或 conda env）运行 `python main.py <subcommand> ...`。
-
-### 5. 测试
+### 3. 测试
 
 ```bash
 bash test/run_test.sh
 ```
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。
+
+### 1. Conda（宿主机直跑 main.py / HPC 无 root）
+
+```bash
+mamba create -n ultra-native -c conda-forge -c bioconda python=3.11 ultra_bioinformatics=0.1 minimap2 namfinder samtools pyyaml   # 配方见文末「Conda 环境」节
+conda activate ultra-native
+```
+
+### 2. Docker（官方镜像）
+
+```bash
+docker pull quay.io/biocontainers/ultra_bioinformatics:0.1--pyh7cba7a3_0
+# 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+# 镜像入口为原生 uLTRA（仅工具，无 main.py）；align 产物 SAM 的 sort 由宿主机 samtools 完成
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/ultra_bioinformatics:0.1--pyh7cba7a3_0 index \
+    /data/genome.fa /data/genes.sorted.gtf /data/idx_dir --disable_infer
+docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/biocontainers/ultra_bioinformatics:0.1--pyh7cba7a3_0 align \
+    /data/genome.fa /data/reads.fa /data/aln --index /data/idx_dir --t 8 --prefix sample
+```
+
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换）：
+
+```bash
+# galaxyproject 预构建 sif（等价直链见文末「容器与 Conda 链接」）
+apptainer pull ultra.sif docker://depot.galaxyproject.org/singularity/ultra_bioinformatics:0.1--pyh7cba7a3_0
+apptainer run -B $PWD:/data -H /data ultra.sif index \
+    /data/genome.fa /data/genes.sorted.gtf /data/idx_dir --disable_infer
+apptainer run -B $PWD:/data -H /data ultra.sif align \
+    /data/genome.fa /data/reads.fa /data/aln --index /data/idx_dir --t 8 --prefix sample
+```
+
+### 4. 二进制包安装（官方 release，无 conda / docker 依赖）
+
+uLTRA 以 Python 包形式分发（bioconda `ultra_bioinformatics` / PyPI `ultra-bioinformatics`），官方 GitHub 仓库提供 INSTALL.sh 一键安装（自动建 conda env）；GitHub release 不附预编译二进制，源码安装需另取 namfinder、minimap2 并置于 PATH：
+
+* **官方 GitHub**：<https://github.com/ksahlin/uLTRA>（含 INSTALL.sh 安装脚本与使用文档）
+
+* **Bioconda 页面**：<https://bioconda.github.io/recipes/ultra_bioinformatics/README.html>
+
+* **PyPI**：`pip install ultra-bioinformatics`
+
+```bash
+# 方式一：conda（官方推荐；minimap2/namfinder/samtools 同环境安装）
+mamba create -n ultra -c conda-forge -c bioconda ultra_bioinformatics=0.1 minimap2 namfinder samtools
+conda activate ultra
+
+# 方式二：官方 INSTALL.sh 源码安装（克隆仓库后运行）
+git clone https://github.com/ksahlin/uLTRA.git --depth 1 && cd uLTRA
+./INSTALL.sh ~/software/ultra_install
+
+# 验证安装
+uLTRA --help
+```
+
+> 官方镜像/conda 包内为原生 uLTRA 入口（仅工具，无 main.py）；需要 Schema/自省/参数注入时在**宿主机**（conda env，见上）运行 `python main.py <subcommand> ...`（见上「快速开始」）。
 
 ## 性能优化约定
 
@@ -199,7 +238,7 @@ config.setdefault("ultra_prefix", "sample")                   # align：BAM 前�
 
 ```yaml
 # ultra native Conda 环境配方（兜底：HPC 无 root / 非容器场景）
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 ultra-native.yml 后 mamba env create -f ultra-native.yml；在线推荐上方 mamba create 直装命令
 # 注意：Debian apt 无 ultra 包，uLTRA 仅由 bioconda 提供；minimap2 / namfinder /
 #       samtools 为 uLTRA 运行时依赖（align 子命令按 PATH 查找），必须同环境安装。
 name: ultra-native
@@ -221,6 +260,6 @@ dependencies:
 ## 容器与 Conda 链接
 
 - **Bioconda 页面**：https://bioconda.github.io/recipes/ultra_bioinformatics/README.html（uLTRA 的 bioconda 包名为 `ultra_bioinformatics`，二进制 `uLTRA`）
-- **Docker**：`docker pull quay.io/biocontainers/ultra_bioinformatics:<tag>`（tag 以 quay / depot.galaxyproject.org 为准）
-- **Singularity**：https://depot.galaxyproject.org/singularity/ultra_bioinformatics%3A<tag>（与 quay 同 build tag）
+- **Docker**：`docker pull quay.io/biocontainers/ultra_bioinformatics:0.1--pyh7cba7a3_0`
+- **Singularity**：https://depot.galaxyproject.org/singularity/ultra_bioinformatics%3A0.1--pyh7cba7a3_0（与 quay 同 build tag）
 - 安装方式（本地）：`mamba create -n ultra -c conda-forge -c bioconda ultra_bioinformatics=0.1 minimap2 namfinder samtools`

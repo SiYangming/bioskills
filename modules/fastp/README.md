@@ -53,11 +53,18 @@ python main.py --list-commands
 
 ## 环境安装（三选一；官方镜像/conda 提供）
 
-### 1. Conda（宿主机直跑 main.py；HPC 无 root / 离线兜底）
+### 1. Conda / brew（包管理器安装）
 
 ```bash
-mamba env create -f environment.yml   # name: fastp-native（fastp=0.24.0）
+mamba create -n fastp-native -c conda-forge -c bioconda fastp=0.24.0   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate fastp-native
+```
+
+```bash
+# 或用 Homebrew（macOS / Linux；公式在 homebrew-core，无需额外 tap）
+# brew 当前 1.3.6，与 meta 登记 0.24.0 略有差异（版本以 formula 为准）
+brew install fastp
+fastp --version   # 断言
 ```
 
 ### 2. 官方镜像（Docker；官方镜像内只含 fastp 工具）
@@ -171,7 +178,7 @@ fastp:
 
 ```yaml
 # fastp native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 fastp-native.yml 后 mamba env create -f fastp-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：官方镜像/conda 提供 fastp（quay.io/biocontainers/fastp / bioconda fastp=0.24.0）；
 #      本文件仅作 HPC 无 root / 离线场景的 Conda 兜底（本地不再自建容器）。
 name: fastp-native

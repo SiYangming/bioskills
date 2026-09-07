@@ -45,7 +45,7 @@ python main.py --list-commands
 ### 1. Conda（HPC 无 root / 离线兜底）
 
 ```bash
-mamba env create -f environment.yml   # name: flair-native（含 flair + minimap2）
+mamba create -n flair-native -c conda-forge -c bioconda flair=3.0.0b1 minimap2=2.30   # 或文末「Conda 环境」配方另存为 yml 离线使用
 conda activate flair-native
 ```
 
@@ -191,7 +191,7 @@ dependencies:
 
 ```yaml
 # flair native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 flair-native.yml 后 mamba env create -f flair-native.yml；在线推荐上方 mamba create 直装命令
 # 说明：flair 不在 Debian bookworm apt；本文件是 Conda 兜底（HPC 无 root / 离线场景）。
 #      容器默认路线：官方镜像优先（quay.io/biocontainers/flair），不再维护 Dockerfile/Apptainer.def。
 name: flair-native

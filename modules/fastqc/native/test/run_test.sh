@@ -16,10 +16,10 @@ python3 "$HERE/main.py" --list-commands
 echo "==> [2/3] CLI 自省：--schema（非空 + 合法 JSON）"
 python3 "$HERE/main.py" --schema > schema.json
 test -s schema.json
-python3 -c "import json; s=json.load(open('schema.json')); assert s.get('title')=='fastqc_native'"
+python3 -c "import json; s=json.load(open('schema.json')); assert s.get('title')=='fastqc', s.get('title')"
 
 if ! command -v fastqc >/dev/null 2>&1; then
-  echo "[SKIP] 本环境未安装 fastqc binary，跳过真实运行子步骤（3/3）。请用 conda env create -f $HERE/environment.yml 后重跑。"
+  echo "[SKIP] 本环境未安装 fastqc binary，跳过真实运行子步骤（3/3）。请用 mamba create -n fastqc-native -c conda-forge -c bioconda fastqc=0.12.1 建环境后重跑。"
   echo "ALL TESTS PASSED (introspection only, binary unavailable)"
   exit 0
 fi

@@ -8,7 +8,7 @@
 
 # samtools / native
 
-自包含的 samtools 驱动实现（`source_type: custom`）。
+samtools 是处理 SAM/BAM/CRAM 比对结果的核心工具集，支持排序、索引、查看、格式转换、统计、提取与 mpileup 变异检测等操作，是测序数据分析中最常用的工具之一、绝大多数 NGS 流程的底座（官网：<https://www.htslib.org/>）。本目录为自包含的 samtools 驱动实现（`source_type: custom`）。
 
 ## 能力
 
@@ -30,14 +30,9 @@
 
 ## 快速开始
 
-### 1. 安装环境
+> 安装 samtools 的四种方式（conda / docker / apptainer / 源码编译）见下方「环境安装」节；以下 CLI 与自省命令在宿主机已装工具的环境执行。
 
-```bash
-mamba env create -f environment.yml
-conda activate samtools-native
-```
-
-### 2. CLI 调用
+### 1. CLI 调用
 
 ```bash
 python main.py view -bS input.sam -o out.bam --threads 8
@@ -47,34 +42,78 @@ python main.py flagstat sorted.bam
 python main.py faidx refs.fa
 ```
 
-### 3. Agent / Schema 自省
+### 2. Agent / Schema 自省
 
 ```bash
 python main.py --schema              # 输出 JSON Schema
 python main.py --list-commands       # 列出支持的子命令
 ```
 
-### 4. 容器运行（官方镜像优先，不维护本地配方）
-
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制：
-
-```bash
-# Docker：工具直跑（官方镜像内只含 samtools，main.py 驱动在宿主机运行）
-docker pull quay.io/biocontainers/samtools:1.21--h96c455f_1        # tag 见 quay 页面
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data quay.io/biocontainers/samtools:1.21--h96c455f_1 \
-  sort /data/input.bam -o /data/sorted.bam --threads 8
-
-# Singularity/Apptainer
-apptainer pull samtools.sif docker://quay.io/biocontainers/samtools:1.21--h96c455f_1
-# 或直链 depot.galaxyproject.org/singularity/samtools%3A1.21--h96c455f_1（与 quay 同 build tag）
-```
-
-> 容器内为原生工具入口；需要 Schema/自省/参数注入时在**宿主机**（conda env 装 samtools）运行 `python main.py <subcommand> ...`。
-
-### 5. 测试
+### 3. 测试
 
 ```bash
 bash test/run_test.sh
+```
+
+## 环境安装（官方镜像优先，不维护本地配方）
+
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑（容器内只含 samtools，无 python 驱动）。
+
+### 1. Conda / brew（包管理器安装）
+
+```bash
+mamba create -n samtools-native -c conda-forge -c bioconda samtools=1.21
+conda activate samtools-native
+samtools --version    # 验证
+```
+
+```bash
+# 或用 Homebrew（macOS / Linux；公式在 homebrew-core，无需额外 tap）
+# brew 当前 1.24，与 meta 登记 1.21 略有差异（版本以 formula 为准）
+brew install samtools
+samtools --version   # 断言
+```
+
+> 完整离线配方（含 python=3.11 / pyyaml / htslib，可另存为 samtools-native.yml（离线兜底），在线直接 mamba create -n samtools-native -c conda-forge -c bioconda samtools=1.21）见文末「Conda 环境」节（name: samtools-native）。
+
+### 2. Docker（官方镜像）
+
+```bash
+docker pull quay.io/biocontainers/samtools:1.21--h96c455f_1
+# 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":/data -w /data \
+    quay.io/biocontainers/samtools:1.21--h96c455f_1 \
+    sort /data/input.bam -o /data/sorted.bam --threads 8
+```
+
+容器内为原生 samtools 入口；需要 Schema/自省/参数注入时在**宿主机**（conda env 装 samtools）运行 `python main.py <subcommand> ...`。
+
+### 3. Apptainer / Singularity
+
+depot.galaxyproject.org 已预构建好 sif，直接拉取现成镜像即可（无需本地从 docker 转换；等价直链见文末「容器与 Conda 链接」）：
+
+```bash
+apptainer pull samtools.sif docker://depot.galaxyproject.org/singularity/samtools:1.21--h96c455f_1
+apptainer run -B "$PWD":/data -H /data samtools.sif sort /data/input.bam -o /data/sorted.bam --threads 8
+```
+
+### 4. 二进制包安装（官方源码编译，无 conda / docker 依赖）
+
+* **官网/下载页**：<https://www.htslib.org/download/>
+
+* **GitHub release**：<https://github.com/samtools/samtools/releases>
+
+samtools 官方以源码形式分发（无预编译二进制），release 源码包不捆绑 htslib，需先安装 htslib（同下载页 htslib-1.21 源码按同样 configure/make 流程安装，或 conda 安装）再编译：
+
+```bash
+wget https://github.com/samtools/samtools/releases/download/1.21/samtools-1.21.tar.bz2 -P ~/software/
+cd ~/software && tar jxf samtools-1.21.tar.bz2 && cd samtools-1.21
+./configure --prefix=$HOME/software/samtools-1.21 && make -j 8 && make install
+echo 'export PATH=$PATH:$HOME/software/samtools-1.21/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# 验证安装
+samtools --version
 ```
 
 ## 性能优化约定
@@ -84,6 +123,82 @@ bash test/run_test.sh
 * **临时目录**：`sort` 自动使用 `$TMPDIR` 下的临时前缀，避免污染工作目录。
 
 * **内存**：通过 `meta.yaml.optimization.default_mem_mb` 声明，供上层调度器读取。
+
+## 实战示例
+
+比对、变异检测类流程中常见的 SAM/BAM 操作套路如下。命令为软件原生 CLI；其中 `tview` 等未封装进 `main.py` 的命令按需直接调用原生 `samtools`，`sort` / `index` / `view` / `flagstat` / `depth` / `mpileup` / `faidx` / `merge` 的等价能力已由 `native/main.py` 覆盖（见上「能力」与「快速开始」）。
+
+### 1. 比对后处理基本操作（SAM → 排序 BAM → 索引 → 查看 / 过滤）
+
+```bash
+# SAM 转 BAM 并按坐标排序（-@ 线程数；-O 输出格式）
+samtools sort -@ 8 -o sample1.bam -O BAM sample1.sam
+samtools sort -@ 8 -o sample2.bam -O BAM sample2.sam
+
+# 为排序后的 BAM 建立索引（生成 .bai 文件）
+samtools index sample1.bam
+samtools index sample2.bam
+
+# 查看特定区域的比对结果（header + alignments）
+samtools view -h sample1.bam chr1:10000-20000 | less -S
+
+# 提取指定区域（此处为整条 chr1）的比对并另存为 BAM
+samtools view -h -b sample1.bam chr1 > sample1.chr1.bam
+
+# 按 FLAG 过滤：-f 64 取双端第一条 reads，再接 -F 4 排除未比对 reads
+samtools view -h -f 64 sample1.bam | samtools view -h -F 4 | less
+```
+
+### 2. 提取参考序列与比对统计
+
+```bash
+# 从参考 FASTA 提取指定区域序列（自动建立 .fai 索引）
+samtools faidx genome.fa chr1:40000-42000 | less
+
+# 比对率统计（flag 统计）
+samtools flagstat sample1.bam
+
+# 逐位点覆盖深度
+samtools depth sample1.bam > sample1.depth.txt
+
+# mapping quality（MAPQ）分布（SAM 第 5 列）
+samtools view sample1.bam | awk '{print $5}' | sort | uniq -c | sort -k2 -n
+
+# 交互式文本比对查看（tview 为原生 CLI；BAM 与参考 FASTA 均需先建索引）
+samtools tview sample1.bam genome.fa
+```
+
+### 3. 基于 mpileup 的轻量变异检测（Samtools + bcftools）
+
+```bash
+# 一步完成：samtools mpileup 汇总多样品比对 → bcftools call 调用变异（bcftools 需另行安装）
+samtools mpileup -ugf genome.fa sample1.bam sample2.bam | bcftools call -vm > variants.vcf
+
+# 变异过滤（bcftools 自带脚本）
+vcfutils.pl varFilter variants.vcf > variants.filter.vcf
+```
+
+mpileup 参数说明：
+
+| 参数                    | 说明                                 |
+| --------------------- | ---------------------------------- |
+| `-t AD,ADF,ADR,DP,SP` | 输出额外标签信息：等位基因深度、正/负链各自深度、总深度、链偏倚评分 |
+| `-g`                  | 直接输出 BCF（二进制 VCF）                  |
+| `-f`                  | 参考基因组 FASTA                        |
+| `-u`                  | 未压缩的 BCF，便于管道接力                    |
+
+> 注：`bcftools call -vm` 中 `-v` = 只输出变异位点，`-m` = multiallelic-caller 模式（适合多样品分析）。Samtools + Bcftools 是快速、轻量的变异检测方案；复杂变异类型（如多等位基因变异）推荐 GATK HaplotypeCaller，或将两路结果取交集提高准确性（GATK 与 samtools 双路联检为常见实践）。
+
+### 4. 多样本 BAM 合并（merge）
+
+基因预测（AUGUSTUS 的 bam2hints、BRAKER 的 `--bam`）与多比对联检等场景，常需先把多个样本的比对结果合并为单个 BAM：
+
+```bash
+# 合并多个已排序 BAM，随后统一排序、建索引供下游使用
+samtools merge -@ 8 rnaseq.merged.bam sample1.sorted.bam sample2.sorted.bam
+samtools sort -@ 8 -o rnaseq.sort.bam rnaseq.merged.bam
+samtools index rnaseq.sort.bam
+```
 
 ***
 
@@ -127,7 +242,7 @@ bash test/run_test.sh
 
 ```yaml
 # samtools native Conda 环境配方
-# 创建：mamba env create -f environment.yml
+# 离线兜底：可另存为 samtools-native.yml 后 mamba env create -f samtools-native.yml；在线推荐上方 mamba create 直装命令
 name: samtools-native
 channels:
   - conda-forge

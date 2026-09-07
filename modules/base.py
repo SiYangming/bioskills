@@ -252,8 +252,14 @@ class SkillBase:
 
     # -- 内部工具 ----------------------------------------------------------- #
     def _guess_meta_path(self) -> Path:
-        # base.py 位于 modules/ 下，技能目录为其兄弟：modules/<software>/native/meta.yaml
-        return Path(__file__).resolve().parent / self.software / "native" / "meta.yaml"
+        # base.py 位于 modules/ 下，技能目录为其兄弟：modules/<software>/
+        # 优先软件级 meta（modules/<software>/meta.yaml，仓库现行唯一 meta）；
+        # 早期实现级 meta 位置 modules/<software>/native/meta.yaml 作回退。
+        root = Path(__file__).resolve().parent
+        sw_meta = root / self.software / "meta.yaml"
+        if sw_meta.exists():
+            return sw_meta
+        return root / self.software / "native" / "meta.yaml"
 
     def _render_env_vars(self, env_vars: dict[str, str]) -> dict[str, str]:
         """渲染环境变量中的 {tmpdir}/{cpus}/{mem_mb} 占位符。"""
@@ -279,6 +285,23 @@ class SkillBase:
         """在配置的 tmpdir 下创建临时目录并返回路径。"""
         prefix = prefix or f"{self.software}_"
         return tempfile.mkdtemp(prefix=prefix, dir=self.tmpdir)
+
+    def _effective_threads(self, subcommand: str | None = None,
+                           override: int | None = None) -> int:
+        """线程选择优先级：用户显式 > 子命令建议（meta optimization.per_subcommand_threads）> 全局默认。
+
+        基类默认实现；子类可覆写（如 ncbi-datasets-cli / stringtie 各有细化逻辑）。
+        """
+        if override and override > 0:
+            return int(override)
+        per = (self.meta.get("optimization", {}) or {}).get("per_subcommand_threads", {})
+        if isinstance(per, dict):
+            key = subcommand or "default"
+            if key in per:
+                return int(per[key])
+            if "default" in per:
+                return int(per["default"])
+        return int(self.cpus)
 
     # -- 子类接口 ----------------------------------------------------------- #
     def build_command(self, subcommand: str, **kwargs: Any) -> list[str]:

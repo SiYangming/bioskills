@@ -1,0 +1,13 @@
+# orfanage native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）/ 容器构建（Dockerfile、Apptainer.def
+#       micromamba create -f 均 COPY 本文件到 /opt/env）共用。
+# 版本对齐：modules/orfanage/meta.yaml software_versions.native orfanage=1.2.0（bioconda；
+#           Debian apt 无 orfanage）。main.py 运行依赖 pyyaml。
+name: orfanage-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - orfanage=1.2.0
+  - pyyaml>=6.0
