@@ -52,6 +52,8 @@ implementations:
   container_ref:
     bioconda: https://anaconda.org/bioconda/flair
     quay_biocontainers: quay.io/biocontainers/flair
+    bioinfortools: quay.io/bioinfortools/flair:2.2.0（社区镜像，源自 brookslab/flair 官方 Docker；仅历史 2.2.0 备选，
+      模块当前官方线为 bioconda 3.0.0b1，见 README）
     install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
       镜像
 - id: flair_snakemake_local

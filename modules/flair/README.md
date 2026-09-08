@@ -212,6 +212,8 @@ dependencies:
 
 * **Docker**：`docker pull quay.io/biocontainers/flair:3.0.1--pyhdfd78af_0`
 
+* **社区镜像（历史 2.2.0，源自 brookslab/flair 官方 Docker）**：`docker pull quay.io/bioinfortools/flair:2.2.0`（仅当需要上游 brookslab 2.2.0 构建时用；模块当前官方线为 bioconda 3.0.0b1）
+
 * **Singularity**：<https://depot.galaxyproject.org/singularity/flair%3A3.0.1--pyhdfd78af_0>
 
 * 安装方式（本地）：`mamba create -n flair -c conda-forge -c bioconda flair=3.0.1`

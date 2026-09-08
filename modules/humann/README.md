@@ -163,7 +163,7 @@ humann --version
 （原 `HUMAnN_4_0_0_a_1.def`）以 **4.0.0a1** 登记作者 v4 alpha 路线，与 native 主路线 3.9 并列声明：
 
 * 容器：`native/Apptainer.def`（debian:bookworm-slim + apt `bowtie2`/`diamond-aligner`/`libglpk40` + pip `humann==4.0.0a1`；自建兜底，供想尝鲜 v4 alpha 的用户），构建后镜像内部 `humann --version` 输出 `humann v4.0.0.alpha.1`；
-* 社区镜像备用：`quay.io/bioinfortools/humann:4.0.0a1`；
+* 社区镜像备用：`quay.io/bioinfortools/humann:4.0.0a1`（Ubuntu 24.04 底座、Apptainer.def 自建而非 bioconda 配方；内置 MetaPhlAn 4.2.4 + bowtie2 2.5.2 + diamond 2.1.9，约 394 MB，比 biocontainers/humann:3.9 更小；用法 `docker run --rm quay.io/bioinfortools/humann:4.0.0a1 humann --version`）；
 * 宿主机安装：`bash native/install.sh --version 4.0.0a1 --method pip`（PyPI sdist → venv，见 install.sh 头注）；
 * 差异说明：4.0.0a1 为纯 Python sdist（无 install_requires / wheel），运行时需系统 bowtie2 / diamond / glpk（apt/brew 提供）；prescreen 阶段需另 `pip install MetaPhlAn` 并下载数据库；升级 v4 新 alpha 时请以 PyPI / GitHub master 为准同步刷新本文件与 `software_versions.author_v4_alpha`。
 

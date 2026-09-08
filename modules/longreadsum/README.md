@@ -168,12 +168,15 @@ docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
     bioskills/longreadsum:1.6.0 fa -i /data/reads.fa -o /data/qc
 ```
 
-社区镜像（1.6.0，bioinfortools 频道）：
+社区镜像（1.6.0，bioinfortools 频道；由 wglab conda 环境构建）：
 
 ```bash
 docker pull quay.io/bioinfortools/longreadsum:1.6.0
-docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
-    quay.io/bioinfortools/longreadsum:1.6.0 fa -i /data/reads.fa -o /data/qc
+# 该镜像为 conda 环境包装：需显式传 CONDA_PREFIX 并用环境内全路径调用（不设置会报命令不存在）
+docker run --rm -e CONDA_PREFIX=/opt/conda/envs/longreadsum \
+    -u $(id -u):$(id -g) -v $PWD:/data -w /data \
+    quay.io/bioinfortools/longreadsum:1.6.0 \
+    /opt/conda/envs/longreadsum/bin/longreadsum --help
 ```
 
 官方 Docker Hub（旧 miniconda 配方，pin 1.5.0，仅作参考）：`docker pull genomicslab/longreadsum`。

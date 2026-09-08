@@ -203,4 +203,5 @@ bash test/run_test.sh   # argv 构造 + schema 自省为常驻断言；Rscript+M
 * **Docker（官方老镜像）**：`docker pull quay.io/biocontainers/r-matrixeqtl:2.1.1--r3.3.1_0`
 * **Singularity（官方老镜像）**：<https://depot.galaxyproject.org/singularity/r-matrixeqtl%3A2.1.1--r3.4.1_0>
 * **自建新版配方**：`native/Dockerfile` + `native/Apptainer.def`（rocker/r-ver:4.5.2 + MatrixEQTL 2.3）
+* **社区镜像（同自建配方，已发布）**：`docker pull quay.io/bioinfortools/r_matrixeqtl:2.3`（rocker/r-ver:4.5.2 + OpenBLAS + MatrixEQTL 2.3）
 * 安装方式（本地）：`Rscript -e 'install.packages("MatrixEQTL", repos="https://cloud.r-project.org")'`

@@ -49,6 +49,7 @@ implementations:
     galaxyproject: depot.galaxyproject.org/singularity/r-matrixeqtl:2.1.1--r3.4.1_0（官方旧镜像）
     r_channel: https://anaconda.org/channels/r/packages/r-matrixeqtl/overview（anaconda r 频道）
     self_built: native/Dockerfile + Apptainer.def（rocker/r-ver:4.5.2 + MatrixEQTL，新版替代，推荐）
+    bioinfortools: quay.io/bioinfortools/r_matrixeqtl:2.3（rocker/r-ver:4.5.2 + OpenBLAS + MatrixEQTL 2.3，与 self_built 同源、已发布）
     install_hint: 宿主机直接 R install.packages('MatrixEQTL')（见 README/native/install.sh）；
       容器 docker pull 自建镜像或官方旧镜像（README 环境安装 §2/§3）
 default_implementation: r_matrixeqtl_native
