@@ -1,0 +1,83 @@
+# =============================================================================
+# aspera-connect native Apptainer 定义文件（无官方镜像，官方 Connect 安装器兜底）
+#
+# 与 native/Dockerfile 同路线（2026-09-08 核实官方渠道全无）：
+#   bioconda/conda-forge 无 aspera 包（api 全 404）/ quay.io/biocontainers 无 /
+#   depot.galaxyproject.org singularity aspera-connect:4.2.19.956 404 / nf-core modules 无 /
+#   snakemake-wrappers bio/ 无 / homebrew 两源无 → debian:bookworm-slim + ca-certificates +
+#   官方 ibm-aspera-connect tar.gz（内层自解压 .sh 安装器）；无 depot 预构建 sif，
+#   只能本地构建（不能 apptainer pull 直拉）。
+#
+# 官方最新（2026-09-08 抓取 https://www.ibm.com/aspera/connect/ + HEAD 实测 HTTP 200）：
+#   https://d3gcli72yxqn2z.cloudfront.net/downloads/connect/latest/bin/ibm-aspera-connect_4.2.19.956-HEAD_linux_x86_64.tar.gz
+#   （latest 为滚动指针、文件名带 -HEAD；版本号可能继续更新 → 重建前重查官方页面并更新本文件 URL）
+# 安装：IBM 官方手册：按用户安装到 $HOME/.aspera/connect，勿以 root 运行安装器 → %post 以 nobody +
+#   HOME=/opt/aspera 运行安装器；ascp 落 /opt/aspera/.aspera/connect/bin/ascp → 软链 /usr/local/bin/ascp。
+#   ENV HOME=/opt/aspera 使容器内 main.py 默认密钥路径（~/.aspera/connect/etc/...）一致。
+#   IBM 官方页面未公布安装包 sha256（2026-09-08 核实）→ 不内嵌伪造校验和。
+#
+# ⚠️ 专有许可：Aspera 为 IBM 专有软件（非开源，不随镜像分发 EULA 文本）；本配方仅供个人/机构内部
+#   使用，不得随意再分发；使用前请阅读并遵守 IBM 官方 EULA。本配方仅「录入」，未实跑构建。
+#
+# 构建：apptainer build aspera-connect-4.2.19.956.sif modules/aspera-connect/native/Apptainer.def
+# 运行：apptainer run -B $PWD:/data -H /data aspera-connect-4.2.19.956.sif \
+#         ascp -T -l 200M -i /opt/aspera/.aspera/connect/etc/<key文件> \
+#         --host=ftp-private.ncbi.nlm.nih.gov --user=anonftp --mode=recv \
+#         /sra/sra-instant/reads/ByRun/sra/SRR/SRR797/SRR797242 .
+#   （若 4.2+ 随包无 asperaweb_id_dsa.openssh —— 实机核查 macOS 4.2.13 App 已无该 DSA 密钥（仅
+#     aspera_tokenauth_id_rsa），Linux 4.2.19.956 包未实跑核实 → 大概率需自备密钥：把宿主密钥挂载进
+#     容器 -B $PWD/key:/key 后 -i /key/...）
+#   ascp --version 实机输出示例：'IBM Aspera Connect version 4.2.13 (820)' / 'ascp version 4.4.3.820'
+#     （ascp 自报版本与 Connect 包版本不一致属正常 → %test 断言以 'ascp version'/'Usage: ascp' 为准）
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    org.bioskills.software aspera-connect
+    org.bioskills.impl native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.aspera_connect_version 4.2.19.956
+    org.bioskills.pkg_route "official Connect tar.gz (self-extracting .sh installer) + runuser nobody; no miniconda"
+    org.bioskills.license_note "IBM proprietary (EULA not redistributed; internal use only)"
+
+%environment
+    export ASPERA_VERSION=4.2.19.956
+    export HOME=/opt/aspera
+    export TMPDIR=/tmp
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    ASCP_URL="https://d3gcli72yxqn2z.cloudfront.net/downloads/connect/latest/bin/ibm-aspera-connect_4.2.19.956-HEAD_linux_x86_64.tar.gz"
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates wget
+    wget -q -O /tmp/aspera-connect.tar.gz "${ASCP_URL}"
+    mkdir -p /tmp/aspera-inst
+    tar -xzf /tmp/aspera-connect.tar.gz -C /tmp/aspera-inst
+    installer="$(find /tmp/aspera-inst -maxdepth 1 -type f -name 'ibm-aspera-connect*.sh' | head -n 1)"
+    test -n "${installer}"
+    mkdir -p /opt/aspera
+    chown nobody:nogroup /opt/aspera
+    # IBM 官方手册：勿以 root 运行 Connect 安装器 → 以 nobody + HOME=/opt/aspera 执行
+    runuser -u nobody -- env HOME=/opt/aspera sh "${installer}"
+    test -x /opt/aspera/.aspera/connect/bin/ascp
+    chown -R root:root /opt/aspera
+    chmod -R a+rX /opt/aspera
+    # 运行期 ascp 若需在安装目录下建 session/log 子项 → 目录打 sticky 位
+    chmod 1777 /opt/aspera/.aspera/connect
+    ln -s /opt/aspera/.aspera/connect/bin/ascp /usr/local/bin/ascp
+    rm -rf /tmp/aspera-connect.tar.gz /tmp/aspera-inst
+    apt-get purge -y wget
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man /usr/share/info /tmp/* /var/tmp/*
+
+%runscript
+    exec /usr/local/bin/ascp "$@"
+
+%test
+    test -x /usr/local/bin/ascp && echo "ascp present OK"
+    out="$({ ascp --version 2>&1 || true; ascp --help 2>&1 || true; } | head -n 20)"
+    echo "$out" | head -n 4
+    echo "$out" | grep -qiE "ascp version|Usage: ascp" && echo "aspera-connect ascp assertion OK"

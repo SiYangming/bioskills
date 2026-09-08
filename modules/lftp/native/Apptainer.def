@@ -1,0 +1,48 @@
+# =============================================================================
+# lftp native Apptainer 定义文件（查无生物官方镜像 → 通用网络工具 apt 最小化）
+#
+# 与 native/Dockerfile 同路线（2026-09-08 核实生物官方渠道全无）：
+#   bioconda lftp 404 / quay.io/biocontainers/lftp 无（API 401，对照 samtools 200）/
+#   depot.galaxyproject.org singularity lftp:4.9.3 404 / nf-core modules/lftp 404 /
+#   snakemake-wrappers bio/lftp 404
+#   → debian:bookworm-slim + apt lftp（最小化，不引入 micromamba）。
+# 版本：bookworm apt lftp=4.9.2-2（4.9.2 系；上游/conda-forge/brew=4.9.3，minor 差异见 meta
+#   software_versions.native note）→ %test 按实际输出断言 4.9 系。
+#
+# 构建：apptainer build lftp-4.9.2.sif modules/lftp/native/Apptainer.def
+# 运行：apptainer run -B $PWD:/data -H /data lftp-4.9.2.sif \
+#         -e "get -c /sra/.../SRR797242.sra; exit" ftp-trace.ncbi.nlm.nih.gov
+#       apptainer run lftp-4.9.2.sif --version
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    org.bioskills.software lftp
+    org.bioskills.impl native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.lftp_version "4.9.2-2 (apt bookworm; 上游/conda-forge/brew=4.9.3)"
+    org.bioskills.pkg_route "apt-get install --no-install-recommends lftp ca-certificates; no miniconda"
+
+%environment
+    export TMPDIR=/tmp
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends lftp ca-certificates
+    # 版本断言：bookworm apt lftp 为 4.9.2 系（dpkg 版本含 4.9.2-2；与 4.9.3 minor 差异见文件头）
+    dpkg -l | awk '$2=="lftp"{print $3}' | grep -Eq '^4\.9'
+    # 清理四连 + 移除仅构建期依赖（缺一不可）
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man /usr/share/info /tmp/* /var/tmp/*
+
+%runscript
+    exec /usr/bin/lftp "$@"
+
+%test
+    lftp --version 2>&1 | grep -E "Version 4\.9" || { echo "lftp version assertion FAILED"; exit 1; }
+    dpkg -l | awk '$2=="lftp"{print $3}' | grep -Eq '^4\.9' || { echo "dpkg version assertion FAILED"; exit 1; }
+    echo "lftp (bookworm apt 4.9.2 系) version assertion OK"

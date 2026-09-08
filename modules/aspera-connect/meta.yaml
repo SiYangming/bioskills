@@ -1,0 +1,156 @@
+software: aspera-connect
+canonical: aspera-connect
+category: data_acquisition
+description: |-
+  IBM Aspera Connect（命令行工具名 ascp，安装包名 ibm-aspera-connect）是基于 FASP 协议的专有
+  高速文件传输客户端：在长距离 / 高延迟 / 丢包链路上显著快于 FTP / HTTP / SCP，是从 NCBI SRA、
+  EBI ENA 等大型公共数据库高速下载大文件的行业标准工具（生信场景以 `ascp` CLI + 公共共享密钥
+  anonftp / era-fasp 免密高速下载）。官方仅分发自解压安装包（Linux x86_64 tar.gz 内层 .sh /
+  macOS pkg / Windows msi），按用户安装到 $HOME/.aspera/connect（ascp 位于 bin/ascp，公共密钥位于
+  etc/）。注意：Aspera 为 IBM 专有软件（非开源），本模块只做方法/命令/链接/配方「录入」（仅 amd64），
+  禁止真实下载/构建/安装/运行；容器配方仅供个人/机构内部使用，使用前须阅读并遵守 IBM EULA。
+homepage: https://www.ibm.com/products/aspera
+license: IBM 专有许可（非自由软件，见 EULA；不得随意再分发）
+software_versions:
+- id: aspera_connect_native
+  aspera-connect: '4.2.19.956'
+  ascp: 随包（ascp 自报版本号与 Connect 包版本 4.2.19.956 的精确对应关系未核实）
+  build_route: 官方渠道全无（bioconda/conda-forge 无 aspera 包 404 → quay.io/biocontainers 无 →
+    depot.galaxyproject.org 无 → nf-core modules 无 → snakemake-wrappers bio/ 无 → homebrew 两源无，
+    2026-09-08 逐条核实）→ 自建容器（debian:bookworm-slim + 官方 Connect tar.gz 自解压 .sh）或宿主机
+    官方安装包（native/install.sh binary 默认；无 conda 包 → conda 分支仅建 python 驱动 env）
+  source: https://d3gcli72yxqn2z.cloudfront.net/downloads/connect/latest/bin/ibm-aspera-connect_4.2.19.956-HEAD_linux_x86_64.tar.gz
+    （IBM 官方下载页 https://www.ibm.com/aspera/connect/ 所列 Linux x86_64「latest」直链；2026-09-08
+    抓取页面 + HEAD 实测 HTTP 200。latest 为滚动指针，文件名带 -HEAD 标签，版本号可能继续更新 ——
+    重建前以官方页面为准）
+  note: >-
+    IBM 官方下载页未公布安装包 sha256（2026-09-08 核实，页面无校验和字段）→ 本模块与 install.sh /
+    容器配方均不内嵌 sha256（杜绝编造），HTTPS 直链下载完整性请自行核对。IBM 官方手册：Linux 安装为
+    tar -zxvf 后运行内层 ibm-aspera-connect_*.sh，按用户安装到 $HOME/.aspera/connect，且勿以 root 运行
+    安装器。旧式直链 https://d3gcli72yxqn2z.cloudfront.net/connect/bin/ibm-aspera-connect-3.9.6.177839-linux-g2.12-64.tar.gz
+    2026-09-08 实测已 404（历史留存，勿再用）；downloads.asperasoft.com/connect2/ 亦不可达。
+    密钥：公共数据源下载所用的 asperaweb_id_dsa.openssh 位于安装目录 etc/（用户在 3.9.6.177839 包实装
+    验证：~/.aspera/connect/etc/asperaweb_id_dsa.openssh）；社区报告 Connect 4.2+ 或不再随包提供该密钥
+    （未核实 IBM 官方说明）→ 缺失时显式 --key 指定其它密钥/路径。
+- id: aspera_connect_nextflow_nfcore
+  module_version: （官方无此模块）
+  note: nf-core modules 无 modules/nf-core/aspera-connect 与 modules/nf-core/ascp 目录（2026-09-08
+    GitHub API https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ascp 返回 404），
+    未登记；Nextflow 场景请容器化（自建镜像）后走 native ascp 子命令，或宿主 ascp。
+- id: aspera_connect_snakemake_wrappers
+  wrapper_tag: （官方无此 wrapper）
+  note: snakemake-wrappers 无 bio/aspera-connect 与 bio/ascp 目录（2026-09-08 GitHub API
+    https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ascp 返回 404），未登记；
+    Snakemake 场景请在容器内 PATH 直调 ascp 或走 native ascp 子命令。
+implementations:
+- id: aspera_connect_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.2.19.956"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。实现
+    ascp（构造 --mode=recv 高速下载命令；默认参数对齐 NCBI SRA 官方免密共享下载形态）与 version
+    （ascp --version 冒烟）两个技能子命令；ascp 无线程/tmpdir 参数 → 技能层 --threads/--tmpdir 仅接受
+    不注入。查无官方 conda 包/镜像/流程模块（官方渠道全 404，2026-09-08 逐条核实），宿主机与容器安装
+    路线见 README「环境安装」。Aspera 为 IBM 专有软件，仅录入不实下载/构建/运行，EULA 合规自行负责。'
+  container_ref:
+    bioconda: （无——api.anaconda.org/package/bioconda/aspera-connect、/aspera、/ascp 均 HTTP 404，
+      2026-09-08 核实）
+    conda_forge: （无——api.anaconda.org/package/conda-forge/aspera-connect 与 /aspera 均 HTTP 404，
+      2026-09-08 核实）
+    quay_biocontainers: （无——quay.io/biocontainers/aspera-connect 不存在（quay API v1 401 = 无此公开
+      仓库；对照已知仓库 200），2026-09-08 核实）
+    depot_galaxyproject: （无——https://depot.galaxyproject.org/singularity/aspera-connect:4.2.19.956
+      HTTP 404，2026-09-08 核实）
+    nfcore_module: （官方无——modules/nf-core/ascp 与 aspera-connect GitHub API 均 404，2026-09-08 核实）
+    snakemake_wrapper: （官方无——bio/ascp 与 bio/aspera-connect GitHub API 均 404，2026-09-08 核实）
+    dockerhub_ibm: ibmcom/aspera-cli（IBM 官方 aspera-cli 容器，属 Aspera CLI 产品线而非 Connect；
+      本网络核实 hub.docker.com API 超时（000）→ 未确认，仅补充线索并标注未核实）
+    install_hint: 宿主机一键 bash native/install.sh（binary 默认装官方 4.2.19.956 到
+      ${HOME}/.aspera/connect 并写 PATH + ascp 版本断言；--method conda 无包可用 → 仅建 python 驱动
+      env）。容器：自建配方 native/Dockerfile + Apptainer.def（amd64，debian:bookworm-slim + 官方
+      tar.gz 自解压 .sh，仅录入不实构建）。
+default_implementation: aspera_connect_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: aspera-connect 技能子命令：ascp（构造 --mode=recv 高速下载命令）/ version（ascp
+      --version 冒烟）
+  source:
+    type: string
+    required: false
+    description: 远端源路径（ascp 必填；NCBI SRA 形态 /sra/sra-instant/reads/ByRun/sra/SRR/SRR797/SRR797242，
+      ENA 形态 vol1/fastq/ERR164/ERR164407/ERR164407.fastq.gz；用户实装验证用法原样录入）
+  dest:
+    type: string
+    default: .
+    required: false
+    description: 本地目标目录或文件（ascp；默认 .）
+  rate:
+    type: string
+    default: 200M
+    cli_arg: -l
+    description: 限速（-l；默认 200M 对齐用户实装用法；ENA 官方示例常用 300m）
+  key:
+    type: file
+    default: ~/.aspera/connect/etc/asperaweb_id_dsa.openssh
+    cli_arg: -i
+    description: 私钥/认证密钥（-i；默认 NCBI 公共共享密钥路径，3.x 实装验证形态；实机核查 4.2.x
+      macOS 随包已无该 DSA 密钥 → 缺失时显式指定自备密钥）
+    format:
+    - openssh-key
+  host:
+    type: string
+    default: ftp-private.ncbi.nlm.nih.gov
+    cli_arg: --host
+    description: FASP 主机（--host；默认 NCBI；ENA 用 fasp.sra.ebi.ac.uk）
+  user:
+    type: string
+    default: anonftp
+    cli_arg: --user
+    description: 远端用户（--user；默认 NCBI anonftp；ENA 用 era-fasp）
+  port:
+    type: integer
+    required: false
+    cli_arg: -P
+    description: 远端端口（-P；NCBI 默认形态不传；ENA 传 33001）
+  threads:
+    type: integer
+    default: 2
+    cli_arg: --threads
+    description: 技能层线程覆盖（ascp 无线程参数 → 仅接受不注入，记录说明；version 同理）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 ascp 的额外参数（高级用法，慎用；如 -k 1 断点续传等）
+outputs:
+  downloaded_files:
+    type: file
+    description: 下载到本地目标目录/文件的数据（SRA .sra / fastq.gz 等；命名随远端，由 ascp 生成，
+      勿臆造固定文件名）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  container_official: 查无官方维护镜像（bioconda/conda-forge 无包 + quay.io/biocontainers 无 +
+    depot.galaxyproject.org 无，2026-09-08 核实）→ 保留自建配方（linux/amd64，debian:bookworm-slim +
+    ca-certificates + 官方 Connect tar.gz 自解压 .sh，不引入 miniconda）；补充：Docker Hub
+    ibmcom/aspera-cli 属 Aspera CLI 产品线（本网络未核实 000，仅线索）。
+  note: '本镜像配方仅「录入」，未实跑核实；IBM 官方手册提示勿以 root 运行 Connect 安装器 → 配方内以
+    构建期 nobody 用户 + HOME=/opt/aspera 运行 .sh 安装器，ascp 落于 /opt/aspera/.aspera/connect/bin/ascp
+    并软链 /usr/local/bin/ascp。Aspera 为 IBM 专有软件：容器仅个人/机构内部使用，不随镜像再分发 EULA 文本。'
+optimization:
+  default_cpus: 2
+  default_mem_mb: 2048
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    ascp: 2
+    version: 1
+    default: 2
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: ascp

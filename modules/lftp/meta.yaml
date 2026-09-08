@@ -1,0 +1,150 @@
+software: lftp
+canonical: lftp
+category: data_transfer
+description: 'lftp 是一款多协议命令行文件传输客户端（FTP/FTPS/HTTP/HTTPS/SFTP/fish/torrent 等），
+  自带任务控制（job control + readline 输入）、书签、内建 mirror 镜像命令与并行传输（-P），
+  支持断点续传（get -c / mirror -c）与 `-e "<命令串>; exit" <host>` 的非交互执行形态。生信场景
+  主要用于从 NCBI / ENA(EBI) / Ensembl 等公共库以 FTP/HTTPS 批量下载大文件（SRA/FASTQ/参考基因组
+  等）与目录镜像。上游最新稳定 4.9.3（2024-11-08 发布，lftp.yar.ru 首页 events）；**无生物官方
+  渠道**（bioconda lftp 404 → quay.io/biocontainers/lftp 无 → depot.galaxyproject.org 404，
+  2026-09-08 核实，见 software_versions 证据）→ 本项目按通用网络工具处理：conda-forge / Homebrew /
+  Debian apt / 官方源码编译；容器走自建配方（apt 最小化）。'
+homepage: https://lftp.yar.ru/
+license: GPL-3.0-or-later
+software_versions:
+- id: lftp_native
+  lftp: '4.9.3'
+  build_route: 查无生物官方维护（bioconda lftp 404 → quay.io/biocontainers/lftp 无（quay API 401 =
+    仓库不存在，对照已知仓库 biocontainers/samtools 200）→ depot.galaxyproject.org singularity
+    lftp:4.9.3 404，2026-09-08 核实）→ 按通用网络工具处理：宿主机 conda-forge::lftp=4.9.3 /
+    brew install lftp（homebrew-core）/ Debian apt / 官方源码编译；容器自建配方（native/Dockerfile +
+    Apptainer.def：debian:bookworm-slim + apt lftp=4.9.2-2 + ca-certificates，linux/amd64）
+  source: 'conda-forge：https://anaconda.org/conda-forge/lftp（API 2026-09-08 核实 latest=4.9.3，
+    历史 4.7.7/4.8.4/4.9.2/4.9.3）；Homebrew core：https://formulae.brew.sh/api/formula/lftp.json
+    （stable=4.9.3，desc="Sophisticated file transfer program"，SPDX GPL-3.0-or-later，同名核对
+    确为 lftp FTP 客户端）；官方源码：https://lftp.yar.ru/ftp/lftp-4.9.3.tar.xz（2026-09-08 核实
+    HTTP 200，1872104 B）与 GitHub release
+    https://github.com/lavv17/lftp/releases/download/v4.9.3/lftp-4.9.3.tar.gz（v4.9.3 唯一资产）'
+  note: '版本多来源差（各注明）：上游源码 4.9.3（2024-11-08 events）；conda-forge lftp latest=4.9.3；
+    brew stable=4.9.3（与 meta 登记一致，以 formula 为准）；Debian bookworm(oldstable) apt
+    lftp=4.9.2-2、Debian stable(trixie) 4.9.2-3、testing/unstable 4.9.3-3（2026-09 用户核实）——
+    自建 Dockerfile/Apptainer.def 走 bookworm 4.9.2 系（与 4.9.3 有 minor 差异，构建断言按实际
+    dpkg/lftp --version 输出匹配 4.9 系）。官网 https://lftp.yar.ru/get.html 下载页仍列 4.9.2
+    （页面滞后），首页 events 与 ftp 归档目录均已有 4.9.3；官方对源码归档仅发布 .md5sum + GPG .asc
+    （sha256 未核实），GitHub release tar.gz 的 sha256=68116cc184ab660a78a4cef323491e89909e5643b
+    59c7b5f0a14f7c2b20e0a29（homebrew-core formula JSON 校验值，2026-09-08 核实）。'
+- id: lftp_nextflow_nfcore
+  module_version: （官方无此模块）
+  note: nf-core modules 无 modules/nf-core/lftp 目录（2026-09-08 抓取 GitHub API
+    https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/lftp 返回 404），未登记；
+    Nextflow 场景请用容器镜像（自建或 conda-forge）后走 native get/mirror 子命令。
+- id: lftp_snakemake_wrappers
+  wrapper_tag: （官方无此 wrapper）
+  note: snakemake-wrappers 无 bio/lftp 目录（2026-09-08 抓取 GitHub API
+    https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/lftp 返回 404），未登记；
+    Snakemake 场景请在容器内 PATH 直调 lftp 或走 native get/mirror/eval 子命令。
+implementations:
+- id: lftp_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.9.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    lftp 主命令无内置子命令体系（以 `lftp -e "<命令串>; exit" <host>` 形态执行），本驱动设计技能层
+    子命令：get（远程路径断点续传下载，get -c）/ mirror（镜像同步，mirror -c）/ eval（自定义命令串
+    +host）；参数白名单（host / remote_path / remote_dir / local_dir / command）+ --extra-args
+    （lftp 全局参数）与 --extra-lftp-cmds（-e 命令串内追加）透传；--threads 映射全局 -P N（最大
+    并行连接数；mirror 默认 8、get 默认 4、eval 默认 1）。查无生物官方渠道 → 通用网络工具，
+    宿主机与容器安装路线见 README「环境安装」。'
+  container_ref:
+    bioconda: （无——anaconda.org 的 bioconda 频道无 lftp 包：页面 404 + api.anaconda.org/package/
+      bioconda/lftp HTTP 404，2026-09-08 核实）
+    quay_biocontainers: （无——quay.io/api/v1/repository/biocontainers/lftp 返回 401 Requires
+      authentication = 仓库不存在；对照已知仓库 biocontainers/samtools 返回 200，2026-09-08 核实）
+    depot_galaxyproject: （无——https://depot.galaxyproject.org/singularity/lftp:4.9.3 HTTP 404，
+      2026-09-08 核实）
+    nfcore_module: （官方无——modules/nf-core/lftp GitHub API 404，2026-09-08 核实）
+    snakemake_wrapper: （官方无——snakemake-wrappers bio/lftp GitHub API 404，2026-09-08 核实）
+    install_hint: 通用网络工具（非生物官方）：conda-forge 有 lftp（bioconda 无）→ 宿主机默认
+      conda-forge::lftp=4.9.3（native/install.sh conda 路线；等价 native/environment.yml）；无 conda
+      时官方源码编译到 ~/software/lftp-4.9.3（install.sh binary 路线）；容器自建配方
+      （native/Dockerfile + Apptainer.def，debian:bookworm-slim + apt lftp，linux/amd64）。
+      Homebrew：brew install lftp（homebrew-core，4.9.3）。
+default_implementation: lftp_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: lftp 技能子命令：get（远程路径断点续传下载 get -c）/ mirror（镜像同步 mirror -c）/
+      eval（自定义 lftp 命令串 + host）
+  host:
+    type: string
+    required: false
+    description: 远端主机（如 ftp-trace.ncbi.nlm.nih.gov / ftp.sra.ebi.ac.uk / ftp.ensembl.org；
+      作为 lftp 命令行最后的 host 参数）
+  remote_path:
+    type: string
+    required: false
+    description: get 的远程文件路径（如
+      /sra/sra-instant/reads/ByRun/sra/SRR/SRR797/SRR797242/SRR797242.sra）
+  remote_dir:
+    type: string
+    required: false
+    description: mirror 的远程目录路径（如 /vol1/fastq/SRR797）
+  local_dir:
+    type: string
+    default: .
+    description: 本地下载/镜像目录（在 -e 命令串内写 lcd <local_dir>；默认当前目录）
+  continue:
+    type: boolean
+    default: true
+    description: get/mirror 使用 -c 断点续传（默认开；CLI 用 --no-continue 关闭）
+  command:
+    type: string
+    required: false
+    description: eval 的自定义 lftp 命令串（多条用 ; 分隔；未以 exit 结尾时自动补 "; exit" 保证退出）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数/并发数（映射 lftp 全局 -P N 最大并行连接数；显式给优先，缺省取 optimization
+      per_subcommand_threads：mirror 8 / get 4 / eval 1）
+  extra_args:
+    type: string
+    required: false
+    description: 白名单外的 lftp 全局参数原样透传（置于 -e 之前，如 "-u user:pass"）
+  extra_lftp_cmds:
+    type: string
+    required: false
+    description: 追加到 -e 命令串末尾（exit 之前）的额外 lftp 命令（如 "set net:timeout 30"；多条
+      用 ; 分隔）
+outputs:
+  downloaded_file:
+    type: file
+    description: get 在 local_dir 下生成的远程文件（本地文件名与远程 basename 相同；-c 断点续传
+      部分文件续传完成）
+  mirrored_tree:
+    type: directory
+    description: mirror 在 local_dir 下生成的远程目录镜像树（mirror -c 续传已完成文件）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  container_official: 查无生物官方维护镜像（bioconda lftp 404 → quay.io/biocontainers/lftp 无（API
+    401）→ depot.galaxyproject.org 404，2026-09-08 核实）→ 通用网络工具自建配方：debian:bookworm-slim
+    + apt lftp（bookworm=4.9.2-2）+ ca-certificates + 清理四连 + 版本断言（linux/amd64，不引入
+    miniconda）；conda-forge / brew 为宿主机首选，见 README「环境安装」。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 1024
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    mirror: 8
+    get: 4
+    eval: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: lftp

@@ -1,0 +1,17 @@
+# lftp native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）安装 lftp 本体 + main.py 驱动依赖
+#       （python/pyyaml 供 --schema / --list-commands / get/mirror/eval 编排自省）；
+#       离线 / 非容器备选。
+# 版本对齐：modules/lftp/meta.yaml software_versions.native lftp=4.9.3
+# 说明：lftp 在 **conda-forge**（latest=4.9.3，2026-09-08 api.anaconda.org 核实）；bioconda 无 lftp
+#       （页面 + api.anaconda.org/package/bioconda/lftp HTTP 404，2026-09-08 核实）→ 仅用 conda-forge
+#       channel，不加 bioconda。等价一键安装：bash native/install.sh（conda 路线）。
+#       容器路线：native/Dockerfile + Apptainer.def（debian:bookworm-slim + apt lftp=4.9.2-2，
+#       linux/amd64，查无官方生物镜像 → 自建，不引入 miniconda），详见模块 README。
+name: lftp-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - lftp=4.9.3
+  - pyyaml>=6.0

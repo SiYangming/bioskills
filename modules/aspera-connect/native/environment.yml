@@ -1,0 +1,16 @@
+# aspera-connect native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）提供 main.py 驱动的 python/pyyaml
+#       （--schema / --list-commands / ascp 编排自省）；离线 / 非容器备选。
+# 版本对齐：modules/aspera-connect/meta.yaml software_versions.native aspera-connect=4.2.19.956
+# 说明：aspera-connect/aspera/ascp 在 bioconda 与 conda-forge 均无包（2026-09-08 核实：
+#       api.anaconda.org/package/{bioconda,conda-forge}/{aspera-connect,aspera,ascp} 全 HTTP 404）
+#       → 本文件只建「python 驱动 env」，ascp 本体单独安装（官方安装包，见
+#       native/install.sh binary 路线 / README「环境安装 §4」；容器见 native/Dockerfile +
+#       Apptainer.def —— 查无官方镜像 → 自建，linux/amd64，不引入 miniconda）。
+#       专有许可：Aspera 为 IBM 专有软件（非开源），EULA 合规由使用者自行负责。
+name: aspera-connect-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml>=6.0
