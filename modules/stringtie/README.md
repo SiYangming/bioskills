@@ -74,6 +74,13 @@ done
 ### 3. 生成 count 矩阵（prepDE.py3，供 DESeq2 / edgeR 差异分析）
 
 > 提示：bioconda 环境不含 prepDE 脚本，需单独获取。`prepDE.py3`（Python 3 版；历史 Python 2 版为 `prepDE.py`）随官方 GitHub release 包自带，用 `native/install.sh` 的 binary 模式会自动装入 `--prefix/bin`，亦可从 <https://github.com/gpertea/stringtie> 单独下载。
+>
+> 单独获取历史 Python 2 版 `prepDE.py`（官方软件站直链；若该站不可达，请改用上方 GitHub release 内自带版本）：
+>
+> ```bash
+> wget https://ccb.jhu.edu/software/stringtie/dl/prepDE.py -P ~/software
+> chmod 755 ~/software/prepDE.py
+> ```
 
 ```bash
 # 准备 GTF 文件列表（样品名\tGTF 文件路径）
