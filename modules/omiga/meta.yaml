@@ -1,0 +1,142 @@
+software: omiga
+canonical: omiga
+category: qtl
+description: 'OmiGA（OmiGA/Omics Genetic Analysis，华南农业大学 SCAU-AnimalGenetics 实验室）是一套
+  面向组学遗传分析的 QTL 定位与全基因组关联分析套件：主程序为单一大命令 + `--mode` 子模式
+  （cis / cis_independent / cis_interaction / cis_mt / trans / GWAS(gwas) / her_est / enrich /
+  plot 等），覆盖 cis-QTL / trans-QTL / 全基因组关联 / 遗传力估计 / 富集与绘图等分析。官方仅分发
+  Linux x86_64 预编译二进制（tar.xz，自带运行时），源码仓库 GitHub SCAU-AnimalGenetics/OmiGA
+  （仅源码 + src zip，无二进制 release），官网 https://omiga.bio/（docsify）；引用论文 Nature
+  Communications 2026（10.1038/s41467-026-68978-0）。'
+homepage: https://omiga.bio/
+license: GPL-3.0
+software_versions:
+- id: omiga_native
+  omiga: '1.8.17'
+  build_route: 查无官方维护（bioconda omiga 404 → quay.io/biocontainers/omiga 无 → depot.galaxyproject.org
+    singularity omiga:1.8.17 404，2026-09-08 核实）→ 自建容器（debian:bookworm-slim 多阶段 + 官方预编译
+    tar.xz 下载/sha256sum 校验/解压，见 native/Dockerfile / Apptainer.def）或宿主机官方二进制
+    （native/install.sh binary 路线；无 conda 包 → conda 分支仅建 python 驱动 env）
+  source: 'https://omiga.bio/releases/latest.json（发版单源；2026-09-07 抓取 release=1.8.17 →
+    filename=OmiGA-build-v1.8.17-x86_64.tar.xz，官方 sha256=6cfbed0b52085489d5a4b4b549c2343e6ae53921474087
+    cdf28876c2c214ea23，url=https://efile111.hpccube.com:65014/efile/s/d/YWNyZHBkcXZieQ==/08410635d771c08d
+    （efile111.hpccube.com 一次性 token 直链，仅 amd64））'
+  note: 'efile token 链接为一次性、会随发版失效/更换 → 重建容器或 install.sh --version 覆盖时，重新抓
+    latest.json 取最新 filename/sha256/url（勿沿用本文内嵌 URL/sha）；官方历史里仅 stable 版本提供
+    sha256（1.8.16 sha=3df80e…）；1.8.14+ 支持 `omiga --update`/`omiga update` 联网自升级；官网首页
+    Download 按钮仍显示 v1.8.14（滞后，以 latest.json 为准）。omiga --init 为首跑前初始化（产出 OK
+    自检文件）。'
+- id: omiga_nextflow_nfcore
+  module_version: （官方无此模块）
+  note: nf-core modules 无 modules/nf-core/omiga 目录（2026-09-08 抓取 GitHub API
+    https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/omiga 返回 404），未登记；
+    Nextflow 场景请容器化（自建镜像）后走 native run 子命令。
+- id: omiga_snakemake_wrappers
+  wrapper_tag: （官方无此 wrapper）
+  note: snakemake-wrappers 无 bio/omiga 目录（2026-09-08 抓取 GitHub API
+    https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/omiga 返回 404），未登记；
+    Snakemake 场景请在容器内 PATH 直调 omiga 或走 native run 子命令。
+implementations:
+- id: omiga_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.8.17"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。实现
+    run / init / update 三个子命令（对齐上游单一大命令形态 `omiga --mode <MODE> --threads N --genotype
+    <plink前缀> --phenotype <file> [--covariates <file>] --prefix <p> --output-dir <dir>` 与
+    `omiga --init` / `omiga --update` / `omiga --version`；run 的 --threads 自动注入，白名单外的
+    上游参数经 --extra-args 透传，不臆造模式内具体 flag）。查无官方 conda 包/镜像（官方渠道全 404
+    + 无 nf-core/snakemake-wrappers 模块），宿主机与容器安装路线见 README「环境安装」。'
+  container_ref:
+    bioconda: （无——anaconda.org 的 bioconda 频道无 omiga 包：页面 404 + api.anaconda.org/package/
+      bioconda/omiga HTTP 404，2026-09-08 核实）
+    quay_biocontainers: （无——quay.io/biocontainers/omiga 不存在（quay API v1 返回 401 Requires
+      authentication = 仓库不存在；对照已知仓库 samtools 返回 200，2026-09-08 核实））
+    quay_bioinfortools: quay.io/bioinfortools/omiga 仓库名存在但 0 个 tag（quay API tags={}，
+      2026-09-08 核实）→ 无可拉镜像，仅登记说明
+    depot_galaxyproject: （无——https://depot.galaxyproject.org/singularity/omiga:1.8.17 HTTP 404，
+      2026-09-08 核实）
+    nfcore_module: （官方无——modules/nf-core/omiga GitHub API 404，2026-09-08 核实）
+    snakemake_wrapper: （官方无——snakemake-wrappers bio/omiga GitHub API 404，2026-09-08 核实）
+    install_hint: 宿主机：bash native/install.sh（binary 路线 curl 官方 latest.json 直链 + 官方 sha256
+      校验 → ~/software/omiga-1.8.17，写 OMIGA_PATH/PATH → omiga --version 断言）；无官方 conda 包，
+      conda 分支仅建 python=3.11+pyyaml 驱动 env（omiga 本体走官方二进制）。容器：本地自建配方
+      （native/Dockerfile + Apptainer.def，debian:bookworm-slim，linux/amd64）。
+default_implementation: omiga_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: omiga 技能子命令：run（转发 omiga --mode 分析）/ init（omiga --init 首跑初始化）/
+      update（omiga --update 联网自升级）
+  mode:
+    type: string
+    required: true
+    cli_arg: --mode
+    description: run 的分析模式（上游单一大命令子模式）：cis | cis_independent | cis_interaction |
+      cis_mt | trans | GWAS（或 gwas）| her_est | enrich | plot 等（以 omiga --help 实际清单为准）
+  genotype:
+    type: string
+    required: false
+    cli_arg: --genotype
+    description: 基因型 PLINK 前缀（<前缀>.bed/.bim/.fam；cis 族 / trans / GWAS 等分析模式使用）
+  phenotype:
+    type: file
+    required: false
+    cli_arg: --phenotype
+    description: 表型文件（cis 族 / trans / GWAS 等分析模式使用）
+  covariates:
+    type: file
+    required: false
+    cli_arg: --covariates
+    description: 协变量文件（可选；如 cis 官方示例）
+  prefix:
+    type: string
+    required: false
+    cli_arg: --prefix
+    description: 输出结果前缀（run）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: --output-dir
+    description: 输出目录（run；omiga 结果文件写入该目录）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（run 自动注入 --threads N；缺省取 optimization 默认）
+  extra_args:
+    type: string
+    required: false
+    description: 白名单外的上游参数原样透传（高级用法，慎用；例如官方手册其它 --mode 专属参数）
+outputs:
+  result_files:
+    type: file
+    description: run 在 --output-dir 下生成的模式相关结果文件（关联/QTL 表与图谱等；具体命名随
+      --mode 由官方程序生成，勿臆造固定名）
+  init_ok_file:
+    type: file
+    description: omiga --init 首跑初始化产出的 OK 自检文件（Dockerfile/Apptainer.def 构建断言用；
+      位置见官方 Installation 手册，以实际为准）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  container_official: 查无官方维护镜像（bioconda omiga 404 → quay.io/biocontainers/omiga 无 →
+    depot.galaxyproject.org 无，2026-09-08 核实），故保留自建配方（linux/amd64，debian:bookworm-slim +
+    ca-certificates/tini，官方 tar.xz 多阶段下载 + sha256sum 校验 + 解压，不引入 miniconda）；补充说明：
+    quay.io/bioinfortools/omiga 仓库名存在但 0 tag（无可拉镜像，不构成可用渠道）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    run: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: omiga

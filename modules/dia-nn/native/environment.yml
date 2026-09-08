@@ -1,0 +1,20 @@
+# dia-nn native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）离线/非容器备选。
+# 版本对齐：modules/dia-nn/meta.yaml software_versions.native dia-nn=2.6.1（官方 zip 二进制，
+#       部署见 native/install.sh binary 路线或 README「环境安装 §4」）。
+# 说明：DIA-NN 不在 bioconda（2026-09-07 核实 404）；conda 路线仅有 YangmingSi 个人频道
+#       dia-nn=2.3.2（linux-64，2026-02 上传，配方归档于
+#       native/conda-recipe/linux-64/meta.yaml）→ 本文件以 yangmingsi 频道 2.3.2 为兜底，
+#       与官方 zip 2.6.1 版本有差异（如需 2.6.1 请用官方 zip / 模块容器镜像）。
+# python/pyyaml 供 main.py 驱动（自省/Schema）；polars/numpy/matplotlib 供 diann-stats.py。
+name: dia-nn-native
+channels:
+  - conda-forge
+  - yangmingsi
+dependencies:
+  - python=3.11
+  - dia-nn=2.3.2
+  - pyyaml>=6.0
+  - polars
+  - numpy
+  - matplotlib-base

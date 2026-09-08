@@ -1,0 +1,72 @@
+# dia-nn conda-build 配方（YangmingSi 个人频道 / 仅 linux-64）
+# ---------------------------------------------------------------------------
+# 用途：把 DIA-NN 官方 Academia Linux 二进制（diann-linux + 模型 + dll，运行依赖
+#       .NET 8 Runtime）打包为 conda 包，发布到个人频道 YangmingSi。
+# 平台：仅 linux-64 —— 官方仅分发 Windows .msi 与 Linux zip（无 macOS 二进制），
+#       DIA-NN 亦不在 bioconda（anaconda.org/bioconda/dia-nn 404，2026-09-07 核实），
+#       故只保留 linux-64 平台目录（与 orffinder/riborf/riboss 同型）。
+# 历史：dia-nn=2.3.2 已上传 YangmingSi 频道（2026-02-28 更新，linux-64），
+#       页面 https://anaconda.org/channels/YangmingSi/packages/dia-nn/overview
+# 重建（升级到 2.6.1）：官方 zip 不在仓库内（二进制树已从仓库删除以保持最小化），
+#       需先下载并解压到本地，再把下面 source.path 指向实际目录：
+#   wget https://github.com/vdemichev/DiaNN/releases/download/2.0/DIA-NN-2.6.1-Academia-Linux.zip
+#   unzip DIA-NN-2.6.1-Academia-Linux.zip     # 解出 DIA-NN-2.6.1-Academia-Linux/diann-2.6.1/
+#   conda build conda-recipe/linux-64  →  anaconda upload ...（发布至 YangmingSi）
+# 安装：conda install -c YangmingSi dia-nn=2.3.2（当前频道版本；2.6.1 重建上传后同式）
+# 说明：本配方为「自建频道兜底」——DIA-NN 官方无 conda 包、无 quay.io/biocontainers 镜像，
+#       nf-core 亦因无 conda 包而只能走容器（biocontainers/diann:v1.8.1_cv1）。
+# ---------------------------------------------------------------------------
+{% set name = "dia-nn" %}
+{% set version = "2.6.1" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+# 本配方以本地解压目录为 source（官方 zip 由用户先下载解压；URL/sha 直采亦可：
+#   url: https://github.com/vdemichev/DiaNN/releases/download/2.0/DIA-NN-2.6.1-Academia-Linux.zip
+#   sha256: f98e396af791f1903168b365a83fc2cc72208cc133281b9ce6ebe3a794b999ba
+source:
+  path: ./DIA-NN-2.6.1-Academia-Linux/diann-2.6.1
+
+build:
+  number: 0
+  skip: True  # [not linux]
+  # script: build.sh
+  # Allow bundled libraries
+  missing_dso_whitelist:
+    - '*'
+  # Don't check for rpath issues in bundled libs
+  rpaths:
+    - lib/
+    - lib/diann/
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+  host:
+  run:
+    - dotnet-runtime >=8.0
+    - _openmp_mutex
+    - libgcc-ng
+    - libstdcxx-ng
+    # Dependencies for the included python script (diann-stats.py)
+    - python
+    - polars
+    - numpy
+    - matplotlib-base
+
+test:
+  commands:
+    # Check if the executable exists
+    - test -f $PREFIX/bin/diann
+    # Try running help (might fail if no display or args, so allow failure)
+    - diann --help || true
+
+about:
+  home: https://github.com/vdemichev/DiaNN
+  license: Custom（Academia 版学术/非营利免费；商用需官方许可）
+  summary: 'DIA-NN: Deep learning-based analysis of data-independent acquisition mass spectrometry data'
+  description: |
+    DIA-NN is a universal software for data-independent acquisition (DIA) proteomics data processing.

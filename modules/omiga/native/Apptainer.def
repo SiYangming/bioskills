@@ -1,0 +1,65 @@
+# =============================================================================
+# omiga native Apptainer 定义文件（无官方镜像，官方预编译二进制兜底）
+#
+# 与 native/Dockerfile 同路线（2026-09-08 核实官方渠道全无）：
+#   bioconda omiga 404 / quay.io/biocontainers/omiga 无 / depot.galaxyproject.org
+#   singularity omiga:1.8.17 404 / nf-core modules/omiga 404 / snakemake-wrappers bio/omiga 404
+#   → debian:bookworm-slim + apt --no-install-recommends（仅 ca-certificates/curl/xz-utils
+#     构建期依赖）+ 官方 tar.xz（仅 Linux x86_64 / amd64）sha256sum 校验解压；
+#   quay.io/bioinfortools/omiga 仓库名存在但 0 tags → 无可拉 sif，只能本地构建。
+#   官方单源 https://omiga.bio/releases/latest.json（2026-09-07 抓取 release=1.8.17）：
+#   filename=OmiGA-build-v1.8.17-x86_64.tar.xz；
+#   sha256=6cfbed0b52085489d5a4b4b549c2343e6ae53921474087cdf28876c2c214ea23；
+#   url=efile111.hpccube.com 一次性 token 直链（会随发版失效 → 重建前重抓 latest.json 更新本文件）。
+#
+# 构建：apptainer build omiga-1.8.17.sif native/Apptainer.def
+# 运行：apptainer run -B $PWD:/data -H /data omiga-1.8.17.sif \
+#         --mode cis --threads 4 --genotype geno --phenotype pheno.txt \
+#         --prefix out --output-dir res
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    org.bioskills.software omiga
+    org.bioskills.impl native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.omiga_version 1.8.17
+    org.bioskills.pkg_route "official prebuilt tar.xz (latest.json) + sha256sum verify; no miniconda"
+
+%environment
+    export OMIGA_VERSION=1.8.17
+    export OMIGA_PATH=/opt/omiga/bin
+    export PATH=/opt/omiga/bin:${PATH}
+    export TMPDIR=/tmp
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    OMIGA_VERSION=1.8.17
+    OMIGA_URL="https://efile111.hpccube.com:65014/efile/s/d/YWNyZHBkcXZieQ==/08410635d771c08d"
+    OMIGA_SHA256="6cfbed0b52085489d5a4b4b549c2343e6ae53921474087cdf28876c2c214ea23"
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates curl xz-utils
+    # 下载官方 tar.xz → 官方 sha256 校验 → 解压（--strip-components=1 去掉顶层目录，bin/ 落 /opt/omiga/bin）
+    curl -fsSL -o /tmp/omiga.tar.xz "${OMIGA_URL}"
+    echo "${OMIGA_SHA256}  /tmp/omiga.tar.xz" | sha256sum -c -
+    mkdir -p /opt/omiga
+    tar -Jxf /tmp/omiga.tar.xz -C /opt/omiga --strip-components=1
+    chmod +x /opt/omiga/bin/*
+    # 首跑初始化：产出 OK 自检文件（官方 Installation.md）；失败不致命（可后续手动 --init）
+    /opt/omiga/bin/omiga --init || true
+    # 清理四连 + 移除仅构建期依赖
+    rm -f /tmp/omiga.tar.xz
+    apt-get purge -y curl xz-utils
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /usr/share/doc /usr/share/man /usr/share/info /tmp/* /var/tmp/*
+
+%runscript
+    exec /opt/omiga/bin/omiga "$@"
+
+%test
+    /opt/omiga/bin/omiga --init || true
+    /opt/omiga/bin/omiga --version 2>&1 | grep -q "1.8.17"
+    echo "OmiGA 1.8.17 version assertion OK"

@@ -1,0 +1,21 @@
+# genetribe native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）离线/非容器备选。
+# 版本对齐：modules/genetribe/meta.yaml software_versions.native genetribe=1.2.1（YangmingSi
+#       频道 noarch py_0，2026-07-13 上传；官方源码安装见 native/install.sh source 路线或
+#       README「环境安装 §4」）。
+# 说明：GeneTribe 不在 bioconda（2026-09-07 核实 404）；运行依赖 BLAST / BEDTools / jcvi
+#       （MCscan）均在 bioconda（jcvi 当前 1.6.7），故本文件以
+#       conda-forge + bioconda + yangmingsi 三频道直装（不引入 miniconda 之外的额外机制）。
+# python/pyyaml 供 main.py 驱动（自省/Schema）使用。
+name: genetribe-native
+channels:
+  - conda-forge
+  - bioconda
+  - yangmingsi
+dependencies:
+  - python=3.11
+  - genetribe=1.2.1
+  - blast
+  - bedtools
+  - jcvi
+  - pyyaml>=6.0

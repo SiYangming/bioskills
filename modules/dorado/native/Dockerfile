@@ -6,18 +6,20 @@
 #    软链 bin/dorado 到 /usr/local/bin"。
 # 不使用 miniconda / micromamba（dorado 无 conda 包）。
 #
-# 版本：默认 ARG DORADO_VERSION=0.9.1（示例 pin），构建时可用
-#   --build-arg DORADO_VERSION=<release> 覆盖；保持 "latest" 语义由用户指定。
+# 版本：默认 ARG DORADO_VERSION=2.1.2（2026-08-26 官方最新，与 meta software_versions 对齐），
+#   构建时可用 --build-arg DORADO_VERSION=<release> 覆盖。
 # 官方发布页：https://github.com/nanoporetech/dorado/releases
 #
+# 镜像为「dorado 二进制容器」（amd64 直用，ENTRYPOINT=dorado，见 AGENT.md §7 CLI 工具规范）；
+# native/main.py 驱动在宿主机运行，不随镜像分发（容器内无 base.py，import 会失败）。
 # 运行提示（重要）：dorado basecaller 需要模型目录（--model），首次运行会自动下载；
 # 模型文件较大，建议挂载宿主机模型缓存目录。产物归 root 的问题：
-#   docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data bioskills/dorado:latest-v1.0 \
-#       basecall rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
+#   docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data bioskills/dorado:2.1.2 \
+#       basecaller rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
 # ---------------------------------------------------------------------------
 FROM debian:bookworm-slim
 
-ARG DORADO_VERSION=0.9.1
+ARG DORADO_VERSION=2.1.2
 
 LABEL maintainer="bioskills"
 LABEL software="dorado"
@@ -54,14 +56,7 @@ RUN set -eux; \
     ln -sf /opt/dorado/bin/dorado /usr/local/bin/dorado; \
     /usr/local/bin/dorado --version
 
-# 3) 拷贝 native 驱动
-COPY main.py /opt/skill/main.py
-COPY meta.yaml /opt/skill/meta.yaml
-COPY test/ /opt/skill/test/
-
-ENV PYTHONPATH=/opt/skill
-
-# 4) 清理四连 + 删构建期 curl
+# 3) 清理四连 + 删构建期 curl
 RUN set -eux; \
     apt-get autoremove -y; \
     apt-get clean; \
@@ -70,5 +65,6 @@ RUN set -eux; \
 
 WORKDIR /data
 
-# ENTRYPOINT tini：负责正确收割僵尸进程 + 转发信号
-ENTRYPOINT ["/usr/bin/tini", "--", "python3", "/opt/skill/main.py"]
+# ENTRYPOINT tini：负责正确收割僵尸进程 + 转发信号；直接进 dorado 二进制（CLI 工具规范）
+ENTRYPOINT ["/usr/bin/tini", "--", "dorado"]
+CMD ["--help"]

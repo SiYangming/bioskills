@@ -3,26 +3,23 @@
 # 路线：与 Dockerfile 一致 —— dorado 不在 Debian apt / bioconda，apt 只装运行时，
 #       curl 下载官方 Linux x64 静态二进制 tar.gz 到 /opt/dorado，软链到 /usr/local/bin。
 #
-# 构建：apptainer build dorado.sif Apptainer.def（可用 APPTAINER_BUILD_ARGS 传 DORADO_VERSION）
-# 运行：apptainer run dorado.sif basecall rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
+# 构建：apptainer build dorado.sif Apptainer.def（默认 DORADO_VERSION=2.1.2，可用
+#       --build-arg 传 DORADO_VERSION 覆盖）
+# 运行：apptainer run dorado.sif basecaller rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
+# 说明：native/main.py 驱动在宿主机运行，不随镜像分发（容器内无 base.py）。
 
 Bootstrap: docker
 From: debian:bookworm-slim
 
 %arguments
-    DORADO_VERSION=0.9.1
+    DORADO_VERSION=2.1.2
 
 %labels
     Maintainer bioskills
     Software dorado
-    Version latest-v1.0
+    Version 2.1.2
     DoradoVersion {{ DORADO_VERSION }}
     PkgRoute apt(runtime)+official dorado binary (cdn.oxfordnanoportal.com)
-
-%files
-    main.py /opt/skill/main.py
-    meta.yaml /opt/skill/meta.yaml
-    test/ /opt/skill/test/
 
 %post
     export DEBIAN_FRONTEND=noninteractive
@@ -67,28 +64,22 @@ From: debian:bookworm-slim
 %environment
     export LANG=C.UTF-8
     export LC_ALL=C.UTF-8
-    export PYTHONDONTWRITEBYTECODE=1
-    export PYTHONUNBUFFERED=1
-    export PYTHONPATH=/opt/skill
-    export PATH=/opt/dorado/bin:$PATH
     export TMPDIR=/tmp
+    export PATH=/opt/dorado/bin:$PATH
 
 %runscript
-    exec /usr/bin/python3 /opt/skill/main.py "$@"
+    exec dorado "$@"
 
 %test
-    # 非交互自检：确保 dorado 二进制与驱动可用
+    # 非交互自检：确保 dorado 二进制可用（amd64）
     set -eux
-    /usr/local/bin/dorado --version | head -n 1
-    /usr/bin/python3 /opt/skill/main.py --list-commands
-    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/schema.json
-    test -s /tmp/schema.json
-    rm -f /tmp/schema.json
+    /usr/local/bin/dorado --version
+    command -v dorado
 
 %help
-    dorado native Apptainer 镜像（bookworm-slim + 官方二进制下载）。
-    dorado: latest（示例 pin {{ DORADO_VERSION }}；位于 /usr/local/bin/dorado）
-    调用方式：apptainer run dorado.sif <子命令> [options]
-    挂载示例：apptainer run -B $PWD:/data -H /data dorado.sif basecall \
+    dorado native Apptainer 镜像（bookworm-slim + 官方二进制下载，amd64）。
+    dorado: {{ DORADO_VERSION }}（位于 /usr/local/bin/dorado）
+    调用方式：apptainer run dorado.sif <dorado 子命令> [options]（如 basecaller / demux）
+    挂载示例：apptainer run -B $PWD:/data -H /data dorado.sif basecaller \
         rna004_130bps_sup@v5.1.0 /data/pod5/ --output-dir /data/out --emit-fastq
     注：模型自动下载到 ~/.cache/dorado 或由 --model 指定目录，建议挂载缓存目录复用。

@@ -1,0 +1,132 @@
+# longreadsum native Apptainer/Singularity 定义（自建兜底：SWIG 源码编译路线，apt 最小化，禁 miniconda）
+#
+# 背景：LongReadSum 1.6.0 无官方镜像（官方渠道仅到 1.3.1，2026-09-07 核实）；本配方走
+#       debian:bookworm-slim + apt 构建依赖 + git clone v1.6.0 + make swig_build +
+#       python3 setup.py build_ext（仿官方 conda/build.sh；Python 运行依赖 venv + pip）。
+#
+# 构建（在仓库根执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build ../longreadsum.sif longreadsum/native/Apptainer.def
+# 运行：apptainer run longreadsum.sif fa -i /data/reads.fa -o /data/out
+#   （容器内 CLI = longreadsum；驱动 main.py：apptainer exec longreadsum.sif python /opt/skill/main.py ...）
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software longreadsum
+    Version 1.6.0
+    org.bioskills.software longreadsum
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt + git-tag source (SWIG build)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    longreadsum/native/main.py /opt/skill/main.py
+    longreadsum/meta.yaml /opt/skill/longreadsum/meta.yaml
+    longreadsum/native/test/ /opt/skill/test/
+    longreadsum/native/wrapper.py /usr/local/bin/longreadsum
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：构建（g++/make/swig/python3-dev/htslib-dev/hdf5-dev）+ 运行（libvbz-hdf-plugin）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        g++ \
+        make \
+        swig \
+        git \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-venv \
+        zlib1g-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libcurl4-openssl-dev \
+        libhts-dev \
+        libhdf5-dev \
+        libhdf5-cpp-dev \
+        libvbz-hdf-plugin \
+        procps \
+        tini
+
+    # 2) Python 运行依赖（官方 conda run deps 的 pip 对应物；venv 免 miniconda）
+    python3 -m venv /opt/lrs-venv
+    /opt/lrs-venv/bin/pip install --no-cache-dir --upgrade pip
+    /opt/lrs-venv/bin/pip install --no-cache-dir numpy plotly pyarrow pod5
+    /opt/lrs-venv/bin/python -c "import numpy, plotly, pod5, pyarrow; print('python deps OK')"
+
+    # 3) 源码编译 v1.6.0 → 部署 /opt/longreadsum（仿官方 conda/build.sh）
+    git clone --depth 1 --branch v1.6.0 https://github.com/WGLab/LongReadSum /tmp/LongReadSum
+    cd /tmp/LongReadSum
+    make swig_build
+    CXXFLAGS="-I/usr/include/hdf5/serial" /opt/lrs-venv/bin/python setup.py build_ext --build-lib lib
+    mkdir -p /opt/longreadsum/lib /opt/longreadsum/src
+    cp -r lib/*.py lib/_lrst*.so /opt/longreadsum/lib/
+    cp -r src/*.py /opt/longreadsum/src/
+    test -f /opt/longreadsum/lib/lrst.py
+
+    # 4) longreadsum 启动 wrapper（%files 已放入 /usr/local/bin/longreadsum）
+    chmod 0755 /usr/local/bin/longreadsum
+
+    # 5) 仅构建期工具移除 + 清理四连
+    rm -rf /tmp/LongReadSum
+    apt-get purge -y git curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /root/.cache/pip \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/longreadsum "$@"
+
+%test
+    # 非交互自检：longreadsum 主命令可用 + 驱动可自省
+    set -eux
+    /usr/local/bin/longreadsum --help | grep -qi "File types"
+    /opt/lrs-venv/bin/python /opt/skill/main.py --list-commands > /tmp/lrs_commands.txt
+    grep -q "^bam" /tmp/lrs_commands.txt
+    /opt/lrs-venv/bin/python /opt/skill/main.py --schema > /tmp/lrs_schema.json
+    test -s /tmp/lrs_schema.json
+    # 最小合成 FASTA 真跑 fa 子命令，断言 HTML 产物
+    mkdir -p /tmp/lrs_test
+    printf '>r1\nACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT\n>r2\nACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT\n' > /tmp/lrs_test/reads.fa
+    /usr/local/bin/longreadsum fa -i /tmp/lrs_test/reads.fa -o /tmp/lrs_test/out
+    ls /tmp/lrs_test/out/
+    find /tmp/lrs_test/out -name "*.html" | grep -q .
+    rm -rf /tmp/lrs_test /tmp/lrs_commands.txt /tmp/lrs_schema.json
+
+%help
+    longreadsum native Apptainer 镜像（自建：apt 最小化 + SWIG 源码编译 v1.6.0；Python 运行依赖走 venv+pip，禁 miniconda）。
+    CLI 用法：apptainer run longreadsum.sif <filetype> -i <input> -o <outdir> [-t threads] ...
+    驱动用法：apptainer exec longreadsum.sif python /opt/skill/main.py <filetype> ...
+    挂载示例：apptainer run -B $PWD:/data -H /data longreadsum.sif fa -i /data/reads.fa -o /data/out
+    说明：官方镜像渠道（bioconda/quay biocontainers/depot）仅到 1.3.1；1.6.0 用本自建镜像，
+    conda 备选 -c wglab -c conda-forge -c jannessp -c bioconda longreadsum=1.6.0。

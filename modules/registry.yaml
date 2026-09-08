@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-07T09:56:14+00:00'
+generated_at: '2026-09-08T01:51:36+00:00'
 modules:
 - software: bamtools
   canonical: bamtools
@@ -79,6 +79,16 @@ modules:
     version: '5.2'
     priority: Medium
     entrypoint: ''
+- software: dia-nn
+  canonical: dia-nn
+  implementations:
+  - id: dia_nn_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.6.1
+    priority: High
+    entrypoint: ''
 - software: dorado
   canonical: dorado
   implementations:
@@ -86,14 +96,14 @@ modules:
     source_type: custom
     impl: native
     path: native
-    version: latest
+    version: 2.1.2
     priority: High
     entrypoint: ''
   - id: dorado_snakemake_local
     source_type: custom
     impl: snakemake_local
     path: snakemake
-    version: latest
+    version: 2.1.2
     priority: Medium
     entrypoint: ''
 - software: fastp
@@ -147,6 +157,16 @@ modules:
     version: 3.0.0b1
     priority: Medium
     entrypoint: ''
+- software: genetribe
+  canonical: genetribe
+  implementations:
+  - id: genetribe_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.2.1
+    priority: High
+    entrypoint: ''
 - software: gnu_sort
   canonical: gnu_sort
   implementations:
@@ -198,6 +218,16 @@ modules:
     version: '1.12'
     priority: Medium
     entrypoint: ''
+- software: humann
+  canonical: humann
+  implementations:
+  - id: humann_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '3.9'
+    priority: High
+    entrypoint: ''
 - software: isoseq3
   canonical: isoseq3
   implementations:
@@ -232,6 +262,16 @@ modules:
     version: 2.9.0
     priority: Medium
     entrypoint: ''
+- software: longreadsum
+  canonical: longreadsum
+  implementations:
+  - id: longreadsum_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.6.0
+    priority: High
+    entrypoint: ''
 - software: minimap2
   canonical: minimap2
   implementations:
@@ -257,6 +297,16 @@ modules:
     impl: native
     path: native
     version: 18.36.0
+    priority: High
+    entrypoint: ''
+- software: omiga
+  canonical: omiga
+  implementations:
+  - id: omiga_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.8.17
     priority: High
     entrypoint: ''
 - software: orfanage
@@ -309,6 +359,16 @@ modules:
     path: snakemake
     version: 6.4.0
     priority: Medium
+    entrypoint: ''
+- software: quantifypolya
+  canonical: quantifypolya
+  implementations:
+  - id: quantifypolya_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 0.3.0
+    priority: High
     entrypoint: ''
 - software: r_matrixeqtl
   canonical: r_matrixeqtl

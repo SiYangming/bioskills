@@ -40,35 +40,62 @@ python main.py --list-commands
 
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖。
 
-## 环境安装（三选一）
+## 环境安装（官方镜像优先，不维护本地配方）
 
-### 1. Conda（HPC 无 root / 离线兜底）
+官方说明：dorado 不在 Debian bookworm apt、也不在 bioconda（2026-09 抓 `anaconda.org/bioconda/dorado` 404）；官方只发布
+静态二进制与官方 Docker 镜像（`nanoporetech/dorado`）。第三方频道仅陈旧版（YangmingSi `dorado=1.3.0`、HCC `dorado=0.7.2`），
+不建议作安装源。`native/` 保留自建容器配方（Dockerfile / Apptainer.def，amd64；bookworm-slim + 官方二进制下载，默认
+`DORADO_VERSION=2.1.2`）。
+
+### 1. Conda / brew（包管理器安装）
 
 ```bash
+# dorado 无 bioconda 包（第三方频道版本陈旧：YangmingSi 1.3.0 / HCC 0.7.2）；conda 环境仅装 native/main.py 驱动依赖
 mamba create -n dorado-native -c conda-forge python=3.11 "pyyaml>=6.0" pip   # 或文末「Conda 环境」配方另存为 yml 离线使用
-# dorado 官方二进制（不在 bioconda）：
-curl -Ls https://cdn.oxfordnanoportal.com/software/analysis/dorado-<ver>-linux-x64.tar.gz | tar -xz
-export PATH=$PWD/dorado-<ver>-linux-x64/bin:$PATH
+# dorado 二进制单独下载，见下方「### 4. 二进制包安装」
 ```
 
-### 2. Docker
+> brew 两源（homebrew-core / brewsci-bio）均无 dorado 公式（2026-09 核实 404），README 不登记 Homebrew 安装块。
+
+### 2. Docker（官方镜像 / 自建）
 
 ```bash
-docker build -t bioskills/dorado:latest-v1.0 -f Dockerfile .   # --build-arg DORADO_VERSION=<release> 可 pin
+# 官方镜像（nanoseq config 默认走国内加速通道）
+docker pull docker.1ms.run/nanoporetech/dorado:latest        # 或 docker pull nanoporetech/dorado:latest
+# 自建（可选，amd64）：默认 DORADO_VERSION=2.1.2，可 --build-arg 覆盖
+docker build -t bioskills/dorado:2.1.2 -f Dockerfile .
 # 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
 docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
-    bioskills/dorado:latest-v1.0 basecall \
+    bioskills/dorado:2.1.2 basecaller \
     rna004_130bps_sup@v5.1.0 pod5/ --output-dir out --emit-fastq
 # 建议挂载模型缓存目录（dorado 首次运行会自动下载模型，体积较大）
 ```
 
 ### 3. Apptainer / Singularity
 
+dorado 无官方 biocontainer sif（不在 bioconda / depot.galaxyproject.org）→ 用本目录 `Apptainer.def` 自建：
+
 ```bash
 apptainer build dorado.sif Apptainer.def
-apptainer run -B $PWD:/data -H /data dorado.sif basecall \
+apptainer run -B $PWD:/data -H /data dorado.sif basecaller \
     rna004_130bps_sup@v5.1.0 /data/pod5/ --output-dir /data/out --emit-fastq
 ```
+
+### 4. 二进制包安装（官方 release）
+
+```bash
+# 官方 release（GitHub 发布页 → cdn.oxfordnanoportal.com 直链）
+mkdir -p ~/software && cd ~/software
+wget https://cdn.oxfordnanoportal.com/software/analysis/dorado-2.1.2-linux-x64.tar.gz
+tar zxf dorado-2.1.2-linux-x64.tar.gz
+echo 'export PATH=$PATH:~/software/dorado-2.1.2-linux-x64/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# 验证安装
+dorado --version   # 断言 2.1.2
+```
+
+> native/main.py 驱动在宿主机运行（python）；dorado 二进制按上装好并在 PATH 即可被 `main.py`/`snakemake` 调用。
 
 ## 测试
 
@@ -78,11 +105,11 @@ bash test/run_test.sh   # dorado basecaller 需要真实 POD5 + 模型，本脚�
 
 ## 版本
 
-* dorado：latest（官方 release，如 0.9.x / 0.10.x；Dockerfile 用 `ARG DORADO_VERSION` 可 pin）
+* dorado：2.1.2（官方最新，2026-08-26 发布；meta `software_versions.native` 对齐；macOS/Linux 均有二进制，含 CUDA 版 CUDA libs）
 
-* 不在 Debian bookworm apt、不在 bioconda；容器走 bookworm-slim + 官方二进制下载路线
+* 不在 Debian bookworm apt、不在 bioconda（YangmingSi/HCC 频道仅陈旧版）；官方只发布静态二进制；容器走 bookworm-slim + 官方二进制下载路线（自建配方仅 amd64）
 
-* Docker 直用建议：`docker.1ms.run/nanoporetech/dorado:latest`（nanoseq config 默认）
+* Docker 直用建议：`docker.1ms.run/nanoporetech/dorado:latest`（nanoseq config 默认；官方镜像渠道备选 `quay.io/bioinfortools/dorado:1.3.0` 已停更）
 
 ## 历史留存
 

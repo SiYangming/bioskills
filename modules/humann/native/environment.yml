@@ -1,0 +1,16 @@
+# humann native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）离线 / 非容器场景兜底。
+# 版本对齐：modules/humann/meta.yaml software_versions.native humann=3.9
+#           （bioconda 稳定版主路线；作者 v4 alpha 4.0.0a1 走 PyPI pip，见 install.sh --version 4.0.0a1）
+# 依赖：humann=3.9 安装时由 bioconda 自动携带 bowtie2 / diamond / glpk / metaphlan>=4.0；
+#       pyyaml 供 native/main.py（base.SkillBase）运行。
+# 注意：humann-3.9-py312hdfd78af_0 包文件硬编码 lib/python3.12/site-packages，
+#       python 必须 pin 3.12（与官方 build 对齐）；用其它 python 主版本会无法 import。
+name: humann-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - humann=3.9
+  - pyyaml>=6.0

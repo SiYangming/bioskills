@@ -1,0 +1,17 @@
+# omiga native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机（mamba env create -f environment.yml）提供 main.py 驱动的 python/pyyaml
+#       （--schema / --list-commands / run 编排自省）；离线 / 非容器备选。
+# 版本对齐：modules/omiga/meta.yaml software_versions.native omiga=1.8.17
+# 说明：OmiGA 不在 bioconda（2026-09-08 核实：anaconda 页面 404 + api.anaconda.org/package/
+#       bioconda/omiga HTTP 404）→ 本文件只建「python 驱动 env」，omiga 本体二进制单独下载
+#       （官方单源 https://omiga.bio/releases/latest.json → OmiGA-build-v1.8.17-x86_64.tar.xz，
+#       Linux x86_64 官方 sha256 6cfbed0b…ea23；一键安装见 native/install.sh binary 路线）。
+#       运行时不需要 Julia：官方预编译包自带运行时；GPU/Julia 路线仅加速用（官方 Installation.md）。
+# 容器路线：native/Dockerfile + Apptainer.def（debian:bookworm-slim，官方二进制多阶段部署，
+#       查无官方镜像 → 自建，linux/amd64，不引入 miniconda），详见模块 README。
+name: omiga-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml>=6.0

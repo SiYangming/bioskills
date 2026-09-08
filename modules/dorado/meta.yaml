@@ -7,56 +7,76 @@ description: 'Dorado 是 Oxford Nanopore 官方的高精度 basecalling 工具�
 
   '
 homepage: https://github.com/nanoporetech/dorado
-license: Oxford Nanopore Technologies PLC. 开源许可（NC 部分模型另有限制）
+license: Oxford Nanopore Technologies PLC. Public License Version 1.0（研究用途；NC 部分模型另有限制）
 software_versions:
 - id: dorado_native
-  dorado: latest
-  source: https://github.com/nanoporetech/dorado/releases（官方 Linux x64 静态二进制 tar.gz）
-  note: 'dorado 不在 Debian bookworm apt，也不在 bioconda；native 走自建容器（bookworm-slim + 官方
-    release 二进制）或宿主机直跑官方二进制；Dockerfile 用 ARG DORADO_VERSION 可 pin（如 0.9.x/0.10.x），
-    默认 latest。'
+  dorado: 2.1.2
+  build_route: 无官方 conda/容器（bioconda 404 已核）→ 自建容器（bookworm-slim + 官方 release 二进制）
+    或宿主机直跑官方二进制（native/Dockerfile、Apptainer.def、conda-recipe 均默认 2.1.2）
+  source: https://github.com/nanoporetech/dorado/releases/tag/v2.1.2（2026-08-26 发布；
+    linux-x64 tar.gz 直链 https://cdn.oxfordnanoportal.com/software/analysis/dorado-2.1.2-linux-x64.tar.gz）
+  note: '官方 GitHub API 2026-09-07 核实 latest=v2.1.2（非 prerelease，2026-08-26T14:09Z
+    published）；2.0.0（2026-05-20）起新增 v6.0 模型，v5.x 既有模型名（如 nanoseq 默认
+    rna004_130bps_sup@v5.1.0）仍受支持、首次运行本地无模型会自动下载；2.x 最低 CUDA 12.8
+    （linux-arm64 12.6），纯 CPU 用 --device cpu。接口（basecall/demux 子命令 + 默认模型
+    v5.1.0）与 dorado 1.x 时代 nanoseq 依赖保持一致，见 main.py 注释。'
 - id: dorado_nextflow_nfcore
   module_version: —
   dorado: 官方无模块（modules/nf-core/dorado 404）
   source: —
-  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/dorado
-    返回 404；Nextflow 场景请使用 dorado_nextflow_local 或降级 native。
+  note: 2026-09-07 复核 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/dorado
+    仍返回 404（Not Found）；Nextflow 场景请使用本地规则/流程或降级 native。
 - id: dorado_snakemake_wrappers
   dorado: 官方无 wrapper（bio/dorado 404）
   source: —
-  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dorado
-    返回 404；Snakemake 场景请使用 dorado_snakemake_local。
+  note: 2026-09-07 复核 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dorado
+    仍返回 404（Not Found）；Snakemake 场景请使用 dorado_snakemake_local。
 - id: dorado_nextflow_local
-  dorado: 未固定（用户按 main.nf 中 container 自行声明；建议 nanoporetech/dorado:latest）
+  dorado: 未固定（用户按 main.nf 中 container 自行声明；建议 nanoporetech/dorado:latest 或 pin 版本 tag）
 - id: dorado_snakemake_local
-  dorado: latest
+  dorado: 2.1.2
   source: 自维护 dorado_basecall.smk / dorado_demux.smk（提炼自 nanoseq config.yaml dorado 段 + dorado 官方用法）
-  note: rule 内 container 建议 nanoporetech/dorado:latest 或本地 dorado 二进制（dorado 不在 bioconda，无 conda env）。
+  note: rule 内 docker 模式默认 docker.1ms.run/nanoporetech/dorado:latest（nanoseq config 默认，
+    2026-09-07 核实该加速通道在网、含 latest tag），native 模式走 PATH 二进制、建议与
+    dorado_native 同版 2.1.2；dorado 不在 bioconda，无 conda env。
 implementations:
 - id: dorado_native
   path: native
   source_type: custom
   type: native
-  version: "latest"
+  version: "2.1.2"
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖 basecall
     / demux 子命令，自动注入线程（--device cuda:all 可选）。
 
     '
   container_ref:
-    bioconda: https://anaconda.org/bioconda/dorado
-    quay_biocontainers: quay.io/biocontainers/dorado
-    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
-      镜像
+    bioconda: 官方无 dorado 包（anaconda.org/bioconda/dorado 404，2026-09-07 复核）
+    quay_biocontainers: quay.io/biocontainers 无 dorado 官方镜像（bioconda 自动构建链不存在）
+    bioinfortools: quay.io/bioinfortools/dorado:1.3.0（社区镜像；quay API 2026-09-07 核实 tags
+      仅 1.3.0 / 1.3.0-cuda12.2.0-no_model / latest(→no_model)，镜像停更于 1.3.0）
+    hcc: https://anaconda.org/channels/HCC/packages/dorado/overview（HCC 第三方频道 dorado=0.7.2，
+      仅 linux-64，2024-06 最后更新，版本陈旧；HCC 为内布拉斯加大学机构频道、非个人频道）
+    yangmingsi: https://anaconda.org/channels/YangmingSi/packages/dorado/overview（自建频道
+      dorado=1.3.0，linux-64 + osx-arm64，2025-11；2.1.2 重建配方归档于
+      native/conda-recipe/linux-64/meta.yaml，回填官方 sha 并 anaconda upload 后升级）
+    dockerhub: 官方镜像 nanoporetech/dorado（Docker Hub 仓库，tag 以 hub 页为准；国内加速
+      docker.1ms.run/nanoporetech/dorado:latest 为 nanoseq config 默认，2026-09-07 核实该
+      加速通道在网、latest 可拉）
+    install_hint: 宿主机直跑官方二进制（README「二进制包安装」下载 2.1.2 linux-x64 tar.gz）或
+      docker run 官方镜像（须 -u $(id -u):$(id -g)）；conda 仅 YangmingSi/HCC 的陈旧版
+      （1.3.0 / 0.7.2）；本模块自建容器配方（Dockerfile / Apptainer.def）与 conda-recipe
+      见 environment / native/conda-recipe
 - id: dorado_snakemake_local
   path: snakemake
   source_type: custom
   type: snakemake_local
-  version: latest
+  version: "2.1.2"
   priority: medium
   when_to_use: 组装 Snakemake 流程时 include 本模块 snakemake/dorado_{basecall,demux}.smk 本地规则。
-  note: 官方 snakemake-wrappers 无 bio/dorado wrapper（2026-09 抓取 404），本地规则为唯一 Snakemake 路线
-    （rule 内 container nanoporetech/dorado:latest；dorado 不在 bioconda，无 conda env），详见 software_versions。
+  note: 官方 snakemake-wrappers 无 bio/dorado wrapper（2026-09-07 复核 404），本地规则为唯一
+    Snakemake 路线（rule 内 docker 默认 nanoporetech/dorado:latest、native 走 PATH 二进制
+    2.1.2；dorado 不在 bioconda，无 conda env），详见 software_versions。
 default_implementation: dorado_native
 inputs:
   subcommand:
@@ -112,7 +132,8 @@ outputs:
     format: fastq
     description: demux 输出的拆分 FASTQ（按 barcode）
 environment:
-  # conda: —（容器走 apt 运行时 + 官方 GitHub 二进制，无独立 conda env 文件；本地安装用官方二进制/容器）
+  # conda: —（dorado 不在 bioconda；YangmingSi/HCC 频道版本陈旧。容器走 apt 运行时 + 官方二进制，
+  #   本地安装用官方二进制/容器，配方见 native/Dockerfile、Apptainer.def、conda-recipe/linux-64）
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
 optimization:
@@ -141,6 +162,8 @@ execution:
     # 顶层键：dorado_input_pod5 / dorado_fastq / dorado_input_reads / dorado_demux_outdir /
     #   threads / exec_mode(native|docker)；
     # 软件段（config.yaml 预设）：dorado.{docker_image,model,kit_name,extra_params}
+    # 版本：native PATH 二进制建议 2.1.2；docker 默认 docker.1ms.run/nanoporetech/dorado:latest
+    #   （模型 rna004_130bps_sup@v5.1.0 目录名在 dorado 2.x 仍受支持，首次运行自动下载）
   snakemake_rules:
   - dorado_basecall.smk
   - dorado_demux.smk

@@ -1,0 +1,28 @@
+# QuantifyPolyA native 运行环境（conda 兜底，非官方维护包）
+# -----------------------------------------------------------------------------
+# 官方渠道（bioconda r-quantifypolya / quay / galaxyproject / conda r 频道）均无
+# QuantifyPolyA 的 conda 包与镜像 → 本文件只解决「R 运行时 + 需编译/特殊来源的
+# 依赖」的 conda 预编译兜底；其余 CRAN/Bioc 依赖（bedr stringr dplyr tidyr
+# matrixStats FactoMineR factoextra plotly ggplot2 … DESeq2 ggbio GenomicRanges
+# 等）由环境内执行一键安装脚本完成：
+#   Rscript native/install_deps_QuantifyPolyA.R
+# （脚本对已安装包自动跳过；ggalt 不在 CRAN 主源，本文件已含 conda-forge r-ggalt）
+#
+# 创建（推荐，等价 mamba create 手写依赖）：
+#   conda env create -f environment.yml
+#   conda run -n r-quantifypolya Rscript native/install_deps_QuantifyPolyA.R
+# 或一键：bash native/install.sh（auto 双路线）
+name: r-quantifypolya
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - r-base>=4.2          # QuantifyPolyA 0.3.0 建议 R>=4.2（meta software_versions）
+  # 特殊来源/需编译依赖的 conda 预编译兜底（省系统 C/C++ 工具链）：
+  - r-ggalt=0.4.0        # CRAN 2021-06 起归档：conda-forge 直装，免 CRAN Archive 源码编译
+  - r-rcpp               # pbmcapply / uwot 等 Rcpp 依赖的公共底层
+  - r-pbmcapply          # Cluster.PolyA 并行（pbmcmapply）
+  - r-uwot               # DESeq2.PolyA 的 UMAP（RcppAnnoy 模板重编译耗时长，预编译省时）
+  # 其余 ~16 个 CRAN/Bioc 依赖由 install_deps_QuantifyPolyA.R 经 BiocManager/CRAN 安装

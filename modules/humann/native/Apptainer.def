@@ -1,0 +1,112 @@
+# humann native Apptainer/Singularity 定义（作者 4.0.0a1 路线：debian:bookworm-slim + apt 最小系统依赖 + pip）
+#
+# 背景与归属：本文件由仓库既有 HUMAnN_4_0_0_a_1.def（ubuntu:24.04 底座）按「唯一文件归位」改写而来，
+#             底座改为 debian:bookworm-slim，安装改为 apt --no-install-recommends 装最小系统依赖 + pip 装
+#             humann==4.0.0a1，遵守清理四连。对应 meta.yaml software_versions.author_v4_alpha（作者 v4 alpha 路线）。
+#
+# 版本说明（2026-09 核实）：
+#   - bioconda / quay.io/biocontainers 官方稳定线最高 3.9（quay.io/biocontainers/humann:3.9--py312hdfd78af_0），
+#     bioconda 无 4.x alpha 包；本 def 只为作者 4.0.0a1（PyPI sdist）提供自建兜底，与官方 3.9 路线并存声明。
+#   - 作者 biobakery/humann master 已推进到 4.0.0.alpha.2（setup.py VERSION=4.0.0.alpha.2）；PyPI 亦另有
+#     4.0.0a2；本 def 按仓库留存价值 pin 4.0.0a1（quay.io/bioinfortools/humann:4.0.0a1 社区镜像同版本）。
+#   - 依赖：4.0.0a1 为纯 Python sdist（无 install_requires / wheel），运行所需外部二进制
+#     bowtie2 / diamond / glpk 由 Debian apt 提供（bowtie2、diamond-aligner、libglpk40），无需整 miniconda。
+#     prescreen（MetaPhlAn）与 BIOM 输出等可选能力需按需 pip install MetaPhlAn / biom-format（见 %help）。
+#
+# 构建：apptainer build humann-4.0.0a1.sif Apptainer.def
+# 运行：apptainer run humann-4.0.0a1.sif run --input /data/reads.fastq --output /data/out --threads 8
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software humann
+    Version 4.0.0a1-v1.0
+    HumannVersion 4.0.0a1
+    org.bioskills.software humann
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt(minimal)+pip humann==4.0.0a1
+
+%files
+    # 在 bootstrap 阶段把宿主机技能目录内容准备到镜像内路径
+    main.py /opt/skill/main.py
+    meta.yaml /opt/skill/meta.yaml
+    test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    # 1) apt 最小系统依赖（bowtie2 / diamond-aligner / libglpk40 为 humann 外部依赖的 Debian 包；
+    #    python3-pip 为 pip 安装提供者；curl/wget 不需要，pip 走内置 ssl）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        ca-certificates \
+        procps \
+        bowtie2 \
+        diamond-aligner \
+        libglpk40
+    apt-get clean
+
+    # 2) pip 安装 HUMAnN 4.0.0a1（PyPI sdist，纯 Python）
+    #    --break-system-packages：bookworm 的 python3 为 externally-managed，容器内允许直写系统 site-packages
+    pip3 install --no-cache-dir --break-system-packages humann==4.0.0a1
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 3) 版本断言：humann --version 输出形如 "humann v4.0.0.alpha.1"
+    humann --version | grep -q '4\.0\.0'
+
+    # 4) 清理四连（python3-pip 本体保留，仅清 apt 缓存与构建期临时文件）
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/* \
+        /root/.cache/pip
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export TMPDIR=/tmp
+
+%runscript
+    exec python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：断言 humann 4.0.0a1 与技能驱动可运行
+    set -eux
+    humann --version | grep -q '4\.0\.0'
+    python3 /opt/skill/main.py --list-commands
+    python3 /opt/skill/main.py --schema > /tmp/schema.json
+    test -s /tmp/schema.json
+    rm -f /tmp/schema.json
+
+%help
+    humann native Apptainer 镜像（作者 4.0.0a1 路线：bookworm-slim + apt bowtie2/diamond-aligner/libglpk40 + pip humann==4.0.0a1）。
+    官方稳定线请走 quay.io/biocontainers/humann:3.9--py312hdfd78af_0（见模块 README「环境安装」）。
+    调用方式：apptainer run humann-4.0.0a1.sif <subcommand> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data humann-4.0.0a1.sif run \
+        --input /data/reads.fastq --output /data/out --threads 8
+    注意：
+      - 4.0.0a1 为主流程纯 Python 包；MetaPhlAn（prescreen 阶段）与 BIOM 输出需按需
+        pip3 install --break-system-packages MetaPhlAn / biom-format（联网 pip），并下载对应数据库
+        （chocophlan / uniref / metaphlan 等，可用子命令 databases）。
+      - apt 已提供 bowtie2 / diamond / glpk；若特定数据库/算法需要更新版 diamond，
+        可 pip/源码覆盖安装（自备，勿回退整 miniconda 路线）。

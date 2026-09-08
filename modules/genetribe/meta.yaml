@@ -1,0 +1,207 @@
+software: genetribe
+canonical: genetribe
+category: comparative_genomics
+description: 'GeneTribe（chenym1/genetribe，Chen et al. 2020, Molecular Plant 13:1694-1708）是一套
+  collinearity-incorporating homology inference（共线性整合的同源推断）流水线：在两相近基因组间用
+  BLASTP + MCScan（jcvi）共线性块 + 染色体组信息打分，推断 one2one / one2many 同源关系，尤其面向
+  Triticeae 族。上游仅源码分发（python3 入口脚本 genetribe + src/*.py|*.sh），调用形态为
+  `genetribe <command> [options]`，提供 pipeline（core / corenog / sameassembly）与 tool（RBH /
+  CBS / longestcds）两组共 6 个子命令；运行时依赖 blastp / makeblastdb（BLAST）、bedtools、jcvi
+  （MCscan，python3 -m jcvi.compara）三个外部命令。
+  '
+homepage: https://github.com/chenym1/genetribe
+license: MIT
+software_versions:
+- id: genetribe_native
+  genetribe: '1.2.1'
+  blast: '>=2.9（自建容器 apt ncbi-blast+=2.12.0+ds-3=bookworm；conda 兜底 bioconda blast；官方文档推荐 v2.9.0）'
+  bedtools: '>=2.29.2（自建容器 apt bedtools=2.30.0+dfsg-3=bookworm；conda 兜底 bioconda bedtools；官方文档推荐 v2.29.2）'
+  jcvi: '>=1.0.6（pip install jcvi；PyPI 当前 1.6.7、bioconda jcvi=1.6.7；Debian bookworm 无 python-jcvi
+    apt 包，2026-09-07 sources.debian.org 核实 404，故容器内用 python3 -m venv + pip 主路线；官方文档推荐 v1.0.6）'
+  build_route: 查无官方维护镜像（bioconda genetribe 404 → quay.io/biocontainers 无 → depot.galaxyproject.org
+    无，2026-09-07 核实）→ 自建 apt 最小化 Dockerfile / Apptainer.def（linux/amd64，仅录入不实构建）；
+    社区/个人渠道并列登记：quay.io/bioinfortools/genetribe:1.2.1 与 YangmingSi conda 频道 genetribe=1.2.1
+  source: '官方：git clone https://github.com/chenym1/genetribe.git（tag v1.2.1，release 2022-08-15，
+    commit 5aa4fc5d7a2e00129000bd282efc1161b57d023c，GitHub API 核实）+ 上游 ./install.sh；conda：
+    https://anaconda.org/channels/YangmingSi/packages/genetribe/overview（genetribe=1.2.1 noarch，
+    genetribe-1.2.1-py_0.conda，2026-07-13 上传，api.anaconda.org 核实）'
+  note: '上游官方文档推荐 blast v2.9.0 / bedtools v2.29.2 / jcvi v1.0.6；blast 2.9.0 历史强锁曾在
+    conda 环境引发 C 库冲突/OOM（旧 miniconda 配方教训，见 README「历史留存」），自建配方不默认引入
+    miniconda，改走 apt ncbi-blast+=2.12.0+ds-3（>=2.9 满足上游）。上游 -n 默认 36 线程（blastp 并行，
+    缺省时 main.py 不注入 -n，显式 --threads 才注入）。'
+- id: genetribe_nextflow_nfcore
+  module_version: （官方无此模块）
+  note: nf-core modules 无 modules/nf-core/genetribe 目录（2026-09-07 抓取 GitHub API 404），未登记；
+    Nextflow 场景请容器化后走 native 子命令或 quay.io/bioinfortools/genetribe 社区镜像。
+- id: genetribe_snakemake_wrappers
+  wrapper_tag: （官方无此 wrapper）
+  note: snakemake-wrappers 无 bio/genetribe 目录（2026-09-07 抓取 GitHub API 404），未登记；Snakemake
+    场景请用 conda（bioconda blast/bedtools/jcvi + YangmingSi genetribe）或容器内 PATH 直调 genetribe。
+implementations:
+- id: genetribe_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；实现
+    core / corenog / sameassembly / RBH / CBS / longestcds 六个子命令（对齐上游 `genetribe` 入口脚本
+    的真实命令形态：genetribe core -l <A> -f <B> [-d dir] [-r] [-c] [-s sep] [-e E] [-n th] [-b BSR]
+    [-m] 等，见官方 tutorial）。查无官方 conda 包/镜像，宿主机与容器安装路线见 README「环境安装」。'
+  container_ref:
+    bioconda: （无——anaconda.org 的 bioconda 频道不存在 genetribe 包，2026-09-07 404 核实；blast /
+      bedtools / jcvi 三个运行依赖均在 bioconda）
+    yangmingsi_conda: https://anaconda.org/channels/YangmingSi/packages/genetribe/overview（genetribe=1.2.1
+      noarch py_0，2026-07-13 上传，个人频道）
+    quay_biocontainers: （无——quay.io/biocontainers/genetribe 不存在）
+    quay_bioinfortools: quay.io/bioinfortools/genetribe:1.2.1（社区镜像；2026-09-07 quay API 核实 tag 仅
+      "1.2.1" 与 "latest"（同一 digest，2026-04-17 更新），非官方维护渠道）
+    nfcore_module: （官方无——nf-core modules/modules/nf-core/genetribe 404）
+    snakemake_wrapper: （官方无——snakemake-wrappers bio/genetribe 404）
+    install_hint: 宿主机 conda 走 YangmingSi 频道（mamba create -n <env> -c conda-forge -c bioconda -c
+      yangmingsi genetribe=1.2.1 blast bedtools jcvi）；或 git clone 官方仓库 tag v1.2.1 + 上游
+      ./install.sh（需 blastp / bedtools / jcvi 已在 PATH）；容器用本地自建配方（Dockerfile /
+      Apptainer.def，debian:bookworm-slim，linux/amd64）或社区 quay.io/bioinfortools/genetribe:1.2.1。
+default_implementation: genetribe_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: genetribe 子命令：core|corenog|sameassembly|RBH|CBS|longestcds（与上游入口一致）
+  first_prefix:
+    type: string
+    required: false
+    cli_arg: -l
+    description: 第一个物种文件前缀（core/corenog/sameassembly；需 <前缀>.bed/.fa/.chrlist 等在运行目录）
+  second_prefix:
+    type: string
+    required: false
+    cli_arg: -f
+    description: 第二个物种文件前缀（core/corenog/sameassembly）
+  blast_dir:
+    type: string
+    required: false
+    cli_arg: -d
+    description: 预计算 BLAST 结果所在目录（默认 ./；为空则流程自行 makeblastdb + blastp）
+  evalue:
+    type: string
+    required: false
+    cli_arg: -e
+    default: 1e-5
+    description: blastp 的 E-value（core/corenog）
+  split_sep:
+    type: string
+    required: false
+    cli_arg: -s
+    default: .
+    description: 从 transcript ID 切出 gene ID 的分隔符（core/corenog/longestcds）
+  bsr_threshold:
+    type: float
+    required: false
+    cli_arg: -b
+    default: 75
+    description: 基于 BSR 的同源匹配分过滤阈值 0-100（core/corenog）
+  confidence:
+    type: boolean
+    required: false
+    cli_arg: -c
+    default: false
+    description: 是否计算置信度分（需要 <前缀>.confidence 文件；core/corenog）
+  no_chr_group:
+    type: boolean
+    required: false
+    cli_arg: -r
+    default: false
+    description: 不计染色体组得分（core 专用；上游默认计分，加 -r 关闭）
+  no_collinearity:
+    type: boolean
+    required: false
+    cli_arg: -m
+    default: false
+    description: 不使用共线性加权（core 专用；上游默认加权，加 -m 关闭）
+  blast1:
+    type: file
+    required: false
+    cli_arg: -a
+    description: RBH 输入文件 1（三列：q \t s \t score）
+  blast2:
+    type: file
+    required: false
+    cli_arg: -b
+    description: RBH 输入文件 2（三列：q \t s \t score）
+  anchors:
+    type: file
+    required: false
+    cli_arg: -i
+    description: CBS 输入的 anchors 文件（MCScan/jcvi 产生的 lifted anchors）
+  bed1:
+    type: file
+    required: false
+    cli_arg: -a
+    description: CBS 输入的物种 1 六列 bed 文件
+  bed2:
+    type: file
+    required: false
+    cli_arg: -b
+    description: CBS 输入的物种 2 六列 bed 文件
+  cbs_out:
+    type: string
+    required: false
+    cli_arg: -o
+    description: CBS 输出前缀（上游当前代码产出 <out>.collinearity_info；官方教程另记载 <out>.block_pos）
+  pep:
+    type: file
+    required: false
+    cli_arg: -i
+    description: longestcds 输入的蛋白序列 FASTA（转录本级）
+  threads:
+    type: integer
+    default: 36
+    cli_arg: -n
+    description: blastp 线程数（core/corenog；仅当显式 --threads 时注入 -n，缺省沿用上游默认 36）
+outputs:
+  one2one:
+    type: file
+    description: 同源基因对表（RBH+SBH，含同源类型与染色体组信息；<A>_<B>.one2one）
+  one2many:
+    type: file
+    description: 全部同源基因对（基因1 \t 基因2 \t HMS；<A>_<B>.one2many）
+  rbh_table:
+    type: file
+    description: 双向最佳命中表（<A>_<B>.RBH）
+  sbh_table:
+    type: file
+    description: 单侧最佳命中表（<A>_<B>.SBH）
+  singleton_table:
+    type: file
+    description: 无同源基因的 singleton 表（core 输出 <A>_<B>.singleton）
+  block_pos:
+    type: file
+    description: 共线性块坐标（core 输出 <A>_<B>.block_pos）
+  collinearity_info:
+    type: file
+    description: CBS/共线性块信息（<out>.collinearity_info；core 亦输出 <A>_<B>.collinearity_info）
+  longest_fasta:
+    type: file
+    description: longestcds 输出的每基因最长转录本 FASTA（stdout）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  container_official: 查无官方维护镜像（bioconda 无 genetribe 包 → quay.io/biocontainers 无 →
+    depot.galaxyproject.org 无，2026-09-07 核实），故保留自建配方（linux/amd64，debian:bookworm-slim +
+    apt --no-install-recommends + 清理四连，不默认引入 miniconda）；社区/个人资源见
+    container_ref.quay_bioinfortools / yangmingsi_conda。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    core: 36
+    corenog: 36
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: genetribe

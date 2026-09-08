@@ -1,0 +1,163 @@
+software: quantifypolya
+canonical: quantifypolya
+category: transcriptome
+description: 'QuantifyPolyA 是 R 包（sourceforge 项目 quantifypoly-a，无独立命令行
+  二进制），用于长读 / 3'' 端 RNA-seq poly(A) 位点定量与 APA（alternative
+  polyadenylation）动态度量：以每样本 poly(A) 位点 BED 为输入，加权密度峰聚类
+  解决切割位点 microheterogeneity 生成 PAC（poly(A) cluster），经 GFF 注释与
+  DESeq2 归一后量化 canonical / gene / split / CN 型 APA 使用率与组间动态
+  （可与 SIRV spike-in 参比结合做拷贝数校准）。本模块以 Rscript 驱动
+  run_quantifypolya.R 调用 Load.PolyA / Cluster.PolyA / Annotate.PolyA /
+  Quantify.* 完成分析。
+  '
+homepage: https://sourceforge.net/projects/quantifypoly-a/
+license: GPL-3.0-or-later
+software_versions:
+- id: quantifypolya_native
+  quantifypolya: '0.3.0'
+  r: 'R >= 4.0（建议 4.2+；源码包 2021-06 打包于 R 4.1 时代，DESCRIPTION 未 pin R 版本）'
+  ggalt: '0.4.0（CRAN 2021-06 起归档；经 CRAN Archive 源码装或 conda-forge r-ggalt）'
+  build_route: 官方渠道无（bioconda / anaconda r 频道 / quay.io / galaxyproject 均无
+    r-quantifypolya）→ 宿主机 R 源码安装（sourceforge tar.gz + BiocManager 依赖，见
+    native/install_deps_QuantifyPolyA.R）
+  source: https://sourceforge.net/projects/quantifypoly-a/files/QuantifyPolyA_0.3.0.tar.gz
+  note: '0.3.0 即 sourceforge 最新版（2021-06-22 发布，2026-09 在线核实文件区无更新）；
+    DESCRIPTION Depends 含 ggalt（importFrom ggalt geom_lollipop）——ggalt 被 CRAN 归档，
+    安装须从 Archive / conda-forge 拉；nf-core / snakemake-wrappers / bioconda 均无官方实现，
+    Nextflow/Snakemake 场景以 native Rscript 驱动为兜底。'
+- id: quantifypolya_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/quantifypolya 404）
+  quantifypolya: —
+  source: —（nf-core/modules 仓库 modules/nf-core/quantifypolya 目录不存在）
+  note: 2026-09-07 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/quantifypolya
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + rocker/r-ver 容器）为兜底。
+- id: quantifypolya_snakemake_wrappers
+  quantifypolya: 官方无 wrapper（bio/quantifypolya 404）
+  source: —（snakemake-wrappers 仓库 bio/quantifypolya 目录不存在）
+  note: 2026-09-07 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/quantifypolya
+    返回 404；Snakemake 场景以 native/（Rscript 驱动）为兜底。
+- id: quantifypolya_nextflow_local
+  quantifypolya: '未启用（需要时在 main.nf 以容器 Rscript 步骤调 native/main.py quant）'
+- id: quantifypolya_snakemake_local
+  quantifypolya: '未启用（需要时用 shell: 调 native/main.py quant）'
+implementations:
+- id: quantifypolya_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.3.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    quant 子命令以 Rscript 运行 run_quantifypolya.R，完成 Load.PolyA -> [Remove.IP] ->
+    Cluster.PolyA -> [Annotate.PolyA] -> [Filter.PolyA] -> Quantify.*（canonical/gene/split/
+    cncapa）的 poly(A) 定量与 APA 动态度量，输出 polyA_sites.tsv / apa_<mode>.tsv 表格。'
+  container_ref:
+    r_channel: https://anaconda.org/channels/r/packages/r-quantifypolya（不存在；bioconda 亦无）
+    bioconda: https://anaconda.org/bioconda/r-quantifypolya（soft-404，官方无此包）
+    rocker: rocker/r-ver:4.5.2（通用 R 基础镜像；装依赖后即可跑，见 README 容器路线）
+    install_hint: 宿主机一键 Rscript native/install_deps_QuantifyPolyA.R（或 bash native/install.sh
+      auto 双路线）；依赖路线与 R 版本要求见该脚本头注
+default_implementation: quantifypolya_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: quantifypolya 子命令：quant（唯一核心命令）
+  bed_dir:
+    type: file
+    required: false
+    description: 目录，内含每样本一个 .bed（4 列：seqnames strand coord score；无表头；
+      文件名去 .bed 即样本名）。与 bed_files 二选一。
+  bed_files:
+    type: string
+    required: false
+    description: 逗号分隔的 BED 文件列表（与 bed_dir 二选一；格式同上）
+  outdir:
+    type: file
+    required: true
+    description: 输出目录（polyA_sites.tsv / apa_<mode>.tsv / 可选 QuantifyPolyA.rds）
+  fasta:
+    type: file
+    required: false
+    description: 基因组 FASTA（可选；提供时执行 Remove.IP 去除内部引发 poly(A)）
+  gff:
+    type: file
+    required: false
+    description: 基因注释 GFF3/GTF（可选；Annotate.PolyA 给 PAC 注释 gene_id/type 与每样本
+      计数；做 APA 动态度量必需）
+  col_data:
+    type: file
+    required: false
+    description: 实验设计表 TSV（首列样本名 = bed 文件名，须含 condition 列；与 contrast
+      一起启用组间 APA 度量）
+  contrast:
+    type: string
+    required: false
+    description: 组间对比 <列>,<对照>,<处理>，如 condition,Brain,UHR（列缺省为 condition）
+  quant_mode:
+    type: string
+    required: false
+    default: canonical
+    description: APA 动态度量模式：canonical（基因 3'UTR PACs，默认）| gene | split | cncapa
+  max_gapwidth:
+    type: integer
+    required: false
+    default: 24
+    description: PAC 聚类的最大相邻位点 gap（bp，Cluster.PolyA max.gapwidth）
+  min_count:
+    type: integer
+    required: false
+    description: Filter.PolyA 最小计数阈值（需 --gff；缺省不过滤）
+  min_sample:
+    type: integer
+    required: false
+    description: Filter.PolyA 至少覆盖样本数（缺省 1）
+  save_rds:
+    type: boolean
+    required: false
+    default: false
+    description: 同时保存 QpolyA 对象 outdir/QuantifyPolyA.rds（供 Visualize.PolyA 下游画图）
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认，R 驱动按物理核数-1 检测，供 Cluster.PolyA mc.cores）
+      或正整数
+outputs:
+  polyA_sites:
+    type: file
+    format: tsv
+    description: 聚类（+注释 + 每样本计数）后的 poly(A) 位点/簇全表（QpolyA@polyA）
+  apa_dynamics:
+    type: file
+    format: tsv
+    description: 组间 APA 动态度量表 apa_<mode>.tsv（canonical/gene/split/cncapa；需
+      gff + colData + contrast）
+  qpolyA_rds:
+    type: file
+    format: rds
+    description: QpolyA 对象（--save-rds 时输出，供 Visualize.PolyA）
+environment:
+  note: 官方渠道无该 R 包容器/conda 包（bioconda r-quantifypolya soft-404、quay/
+    galaxyproject 无、conda r 频道无）→ 判定「无官方维护」；本模块为纯 R 源码包
+    （源码包内无编译代码，NeedsCompilation=no），依赖经 BiocManager/CRAN 安装，
+    故未自建 Dockerfile/Apptainer.def —— 容器路线直接用通用 R 镜像
+    rocker/r-ver:4.5.2 + 模块 install_deps_QuantifyPolyA.R 装包即可（见 README
+    环境安装 §2/§3 与「容器与 Conda 链接」），宿主机一键安装见 native/install.sh
+    与 install_deps_QuantifyPolyA.R。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    quant: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无
+    quantifypolya 官方子模块（2026-09 核实 404），Nextflow/Snakemake 场景以 native
+    Rscript 驱动为兜底。

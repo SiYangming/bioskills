@@ -1,0 +1,186 @@
+software: humann
+canonical: humann
+category: metagenomics
+description: 'HUMAnN 是宏基因组 / 宏转录组功能分析流程：输入双端 / 单端 reads（或已比对 SAM），
+  依次经 prescreen（MetaPhlAn）→ nucleotide search（bowtie2 / ChocoPhlAn）→ translated search
+  （diamond / UniRef）→ pathway / gene 定量（MinPath），产出基因家族与代谢通路丰度表；
+  配套 humann_renorm_table / humann_join_tables 等表格工具。
+  '
+homepage: https://huttenhower.sph.harvard.edu/humann/
+license: MIT
+software_versions:
+  native:
+    humann: 3.9
+    build_route: official biocontainer（bioconda 有 humann → quay.io/biocontainers 官方 tag → container_official 登记）
+    source: https://anaconda.org/bioconda/humann
+    container_tag: quay.io/biocontainers/humann:3.9--py312hdfd78af_0 / depot.galaxyproject.org（tag 互通）
+    note: '2026-09 核实：bioconda humann 最新稳定版为 3.9（2024-06-13 上传，build
+      py312hdfd78af_0，noarch，依赖 bowtie2>2.1、diamond>=0.9.36、glpk、metaphlan>=4.0、python>=3）；
+      官方镜像路线：quay.io/biocontainers 与 depot.galaxyproject.org 均有同 tag sif。bioconda 无 4.x alpha 包。
+      实测坑：humann-3.9-py312hdfd78af_0 包内文件硬编码 lib/python3.12/site-packages，
+      conda 环境必须显式 pin python=3.12（environment.yml / install.sh / README 均已对齐），
+      否则 humann 命令报 ModuleNotFoundError。'
+  author_v4_alpha:
+    humann: 4.0.0a1
+    source: PyPI humann==4.0.0a1（sdist；pip 路线）+ native/Apptainer.def（自建容器）
+    container_tag: quay.io/bioinfortools/humann:4.0.0a1（社区镜像，备用）
+    note: '作者 v4 alpha 路线（与 native 主路线 3.9 并列声明，两个版本均保留）：
+      PyPI 确认存在 humann 4.0.0a1（2024-10-28 上传 sdist，纯 Python、无 install_requires）；
+      2026-09 核实作者 biobakery/humann master 已推进到 4.0.0.alpha.2（setup.py VERSION），PyPI 亦另有 4.0.0a2，
+      故 4.0.0a1 为历史 alpha 归档版；本库按留存价值以 Apptainer.def 登记 4.0.0a1
+      （debian:bookworm-slim + apt bowtie2/diamond-aligner/libglpk40 + pip humann==4.0.0a1）。
+      4.0.0a1 完整 prescreen 需 MetaPhlAn（pip 另装）+ 数据库下载（humann_databases）。'
+  nextflow_nfcore:
+    humann: （官方无——nf-core modules/humann 404）
+    module_version: —
+    source: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/humann 返回 404
+    note: nf-core 未收录 humann 模块；Nextflow 场景请直接引用官方镜像（native software_versions）或 conda。
+  snakemake_wrappers:
+    humann: （官方无——bio/humann 404）
+    wrapper_tag: —
+    source: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/humann 返回 404
+    note: snakemake-wrappers 未收录 bio/humann wrapper；Snakemake 场景请用 conda env（bioconda humann=3.9）或 container 直接调 humann。
+  brew:
+    humann: （官方无——homebrew-core 与 brewsci/bio 均无 humann 公式）
+    source: 2026-09 抓取 https://formulae.brew.sh/api/formula/humann.json 与 brewsci/homebrew-bio Formula/humann.rb 均 404
+    note: brew 两源均无公式，README 不登记 Homebrew 安装块。
+implementations:
+- id: humann_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.9"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 run（直驱 humann 主流程）与 renorm / join / regroup / databases 等表格与数据库子命令，自动注入线程。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/humann
+    quay_biocontainers: quay.io/biocontainers/humann
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda humann=3.9；容器可用 quay.io/biocontainers/humann:3.9--py312hdfd78af_0
+      官方镜像（tag 见 README）；作者 v4 alpha 4.0.0a1 走 PyPI / Apptainer.def（meta software_versions.author_v4_alpha）
+default_implementation: humann_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: humann 子命令：run|renorm|join|regroup|databases
+  input:
+    type: file
+    required: false
+    cli_arg: -i/--input
+    format:
+    - fastq
+    - fastq.gz
+    - fasta
+    - fasta.gz
+    - sam
+    description: 输入文件（单端/双端 reads、比对 SAM/BAM，或表格子命令的输入表；run 必填）
+  output:
+    type: file
+    required: false
+    cli_arg: -o/--output
+    description: run 为输出目录；renorm/join/regroup 为输出文件（run/renorm/join 必填）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（仅 run 注入 humann --threads；其余表格/数据库子命令为契约字段）
+  input_format:
+    type: string
+    required: false
+    cli_arg: --input-format
+    description: run 输入格式（fastq/fastq.gz/fasta/fasta.gz/sam/bam/...；不填由扩展名推断）
+  memory_use:
+    type: string
+    required: false
+    cli_arg: --memory-use
+    description: run 内存策略（minimum/normal/more/maximum）
+  bypass_prescreen:
+    type: boolean
+    default: false
+    cli_arg: --bypass-prescreen
+    description: run 跳过 tier1 prescreen（MetaPhlAn），不做物种预筛
+  bypass_nucleotide_search:
+    type: boolean
+    default: false
+    cli_arg: --bypass-nucleotide-search
+    description: run 跳过 tier2 nucleotide search（ChocoPhlAn）
+  bypass_translated_search:
+    type: boolean
+    default: false
+    cli_arg: --bypass-translated-search
+    description: run 跳过 tier3 translated search（UniRef）
+  resume:
+    type: boolean
+    default: false
+    cli_arg: -r/--resume
+    description: run 断点续跑（已存在的输出文件跳过）
+  remove_temp_output:
+    type: boolean
+    default: false
+    cli_arg: --remove-temp-output
+    description: run 结束后清理中间文件
+  output_basename:
+    type: string
+    required: false
+    cli_arg: --output-basename
+    description: run 输出文件名前缀（覆盖默认输入名）
+  verbose:
+    type: boolean
+    default: false
+    cli_arg: -v/--verbose
+    description: run 详细日志
+  units:
+    type: string
+    required: false
+    cli_arg: --units
+    description: renorm 归一化单位（cpm/relab/copy-number）
+  file_name:
+    type: string
+    required: false
+    cli_arg: --file-name
+    description: join 匹配输入目录内文件的后缀模式（如 genefamilies.tsv）
+  groups:
+    type: string
+    required: false
+    cli_arg: --groups
+    description: regroup 分组目标（uniref90/uniref50/ec/metacyc-rxn/... 或自定义映射文件）
+  database:
+    type: string
+    required: false
+    cli_arg: positional
+    description: databases 数据库名（chocophlan/uniref/utility/full 等）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 humann / 各辅助脚本的额外参数（高级用法，慎用）
+outputs:
+  output_dir:
+    type: file
+    format: directory
+    description: run 输出目录（含 *_genefamilies.tsv / *_pathabundance.tsv / *_pathcoverage.tsv 等）
+  out_table:
+    type: file
+    format: tsv
+    description: renorm/join/regroup 输出的归一化 / 合并 / 重分组丰度表
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    default: 4
+environment:
+  container_official: quay.io/biocontainers/humann（bioconda 官方镜像 3.9；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  apptainer_def: Apptainer.def（作者 4.0.0a1 自建路线专用；bioconda 官方仅 3.x 无 4.x alpha，此 def 为 v4 alpha 留存，见 software_versions.author_v4_alpha 与 README）
+  conda: environment.yml
+  note: '双版本并存：native 主路线 = 官方镜像 3.9（container_official，不另维护 3.9 配方）；
+    作者 4.0.0a1 = PyPI + 自建 Apptainer.def（+ bioinfortools 社区镜像备用）。'
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: humann

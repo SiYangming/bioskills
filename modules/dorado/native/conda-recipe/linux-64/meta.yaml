@@ -1,0 +1,73 @@
+# dorado conda-build 配方（YangmingSi 个人频道 / linux-64）
+# ---------------------------------------------------------------------------
+# 来源：由 native/meta.yaml（旧 1.3.0 不完整 sha 变量片段，已删除）按 AGENT.md
+#       §4「自建 conda 包配方（native/conda-recipe/，按平台分目录）」归档补全为
+#       结构完整的 linux-64 配方。
+# 用途：把官方预编译二进制 tar.gz 重新打包为 conda 包，发布到个人频道 YangmingSi：
+#       https://anaconda.org/channels/YangmingSi/packages/dorado/overview
+#       （dorado=1.3.0 已上传：linux-64 + osx-arm64，build 0，2025-11；页面描述
+#        "repackages the pre-compiled binaries" 与本配方同源；arm64 CUDA13 变量
+#        说明与频道描述"For Linux ARM64, use CUDA_MAJOR=13 env var"一致）。
+# 平台：仅 linux-64 —— 本文件对应 linux-64 构建；osx-arm64 重建时按同式另建
+#       osx-arm64/meta.yaml（本模块暂只归档 linux-64，见模块 README 清理记录）。
+# 历史 sha 引用（旧 native/meta.yaml 的 1.3.0 各平台变量，仅作记录、未独立复核；
+#       2.1.2 的 sha256 以官方 release 页公布值为准，禁止沿用 1.3.0 旧值）：
+#   linux_x64_sha256       = c558bf1bd319ef8af2af7a1a1e181a4ba7f3f95cd9878ff701465c8f596026e0  # 1.3.0
+#   linux_arm64_sha256     = f30b2d1f23492b62cae360606906bfa41432f0f48dfe088efd57e1f6873f8a7e  # 1.3.0
+#   linux_arm64_cuda13_sha = fb000f04383256d62c06f607b3072fda376656791ff867c8c4e5c3fbd59974bd  # 1.3.0
+#   osx_arm64_sha256       = 09efe9c264fa101c64dd4ebf63bbe3377b0a741f34bef52ad5b345d611f3dc41  # 1.3.0
+#   win64_sha256           = 520218bbd1aaff7f902a2a41155951cba1a8b8b87366ad9c97275062ebb50c4a  # 1.3.0
+# 重建 / 升级到 2.1.2：
+#   sha256 为占位符 —— 构建前先从官方 release 页
+#   https://github.com/nanoporetech/dorado/releases/tag/v2.1.2 获取
+#   dorado-2.1.2-linux-x64.tar.gz 的 sha256 回填（本仓库只做录入，禁止在此实跑
+#   conda build / 下载）；回填后：
+#     conda build conda-recipe/linux-64  →  anaconda upload ...（发布至 YangmingSi）
+#   并同步将模块 software_versions.native.source 指向新频道版本。
+# ---------------------------------------------------------------------------
+{% set name = "dorado" %}
+{% set version = "2.1.2" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://cdn.oxfordnanoportal.com/software/analysis/dorado-{{ version }}-linux-x64.tar.gz
+  # TODO(构建前必填)：从官方 release 页获取 2.1.2 linux-x64 sha256 回填；禁止编造、
+  #   禁止沿用上方 1.3.0 旧 sha 值。留占位符会导致 conda-build 校验失败，属预期提醒。
+  sha256: __PENDING_FILL_FROM_OFFICIAL_RELEASE_2.1.2__
+
+build:
+  number: 0
+  skip: True  # [not linux]
+  script: |
+    set -eux
+    mkdir -p "$PREFIX/bin"
+    # tar.gz 内顶层目录为 dorado-{{ version }}-linux-x64/{bin,lib,...}
+    cp -f "$SRC_DIR"/dorado-*/bin/dorado "$PREFIX/bin/"
+    chmod +x "$PREFIX/bin/dorado"
+    # 官方 tar 自带 libtorch / CUDA 运行库（lib/ 子目录）。conda 打包需按其实际
+    # RPATH 布局核对：若二进制以 $ORIGIN/../lib 找库，则保留 "bin 与 lib 同父目录"
+    # 结构并在激活脚本补 LD_LIBRARY_PATH；发布前必须本地 conda build 实测验证
+    # （本仓库禁实跑，此处不臆造布局细节；1.3.0 上传包结构可作对照）。
+
+requirements:
+  # 无编译；官方二进制自带运行库。GPU 使用需宿主机 NVIDIA 驱动（dorado 2.x 要求
+  # CUDA ≥12.8 / 12.6(linux-arm64)）；纯 CPU 可 --device cpu。
+  run:
+    - libgcc-ng
+
+test:
+  commands:
+    - test -x "$PREFIX/bin/dorado"
+    - "$PREFIX/bin/dorado" --version
+
+about:
+  home: https://github.com/nanoporetech/dorado
+  license: Oxford Nanopore Technologies PLC. Public License Version 1.0（研究用途；NC 部分模型另有限制）
+  # 官方许可证全文：https://github.com/nanoporetech/dorado/blob/master/LICENCE.txt
+  summary: 'Dorado: high-performance, easy-to-use, open source basecaller for Oxford Nanopore reads (repackaged official binaries)'
+  description: |
+    This package repackages the pre-compiled official Dorado binaries (linux-64).
+    Source: https://github.com/nanoporetech/dorado/releases（2.1.2，2026-08-26）。

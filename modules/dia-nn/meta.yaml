@@ -1,0 +1,177 @@
+software: dia-nn
+canonical: dia-nn
+category: proteomics
+description: 'DIA-NN 是基于深度学习的 data-independent acquisition（DIA）质谱蛋白质组学
+  数据处理软件：由 FASTA 生成 in-silico 预测谱图库（--predictor/--out-lib），再对
+  .raw/.d/.mzML 原始数据进行搜库与定量（--fasta-search 或 --lib），输出报告 TSV 与定量矩阵。
+
+  '
+homepage: https://github.com/vdemichev/DiaNN
+license: Custom（Academia 版学术/非营利免费；商用需官方许可）
+software_versions:
+- id: dia_nn_native
+  dia-nn: '2.6.1'
+  build_route: 无官方容器（bioconda dia-nn 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    无，2026-09-07 核实）→ 自建 apt 最小化（debian:bookworm-slim + dotnet-runtime-8.0 + 官方 zip）
+  source: https://github.com/vdemichev/DiaNN/releases/download/2.0/DIA-NN-2.6.1-Academia-Linux.zip
+    （GitHub release tag=2.0 下追加资产；sha256 f98e396af791f1903168b365a83fc2cc72208cc133281b9ce6ebe3a794b999ba，
+    2026-09-07 官方 API 核实）
+  note: 官方仅分发 Linux x86_64 zip 与 Windows .msi（无 macOS 二进制）；diann-linux 为 .NET 8
+    框架依赖程序，运行时需 dotnet-runtime-8.0（packages.microsoft.com，勿装 SDK）+ LD_LIBRARY_PATH
+    指向解压目录（libtorch 等）；宿主机一键安装走 native/install.sh（binary 官方 zip 默认 2.6.1）。
+- id: dia_nn_nextflow_nfcore
+  module_version: 'master（2026-09-07 抓取：modules/nf-core/diann/ 官方目录含 insilicolibrarygeneration/
+    （旧拆分子模块，main.nf+meta.yml+tests）与顶层合并版 main.nf/meta.yml/tests/——以官方在线目录为准）'
+  dia-nn: v1.8.1_cv1 容器镜像（docker.io/biocontainers/diann:v1.8.1_cv1）
+  source: container docker.io/biocontainers/diann:v1.8.1_cv1 / containers.biocontainers.pro
+    s3 SingImgsRepo（DIA-NN 无 bioconda 包，模块无 environment.yml）
+  note: nf-core diann 模块在 -profile conda/mamba 下直接报错，仅支持 Docker/Singularity/Podman；
+    使用请 nf modules install nf-core diann 装到项目自身目录，勿直接引用本仓库示例 main.nf。
+- id: dia_nn_snakemake_wrappers
+  dia-nn: 官方无 wrapper（bio/diann 404）
+  source: —（snakemake-wrappers 仓库 bio/diann 目录不存在）
+  note: 2026-09-07 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/diann
+    返回 404；Snakemake 场景目前无官方 wrapper 可用。
+- id: dia_nn_nextflow_local
+  dia-nn: 未固定（用户按 main.nf 中 container/官方 zip 自行声明）
+- id: dia_nn_snakemake_local
+  dia-nn: 未启用（本模块未建 snakemake/ 目录；官方 wrapper 缺失，确需时按 td2 式自建并登记于此）
+implementations:
+- id: dia_nn_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.6.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 lib（in-silico 预测库生成）与 run（DIA 数据分析）两步链路，自动注入线程。
+
+    '
+  container_ref:
+    bioconda: 官方无 dia-nn 包（anaconda.org/bioconda/dia-nn 404，2026-09-07 核实）
+    quay_biocontainers: quay.io/biocontainers 无 dia-nn 官方镜像（bioconda 自动构建链不存在）
+    bioinfortools: quay.io/bioinfortools/diann:2.3.2（社区镜像，仅 2.3.2 单 tag，2026-09-07
+      quay API 核实）
+    yangmingsi: https://anaconda.org/channels/YangmingSi/packages/dia-nn/overview（自建频道 dia-nn=2.3.2，
+      linux-64，2026-02 上传；recipe 归档于 native/conda-recipe/linux-64/meta.yaml，重建后 anaconda
+      upload 发布）
+    nfcore_module: nf-core modules/diann 存在（容器 pin v1.8.1_cv1，禁 conda profile；详见
+      software_versions 与 README 官方登记节）
+    install_hint: 宿主机一键 bash native/install.sh（默认官方 zip 2.6.1 binary 路线；conda 路线仅
+      yangmingsi 频道 2.3.2）；容器自建 native/Dockerfile + Apptainer.def（无官方镜像）；有真实
+      .raw/.d/.mzML 时也可 docker run quay.io/bioinfortools/diann:2.3.2（社区镜像，须 -u $(id
+      -u):$(id -g)）
+default_implementation: dia_nn_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: dia-nn 子命令：run|lib（lib 别名 library）
+  fasta:
+    type: file
+    required: false
+    cli_arg: --fasta
+    description: 蛋白 FASTA 数据库（lib 必填；run 在无 --lib 时必填，配合 --fasta-search/--predictor）
+    format:
+    - fasta
+    - fa
+  lib:
+    type: file
+    required: false
+    cli_arg: --lib
+    description: 现有谱图库 speclib（如 <prefix>.predicted.speclib；run 分析用库时给出）
+  out_lib:
+    type: string
+    required: false
+    cli_arg: --out-lib
+    description: 预测谱图库输出前缀（lib 必填；实际产出 <prefix>.predicted.speclib）
+  dir:
+    type: directory
+    required: false
+    cli_arg: --dir
+    description: 含质谱原始数据（.raw/.d/.mzML）的输入目录（run 必填）
+  out:
+    type: file
+    required: false
+    cli_arg: --out
+    description: run 输出报告 TSV 路径（必填）
+  qvalue:
+    type: float
+    default: 0.01
+    cli_arg: --qvalue
+    description: Q-value 阈值（默认 0.01）
+  predictor:
+    type: boolean
+    default: true
+    cli_arg: --predictor
+    description: 使用深度学习预测器（lib 默认开启；run 可选）
+  fasta_search:
+    type: boolean
+    default: false
+    cli_arg: --fasta-search
+    description: 直接对 FASTA 搜索（无库 run 分析）
+  matrices:
+    type: boolean
+    default: false
+    cli_arg: --matrices
+    description: run 输出定量矩阵（pg/pr/gg_matrix.tsv）
+  relaxed_prot_inf:
+    type: boolean
+    default: false
+    cli_arg: --relaxed-prot-inf
+    description: 宽松蛋白推断（run）
+  reanalyse:
+    type: boolean
+    default: false
+    cli_arg: --reanalyse
+    description: reanalyse 模式（run，配合已有结果）
+  temp:
+    type: directory
+    required: false
+    cli_arg: --temp
+    description: DIA-NN 中间/quant 文件目录（run 可选；默认随 TMPDIR）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 diann 的额外参数（高级用法，慎用）
+outputs:
+  report_tsv:
+    type: file
+    format: tsv
+    description: run 主报告（肽段/蛋白定量，含标题行与 qvalue 过滤）
+  predicted_speclib:
+    type: file
+    format: speclib
+    description: lib 输出的预测谱图库 <prefix>.predicted.speclib（后续 run --lib 使用）
+  matrices:
+    type: file
+    format: tsv
+    description: --matrices 输出的定量矩阵（pg/pr/gg/unique_genes_matrix.tsv）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方容器渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）2026-09-07 全无 →
+    自建 apt 最小化配方（debian:bookworm-slim + dotnet-runtime-8.0 + 官方 zip，不默认引入 conda）；
+    社区镜像 quay.io/bioinfortools/diann:2.3.2 与 YangmingSi 频道 dia-nn=2.3.2 作补充登记（见
+    container_ref/README）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  per_subcommand_threads:
+    run: 8
+    lib: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: diann
