@@ -1,0 +1,112 @@
+# custom / sratools_pipeline 复合流程元数据
+#
+# 流程：SRA 批量获取（prefetch 并行下载）-> SRA 转 FASTQ（fasterq-dump / fastq-dump，--split-3 --gzip）
+# 外加一体化状态管理（download|convert|status|stop|clean）。
+# 本组合为「SRA 数据获取 + FASTQ 产出」编排：默认委托 modules/sra-tools 的 native 实现
+# （modules/sra-tools/native/main.py prefetch|fasterq-dump|fastq-dump，sra-tools=3.4.1）。
+# 经典一体化脚本 native/sra_pipeline.sh 合并自 modules/sra-tools/native/ 的 batch_prefetch.sh、
+# batch_prefetch 2.sh、batch_sra_to_fastq.sh、batch_sra_to_fastq_parallel.sh。
+
+id: custom_sratools_pipeline
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "可复用 SRA 批量获取组合：prefetch（并行下载 .sra）-> fasterq-dump/fastq-dump（--split-3 --gzip 转 FASTQ）+ 状态管理（download/convert/status/stop/clean）"
+
+description: |
+  将 NCBI SRA 数据获取（下载 + 转 FASTQ）提炼为可复用的 subworkflow
+  （参照 subworkflow/fastp_bwa_samtools / umi_tools_extract_dedup 形态）：
+  1) meta 声明 stages / inputs / outputs（本文件）；
+  2) 两条执行路线：
+     路线 A：经典一体化脚本 native/sra_pipeline.sh（download|convert|status|stop|clean，
+             自带锁/PID/失败记录，适合一条命令跑批 + 断点管理）；
+     路线 B：native 编排入口 native/main.py（--list-stages / --dry-run / --real，
+             逐 accession 委托 modules/sra-tools/native/main.py prefetch / fasterq-dump / fastq-dump）；
+  3) Snakemake / Nextflow 引擎集成要点并入 sratools_pipeline.md（流程文档「引擎集成」节），
+     工具规则复用 modules/sra-tools/snakemake/*.smk 与 nf-core sratools 模块。
+
+agent_guidance:
+  when_to_use: "用户要从 SRA 数据库批量下载并转 FASTQ（RNA-seq/WGS 等上游数据获取），或需要状态管理（停止/续跑/清理）的一体化下载转换流程时。"
+  recommendation_priority: "Medium（数据获取阶段与下游分析解耦，属于可复用前置组合）"
+
+stages:
+  - id: sra_prefetch
+    software: sra-tools
+    implementation: sra-tools_native
+    purpose: "按 SRR 列表并行 prefetch 下载 .sra（默认 -f yes -t http），输出 <download_dir>/<srr_id>/<srr_id>.sra"
+  - id: sra_to_fastq
+    software: sra-tools
+    implementation: sra-tools_native
+    purpose: "将 .sra 转 FASTQ（默认 fasterq-dump 高速版；兼容 fastq-dump），--split-3 --gzip 输出 <fastq_dir>/<srr_id>_*.fastq.gz"
+
+inputs:
+  srr_list:
+    type: file
+    required: true
+    description: "SRA accession 列表（每行一个，支持 # 注释与空行；如 SRR_Acc_List.txt）"
+  download_dir:
+    type: string
+    default: sra_downloads
+    description: "prefetch 下载目录（每个 accession 一个子目录）"
+  fastq_dir:
+    type: string
+    default: fastq_files
+    description: "FASTQ 输出目录"
+  dump_method:
+    type: string
+    default: fasterq-dump
+    description: "转 FASTQ 工具：fasterq-dump（官方推荐）/ fastq-dump（兼容旧版）"
+  split_3:
+    type: boolean
+    default: true
+    description: "双端数据拆分为 *_1/*_2（--split-3）"
+  gzip:
+    type: boolean
+    default: true
+    description: "输出 .fastq.gz"
+  prefetch_options:
+    type: string
+    default: "-f yes -t http"
+    description: "prefetch 附加选项（默认 -f yes -t http：强制重下 + HTTP 协议）"
+  threads:
+    type: integer
+    default: 4
+    description: "并行/转换线程数（fasterq-dump 自动注入 -e）"
+  tmpdir:
+    type: string
+    default: /tmp
+    description: "fasterq-dump 临时目录（-t）"
+
+outputs:
+  sra_files:
+    path_pattern: "{download_dir}/<srr_id>/<srr_id>.sra"
+  fastq_files:
+    path_pattern: "{fastq_dir}/<srr_id>_*.fastq[.gz]（--split-3 时按 *_1/*_2 布局）"
+  master_log:
+    path_pattern: "{download_dir}/sra_pipeline.log（路线 A 一体化脚本运行日志）"
+  failed_record:
+    path_pattern: "{download_dir}/failed.txt（路线 A 下载/转换失败 accession 记录）"
+
+execution:
+  entrypoint: |-
+    路线 A（一体化批量 + 状态管理，经典脚本）:
+      subworkflow/sratools_pipeline/native/sra_pipeline.sh download|convert|status|stop|clean [--threads N] [--srr-list FILE] [--docker]
+    路线 B（阶段编排，逐 accession 委托 modules/sra-tools/native/main.py）:
+      python subworkflow/sratools_pipeline/native/main.py --list-stages | --dry-run（默认）| --real --srr-list SRR_Acc_List.txt
+  dependencies_in_skills:
+    - sra-tools/native
+  fallback_note: "sra-tools native 已构建（modules/sra-tools/native/main.py，sra-tools=3.4.1），
+    --dry-run 打印委托命令无需任何外部依赖；--real / 路线 A 需先经 conda 或官方容器装好
+    prefetch / fasterq-dump / fastq-dump（参见 modules/sra-tools/README.md「环境安装」）。"
+  test_command: "bash native/test/run_test.sh"
+
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  per_subcommand_threads:
+    fasterq-dump: 8
+    fastq-dump: 4
+    prefetch: 2
+    default: 4
