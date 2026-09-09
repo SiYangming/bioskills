@@ -342,6 +342,8 @@ class <Tool>Skill(base.SkillBase):
 
 * `modules/<sw>/README.md`：官方 wrapper / nf-core 子模块清单 + 引用示例 + **强提示**。
 
+* **Snakemake wrapper 调用规则（2026-09 起全库适用）**：凡官方 `bio/<sw>` wrapper 存在（`software_versions.snakemake_wrappers` 非 404 / 非「官方无」占位）且模块**无本地 snakemake 修订**（`snakemake/` 下无自维护 `.smk` / `script` wrapper）→ README 官方登记节必须提供**可直接粘贴的 `rule ... wrapper:` 调用示例**（`wrapper: "v<tag>/bio/<sw>[/<sub>]"`，tag 取 `software_versions.snakemake_wrappers.wrapper_tag` 登记值；扁平 wrapper 按官方 `wrapper.py` 的 params 契约书写，如 `params.command` + `params.extra`）。**本地已有修订 / 自维护规则**的模块**不重复**提供官方 wrapper 调用示例（本地 `.smk` include 即执行路径），仅在 `software_versions` 与官方登记中记录 wrapper 存在性与句柄；wrapper 强提示（运行时解析、勿当 wrapper_path）保持。官方 wrapper 缺失时，才走本地 `snakemake/` 自定义。
+
 > 承载字段要求（语义沿用，不因合并而省略）：
 
 | 登记内容                            | 官方 nf-core                                                                          | 官方 snakemake-wrappers                                               |
