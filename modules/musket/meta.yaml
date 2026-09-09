@@ -1,0 +1,222 @@
+software: musket
+canonical: musket
+category: qc
+description: 'Musket（Liu Y., Schroeder J., Schmidt B.，Bioinformatics 2013, 29(3):308-315）是基于
+  k-mer spectrum 的多阶段（multistage）Illumina 短读替换错误修正工具：master-slave 多线程模型，
+  依次应用三种修正技术（k-mer 计数/Bloom filter + hash table），支持 FASTA/FASTQ（含 gzip 压缩）
+  多文库输入与两种输出形态（-o 单文件合并输出 / -omulti 前缀多文件输出 prefix.0/.1/...，与输入
+  一一对应）。官方发布站点为 SourceForge musket（最新 musket-1.1.tar.gz，2013-10-09），官网文档
+  https://musket.sourceforge.net/homepage.htm（参数全表）。注意：官方无 --version/--help 参数
+  （可用性以无参运行/真实修正冒烟判定）；Makefile 宏 MAX_KMER_SIZE 默认 28（更大的 k 需改宏
+  重编译）、MAX_SEQ_LENGTH 默认 200。'
+homepage: https://musket.sourceforge.net/
+license: 'Apache-2.0 OR GPL-2.0（SourceForge 项目页 2026-09 显示 "Apache License V2.0, GNU
+  General Public License version 2.0 (GPLv2)" 双许可；源码包内 LICENSE 文件内容未下载核实）'
+software_versions:
+  native:
+    musket: '1.1'
+    build_route: 自建容器/源码编译（官方渠道 2026-09 逐渠道核实全无：bioconda musket API
+      {"error":"musket" could not be found} + anaconda 页面 404、conda-forge 同 API 404、
+      quay.io/biocontainers/musket 401（对照 fastuniq/samtools 200 = 仓库不存在）、
+      quay.io/bioinfortools/musket 401、depot.galaxyproject.org singularity musket:1.1 404、
+      nf-core modules/musket 404、snakemake-wrappers bio/musket 404、homebrew-core musket.json
+      404、brewsci/bio musket.rb 404、bioconda-recipes 历史无 recipes/musket）→ 自建
+      debian:bookworm-slim + g++/make/zlib1g-dev + 官方 sourceforge 源码 make
+      （native/Dockerfile / Apptainer.def）或宿主机官方源码编译（native/install.sh source 路线）
+    source: 'https://downloads.sourceforge.net/project/musket/musket-1.1.tar.gz（SourceForge musket
+      最新发布 2013-10-09，112.1 kB；302 自动重定向官方镜像，2026-09-08 核实）。注意官方文件名为
+      .tar.gz 而非部分教学文档所记 .tar.bz2（后者 404 核实不存在）'
+    note: 'sha256：SourceForge 不提供文件摘要、且无 bioconda/brew recipe 可参照 → 未核实（安装脚本
+      不内嵌 sha，仅提示人工核对，禁止编造）。-k 语义（官方 README）：-k 后接两个值 = k-mer 大小
+      （默认 21）+ 估计的不同 k-mer 总数（默认 536870912，不影响正确性、只平衡 Bloom filter 与
+      hash table 间内存占用），教学文档所称"50000000 哈希表大小"实为该估计值。'
+  nextflow_nfcore:
+    module_version: （官方无此模块）
+    musket: 官方无模块
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/musket
+      返回 404（GitHub API "Not Found"）；Nextflow 场景需容器化后走 native correct 子命令。
+  nextflow_local:
+    musket: （未启用占位）
+  snakemake_wrappers:
+    wrapper_tag: （官方无此 wrapper）
+    musket: 官方无 wrapper
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/musket
+      返回 404（GitHub API "Not Found"）；Snakemake 场景请在容器内 PATH 直调 musket 或走 native
+      correct 子命令。
+  snakemake_local:
+    musket: （未启用占位）
+implementations:
+- id: musket_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    Musket 为单条命令工具（无官方子命令/--help/--version），驱动提供 correct 子命令承载官方主流程：
+    musket [-k <kmer> <est-kmer-count>] [-o <file> | -omulti <prefix>] -p <threads>
+    [-inorder] [-lowercase] [-zlib n] [-maxtrim n] [advanced...] <reads...>；--threads 自动注入 -p。
+    查无官方 conda 包/镜像/wrapper（官方渠道 2026-09 全 404/401 核实），宿主机与容器安装路线见
+    README「环境安装」。
+  container_ref:
+    sourceforge: https://sourceforge.net/projects/musket/（官方发布站：源码归档 musket-1.1.tar.gz +
+      utils/memusage.tar.gz；无预编译二进制资产）
+    homepage: https://musket.sourceforge.net/homepage.htm（官方参数文档/README）
+    bioconda: （无——api.anaconda.org/package/bioconda/musket 返回 {"error":"musket" could not be
+      found}，anaconda.org/bioconda/musket 页面 404，2026-09-08 核实）
+    conda_forge: （无——api.anaconda.org/package/conda-forge/musket 同样报错，2026-09-08 核实）
+    quay_biocontainers: （无——quay.io/api/v1/repository/biocontainers/musket/tag 返回 401 Requires
+      authentication = 仓库不存在；对照已知仓库 fastuniq/samtools 返回 200，2026-09-08 核实）
+    quay_bioinfortools: （无——quay.io/api/v1/repository/bioinfortools/musket 401，2026-09-08 核实）
+    depot_galaxyproject: （无——https://depot.galaxyproject.org/singularity/musket:1.1 HTTP 404，
+      2026-09-08 核实）
+    nfcore_module: （官方无——modules/nf-core/musket GitHub API 404，2026-09-08 核实）
+    snakemake_wrapper: （官方无——snakemake-wrappers bio/musket GitHub API 404，2026-09-08 核实）
+    brew: （两源均无——homebrew-core formula/musket.json 404、brewsci/bio Formula/musket.rb 404，
+      2026-09-08 核实）
+    install_hint: 宿主机：bash native/install.sh（默认 source 路线 curl 官方 sourceforge 源码包 →
+      make → ~/software/musket-1.1 写 PATH → 迷你修正冒烟断言）；无官方 conda 包，conda 分支仅建
+      python=3.11+pyyaml 驱动 env（musket 本体走源码编译或自建容器）。容器：本地自建配方
+      （native/Dockerfile + Apptainer.def，debian:bookworm-slim + g++/make/zlib1g-dev + 官方源码 make）。
+default_implementation: musket_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: musket 技能子命令：correct（承载官方主流程 k-mer 谱错误修正；
+      musket [-k <kmer> <est>] [-o <file>|-omulti <prefix>] [-p N] [-inorder] ... <reads...>）
+  reads:
+    type: file
+    required: true
+    format:
+    - fastq
+    - fasta
+    - fastq.gz
+    description: 一个或多个输入文库文件（FASTA/FASTQ，支持 gzip 压缩；多文件时建议配合
+      -omulti/-inorder 做多文库配对修正）
+  kmer_size:
+    type: integer
+    required: false
+    cli_arg: '-k（第一值）'
+    default: 21
+    description: k-mer 长度（官方默认 21；Makefile 宏 MAX_KMER_SIZE 默认 28，更大的 k 需改宏重编译；
+      -k 后必须跟两值，第二值见 est_kmer_count）
+  est_kmer_count:
+    type: integer
+    required: false
+    cli_arg: '-k（第二值）'
+    default: 536870912
+    description: 输入数据集中估计的不同 k-mer 总数（官方默认 536870912；不影响正确性，仅平衡
+      Bloom filter 与 hash table 之间的内存占用；教学文档所称"哈希表大小 50000000"即此值）
+  output:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 单一输出文件名（所有输入 reads 的修正结果合并写入该文件；与 -omulti 互斥）
+  omulti:
+    type: string
+    required: false
+    cli_arg: -omulti
+    description: 多路输出前缀（每个输入文件一个输出：第 i 个输入 → <prefix>.0/.1/.2...，从 0 起
+      与输入次序一一对应；与 -o 互斥）
+  inorder:
+    type: boolean
+    required: false
+    cli_arg: -inorder
+    default: false
+    description: 保持 reads 输出顺序与输入一致（驱动默认不注入=关；paired-end 多文库修正官方推荐开启，
+      自 1.0.5 起以 -inorder 取代 -paired）
+  lowercase:
+    type: boolean
+    required: false
+    cli_arg: -lowercase
+    default: false
+    description: 修正后的碱基以小写输出（官方自 1.0.6 起；缺省大写）
+  zlib:
+    type: integer
+    required: false
+    cli_arg: -zlib
+    default: 0
+    description: zlib 压缩输出（官方默认 0=不压缩；非 0 即 zlib 压缩写出，int 取值含义以官方为准）
+  maxtrim:
+    type: integer
+    required: false
+    cli_arg: -maxtrim
+    default: 0
+    description: 最多可修剪的末端碱基数（默认 0=不修剪）
+  maxbuff:
+    type: integer
+    required: false
+    cli_arg: -maxbuff
+    default: 1024
+    description: 每个 worker 的消息缓冲区容量（advanced，官方默认 1024）
+  multik:
+    type: boolean
+    required: false
+    cli_arg: -multik
+    default: false
+    description: 启用多 k-mer 大小（advanced，官方默认 0=关闭；开启后 -minmulti 不适用）
+  maxerr:
+    type: integer
+    required: false
+    cli_arg: -maxerr
+    default: 4
+    description: 任意 #k 长度区域内允许的最大突变数（advanced，官方默认 4）
+  maxiter:
+    type: integer
+    required: false
+    cli_arg: -maxiter
+    default: 2
+    description: 每个 k-mer 大小的最大修正迭代数（advanced，官方默认 2）
+  minmulti:
+    type: integer
+    required: false
+    cli_arg: -minmulti
+    default: 0
+    description: 正确 k-mer 的最低 multiplicity（advanced，仅未启用 multik 时适用，官方默认 0）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -p
+    description: 线程数（自动注入官方 -p；官方要求 >=2、默认 2；用户显式 --threads 优先于
+      optimization 默认）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 musket 的额外参数（高级用法，慎用；白名单外选项可由此传入）
+outputs:
+  corrected_single:
+    type: file
+    format: fastq
+    description: -o 单文件输出：全部输入 reads 的修正结果（FASTA/FASTQ 与输入一致，gzip 输入按
+      -zlib 决定输出压缩）
+  corrected_multi:
+    type: file
+    description: -omulti 多路输出：每个输入文件对应 <prefix>.0/.1/.2...（与输入次序一一对应）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → conda-forge → quay.io/biocontainers → quay.io/bioinfortools →
+    depot.galaxyproject.org）2026-09 全部核实无 musket 包/镜像 → 保留自建配方
+    （linux/amd64，debian:bookworm-slim + g++/make/zlib1g-dev + 官方 sourceforge 源码 make，
+    不引入 miniconda）。environment.yml 仅为离线/无 root 场景提供 python 驱动环境（musket 无
+    conda 包，本体走源码编译/容器）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    correct: 4
+    default: 4
+  note: Musket 为 k-mer 计数/哈希类工具，内存占用高（Bloom filter + hash table 由 -k 第二值
+    est_kmer_count 平衡；官方默认 536870912 对应 2^29 级计数，峰值内存可达数 GB~数十 GB 视
+    数据而定，未给精确公式）→ default_mem_mb 取 16384 级；线程 master-slave 模型，-p 官方要求 >=2。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: musket

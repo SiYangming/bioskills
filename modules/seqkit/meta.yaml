@@ -1,0 +1,364 @@
+software: seqkit
+canonical: seqkit
+category: sequence_utils
+description: 'seqkit（shenwei356/seqkit，Go 编写）是跨平台、超快的 FASTA/Q 处理工具集：
+  提供 stats/fx2tab/grep/sample/rmdup/sort/split/split2/translate/seq/fq2fa/fa2fq/head/
+  sliding/concat/replace/common/duplicate/sana/restart 等数十个原子子命令，覆盖序列统计、
+  格式转换、检索、抽样、去重、排序、分割、翻译等日常序列处理，支持 gzip/xz/zstd/bzip2/lz4
+  压缩与 stdin/stdout 管道。官方渠道齐全：bioconda → quay.io/biocontainers →
+  depot.galaxyproject.org 均有维护镜像；nf-core modules 与 snakemake-wrappers 均有官方实现
+  （登记不建目录）。homepage 官网 https://bioinf.shenwei.me/seqkit/，usage 文档
+  https://bioinf.shenwei.me/seqkit/usage/；引用论文：Wei Shen et al. iMeta 2024（SeqKit2，
+  10.1002/imt2.191）。'
+homepage: https://bioinf.shenwei.me/seqkit/
+license: MIT
+software_versions:
+- id: seqkit_native
+  seqkit: 2.13.0
+  build_route: official biocontainer（quay.io/biocontainers/seqkit / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/seqkit
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org，2026-09-08 核实：
+    bioconda latest_version=2.13.0；quay tag 2.13.0--he881be0_0；depot singularity
+    seqkit:2.13.0--he881be0_0 HTTP 200），本地不再自建容器；宿主机直跑 main.py 时用
+    conda/mamba 安装 seqkit 或官方 GitHub release 二进制（native/install.sh 双路线）。
+    GitHub latest release v2.13.0（2026-02-27 发布）；CHANGELOG 已列 v2.14.0 但截至 2026-09-08
+    尚未发 release，以 releases/latest=v2.13.0 为准。'
+- id: seqkit_nextflow_nfcore
+  module_version: nf-core master（2026-09-08 抓取 modules/nf-core/seqkit）
+  seqkit: 2.13.0
+  source: bioconda::seqkit=2.13.0（modules/nf-core/seqkit/*/environment.yml，以 seqkit/stats
+    environment.yml 为锚点）
+  note: 'nf-core modules 有 modules/nf-core/seqkit 目录，17 个子模块：concat / fq2fa / fx2tab /
+    grep / head / pair / replace / rmdup / sample / sana / seq / sliding / sort / split2 / stats /
+    tab2fx / translate（2026-09-08 GitHub API 核实，与官方目录一致；官方无 seqkit/split 子模块，
+    分割为 split2）。'
+- id: seqkit_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  seqkit: 2.13.0
+  source: bio/seqkit/environment.yaml：seqkit =2.13.0 + htslib =1.24 + snakemake-wrapper-utils
+    =0.9.0（2026-09-08 抓取 raw 核实）
+  note: 'snakemake-wrappers 有 bio/seqkit 目录但为扁平 wrapper（无子目录：wrapper.py +
+    environment.yaml + meta.yaml + test/），运行时用 wrapper: "v9.17.1/bio/seqkit"，由 params
+    （subcommand 等）分派到 seqkit 子命令。切 wrapper tag 后请核对 environment.yaml pin。'
+- id: seqkit_nextflow_local
+  seqkit: 未启用（官方 nf-core modules/seqkit 已覆盖，未建本地 nextflow 目录；登记不建目录）
+- id: seqkit_snakemake_local
+  seqkit: 未启用（官方 snakemake-wrappers bio/seqkit 已覆盖，未建本地 snakemake 目录；登记不建目录）
+implementations:
+- id: seqkit_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.13.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 stats / fx2tab / grep / sample / rmdup / sort / split / translate / fq2fa 9 个高频原子
+    子命令（白名单参数对齐官方 usage 页 v2.13.0 flags），自动注入 seqkit -j 线程；白名单外的
+    上游参数经 --extra-args 透传，不臆造 flag。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/seqkit
+    quay_biocontainers: quay.io/biocontainers/seqkit
+    depot_galaxyproject: https://depot.galaxyproject.org/singularity/seqkit:2.13.0--he881be0_0
+    nfcore_module: modules/nf-core/seqkit（concat/fq2fa/fx2tab/grep/head/pair/replace/rmdup/sample/
+      sana/seq/sliding/sort/split2/stats/tab2fx/translate，登记不建目录）
+    snakemake_wrapper: bio/seqkit（扁平 wrapper，v9.17.1/bio/seqkit，登记不建目录）
+    install_hint: 宿主机：bash native/install.sh（auto：有 conda/mamba 走 bioconda
+      seqkit=2.13.0；无 conda 且 linux-x64/macos-x64 走官方 GitHub release 二进制到
+      ~/software/seqkit-2.13.0，sha256 校验 + seqkit version 断言）。容器：官方镜像直拉
+      quay.io/biocontainers/seqkit:2.13.0--he881be0_0（或 depot sif），native/ 不维护
+      Dockerfile/Apptainer.def。
+default_implementation: seqkit_native
+source_reference:
+  note: 官方实现不建目录；以下子模块清单与官方在线目录一致（2026-09-08 抓取），刷新请直接核对
+    官方目录 URL。
+  nf_core_modules_url: https://github.com/nf-core/modules/tree/master/modules/nf-core/seqkit
+  nf_core_submodules:
+  - concat
+  - fq2fa
+  - fx2tab
+  - grep
+  - head
+  - pair
+  - replace
+  - rmdup
+  - sample
+  - sana
+  - seq
+  - sliding
+  - sort
+  - split2
+  - stats
+  - tab2fx
+  - translate
+  snakemake_wrappers_url: https://github.com/snakemake/snakemake-wrappers/tree/master/bio/seqkit
+  snakemake_wrappers_submodules: []   # bio/seqkit 为扁平 wrapper（无子目录：wrapper.py/environment.yaml/meta.yaml/test）
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: seqkit 技能子命令：stats|fx2tab|grep|sample|rmdup|sort|split|translate|fq2fa
+  files:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入 FASTA/Q 文件（可多个；缺省读 stdin；支持 .gz/.xz/.zst/.bz2/.lz4）
+  out_file:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出文件（缺省 stdout；后缀 .gz 自动 gzip）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -j
+    description: seqkit 线程数（自动注入 -j N；seqkit 默认 4）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录（透传 TMPDIR；sort/split 两遍模式等写临时文件时生效）
+  # ---- stats ----
+  all_stats:
+    type: boolean
+    required: false
+    cli_arg: -a
+    description: stats 全量统计（四分位/Q1-Q3、sum_gap、N50/N50_num、Q20/Q30、AvgQual、GC、sum_n）
+  tabular:
+    type: boolean
+    required: false
+    cli_arg: -T
+    description: stats 制表符输出（机器友好，便于 R/Excel/csvtk）
+  basename:
+    type: boolean
+    required: false
+    cli_arg: -b
+    description: stats 仅输出文件名（不显示完整路径）
+  skip_err:
+    type: boolean
+    required: false
+    cli_arg: -e
+    description: stats 跳过错误文件仅告警
+  skip_file_check:
+    type: boolean
+    required: false
+    cli_arg: -S
+    description: stats 跳过输入文件检查
+  n50_like:
+    type: string
+    required: false
+    cli_arg: -N
+    description: stats 追加其它 N50-like 列（如 "50,90"；v2.5.0+，N90 需显式 -N 90）
+  # ---- fx2tab ----
+  only_name:
+    type: boolean
+    required: false
+    cli_arg: -n
+    description: fx2tab 仅输出名称列（不带序列/质量）
+  length_col:
+    type: boolean
+    required: false
+    cli_arg: -l
+    description: fx2tab 附加序列长度列
+  gc_col:
+    type: boolean
+    required: false
+    cli_arg: -g
+    description: fx2tab 附加 GC 含量列
+  only_id:
+    type: boolean
+    required: false
+    cli_arg: -i
+    description: fx2tab 输出 ID 而非完整 header
+  header_line:
+    type: boolean
+    required: false
+    cli_arg: -H
+    description: fx2tab 输出表头行
+  # ---- grep ----
+  pattern:
+    type: string
+    required: false
+    cli_arg: -p
+    description: grep 搜索模式（可多次 -p；默认整词匹配 ID，加 --use-regexp 做正则部分匹配）
+  pattern_file:
+    type: file
+    required: false
+    cli_arg: -f
+    description: grep 模式文件（每行一个模式）
+  invert_match:
+    type: boolean
+    required: false
+    cli_arg: -v
+    description: grep 反向匹配（排除命中的记录）
+  by_name:
+    type: boolean
+    required: false
+    cli_arg: -n
+    description: grep/sort/rmdup 按完整名称（full name）而非仅 ID
+  by_seq:
+    type: boolean
+    required: false
+    cli_arg: -s
+    description: grep 按序列搜索（正负链）；sort 按序列排序；rmdup 按序列去重
+  ignore_case:
+    type: boolean
+    required: false
+    cli_arg: -i
+    description: 忽略大小写
+  use_regexp:
+    type: boolean
+    required: false
+    cli_arg: -r
+    description: grep 模式按正则部分匹配（默认整词匹配）
+  # ---- sample ----
+  number:
+    type: integer
+    required: false
+    cli_arg: -n
+    description: sample 按条数抽样（结果可能不完全精确；大 FASTQ 慎用会载入内存）
+  proportion:
+    type: float
+    required: false
+    cli_arg: -p
+    description: sample 按比例抽样（0-1）
+  rand_seed:
+    type: integer
+    required: false
+    cli_arg: -s
+    description: sample 随机种子（默认 11；双端用同种子保持配对）
+  non_deterministic:
+    type: boolean
+    required: false
+    cli_arg: -r
+    description: sample 基于时间的真随机（默认输出确定性）
+  # ---- rmdup ----
+  dup_seqs_file:
+    type: file
+    required: false
+    cli_arg: -d
+    description: rmdup 把重复序列写入该文件
+  only_positive_strand:
+    type: boolean
+    required: false
+    cli_arg: -P
+    description: 仅正链比较（rmdup by-seq / grep by-seq 等）
+  # ---- sort ----
+  by_length:
+    type: boolean
+    required: false
+    cli_arg: -l
+    description: sort 按序列长度排序
+  reverse:
+    type: boolean
+    required: false
+    cli_arg: -r
+    description: sort 反向（配合 -l 即长度降序，如 seqkit sort -l -r）
+  natural_order:
+    type: boolean
+    required: false
+    cli_arg: -N
+    description: sort 自然序（按 ID/名称排序时）
+  # ---- split ----
+  by_size:
+    type: integer
+    required: false
+    cli_arg: -s
+    description: split 每文件 N 条序列
+  by_part:
+    type: integer
+    required: false
+    cli_arg: -p
+    description: split 分成 N 份
+  by_id:
+    type: boolean
+    required: false
+    cli_arg: -i
+    description: split 按序列 ID 分割（默认输出目录 $infile.split）
+  out_dir:
+    type: string
+    required: false
+    cli_arg: -O
+    description: split 输出目录（默认 $infile.split）
+  force_split:
+    type: boolean
+    required: false
+    cli_arg: -f
+    description: split 覆盖已存在的输出目录
+  # ---- translate ----
+  frame:
+    type: string
+    required: false
+    cli_arg: -f
+    description: translate 翻译框（1,2,3,-1,-2,-3 或 6=全部六框；默认 [1]）
+  transl_table:
+    type: integer
+    required: false
+    cli_arg: -T
+    description: translate 密码子表/遗传码（默认 1 标准码）
+  trim_translation:
+    type: boolean
+    required: false
+    cli_arg: --trim
+    description: translate 去除右端 X/* 字符
+  init_codon_as_m:
+    type: boolean
+    required: false
+    cli_arg: -M
+    description: translate 起始密码子译为 M
+  allow_unknown_codon:
+    type: boolean
+    required: false
+    cli_arg: -x
+    description: translate 未知密码子译为 X
+  min_len:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: translate 最小氨基酸长度（配合 -s 输出子序列）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 seqkit 的额外参数（高级用法，慎用；白名单外 flag 原样追加）
+outputs:
+  seq_stats:
+    type: file
+    format: text
+    description: stats 输出统计表（缺省 stdout；-T 制表、-o 落盘）
+  converted_sequences:
+    type: file
+    format: fasta
+    description: fx2tab/tab2fx 管道转换或 fq2fa 输出的序列
+  filtered_sequences:
+    type: file
+    format: fasta
+    description: grep/sample/rmdup/sort 后的序列文件（stdout 或 -o）
+  split_dir:
+    type: file
+    format: directory
+    description: split 输出目录（默认 $infile.split，含 .part_001 等分片）
+  protein_sequences:
+    type: file
+    format: fasta
+    description: translate 输出的蛋白序列
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/seqkit（bioconda 官方自动构建镜像；tag 含版本+build，
+    当前 2.13.0--he881be0_0，以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均存在，
+    2026-09-08 核实），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba（bioconda seqkit=2.13.0）或官方 release 二进制安装。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    stats: 8
+    sort: 8
+    split: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: seqkit

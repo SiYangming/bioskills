@@ -1,0 +1,14 @@
+# fastuniq native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机离线 / 非容器场景备选：mamba env create -f environment.yml
+# 版本对齐：modules/fastuniq/meta.yaml software_versions.native fastuniq=1.1。
+# 渠道说明：bioconda 官方有 fastuniq=1.1（linux-64/osx-64/linux-aarch64/osx-arm64，2026-09 核实）；
+#           容器官方镜像 quay.io/biocontainers/fastuniq:1.1--h7b50bb2_2（见模块 README「环境安装」）。
+# main.py 运行依赖：pyyaml（SkillBase）；fastuniq 为 C 二进制、无 Python 依赖。
+name: fastuniq-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - fastuniq=1.1
+  - pyyaml>=6.0

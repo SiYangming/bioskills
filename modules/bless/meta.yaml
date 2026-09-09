@@ -1,0 +1,165 @@
+software: bless
+canonical: bless
+category: qc
+description: 'BLESS / BLESS 2（Bloom-filter-based Error Correction Solution for NGS reads，
+  作者 Yun Heo 等，UIUC）是基于 Bloom filter + k-mer 计数的 Illumina/高通量测序 reads
+  错误修正工具，支持 OpenMP/MPI 多线程并行（KMC 做 k-mer 计数；产出 *.corrected.fastq）。
+  官方发布站点为 SourceForge bless-ec（无官方 GitHub 仓库、无 bioconda/quay/depot
+  官方镜像/conda 包，2026-09 逐渠道核实）：BLESS 1 版本线 V0.11–V0.24（2013-10 ~ 2015-01），
+  BLESS 2 版本线 V1.00–V1.02（wiki 标注 V1.00+ aka BLESS 2，2015-05 ~ 2015-06；主程序名仍为
+  bless，最新发布 bless.v1p02.tgz）。native/install.sh 与 native/Dockerfile/Apptainer.def
+  为自建源码编译配方（GPLv3 源码 + make；需高版本 GCC + MPI 开发库）。
+  '
+homepage: https://sourceforge.net/projects/bless-ec/
+license: GPL-3.0
+software_versions:
+  native:
+    bless: "1.02"
+    build_route: 自建容器（debian:bookworm-slim + apt 构建依赖 g++/make/mpich + 官方 sourceforge
+      源码归档 bless.v1p02.tgz + make；官方渠道 bioconda → quay.io/biocontainers →
+      depot.galaxyproject.org 均无 → 自建兜底）
+    source: 'https://downloads.sourceforge.net/project/bless-ec/bless.v1p02.tgz（SourceForge
+      bless-ec 最新发布 2015-06-10，6.0 MB；sha256 未核实）；项目页
+      https://sourceforge.net/projects/bless-ec/；用法文档 https://sourceforge.net/p/bless-ec/wiki/Home/'
+    note: 'BLESS 2（论文 Bioinformatics 32(15):2369-2371, 2016）与 BLESS 1（Bioinformatics
+      30(10):1354-1362, 2014）同属 sourceforge bless-ec 项目；BLESS2 主程序名仍为 bless。
+      V1.01 起 tgz 内已包含全部依赖库（Boost/sparsehash/klib/KMC/murmurhash3/zlib/pigz），
+      编译仅需 make + 高版本 GCC + MPI（官方测试 GCC 4.9.2 + MPICH 3.1.3 / OpenMPI 1.8.2；
+      用户文档亦要求高版本 GCC + MPICH）。官方 5 个渠道（bioconda / quay biocontainers /
+      depot / nf-core / snakemake-wrappers）2026-09 核实全部缺失；conda-forge/bless 为同名
+      异义的 Python CLI 日志包（v0.4.0，MIT，勿混淆）。'
+  nextflow_nfcore:
+    bless: 官方无模块
+    module_version: ''
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/bless
+      返回 404；Nextflow 场景需自定义或降级 native。
+  nextflow_local:
+    bless: （未启用占位）
+  snakemake_wrappers:
+    bless: 官方无 wrapper
+    wrapper_tag: v3.13.0
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/bless
+      返回 404；Snakemake 场景需自定义或降级 native。
+  snakemake_local:
+    bless: （未启用占位）
+implementations:
+- id: bless_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.02"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    bless 为单条命令工具（无子命令），驱动提供 correct 子命令承载官方 CLI：
+    bless -read1 R1 -read2 R2 [-read 单端] -kmerlength K -prefix P [-notrim] [-load DB]
+    [-smpthread T]。
+  container_ref:
+    sourceforge: https://sourceforge.net/projects/bless-ec/（官方发布站：源码归档 + wiki，无二进制资产）
+    bioconda: 无（api.anaconda.org/package/bioconda/bless 404，2026-09）
+    conda_forge_same_name: https://anaconda.org/conda-forge/bless（同名异义：Python CLI 日志包，
+      非 NGS BLESS，勿安装）
+    quay_biocontainers: 无（biocontainers 镜像由 bioconda 自动构建，bioconda 无 bless 包）
+    depot_galaxyproject: 无 sif（depot.galaxyproject.org/singularity/ 目录列表无 bless* 条目）
+    dockerhub_official: 无官方镜像
+    install_hint: '1.02 无任何官方渠道 → 源码编译：native/install.sh --method source（用户前缀
+      ~/software/bless-1.02，免 root）或 native/Dockerfile / Apptainer.def 自建镜像；切勿用
+      conda-forge/bless（同名 Python 日志包）。'
+default_implementation: bless_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'bless 无子命令结构；驱动按 Agent 路由约定提供 correct 子命令承载官方单条 CLI
+      （bless -read1/-read2/-read/-kmerlength/-prefix/-notrim/-load/-smpthread）'
+  read:
+    type: file
+    required: false
+    cli_arg: -read
+    format:
+    - fastq
+    description: 单端（或已合并双端）FASTQ 输入（官方单端用法 -read <fastq>）
+  read1:
+    type: file
+    required: false
+    cli_arg: -read1
+    format:
+    - fastq
+    description: 双端测序 R1 FASTQ（paired-end 用法 -read1/-read2；可与 read2 成对使用）
+  read2:
+    type: file
+    required: false
+    cli_arg: -read2
+    format:
+    - fastq
+    description: 双端测序 R2 FASTQ（paired-end 用法 -read1/-read2；可与 read1 成对使用）
+  kmerlength:
+    type: integer
+    required: false
+    cli_arg: -kmerlength
+    default: 21
+    description: k-mer 长度（BLESS1 建议奇数；V0.20 起支持偶数；经验公式 Ns/4^k ≤ 0.0001）
+  prefix:
+    type: string
+    required: true
+    cli_arg: -prefix
+    description: 输出前缀 <输出目录名>/<文件前缀>；产出 <prefix>.1.corrected.fastq /
+      <prefix>.2.corrected.fastq（双端）或 <prefix>.corrected.fastq（单端，以官方实际为准），
+      并生成 Bloom filter 转储 <prefix>.bf.data + <prefix>.bf.size
+  notrim:
+    type: boolean
+    required: false
+    cli_arg: -notrim
+    default: false
+    description: 不进行末端修剪（官方自 V0.13 起默认修剪 reads；用户文档 CentOS 6 示例使用 -notrim）
+  load:
+    type: string
+    required: false
+    cli_arg: -load
+    description: 载入已有 Bloom filter 转储（复用 <load>.bf.data/.bf.size，跳过 k-mer 计数阶段；
+      多文库/多批 reads 共享同一 k-mer 库时使用，用户文档 -load fragment 示例）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -smpthread
+    description: 线程数（自动注入到官方 -smpthread，每节点 OpenMP 线程数默认 = SMP 核数；
+      用户显式 --threads 优先于 optimization 默认）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 bless 的附加参数（高级用法，慎用；白名单外选项如运行期帮助输出中的
+      其它开关可由此传入）
+outputs:
+  corrected_fastq:
+    type: file
+    format: fastq
+    description: 修正后 reads：双端 <prefix>.1.corrected.fastq + <prefix>.2.corrected.fastq
+      （用户文档产物命名）；单端输出文件名以官方实际为准（未核实）
+  bf_data:
+    type: file
+    format: data
+    description: Bloom filter 内容转储 <prefix>.bf.data（可被 -load 复用跳过计数阶段）
+  bf_size:
+    type: file
+    description: Bloom filter 大小文件 <prefix>.bf.size（与 .bf.data 配套供 -load 使用）
+environment:
+  conda: environment.yml
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 1.02 无官方镜像/conda 包（bioconda/quay biocontainers/depot 全无，2026-09 核实）→
+    自建 apt 最小化 + 官方源码 make 配方（debian:bookworm-slim + g++/make/mpich；tgz 自带
+    依赖库）；environment.yml 仅为离线/无 root 场景提供源码编译工具链（bless 本身无 conda 包，
+    conda-forge/bless 为同名异义的 Python 日志包，勿装）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    correct: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: bless

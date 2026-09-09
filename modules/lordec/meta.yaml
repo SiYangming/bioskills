@@ -1,0 +1,149 @@
+software: lordec
+canonical: lordec
+category: qc
+description: 'LoRDEC（Salmela & Rivals 2014, Bioinformatics 30:3506）是长读（PacBio /
+  ONT）三代测序错误的混合纠错（hybrid error correction）工具：以低错误率短读（典型 Illumina，
+  可 gzip 压缩的 FASTA/FASTQ，-2 可给双端两文件或单文件）构建 succinct De Bruijn Graph（DBG），
+  在图中为长读的每个错误区寻找修正路径并回代，校正插入/缺失/替换错误。程序族：
+  lordec-correct（主纠错）、lordec-trim / lordec-trim-split（对 corrected reads 修剪头尾未纠
+  区 / 修剪并拆分内部未纠区）、lordec-stats（统计）、lordec-build-SR-graph（DBG 持久化）。
+  输出 corrected FASTA：大写=已纠正确碱基，小写=未能纠正的碱基。
+
+  '
+homepage: http://www.atgc-montpellier.fr/lordec/
+license: 'CECILL-2.1（官网 "LoRDEC is distributed under the CeCILL A license"；源码包内
+  LICENSE/Licence_CeCILL_V2.1-en.txt —— CeCILL v2.1，SPDX id CECILL-2.1。注意：其依赖库 GATB
+  以 GNU Affero GPL v3 分发，二者许可不同）'
+software_versions:
+  native:
+    lordec: 0.9
+    build_route: official biocontainer（bioconda lordec=0.9 → quay.io/biocontainers/lordec / depot.galaxyproject.org 官方渠道齐全）
+    source: 'conda: https://anaconda.org/bioconda/lordec（linux-64 + osx-64，最新 build
+      lordec-0.9-h77376b9_3 / lordec-0.9-h892528c_3，2022-02-24 上传）；官方源码包:
+      https://gite.lirmm.fr/lordec/lordec-releases/uploads/800a96d81b3348e368a0ff3a260a88e1/lordec-src_0.9.tar.bz2
+      （curl 200 稳定直链；官方仅发布 md5 dc57581bf2d265bd245f824a1e74209b，无 sha256）'
+    note: '2026-09-08 核实：官方渠道齐全（bioconda / quay.io/biocontainers / depot.galaxyproject.org
+      均有 lordec 0.9，官方镜像 tag 0.9--h77376b9_3）；nf-core 与 snakemake-wrappers 均无官方模块
+      （404）→ 流程场景降级 native。bioconda recipe（master）pin gatb=1.4.1 + boost + hdf5 + zlib
+      （0.9 源码为 C++ 工程，Makefile 默认 AUTOMATIC_LIBBOOST_LOCAL_INSTALL=yes 并自动下载编译
+      GATB core，见 README「历史留存/源码编译」）；brew 两源（homebrew-core / brewsci/bio）均无公式。
+      LoRDEC 运行时需较多 RAM（DBG 建图），optimization.default_mem_mb 已按 16384 声明。lordec
+      无统一 --version；官方/bioconda 可用性判据为 lordec-trim -h 输出含 Usage。'
+  nextflow_nfcore:
+    lordec: 官方无模块
+    module_version: ''
+    source: （占位）
+    note: 2026-09-08 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/lordec
+      返回 404；Nextflow 场景需自定义或降级 native。
+  nextflow_local:
+    lordec: （未启用占位）
+  snakemake_wrappers:
+    lordec: 官方无 wrapper
+    wrapper_tag: v3.13.0
+    source: （占位）
+    note: 2026-09-08 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/lordec
+      返回 404；Snakemake 场景需自定义或降级 native。
+  snakemake_local:
+    lordec: （未启用占位）
+implementations:
+- id: lordec_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.9"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）首选目标；用
+    Illumina 短读纠正 PacBio/长读：correct（-2 短读 -i 长读 -k -s -o [-T]）→ trim（-i -o）→
+    trim-split（-i -o）。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/lordec（lordec=0.9，linux-64/osx-64，官方渠道）
+    quay_biocontainers: quay.io/biocontainers/lordec:0.9--h77376b9_3（bioconda 自动构建官方镜像，linux-64 最新 build _3；tag 以 quay / depot 为准）
+    depot: https://depot.galaxyproject.org/singularity/lordec%3A0.9--h77376b9_3（Galaxy 预构建 sif 直拉）
+    gite_src: https://gite.lirmm.fr/lordec/lordec-releases/uploads/800a96d81b3348e368a0ff3a260a88e1/lordec-src_0.9.tar.bz2
+    install_hint: '官方渠道已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再
+      自建 Dockerfile/Apptainer.def；宿主机一键 bash native/install.sh（conda 或源码 make 双路线）。
+      conda 推荐：mamba install -c bioconda -c conda-forge lordec。'
+default_implementation: lordec_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'lordec 子命令：correct（lordec-correct 主纠错）| trim（lordec-trim 修剪头尾未纠区）
+      | trim-split（lordec-trim-split 修剪并拆分）'
+  short_reads:
+    type: string
+    required: false
+    cli_arg: -2
+    description: 'correct 子命令：参考短读集（FASTA/FASTQ，可 gzip）——单文件路径，或双端
+      "R1.fastq,R2.fastq" 逗号两文件（用户典型用法：illumina.1.fastq,illumina.2.fastq）'
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    format:
+    - fasta
+    - fastq
+    description: '输入长读文件：correct 时为待纠错的 PacBio/长读（FASTA，典型 subreads.fasta）；
+      trim / trim-split 时为 lordec-correct 输出的 corrected FASTA'
+  kmer_size:
+    type: integer
+    required: false
+    cli_arg: -k
+    description: 'correct 子命令：k-mer 长度（建图用；细菌/小基因组 k=17 或 19，大基因组 k=21，典型 17）'
+  solidity:
+    type: integer
+    required: false
+    cli_arg: -s
+    description: 'correct 子命令：solid k-mer 丰度阈值 s（k-mer 至少在短读中出现 s 次才视为可信，
+      典型 2–3；用户示例 -s 3）'
+  output:
+    type: string
+    required: false
+    cli_arg: -o
+    description: '输出文件：correct 为纠正后 reads（FASTA，大写=已纠/小写=未纠，典型 corrected.fasta）；
+      trim / trim-split 为修剪后 FASTA'
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -T
+    description: '线程数（自动注入 -T；仅 correct 子命令的官方 CLI 支持 -T，trim/trim-split 为
+      单线程、--threads 仅作占位接受不注入）'
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 lordec 二进制的附加参数（高级用法，慎用；如 correct 的 --branch/--errorrate/
+      --trials、trim 的 --l 等官方可选参数）
+outputs:
+  corrected_fasta:
+    type: file
+    format: fasta
+    description: correct 输出：纠正后长读 FASTA（大写=已纠正，小写=未纠正区残留）
+  trimmed_fasta:
+    type: file
+    format: fasta
+    description: trim / trim-split 输出：修剪（并可选拆分）后的 FASTA
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/lordec（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均有 lordec 0.9），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba（-c conda-forge -c bioconda
+    lordec=0.9）、或源码 make（native/install.sh --method source；依赖 gatb-core/Boost/HDF5/cmake，见 README）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    correct: 8
+    trim: 1
+    trim-split: 1
+    default: 4
+  note: LoRDEC 在内存中建 succinct De Bruijn Graph（短读 k-mer 计数），运行时需较多 RAM（官方称
+    可在桌面机跑大基因组，但内存随数据量增长，大真核/脊椎动物数据请给足内存）；default_mem_mb=16384
+    为调度语义建议，实际以官方 FAQ 的内存经验与自身数据量为准。correct 建议 8 线程（-T 8，用户示例）；
+    trim / trim-split 为单线程程序（不注入 -T）。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: lordec-correct

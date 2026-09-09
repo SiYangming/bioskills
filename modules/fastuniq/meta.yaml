@@ -1,0 +1,143 @@
+software: fastuniq
+canonical: fastuniq
+category: qc
+description: 'FastUniq（Xu et al. 2012, PLoS ONE 7:e52249）是去除双端短读段（Illumina）
+  PCR/光学重复的 de novo 去重工具：以输入列表（每行一个 FASTQ/FASTA 文件，相邻两行顺序一致的
+  read pair 属一对，最多 1000 对）为输入，通过比较 read pair 序列（两两完全一致判定重复）去除
+  重复对，无需参考基因组，可同时处理不同长度 reads；输出去重后 FASTQ（-t q 默认，双文件）/ FASTA
+  （-t f 双文件、-t p 单文件）。
+
+  '
+homepage: https://sourceforge.net/projects/fastuniq/
+license: 'CC-BY（Creative Commons Attribution License；bioconda recipe 记录为
+  "Creative Commons Attribution License"；官方源码包内未见显式 LICENSE 文件 → 具体许可版本号未核实）'
+software_versions:
+  native:
+    fastuniq: 1.1
+    build_route: official biocontainer（bioconda fastuniq=1.1 → quay.io/biocontainers/fastuniq / depot.galaxyproject.org）
+    source: 'bioconda fastuniq=1.1（https://anaconda.org/bioconda/fastuniq）；官方源码 tarball
+      https://downloads.sourceforge.net/project/fastuniq/FastUniq-1.1.tar.gz
+      （sha256 9ebf251566d097226393fb5aa9db30a827e60c7a4bd9f6e06022b4af4cee0eae，
+      bioconda recipe 与 brew formula 双源一致；官方仅源码包，无预编译二进制 release）'
+    note: '2026-09 核实：官方渠道齐全（bioconda / quay.io/biocontainers / depot.galaxyproject.org
+      均有 fastuniq 1.1，官方镜像 tag 形如 1.1--h7b50bb2_2 / 1.1--h470a237_1）；nf-core 与
+      snakemake-wrappers 均无官方模块（404）→ 流程场景降级 native。fastuniq 为单线程 C 程序
+      （无 --threads/-p 多线程参数）；无 --version/--help（无参运行即打印用法并返回非 0，bioconda
+      测试用 fastuniq 2>&1 | grep "The input file list of paired"）。注意真实 CLI：-t 为输出
+      格式（q/f/p）而非临时目录，-c 为输出描述类型（0/1）而非输出目录（与网上部分二手教程不同，
+      以官方 README.txt 为准）。'
+  nextflow_nfcore:
+    fastuniq: 官方无模块
+    module_version: ''
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/fastuniq
+      返回 404；Nextflow 场景需自定义或降级 native。
+  nextflow_local:
+    fastuniq: （未启用占位）
+  snakemake_wrappers:
+    fastuniq: 官方无 wrapper
+    wrapper_tag: v3.13.0
+    source: （占位）
+    note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/fastuniq
+      返回 404；Snakemake 场景需自定义或降级 native。
+  snakemake_local:
+    fastuniq: （未启用占位）
+implementations:
+- id: fastuniq_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）首选目标；双端
+    FASTQ 去除 PCR/光学重复：给定输入列表或 read1+read2 两文件（自动写列表），调
+    fastuniq -i list -t q -o R1.uniq -p R2.uniq。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/fastuniq（fastuniq=1.1，linux-64/osx-64/linux-aarch64/osx-arm64）
+    quay_biocontainers: quay.io/biocontainers/fastuniq:1.1--h7b50bb2_2（bioconda 自动构建官方镜像；tag 以 quay / depot 为准）
+    brewsci_bio: 'brew tap brewsci/bio && brew install fastuniq（公式 Fastuniq 1.1，sha256 与 bioconda 一致）'
+    sourceforge: https://sourceforge.net/projects/fastuniq/files/FastUniq-1.1.tar.gz/download
+    install_hint: 官方渠道已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建
+      Dockerfile/Apptainer.def；宿主机一键 bash native/install.sh（conda 或源码编译双路线）。
+default_implementation: fastuniq_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'fastuniq 子命令：run（双端去重；fastuniq -i <list> -t <q|f|p> -o <out1> [-p <out2>] [-c <0|1>]）'
+  list:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 输入文件列表（每行一个 FASTQ/FASTA 路径；相邻两行顺序一致的 reads 属一对，最多 1000 对）
+  read1:
+    type: file
+    required: false
+    description: 双端第一端（R1）FASTQ/FASTA；与 read2 成对给出时自动写 2 行输入列表（替代 --list）
+  read2:
+    type: file
+    required: false
+    description: 双端第二端（R2）FASTQ/FASTA；与 read1 配对使用
+  output1:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 第一输出文件（read1 去重结果；-t p 单 FASTA 模式为唯一输出）
+  output2:
+    type: file
+    required: false
+    cli_arg: -p
+    description: 第二输出文件（read2 去重结果；仅 -t q/f 双文件模式需要）
+  format:
+    type: string
+    default: q
+    cli_arg: -t
+    description: 输出格式 q=双 FASTQ（默认）/ f=双 FASTA / p=单 FASTA（相邻两条属一对）
+  desc_type:
+    type: integer
+    required: false
+    cli_arg: -c
+    description: 输出序列描述类型 0=保留原始描述（默认）/ 1=FastUniq 重新编号
+  threads:
+    type: integer
+    default: 4
+    description: '线程数占位：fastuniq 为单线程 C 程序、无多线程参数（不注入命令，仅与其它模块
+      CLI 保持一致；Agent 侧请勿期望并行加速）'
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 fastuniq 的附加参数（高级用法，慎用）
+outputs:
+  dedup_read1:
+    type: file
+    format: fastq
+    description: 去重后的 read1 文件（-o；-t f 时为 fasta 内容）
+  dedup_read2:
+    type: file
+    format: fastq
+    description: 去重后的 read2 文件（-p；仅 -t q/f 双文件模式；-t p 时无此产物）
+  dedup_interleaved:
+    type: file
+    format: fasta
+    description: '-t p 单 FASTA 模式：去重后 read pair 写入同一文件（相邻两条属一对）'
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/fastuniq（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均有 fastuniq 1.1），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba（-c conda-forge -c bioconda
+    fastuniq=1.1）、brew（brewsci/bio）或源码编译（native/install.sh）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 1
+    default: 1
+  note: FastUniq 为单线程且内存占用高（读段入内存排序去重；大 lane 数据请给足内存，官方论文/README
+    未给精确内存公式，超内存行为未核实）。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fastuniq

@@ -1,0 +1,23 @@
+# bless native Conda 环境配方（native/environment.yml）
+# 用途：离线 / 非容器 / 无 root 场景下提供「源码编译工具链」兜底：mamba env create -f environment.yml
+# 版本对齐：modules/bless/meta.yaml software_versions.native bless=1.02（源码归档 bless.v1p02.tgz）。
+# ⚠️ 渠道说明（2026-09 核实）：**bioconda 无 bless 包**（api.anaconda.org/package/bioconda/bless 404、
+#     bioconda-recipes recipes/bless 404）；conda-forge/bless 是**同名异义**的 Python CLI 日志包
+#     （v0.4.0，MIT，与 NGS BLESS 无关），切勿安装。因此本环境只提供运行/编译辅助工具：
+#     - python + pyyaml：供 native/main.py 驱动运行（SkillBase 依赖）；
+#     - make + mpich：源码编译 bless 所需（conda 版 mpich；官方 wiki 测试 MPICH 3.1.3）。
+#     bless 本体仍需官方 SourceForge 源码
+#     （https://downloads.sourceforge.net/project/bless-ec/bless.v1p02.tgz）编译：
+#     `conda activate bless-native && bash native/install.sh --method source`。
+#     g++/C++ 编译器用系统自带（Debian/Ubuntu: sudo apt-get install g++ 或 build-essential；
+#     macOS: brew install gcc）；如需纯 conda 编译链可自行加 gxx_linux-64（linux-64）/ clangxx_osx-64，
+#     并保证激活后 make 时 mpich 头/库路径生效（CPLUS_INCLUDE_PATH/LIBRARY_PATH 指向 $CONDA_PREFIX）。
+# 容器说明：native/Dockerfile、Apptainer.def 走 apt 最小化 + 源码 make（禁 miniconda），不使用本文件。
+name: bless-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml>=6.0
+  - make
+  - mpich

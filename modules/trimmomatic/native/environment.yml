@@ -1,0 +1,13 @@
+# trimmomatic native Conda 环境配方（离线 / 非容器兜底备选）
+# 在线推荐直接：mamba create -n trimmomatic -c conda-forge -c bioconda trimmomatic=0.39
+# 说明：Trimmomatic 为 noarch Java 包；openjdk 由其依赖自动带入（conda-forge openjdk），
+#       main.py 经 JAVA_TOOL_OPTIONS 注入 -Xmx 堆内存与 -Djava.io.tmpdir，java 自动读取。
+#       如需显式钉 JDK 版本可追加 - openjdk=17.*（0.39 需要 Java 8+，新版本以官方说明为准）。
+name: trimmomatic-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - trimmomatic=0.39
+  - pyyaml>=6.0

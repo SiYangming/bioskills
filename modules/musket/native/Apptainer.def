@@ -1,0 +1,132 @@
+# musket native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 SourceForge 源码 make，禁 miniconda）
+#
+# 背景：Musket（k-mer 谱多阶段 Illumina 短读错误修正）无官方镜像/conda 包 —— bioconda →
+#       conda-forge（API {"error":"musket" could not be found"}）→ quay.io/biocontainers（401 =
+#       仓库不存在，对照 fastuniq/samtools 200）→ depot.galaxyproject.org（singularity musket:1.1
+#       404）2026-09-08 核实全无；nf-core / snakemake-wrappers / brew 亦无。官方发布站
+#       SourceForge musket（最新 musket-1.1.tar.gz，仅源码包；make 编译）。
+#       本配方：debian:bookworm-slim + apt 构建依赖（build-essential/zlib1g-dev）+ 官方源码 make。
+# ⚠️ 编译兼容性（未核实）：2013 年 C++ 源码在 bookworm g++12 下可能有新告警/需小修（只做录入，
+#     未实际构建验证）；Makefile 宏 MAX_KMER_SIZE 默认 28 / MAX_SEQ_LENGTH 默认 200。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build musket-1.1.sif musket/native/Apptainer.def
+# 运行（容器内 CLI = musket；musket 无 --help/-v）：
+#   apptainer run -B $PWD:/data -H /data musket-1.1.sif \
+#       -k 21 50000000 -p 4 -inorder -omulti /data/out /data/f1.fastq /data/f2.fastq
+#   驱动 main.py：apptainer exec musket-1.1.sif python3 /opt/skill/main.py correct \
+#       --kmer-size 21 --est-kmer-count 50000000 --omulti /data/out -p 4 --inorder \
+#       --reads /data/f1.fastq /data/f2.fastq
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software musket
+    Version 1.1
+    org.bioskills.software musket
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt build deps + SourceForge source (make)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    musket/native/main.py /opt/skill/main.py
+    musket/meta.yaml /opt/skill/musket/meta.yaml
+    musket/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：构建（build-essential/zlib1g-dev）+ 运行（python3/python3-yaml 供 main.py 驱动）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        g++ \
+        make \
+        zlib1g-dev \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方源码归档下载 + make + 部署 /usr/local/bin/musket（官方 README：源码根目录 make）
+    curl -fSL -o /tmp/musket.tar.gz \
+        "https://downloads.sourceforge.net/project/musket/musket-1.1.tar.gz"
+    mkdir -p /tmp/src && tar -xzf /tmp/musket.tar.gz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    cd "$SRC"
+    make -j"$(nproc)"
+    test -x ./musket
+    install -m 0755 ./musket /usr/local/bin/musket
+
+    # 3) 冒烟：迷你 FASTQ 真实修正（musket 无 --version/--help：修正输出非空即判定可用）
+    printf '@r1\n%s\n+\n%s\n' \
+        "ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT" \
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" > /tmp/smoke_in.fastq
+    printf '@r2\n%s\n+\n%s\n' \
+        "TGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCA" \
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" >> /tmp/smoke_in.fastq
+    printf '@r3\n%s\n+\n%s\n' \
+        "GGGGAAAACCCCAAAAGGGGAAAACCCCAAAAGGGGAAAACCCCAAAAGGGGAAAACCCCAAAA" \
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" >> /tmp/smoke_in.fastq
+    printf '@r4\n%s\n+\n%s\n' \
+        "TTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGGTTTTCCCCAAAAGGGG" \
+        "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" >> /tmp/smoke_in.fastq
+    musket -k 21 100000 -o /tmp/smoke_out.fastq /tmp/smoke_in.fastq >/tmp/smoke.log 2>&1
+    test -s /tmp/smoke_out.fastq || { cat /tmp/smoke.log; echo "musket 冒烟失败" >&2; exit 1; }
+    rm -rf /tmp/src /tmp/musket.tar.gz /tmp/smoke_in.fastq /tmp/smoke_out.fastq /tmp/smoke.log
+
+    # 4) 仅构建期下载工具移除 + 清理四连（g++/make/zlib1g-dev 保留）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/musket "$@"
+
+%test
+    # 非交互自检：musket 迷你修正冒烟 + 驱动可自省（musket 无 --version/--help）
+    set -eux
+    printf '@r1\nACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT\n+\nIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\n' > /tmp/smoke_in.fastq
+    /usr/local/bin/musket -k 21 100000 -o /tmp/smoke_out.fastq /tmp/smoke_in.fastq >/tmp/smoke.log 2>&1
+    test -s /tmp/smoke_out.fastq
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/musket_commands.txt
+    grep -q '^correct' /tmp/musket_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/musket_schema.json
+    test -s /tmp/musket_schema.json
+    rm -rf /tmp/smoke_in.fastq /tmp/smoke_out.fastq /tmp/smoke.log /tmp/musket_commands.txt /tmp/musket_schema.json
+
+%help
+    musket native Apptainer 镜像（自建：apt 最小化 + 官方 SourceForge 源码 make v1.1）。
+    CLI 用法：apptainer run musket-1.1.sif -k 21 50000000 -p 4 -inorder -omulti /data/out /data/f1.fastq /data/f2.fastq
+    驱动用法：apptainer exec musket-1.1.sif python3 /opt/skill/main.py correct --kmer-size 21 \
+        --est-kmer-count 50000000 --omulti /data/out -p 4 --inorder --reads /data/f1.fastq /data/f2.fastq
+    挂载示例：apptainer run -B $PWD:/data -H /data musket-1.1.sif -k 21 50000000 -omulti /data/out -inorder /data/f1.fastq /data/f2.fastq
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09
+    全无 → 自建镜像；musket 无 --help/-v（可用性以迷你修正冒烟判定）；-o 与 -omulti 互斥、
+    -omulti 输出 <prefix>.0/.1/...（与输入一一对应）；-p 官方要求 >=2；Makefile MAX_KMER_SIZE 默认 28。

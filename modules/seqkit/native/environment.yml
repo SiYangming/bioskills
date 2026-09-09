@@ -1,0 +1,13 @@
+# seqkit native Conda 环境配方（modules/seqkit/native/environment.yml）
+# 用途：main.py 驱动运行环境（离线 / 非容器场景兜底；在线推荐 README「### 1. Conda/brew」直装命令）
+# 说明：seqkit 不在 Debian bookworm apt；官方镜像（quay.io/biocontainers/seqkit）即由 bioconda
+#       本环境构建，native/ 不再维护 Dockerfile/Apptainer.def（官方镜像优先，见模块 README）。
+name: seqkit-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - seqkit=2.13.0
+  - pyyaml>=6.0
+  - pip

@@ -1,0 +1,17 @@
+# lordec native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机离线 / 非容器场景备选：mamba env create -f environment.yml
+# 版本对齐：modules/lordec/meta.yaml software_versions.native lordec=0.9。
+# 渠道说明：bioconda 官方有 lordec=0.9（linux-64 lordec-0.9-h77376b9_3 / osx-64 lordec-0.9-h892528c_3，
+#           2022-02-24 上传，2026-09-08 核实；历史版本 0.6 亦在）；conda 推荐在线直装：
+#           mamba install -c bioconda -c conda-forge lordec
+#           容器官方镜像 quay.io/biocontainers/lordec:0.9--h77376b9_3（见模块 README「环境安装」）。
+# main.py 运行依赖：pyyaml（SkillBase）；lordec-correct/lordec-trim/lordec-trim-split 为 C++ 二进制
+#           （bioconda 包已内置运行时依赖 gatb/boost/hdf5/zlib，无需单列）。
+name: lordec-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - lordec=0.9
+  - pyyaml>=6.0

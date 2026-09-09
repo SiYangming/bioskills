@@ -1,0 +1,187 @@
+software: trimmomatic
+canonical: trimmomatic
+category: qc
+description: 'Trimmomatic 是灵活的 Illumina NGS reads 修剪工具（Java），支持单端（SE）与双端（PE）
+  模式，可去除接头（ILLUMINACLIP）、切除低质量碱基（LEADING/TRAILING/SLIDINGWINDOW/
+  MAXINFO/CROP/HEADCROP/TAILCROP/AVGQUAL）、过滤短 reads（MINLEN）与 Phred 编码转换
+  （TOPHRED33/64），处理 Phred+33/+64 的 FASTQ(.gz/.bz2)。
+
+  '
+homepage: http://www.usadellab.org/cms/?page=trimmomatic
+license: GPL-3.0
+software_versions:
+- id: trimmomatic_native
+  trimmomatic: '0.39'
+  java: Java 8+（运行时需宿主 java；conda/容器包自带 OpenJDK，官方 zip 需宿主自装）
+  build_route: official biocontainer（quay.io/biocontainers/trimmomatic / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/trimmomatic
+  note: '默认锚定 0.39（与用户文档 / 官方 usadellab zip / nf-core / brewsci 0.39_1 一致）。
+    上游已恢复开发：GitHub 官方 release 最新 v0.40（0.40+ 官网下载迁移至 GitHub，含官方容器
+    ghcr.io/usadellab/trimmomatic:v0.40）；bioconda/quay 最新 noarch 为 0.41（2026-07）。
+    需要新版时 conda 改 pin trimmomatic=0.41 或拉 quay tag 0.41--hdfd78af_0 即可；
+    官方 ≥0.40 二进制/源码 URL 与 sha256 未核实（以 GitHub releases 为准）。'
+- id: trimmomatic_nextflow_nfcore
+  module_version: 'master（2026-09-08 抓取；单模块 modules/nf-core/trimmomatic，无 PE/SE 子目录）'
+  trimmomatic: '0.39'
+  source: bioconda::trimmomatic=0.39（modules/nf-core/trimmomatic/environment.yml）
+  note: nf-core 官方单模块（environment.yml + main.nf + meta.yml + tests），pin trimmomatic=0.39；
+    nf-core 升级后请同步刷新本登记。
+- id: trimmomatic_snakemake_wrappers
+  wrapper_tag: v9.16.0（2026-08 release；bio/trimmomatic 为单 wrapper，无子目录）
+  trimmomatic: '0.41'
+  wrapper_utils: 0.9.0
+  source: bioconda trimmomatic=0.41 + snakemake-wrapper-utils=0.9.0（bio/trimmomatic/environment.yaml）
+  note: 'snakedeploy-bot 2026-07 autobump 至 trimmomatic=0.41（比 native/nf-core 的 0.39 新）；
+    固定旧 wrapper tag（< v9.16 附近）会回落到 0.39，切 tag 后务必核对。'
+- id: trimmomatic_nextflow_local
+  trimmomatic: 未固定（官方 nf-core 单模块已覆盖；本地 nextflow 未建目录）
+- id: trimmomatic_snakemake_local
+  trimmomatic: 未固定（官方 bio/trimmomatic 单 wrapper 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: trimmomatic_native
+  path: native
+  source_type: custom
+  type: native
+  version: '0.39'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令 pe / se 直接转发 Trimmomatic CLI（java -jar trimmomatic PE|SE …），自动注入
+    -Xmx 堆内存（JAVA_TOOL_OPTIONS）、-threads 与临时目录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/trimmomatic
+    quay_biocontainers: quay.io/biocontainers/trimmomatic
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda <sw>；容器可用 quay.io/biocontainers
+      镜像
+default_implementation: trimmomatic_native
+inputs:
+  fwd:
+    type: file
+    required: true
+    cli_arg: positional
+    format: [fastq, fastq.gz]
+    description: PE 模式 R1 输入（第 1 位置参数）；SE 模式请用 input
+  rev:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [fastq, fastq.gz]
+    description: PE 模式 R2 输入（第 2 位置参数）
+  out_fwd_paired:
+    type: file
+    required: false
+    cli_arg: positional
+    description: PE 输出 1/3（paired R1，第 3 位置参数）
+  out_fwd_unpaired:
+    type: file
+    required: false
+    cli_arg: positional
+    description: PE 输出 2/4（unpaired R1，第 4 位置参数）
+  out_rev_paired:
+    type: file
+    required: false
+    cli_arg: positional
+    description: PE 输出 3/4（paired R2，第 5 位置参数）
+  out_rev_unpaired:
+    type: file
+    required: false
+    cli_arg: positional
+    description: PE 输出 4/4（unpaired R2，第 6 位置参数）
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: SE 模式输入（单端 FASTQ）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: SE 模式输出
+  steps:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 修剪步骤字符串透传（可多个，按序追加），如 ILLUMINACLIP:adapters/TruSeq3-PE.fa:2:30:10
+      LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -threads
+    description: 线程数（自动注入；PE 默认 4 / SE 默认 2）
+  java_mem_mb:
+    type: integer
+    default: 8192
+    description: JVM 最大堆内存 MB（经 JAVA_TOOL_OPTIONS -Xmx 注入）
+  phred33:
+    type: boolean
+    default: false
+    cli_arg: -phred33
+    description: 声明输入为 Phred+33 编码（默认自动检测）
+  phred64:
+    type: boolean
+    default: false
+    cli_arg: -phred64
+    description: 声明输入为 Phred+64 编码（默认自动检测）
+  trimlog:
+    type: string
+    required: false
+    cli_arg: -trimlog
+    description: 修剪日志文件（可选；文件可能很大）
+  summary:
+    type: string
+    required: false
+    cli_arg: -summary
+    description: 统计汇总输出文件（0.38+）
+  dry_run:
+    type: boolean
+    default: false
+    description: 只构造并打印命令行（不执行；argv 构造回归用）
+outputs:
+  out_fwd_paired:
+    type: file
+    format: fastq.gz
+    description: PE 修剪后 R1 paired reads
+  out_fwd_unpaired:
+    type: file
+    format: fastq.gz
+    description: PE 修剪后 R1 unpaired reads（伴侣被滤除）
+  out_rev_paired:
+    type: file
+    format: fastq.gz
+    description: PE 修剪后 R2 paired reads
+  out_rev_unpaired:
+    type: file
+    format: fastq.gz
+    description: PE 修剪后 R2 unpaired reads
+  output:
+    type: file
+    format: fastq.gz
+    description: SE 修剪后 reads
+  trimlog:
+    type: file
+    description: 修剪日志（--trimlog 时）
+  summary:
+    type: file
+    description: 统计汇总（--summary 时）
+environment:
+  container_official: quay.io/biocontainers/trimmomatic（bioconda 官方镜像，含 OpenJDK 底座；tag 以 quay
+    / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需先装
+    java + trimmomatic（conda / brew / 官方 zip 任选，见 README「环境安装」）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    JAVA_TOOL_OPTIONS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    pe: 4
+    se: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: trimmomatic
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core 单模块 modules/nf-core/trimmomatic（pin
+    trimmomatic=0.39）信息见 README（执行请 nf modules install nf-core trimmomatic）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers 单 wrapper bio/trimmomatic（pin
+    trimmomatic=0.41）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/trimmomatic" 由 Snakemake 解析）'

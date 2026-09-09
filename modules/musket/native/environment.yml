@@ -1,0 +1,13 @@
+# musket native Conda 环境配方（native/environment.yml）
+# 用途：本地宿主机离线 / 非容器场景备选：mamba env create -f environment.yml
+# 说明：bioconda / conda-forge 均无 musket 包（2026-09-08 API 核实均返回
+#       {"error":"musket" could not be found"}）→ 本环境仅提供 python 驱动依赖（main.py 自省/
+#       Schema 用）；musket 本体走官方源码编译（bash native/install.sh --method source）或自建容器
+#       （native/Dockerfile / Apptainer.def，见模块 README「环境安装」）。
+# main.py 运行依赖：pyyaml（SkillBase）；musket 本体为 C++ 二进制（make 编译），无 Python 依赖。
+name: musket-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml>=6.0

@@ -1,0 +1,132 @@
+# bless native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 SourceForge 源码 make，禁 miniconda）
+#
+# 背景：BLESS / BLESS 2 无官方镜像（bioconda → quay.io/biocontainers → depot.galaxyproject.org
+#       2026-09 核实全无；GitHub 无官方仓库）；官方发布站 SourceForge bless-ec 最新
+#       bless.v1p02.tgz（BLESS 1.02 / BLESS 2，GPLv3 源码，tgz 内含依赖库）。
+#       本配方：debian:bookworm-slim + apt 构建依赖（g++/make/mpich）+ 官方源码 make。
+# ⚠️ 编译兼容性（未核实）：官方测试 GCC 4.9.2 + MPICH 3.1.3 / OpenMPI 1.8.2（2015）；bookworm
+#     g++12 + mpich 4.x 下 2015 代码可能需小修（只做录入，未实际构建验证）。
+#
+# 构建（在仓库根执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build ../bless.sif bless/native/Apptainer.def
+# 运行（容器内 CLI = bless launcher，自动在 CWD 放 kmc/bin/kmc + MPI hostname 兜底）：
+#   apptainer run -B $PWD:/data -H /data bless.sif \
+#       -read1 /data/reads_1.fastq -read2 /data/reads_2.fastq -kmerlength 21 -prefix out/illumina
+#   驱动 main.py：apptainer exec bless.sif python3 /opt/skill/main.py correct -1 ... -2 ... -k 21 -p ...
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software bless
+    Version 1.02
+    org.bioskills.software bless
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt build deps + SourceForge source (make)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    bless/native/main.py /opt/skill/main.py
+    bless/meta.yaml /opt/skill/bless/meta.yaml
+    bless/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：构建（g++/make/mpich/libmpich-dev）+ 运行（python3/python3-yaml 供 main.py 驱动）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        g++ \
+        make \
+        ca-certificates \
+        curl \
+        mpich \
+        libmpich-dev \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方源码归档下载 + make + 部署 /opt/bless（真实二进制 + kmc/bin/kmc）
+    curl -fSL -o /tmp/bless.tgz \
+        "https://downloads.sourceforge.net/project/bless-ec/bless.v1p02.tgz"
+    mkdir -p /tmp/src && tar -xzf /tmp/bless.tgz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    cd "$SRC"
+    make -j"$(nproc)"
+    test -x ./bless
+    mkdir -p /opt/bless/kmc/bin
+    install -m 0755 ./bless /opt/bless/bless
+    if [ -f ./kmc/bin/kmc ]; then install -m 0755 ./kmc/bin/kmc /opt/bless/kmc/bin/kmc; fi
+    rm -rf /tmp/src /tmp/bless.tgz
+
+    # 3) bless launcher（/usr/local/bin/bless）：CWD 下放 kmc/bin/kmc（用户文档 alias 依据）
+    #    + MPI hostname 解析兜底（用户文档：hostname localhost）
+    cat > /usr/local/bin/bless <<'EOF'
+#!/usr/bin/env bash
+# BLESS 运行时要求 CWD 下存在 kmc/bin/kmc（用户文档 alias 依据）；launcher 保证之
+if [[ ! -x kmc/bin/kmc ]]; then
+    if mkdir -p kmc/bin 2>/dev/null; then
+        cp /opt/bless/kmc/bin/kmc kmc/bin/ 2>/dev/null || true
+    fi
+fi
+# MPI hostname 解析问题兜底（用户文档：hostname localhost）
+if ! getent hosts "$(hostname 2>/dev/null)" >/dev/null 2>&1; then
+    echo "127.0.0.1 $(hostname 2>/dev/null)" >> /etc/hosts 2>/dev/null || true
+fi
+exec /opt/bless/bless "$@"
+EOF
+    chmod 0755 /usr/local/bin/bless
+
+    # 4) 仅构建期下载工具移除 + 清理四连（g++/make/mpich 保留）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/bless "$@"
+
+%test
+    # 非交互自检：bless 主命令可用（无参打印选项）+ 驱动可自省
+    set -eux
+    (getent hosts "$(hostname)" >/dev/null 2>&1 || echo "127.0.0.1 $(hostname)" >> /etc/hosts)
+    cd /tmp
+    /usr/local/bin/bless 2>&1 | grep -q '\-kmerlength'
+    /usr/local/bin/bless 2>&1 | grep -q '\-prefix'
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/bless_commands.txt
+    grep -q '^correct' /tmp/bless_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/bless_schema.json
+    test -s /tmp/bless_schema.json
+    rm -rf /tmp/bless_commands.txt /tmp/bless_schema.json
+
+%help
+    bless native Apptainer 镜像（自建：apt 最小化 + 官方 SourceForge 源码 make v1p02 ≈ BLESS 1.02/BLESS 2）。
+    CLI 用法：apptainer run bless.sif -read1 R1.fastq -read2 R2.fastq -kmerlength 21 -prefix out/illumina [-notrim] [-load db]
+    驱动用法：apptainer exec bless.sif python3 /opt/skill/main.py correct -1 R1.fastq -2 R2.fastq -k 21 -p out/illumina
+    挂载示例：apptainer run -B $PWD:/data -H /data bless.sif -read1 /data/reads_1.fastq -read2 /data/reads_2.fastq -kmerlength 21 -prefix out/illumina
+    说明：官方渠道（bioconda/quay biocontainers/depot）全无 → 自建镜像；bless 无 --help/-v，
+    无参运行即打印全部选项；运行时 launcher 自动在 CWD 放置 kmc/bin/kmc 并兜底 MPI hostname 解析。
