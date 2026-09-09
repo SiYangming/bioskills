@@ -51,31 +51,6 @@ python main.py --list-commands
 
 ***
 
-## 实战示例：Stampy 变异敏感比对（历史流程；等价能力 = `native/main.py` 三子命令）
-
-以下为 2011–2017 时代典型流程（跨物种 / 高分歧样本 reads 比对），仅历史复现。
-原教程惯用 `/home/train/stampy-1.0.32` 等绝对前缀，此处改写为**用户前缀**
-`~/software/stampy-1.0.32`（免 root；原始路径见「历史留存」）：
-
-```bash
-# 0) 准备：部署 stampy 到用户前缀（见「环境安装」；stampy.py 需以 python2.7 运行）
-export PATH="$HOME/software/stampy-1.0.32:$PATH"
-
-# 1) 建基因组索引（-G 前缀 + 参考 FASTA；产物 <prefix>.stidx）
-python2 stampy.py -G genome --species=human --assembly=hg19 ref.fa
-# 2) 建 hash 索引（-g 引用 genome 步骤的 .stidx）
-python2 stampy.py -g genome -H genome
-# 3) 比对 reads（-M；双端逗号两文件；-o SAM；-t 线程）
-python2 stampy.py -g genome -h genome -M reads_1.fastq,reads_2.fastq \
-    -o out.sam -f sam -t 8
-# 4) （可选 hybrid）先用 BWA 快筛，unmapped reads 再交 Stampy 精比对（历史推荐用法）
-bwa aln genome.fa unaligned.fq > unaligned.sai
-bwa samse genome.fa unaligned.sai unaligned.fq > bwa.sam
-```
-
-> 比对输出为 SAM；`--substitutionrate`（默认 0.001）与 `--sensitive` 可提升
-> 分歧样本的灵敏度（更慢）。
-
 ### 参数说明（录入；2026-09 对照官方 help 文本）
 
 | 参数 | 适用动作 | 说明 |

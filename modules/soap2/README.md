@@ -42,32 +42,6 @@ python main.py --list-commands
 
 ***
 
-## 实战示例：SOAP2 短读比对全流程（历史流程；等价能力 = `native/main.py` 两子命令）
-
-以下为 2009–2011 时代经典 Illumina SE/PE 比对教程步骤，仅历史复现。原教程惯用
-`/opt/biosoft/soap2.21release` 等绝对安装前缀，此处改写为**用户前缀**
-`~/software/soap2.21release`（免 root；原始路径见「历史留存」）：
-
-```bash
-# 0) 准备：解压 soap2.21release 到用户前缀（GigaScience 存档或 bioconda，见「环境安装」）
-mkdir -p ~/software/soap2.21release && cd ~/software/soap2.21release
-export PATH="$HOME/software/soap2.21release:$PATH"
-
-# 1) 构建 2way-BWT 索引（索引文件生成在 FASTA 所在目录；ref.fa 仅支持 FASTA）
-2bwt-builder ref.fa
-# 产物：ref.fa.bwt / ref.fa.amb / ref.fa.ann / ref.fa.pac（soap -D 前缀取 ref.fa）
-
-# 2) 双端比对（-m/-x 插入片段范围；-r 1 重复 hits 随机报一个；-p 线程）
-soap -D ref.fa -a reads_1.fa -b reads_2.fa -o lib1.soap \
-     -m 200 -x 600 -n 5 -r 1 -p 8
-# 3) 单端比对（省略 -b）
-soap -D ref.fa -a reads.fa -o reads.soap -r 2 -p 4
-```
-
-> 产物 `*.soap` 为 SOAP 自定义格式（read 名 / 序列 / 质量 / 染色体 / 位置 / 链 /
-> 错配数等列）；下游需要 SAM/BAM 时用 **soap2sam** 转换（BGI 时代独立转换脚本，
-> 官方渠道随官网不可达，2026-09 未找到稳定归档——见「版本」如实说明）。
-
 ### 参数说明（录入；2026-09 对照 soap.1 man page 与 SOAP2 论文）
 
 | 参数 | 说明 |

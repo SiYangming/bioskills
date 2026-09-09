@@ -45,31 +45,6 @@ python main.py --list-commands
 
 ***
 
-## 实战示例：TopHat2 RNA-seq 剪接比对（历史流程；等价能力 = `native/main.py tophat`）
-
-以下为 2013–2016 时代经典 TopHat2 双端 RNA-seq 教程步骤，仅历史复现。原教程惯用
-`/opt/biosoft/tophat-2.1.1.Linux_x86_64` 等绝对安装前缀，此处改写为**用户前缀**
-`~/software/tophat-2.1.1`（免 root；原始路径见「历史留存」）：
-
-```bash
-# 0) 准备：解压官方二进制到用户前缀，并确保 Bowtie2 已建好基因组索引
-mkdir -p ~/software/tophat-2.1.1 && cd ~/software/tophat-2.1.1
-export PATH="$HOME/software/tophat-2.1.1:$PATH"
-# Bowtie2 建索引（参考 genome.fa → genome_index.1.bt2 等；bowtie2-build genome.fa genome_index）
-
-# 1) 无注释 de novo 剪接位点发现（SE/PE reads；-p 线程）
-tophat -o tophat_out -p 8 genome_index reads_1.fq reads_2.fq
-# 2) 带注释（-G GTF 自动建 transcriptome index，比对更准；--transcriptome-index 可复用）
-tophat -o tophat_out_gtf -p 8 -G genes.gtf genome_index reads_1.fq reads_2.fq
-# 3) 双端 inner distance 指定（-r，文库 insert 已知时）
-tophat -o tophat_out_r -p 8 -r 150 genome_index reads_1.fq reads_2.fq
-```
-
-> 主产物在 `-o` 输出目录：`accepted_hits.bam`（默认过滤多比对 read，保留
-> `--max-multihits` 内）、`junctions.bed`（剪接位点）、`align_summary.txt`（计数
-> 统计）、`insertions.bed` / `deletions.bed`（indel）。下游常接 cufflinks
-> （本模块不覆盖）。
-
 ### 参数说明（录入；2026-09 对照官方 manual）
 
 | 参数 | 说明 |

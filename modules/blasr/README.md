@@ -78,26 +78,9 @@ blasr subreads.fasta ref.fa ref.fa.sa --out aln.sam --sam --nproc 4
 | `--bestn N` | blasr | 每 read 最多报告 hits 数（默认 10） |
 | `--minPctIdentity F` | blasr | 最低比对一致率阈值（如 70；可选） |
 
-**历史教程参数对照（旧版 blasr CLI 形态；5.x 用法见上表，勿混用）**：
-
-早期版本（3.x 时代、SMRT Analysis 打包版）命令行形态与参数示例：
-
-```bash
-blasr subreads.fasta genome.fasta --sa genome.fasta.sa --header -m 5 \
-      --out blasr.out5 --minPctAccuracy 70 --nproc 8 --stride 10
-```
-
-| 历史参数 | 说明 | 备注 |
-| ---- | ---- | ---- |
-| `--sa genome.fasta.sa` | 使用 suffix array 索引（旧式 flag 传入） | 5.x 改为位置参数 `<reference.sa>`（见上表） |
-| `-m 5` | 输出格式 M5（tabular 格式，m4/m5/m8 属旧式输出族） | 5.x 用 `--out` + `--sam/--bam` |
-| `--minPctAccuracy 70` | 最小比对准确率 70% | 5.x 对应 `--minPctIdentity 70` |
-| `--stride 10` | 种子步长，影响比对速度与灵敏度 | 低层种子参数（5.x 调参见 `blasr --help`，不逐一映射） |
-| `--header` | 输出头部信息 | 5.x 由输出格式/`--header` 体系决定 |
-
-> 💡 **长读长比对要点**：PacBio 数据错误率较高（约 15%），比对需设较高容错
-> （如 `--minPctAccuracy/--minPctIdentity 70`）。blasr 专为 PacBio 数据设计，
-> 长读长比对表现优异（历史定位）；现代 PacBio 工具链请用 pbmm2 / minimap2。
+> 旧版（3.x 时代、SMRT Analysis 打包版）CLI 参数形态（`--sa` / `-m 5` /
+> `--minPctAccuracy 70` / `--stride` / `--header` 等）与 5.x 差异较大，归档时已移除；
+> 需要对照的可查本模块 git 历史或官方旧 manual。
 
 ## 测试
 

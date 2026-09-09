@@ -190,43 +190,7 @@ mamba env create -f native/environment.yml
 > ```
 > （`String::Approx` / `YAML` 直接 `sudo cpan -i` 即可，无 C 库依赖。）
 
-### 4.3 历史命令示例（引用性记录，出处见节首）
-
-官方脚本 help 形态（来源①）：
-
-```bash
-# 1) Illumina PE 高质量过滤（并行版；默认 -l 70 / -s 20；输出默认 IlluQC_Filtered_files/）
-perl NGSQCToolkit_v2.3.3/QC/IlluQC_PRLL.pl -pe R1.fq R2.fq N A -l 70 -s 20 -c 4 -o qc_out
-#    接头库参数 N = 不过滤接头；A = 自动检测 Phred 变体；-z g 可输出 gzip
-
-# 2) 3' 端质量截短（-q 20）+ 丢弃短于 70 bp 的 read（-n 70）
-perl NGSQCToolkit_v2.3.3/Trimming/TrimmingReads.pl -i R1_filtered.fq \
-    -irev R2_filtered.fq -q 20 -n 70 -o R1_trimmed.fq
-
-# 3) 去 N（默认 -c 0：丢弃含任何 N 的 read；-t5/-t3 可改为端部修剪）
-perl NGSQCToolkit_v2.3.3/Trimming/AmbiguityFiltering.pl -i reads.fq -c 0 -n 70
-```
-
-第三方教程记录（来源②，中文教学流程，2020；含旧版 `-p` 等未入 help 的参数，
-仅作历史教学留存，**不推荐照抄到新项目**）：
-
-```bash
-# QC：perl IlluQC.pl -pe R1 R2 <phred-type> <adapter> -p <...> -l 70 -s 20 -o <out>
-nohup perl NGSQCToolkit_v2.3.3/QC/IlluQC.pl -pe C1_R1.fastq C1_R2.fastq 2 A \
-    -p 2 -l 70 -s 20 -o C1_IlluQC &
-# Trim：perl TrimmingReads.pl -i <filtered> -irev <filtered R2> -q 20 -n 70 -o <out>
-nohup perl NGSQCToolkit_v2.3.3/Trimming/TrimmingReads.pl -i C1_R1.fastq_filtered \
-    -irev C1_R2.fastq_filtered -q 20 -n 70 -o C1_TrimmingReads &
-```
-
-ILRI HPC 安装记录（来源③，2014-08 安装 2.3.3；镜像 IP 是否仍在线**未核实**）：
-
-```bash
-wget "http://59.163.192.90:8080/ngsqctoolkit/cgi-bin/download.pl?toolkit=NGSQCToolkit_v2.3.3.zip"
-unzip NGSQCToolkit_v2.3.3.zip && chmod +x NGSQCToolkit_v2.3.3/{QC,Trimming,Statistics,Format-converter}/*.pl
-```
-
-### 4.4 注意事项（历史复现时）
+### 4.3 注意事项（历史复现时）
 
 - 脚本为 2008–2014 时代 Perl：无现代语法，但对 Perl 版本不敏感；安装依赖时若宿主
   Perl 很新（5.36+），`String::Approx`/`GD` 等 XS 模块会就地重编译，需系统库齐全。

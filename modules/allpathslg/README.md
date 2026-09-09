@@ -119,11 +119,6 @@ ErrorCorrectReads.pl PHRED_ENCODING=33 READS_OUT=jumping1 \
   PLOIDY=1 PAIRED_SEP=3000 PAIRED_STDEV=1000
 fastq_rc.pl jumping1.paired.A.fastq > jumping.1.fastq
 fastq_rc.pl jumping1.paired.B.fastq > jumping.2.fastq
-
-# 3) k-mer 频谱图（在 <READS_OUT>.fastq.kspec 目录内；必要时按需改 @fns 列表）
-cd illumina.fastq.kspec
-KmerSpectrumPlot.pl SPECTRA=1
-convert kmer_spectrum.distinct.log.log.eps kmer_spectrum.distinct.log.log.png
 ```
 
 **参数说明（ErrorCorrectReads.pl）**：
