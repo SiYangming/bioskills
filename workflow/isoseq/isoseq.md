@@ -824,7 +824,7 @@ python3 pyflow/tama_polyacleanup.py \
   --fasta bamtools_convert_output/SAMPLE/m64291e_ccs.chunk1.fasta \
   --outdir tama_polyacleanup_output/SAMPLE \
   --tama-script \
-  "/Users/siyangming/isoseq/pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py"
+  "pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py"
 ```
 
 不指定 `--prefix` 时，输出前缀将自动在输入文件名基础上追加 `_tama`，并将三个核心结果文件以 `gzip` 压缩写出。
@@ -859,7 +859,7 @@ python3 pyflow/tama_polyacleanup.py \
 DATA_DIR=bamtools_convert_output \
 OUT_BASE=tama_polyacleanup_output \
 PARA_CPU=28 \
-TAMA_SCRIPT=/Users/siyangming/isoseq/pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py \
+TAMA_SCRIPT=pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py \
 bash pyflow/run_tama_polyacleanup.sh
 ```
 
@@ -873,7 +873,7 @@ bash pyflow/run_tama_polyacleanup.sh
 DATA_DIR=bamtools_convert_output \
 OUT_BASE=tama_polyacleanup_output \
 PARA_CPU=28 \
-TAMA_SCRIPT=/Users/siyangming/isoseq/pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py \
+TAMA_SCRIPT=pyflow/gs-tama-1.0.3/tama_go/sequence_cleanup/tama_flnc_polya_cleanup.py \
 bash pyflow/run_tama_polyacleanup.sh
 ```
 

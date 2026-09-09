@@ -124,6 +124,61 @@ samtools --version
 
 * **内存**：通过 `meta.yaml.optimization.default_mem_mb` 声明，供上层调度器读取。
 
+## SAM 格式速查（读取 / 处理 SAM 前置知识）
+
+SAM（The Sequence Alignment/Map format）为序列比对文件格式；详细规范见
+`http://samtools.github.io/hts-specs/SAMv1.pdf`。SAM 由**头部区**与**主体区**
+两部分组成，均以 tab 分列。比对工具（bowtie、tophat 等）产出的 SAM 记录比对
+结果，后续常需用 samtools 对其排序/过滤/转换，故先掌握格式：
+
+**头部区**（以 `@` 开头，记录总体信息：比对软件、参考序列、格式版本等）：
+
+```
+@HD VN:1.0 SO:unsorted
+    头部第一行：VN 为格式版本；SO 表示排序类型——unknown(默认)/unsorted/queryname/
+    coordinate。注意：samtools sort 后不自动更新 BAM 的 SO 值，picard 会更新。
+@SQ SN:A.auricula_all_contig_1 LN:9401
+    参考序列（决定排序顺序）。SN 参考序列名；LN 参考序列长度。
+@RG ID:sample01
+    Read Group：1 个 sample 的测序结果=1 个 Read Group（可含多个 library）。
+    数据编号信息记录于此；GATK 要求输入 SAM 必须含 @RG。
+@PG ID:bowtie2 PN:bowtie2 VN:2.0.0-beta7
+    生成该 SAM 的比对软件（程序记录）。
+```
+
+**主体区**（每比对一行，11 个主列 + 1 个可选列）：
+
+| 列号 | 列名 | 说明 |
+| ---- | ---- | ---- |
+| 1 | QNAME | 比对的序列名 |
+| 2 | FLAG | Bitwise FLAG（表明比对类型：pairing、strand、mate strand 等） |
+| 3 | RNAME | 比对上的参考序列名 |
+| 4 | POS | 1-based 比对最左侧定位 |
+| 5 | MAPQ | 比对质量 |
+| 6 | CIGAR | Extended CIGAR string（操作符 MIDNSHP） |
+| 7 | MRNM | 匹配另一端 read 所比对的参考序列名（`*` 未配对） |
+| 8 | MPOS | 1-based leftmost Mate Position |
+| 9 | ISIZE | 插入片段长度 |
+| 10 | SEQ | 与参考同链的比对序列（`*` 未存储） |
+| 11 | QUAL | 序列质量（ASCII-33 = Phred base quality） |
+| 12 | 可选列 | `TAG:TYPE:VALUE` 形式提供额外信息 |
+
+**第 2 列 FLAG 位值速查**（`samtools view -f/-F` 筛选即按这些位组合）：
+
+| FLAG 值 | 含义 |
+| ------ | ---- |
+| 1 | 该 read 是 paired reads 中的一个 |
+| 2 | Paired reads 中每个都正确比对到参考序列 |
+| 4 | 该 read 未比对到参考序列 |
+| 8 | 与之配对的另一端 read 未比对到参考序列 |
+| 16 | 该 read 与参考序列反向互补 |
+| 32 | 与之配对的另一端 read 反向互补 |
+| 64 | Paired reads 中该 read 是第 1 条 |
+| 128 | Paired reads 中该 read 是第 2 条 |
+| 256 | 次优比对结果 |
+| 512 | 未通过质量控制 |
+| 1024 | PCR 重复或光学重复 |
+
 ## 实战示例
 
 比对、变异检测类流程中常见的 SAM/BAM 操作套路如下。命令为软件原生 CLI；其中 `tview` 等未封装进 `main.py` 的命令按需直接调用原生 `samtools`，`sort` / `index` / `view` / `flagstat` / `depth` / `mpileup` / `faidx` / `merge` 的等价能力已由 `native/main.py` 覆盖（见上「能力」与「快速开始」）。
@@ -199,6 +254,26 @@ samtools merge -@ 8 rnaseq.merged.bam sample1.sorted.bam sample2.sorted.bam
 samtools sort -@ 8 -o rnaseq.sort.bam rnaseq.merged.bam
 samtools index rnaseq.sort.bam
 ```
+
+### 5. 常用子命令参数速查（比对后处理主力）
+
+| 命令 | 参数 | 说明 |
+| ---- | ---- | ---- |
+| `sort` | `-@ N` | 使用 N 个线程 |
+| `sort` | `-O BAM` | 输出 BAM 格式（`-o out.bam` 显式输出文件；默认写 stdout） |
+| `view` | `-h` | 输出含 header 信息（比对结果头部） |
+| `view` | `-b` | 输出 BAM（二进制）格式 |
+| `view` | `-f 64` | 筛选 flag=64 的 reads（双端测序的第一条；`-f` 需匹配的 flag） |
+| `view` | `-F 4` | 排除 flag=4 的 reads（未比对；`-F` 需排除的 flag） |
+| `index` | — | 为排序 BAM 建 `.bai/.csi` 索引（view 区域/tview 前置） |
+| `tview` | — | 交互式文本可视化比对结果（BAM 与参考 FASTA 均需索引） |
+| `faidx` | — | 为 FASTA 文件建立 `.fai` 索引（区域提取 / GATK 前置） |
+| `flagstat` | — | 统计比对结果 flag 信息（总数/比对/配对/重复分类） |
+| `depth` | — | 统计每个位点的覆盖深度（`-a` 输出零覆盖位点） |
+
+> 速查表来源：比对后处理典型教程参数整理；完整子命令以官方
+> `samtools --help` / 手册为准（本表所列命令除 `tview` 外均已被
+> `native/main.py` 的等价子命令覆盖，见「能力」节）。
 
 ***
 

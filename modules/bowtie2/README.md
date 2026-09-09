@@ -254,6 +254,33 @@ include { BOWTIE2_BUILD } from '../modules/nf-core/bowtie2/build/main'
 
 ***
 
+## 历史留存（源码编译依赖：TBB / Boost C++ 库）
+
+历史教程（CentOS 6/8 时代）走源码编译时需额外依赖；现版本 2.5.4 请直接用上方
+「环境安装」的官方 conda/镜像/二进制路线。记录仅供复现老版本（如 2.3.x）源码：
+
+* **TBB（Threading Building Blocks）**：新版 bowtie2 默认使用 TBB 多线程库，源码
+  `make` 需其库。历史步骤：下载 tbb2017_20161128oss_src.tgz 并 `make -j 4` 编译后，
+  `export LIBRARY_PATH/LD_LIBRARY_PATH=<tbb>/build/linux_intel64_gcc_..._release/`
+  再 `make` bowtie2（2.3.0 源码包 era）。
+* **Boost C++ Libraries**（bowtie2 源码编译、TopHat 等 C++ 生信工具通用依赖；官网
+  <https://www.boost.org/>）：示例 1.82.0，源码 tarball 在
+  `https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz`：
+
+  ```bash
+  cd ~/software && wget https://boostorg.jfrog.io/artifactory/main/release/1.82.0/source/boost_1_82_0.tar.gz
+  tar zxf boost_1_82_0.tar.gz && cd boost_1_82_0/
+  ./bootstrap.sh --prefix=$HOME/opt/boost_1_82_0
+  ./b2 -j 4 install
+  # 写依赖环境（历史教程用 /opt/biosoft 前缀 + ~/.bash_profile；此处用户前缀 ~/opt 免 root）
+  echo 'export LD_LIBRARY_PATH=$HOME/opt/boost_1_82_0/lib:$LD_LIBRARY_PATH
+  export C_INCLUDE_PATH=$HOME/opt/boost_1_82_0/include:$C_INCLUDE_PATH' >> ~/.bashrc
+  source ~/.bashrc
+  ```
+
+  用途：为 C++ 生信软件提供基础库（智能指针 / 正则 / 线性代数等模块），源码编译时
+  需通过 LD_LIBRARY_PATH / C_INCLUDE_PATH 或 `--with-boost` 指定路径。
+
 ## Conda 环境（离线 / 非容器兜底备选）
 
 ```yaml

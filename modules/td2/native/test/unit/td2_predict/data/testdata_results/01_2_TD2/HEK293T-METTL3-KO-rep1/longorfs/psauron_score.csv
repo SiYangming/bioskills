@@ -1,4 +1,4 @@
-/usr/local/bin/psauron -i /Users/siyangming/Desktop/flrnaseq.smk/testdata_results/01_2_TD2/HEK293T-METTL3-KO-rep1/longorfs/longest_orfs.cds -o /Users/siyangming/Desktop/flrnaseq.smk/testdata_results/01_2_TD2/HEK293T-METTL3-KO-rep1/longorfs/psauron_score.csv -m 0 --inframe 0.5
+/usr/local/bin/psauron -i testdata_results/01_2_TD2/HEK293T-METTL3-KO-rep1/longorfs/longest_orfs.cds -o testdata_results/01_2_TD2/HEK293T-METTL3-KO-rep1/longorfs/psauron_score.csv -m 0 --inframe 0.5
 psauron score: 70.0
 NOTE: alternate reading frames may not contain valid ORFs
 description,psauron_is_protein,in_frame_score,forward_frame2_score,forward_frame3_score,reverse_frame1_score,reverse_frame2_score,reverse_frame3_score,mean_out_of_frame_score
