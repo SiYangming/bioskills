@@ -1,0 +1,13 @@
+# bedtools native Conda 环境配方（离线 / 非容器兜底备选）
+# 在线推荐直接：mamba create -n bedtools -c conda-forge -c bioconda bedtools=2.31.1
+# 说明：官方镜像（quay.io/biocontainers/bedtools）即由 bioconda 本环境构建；
+#       main.py 直接调用 PATH 上的 bedtools 可执行（conda env 激活后即生效），
+#       本地不再自建 Dockerfile/Apptainer.def（见模块 README「环境安装」）。
+name: bedtools-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - bedtools=2.31.1
+  - pyyaml>=6.0

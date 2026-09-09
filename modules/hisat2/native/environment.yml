@@ -1,0 +1,14 @@
+# hisat2 native Conda 环境配方（离线 / 非容器兜底备选）
+# 在线推荐直接：mamba create -n hisat2 -c conda-forge -c bioconda hisat2=2.2.3
+# 说明：官方镜像（quay.io/biocontainers/hisat2）即由 bioconda 本环境构建；
+#       env 提供 hisat2 / hisat2-build / hisat2-inspect 及提取脚本，
+#       main.py 直接调用 PATH 上的可执行（conda env 激活后即生效）。
+#       本地不再自建 Dockerfile/Apptainer.def（见模块 README「环境安装」）。
+name: hisat2-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - hisat2=2.2.3
+  - pyyaml>=6.0

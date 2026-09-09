@@ -1,0 +1,20 @@
+# blasr native 运行环境（conda 兜底；软件已 deprecated，仅历史复现）
+# -----------------------------------------------------------------------------
+# ⚠️ 本模块登记的是已淘汰软件（BLASR 5.3.5；PacBio 官方仓库已 404，官方继任者
+#    pbmm2/minimap2）。conda 路线仅为「历史复现」兜底：
+#   - bioconda 有 blasr=5.3.5（license=BSD-3-Clause-Clear；linux-64/osx-64 等；
+#     2026-09-09 api.anaconda.org 核实）
+#   - 版本锚点：blasr 5.3.5（bioconda 最新；上游源码时代约 2019）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate blasr-native       # 之后 sawriter / blasr 在 PATH
+# 或一键：mamba create -n blasr-native -c conda-forge -c bioconda blasr=5.3.5
+name: blasr-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - blasr=5.3.5          # bioconda 历史包（官方仓库 404；仅历史复现）

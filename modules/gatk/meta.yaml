@@ -1,0 +1,175 @@
+software: gatk
+canonical: gatk
+category: variant_calling
+description: 'GATK（Genome Analysis Toolkit，v4）是 Broad Institute 的变异检测
+  金标准工具套件（Java，官方发布物为 gatk-4.x.zip）：HaplotypeCaller（胚系短变异
+  检测 + -ERC GVCF）、GenotypeGVCFs/CombineGVCFs（GVCF 联合基因分型）、
+  BaseRecalibrator/ApplyBQSR（BQSR 碱基质量校正）、VariantFiltration/SelectVariants
+  （变异过滤与选择）、SplitNCigarReads（RNA-seq 前处理）等，并内嵌 Picard 工具。
+  官网 https://gatk.broadinstitute.org/ ；GitHub https://github.com/broadinstitute/gatk。
+  '
+homepage: https://gatk.broadinstitute.org/
+license: Apache-2.0
+software_versions:
+- id: gatk_native
+  gatk: '4.7.0.0'
+  java: Java 17（官方 zip 自带同版 jre 可选；conda/brew 包依赖 openjdk）
+  build_route: official biocontainer（quay.io/biocontainers/gatk4 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/gatk4
+  note: '官方最新 release 4.7.0.0（2026-08-18 实测 GitHub release；资产 gatk-4.7.0.0.zip）。
+    bioconda 包名为 gatk4（最新 4.6.2.0，noarch）与 gatk4-main（4.7.0.0，linux-64/osx-64，
+    nf-core 亦用它）；quay tag 4.6.2.0--py310hdfd78af_1（bioconda gatk4 尚在 4.6，无 4.7 tag）。
+    brew 无 core 公式，brewsci/bio gatk 公式基于 4.6.2.0 zip 构建（比官方最新低一版）。
+    native 登记以官方 release 4.7.0.0 为准；conda 兜底可 gatk4-main=4.7.0.0 或 gatk4=4.6.2.0。'
+- id: gatk_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；现代 GATK4 官方模块登记名 nf-core/gatk4，子模块 65 个）
+  gatk: '4.7.0.0'
+  source: bioconda::gatk4-main=4.7.0.0 + gcnvkernel=0.9（modules/nf-core/gatk4/haplotypecaller/environment.yml）
+  note: '注意：nf-core/gatk 目录只保留 GATK3 时代 3 个旧子模块（indelrealigner/
+    realignertargetcreator/unifiedgenotyper）；GATK4 全部现代工具登记在 nf-core/gatk4
+    （haplotypecaller/genotypegvcfs/combinegvcfs/baserecalibrator/applybqsr/... 共 65 个），
+    haplotypecaller pin gatk4-main=4.7.0.0，与 native 4.7.0.0 一致。'
+- id: gatk_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  gatk: '4.6.2.0'
+  wrapper_utils: '0.9.0'
+  source: bioconda gatk4=4.6.2.0 + snakemake-wrapper-utils=0.9.0（bio/gatk/haplotypecaller/environment.yaml）
+  note: 官方 bio/gatk 提供 haplotypecaller/genotypegvcfs/combinegvcfs/mutect/applybqsr/
+    baserecalibrator/variantfiltration/selectvariants 等 36 个 wrapper；haplotypecaller pin
+    gatk4=4.6.2.0（**低于**官方最新 4.7.0.0）。固定旧 wrapper tag 会回落版本，切 tag 后务必核对。
+- id: gatk_nextflow_local
+  gatk: 未固定（官方 nf-core/gatk4 已覆盖；本地 nextflow 未建目录）
+- id: gatk_snakemake_local
+  gatk: 未固定（官方 bio/gatk 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: gatk_native
+  path: native
+  source_type: custom
+  type: native
+  version: '4.7.0.0'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令（haplotypecaller/genotypegvcfs/...）映射为真实 GATK 工具名并构造 -I/-R/-O/-V 参数；
+    HaplotypeCaller 自动注入 --native-pair-hmm-threads；JVM 堆内存经 JAVA_TOOL_OPTIONS 注入。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/gatk4
+    quay_biocontainers: quay.io/biocontainers/gatk4
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/gatk4%3A4.6.2.0--py310hdfd78af_1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda gatk4=4.6.2.0（或
+      gatk4-main=4.7.0.0）；容器可用 quay.io/biocontainers/gatk4:4.6.2.0--py310hdfd78af_1 镜像
+default_implementation: gatk_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: GATK 工具（小写）：haplotypecaller|genotypegvcfs|combinegvcfs|variantfiltration|
+      selectvariants|baserecalibrator|applybqsr|splitncigarreads
+  input:
+    type: file
+    required: false
+    cli_arg: -I
+    format: [bam, cram]
+    description: 输入比对 BAM/CRAM（haplotypecaller/baserecalibrator/applybqsr/splitncigarreads）
+  variant:
+    type: file
+    required: false
+    cli_arg: -V
+    format: [vcf, vcf.gz, gvcf.gz]
+    description: 输入 VCF/GVCF（genotypegvcfs/variantfiltration/selectvariants）
+  variants:
+    type: file
+    required: false
+    cli_arg: -V（可重复）
+    format: [gvcf.gz]
+    description: combinegvcfs 的多个 GVCF（可重复传入）
+  reference:
+    type: file
+    required: false
+    cli_arg: -R
+    format: [fasta]
+    description: 参考 FASTA（须带 .dict + .fai）
+  output:
+    type: file
+    required: false
+    cli_arg: -O
+    description: 输出文件（VCF/GVCF/recal 表/BAM）
+  erc:
+    type: string
+    required: false
+    cli_arg: --emit-ref-confidence
+    description: HaplotypeCaller 输出模式 NONE|BP_RESOLUTION|GVCF（GVCF 用于 cohort 流程）
+  interval:
+    type: string
+    required: false
+    cli_arg: -L
+    description: 区间（haplotypecaller/splitncigarreads；如 chr1:1000-2000 或 -L 文件）
+  filter_expression:
+    type: string
+    required: false
+    cli_arg: --filter-expression
+    description: VariantFiltration 过滤表达式（如 'QD < 2.0'）
+  filter_name:
+    type: string
+    required: false
+    cli_arg: --filter-name
+    description: VariantFiltration 过滤名（如 LowQual）
+  select_type:
+    type: string
+    required: false
+    cli_arg: --select-type（可重复）
+    description: SelectVariants 选择类型 SNP|INDEL|MIXED|MNP|SYMBOLIC|NO_VARIATION（可多个）
+  known_sites:
+    type: file
+    required: false
+    cli_arg: --known-sites（可重复）
+    format: [vcf.gz]
+    description: BaseRecalibrator 的已知变异位点（dbSNP/1000G，可多个）
+  recal_file:
+    type: file
+    required: false
+    cli_arg: --bqsr-recal-file
+    description: ApplyBQSR 读取的 BQSR 校正表（BaseRecalibrator 产物）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --native-pair-hmm-threads
+    description: HaplotypeCaller 的 pair-HMM 线程（默认 4）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 gatk 的额外参数（高级用法，慎用）
+outputs:
+  vcf_out:
+    type: file
+    format: [vcf.gz, vcf]
+    description: HaplotypeCaller/GenotypeGVCFs/CombineGVCFs/VariantFiltration/SelectVariants 输出
+  bqsr_table:
+    type: file
+    description: BaseRecalibrator 输出的 BQSR 校正表
+  bam_out:
+    type: file
+    format: bam
+    description: ApplyBQSR/SplitNCigarReads 输出的 BAM
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/gatk4（bioconda 官方镜像，含 OpenJDK 底座；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需先装
+    java 17 + gatk（conda bioconda gatk4 / brewsci/bio gatk / 官方 zip 任选，见 README「环境安装」）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  env_vars:
+    JAVA_TOOL_OPTIONS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    haplotypecaller: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gatk
+  nextflow_note: 本模块未建 nextflow/ 目录；现代 GATK4 官方模块登记名 nf-core/gatk4（65 子模块，
+    pin gatk4-main=4.7.0.0）；nf-core/gatk 仅为 GATK3 旧 3 子模块（indelrealigner 等）。
+    执行请 nf modules install nf-core gatk4 <sub>
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/gatk
+    （36 个 wrapper）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/gatk/<sub>" 由 Snakemake 解析）'

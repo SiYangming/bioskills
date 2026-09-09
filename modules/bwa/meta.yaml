@@ -1,0 +1,159 @@
+software: bwa
+canonical: bwa
+category: alignment_utils
+description: 'bwa（Burrows-Wheeler Aligner）是低内存、高吞吐的短 reads 比对工具：
+  通过 BWT/FM-Index 将单端/双端 reads 比对到参考基因组。0.7.17 起推荐 BWA-MEM
+  （bwa mem，支持 gap 开放/延长与嵌合 reads）；bwa aln/samse/sampe 为
+  BWA-backtrack 旧算法（双端分两步）。bwa index 建立 .bwt/.sa/.pac 索引族。
+  官网 https://bio-bwa.sourceforge.net/ ；GitHub https://github.com/lh3/bwa。
+  '
+homepage: https://github.com/lh3/bwa
+license: GPL-3.0
+software_versions:
+- id: bwa_native
+  bwa: '0.7.19'
+  build_route: official biocontainer（quay.io/biocontainers/bwa / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bwa
+  note: '官方最新 release v0.7.19（2025-03-22 实测 GitHub release/tag 与 bioconda
+    bwa=0.7.19 一致）；quay tag 0.7.19--h577a1d6_1（另有 0.7.19--h577a1d6_0）。
+    bwa 官方 release 无预编译二进制资产（仅源码 tag 归档，make 编译）；brew core bwa=0.7.19
+    与 meta 登记一致。需升级时 conda 改 pin bwa=0.7.19 或拉 quay 新 tag。'
+- id: bwa_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；modules/nf-core/bwa 子目录 aln/index/mem/sampe/samse）
+  bwa: '0.7.19'
+  source: bioconda::bwa=0.7.19 + htslib=1.22.1 + samtools=1.22.1（modules/nf-core/bwa/mem/environment.yml）
+  note: nf-core 官方子模块（aln/index/mem/sampe/samse）各带 environment.yml + main.nf；
+    以 mem 为锚点 pin bwa=0.7.19，与 native 一致；nf-core 升级后请同步刷新本登记。
+- id: bwa_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  bwa: '0.7.19'
+  wrapper_utils: '0.9.0'
+  source: bioconda bwa=0.7.19 + samtools=1.24 + picard-slim=3.5.0 + fgbio-minimal=4.1.1
+    + snakemake-wrapper-utils=0.9.0（bio/bwa/mem/environment.yaml）
+  note: 官方 bio/bwa 提供 aln/index/mem/mem-samblaster/sampe/samse/samxe 共 7 个
+    wrapper；mem 同时依赖 samtools/picard-slim/fgbio-minimal 做 bam 后处理。
+    固定旧 wrapper tag（< v9.17 附近）会回落旧版本，切 tag 后务必核对。
+- id: bwa_nextflow_local
+  bwa: 未固定（官方 nf-core/bwa 已覆盖；本地 nextflow 未建目录）
+- id: bwa_snakemake_local
+  bwa: 未固定（官方 bio/bwa 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: bwa_native
+  path: native
+  source_type: custom
+  type: native
+  version: '0.7.19'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令 index / mem / aln / samse / sampe 直接构造 bwa 真实命令，自动注入 -t 线程
+    （mem/aln）与 TMPDIR。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bwa
+    quay_biocontainers: quay.io/biocontainers/bwa
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/bwa%3A0.7.19--h577a1d6_1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bwa=0.7.19；容器可用
+      quay.io/biocontainers/bwa:0.7.19--h577a1d6_1 镜像
+default_implementation: bwa_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: bwa 子命令：index|mem|aln|samse|sampe
+  reference:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [fasta]
+    description: 参考序列 FASTA（index 的输入；也可 -a bwtsw 指定算法）
+  index:
+    type: string
+    required: false
+    cli_arg: positional
+    description: BWA 索引前缀（bwa index 产物 basename，不含 .bwt 后缀；mem/aln/samse/sampe 用）
+  reads1:
+    type: file
+    required: false
+    format: [fastq, fastq.gz, fasta]
+    description: reads1（mem 的 mate1 / aln 的输入 / sampe 的 R1；samse 的单端输入）
+  reads2:
+    type: file
+    required: false
+    format: [fastq, fastq.gz, fasta]
+    description: reads2（mem 的 mate2 / sampe 的 R2；单端或未配对时省略）
+  sai:
+    type: file
+    required: false
+    description: BWA-backtrack 单端 .sai 中间文件（samse 的输入）
+  sai1:
+    type: file
+    required: false
+    description: BWA-backtrack 双端 R1 的 .sai（sampe 输入）
+  sai2:
+    type: file
+    required: false
+    description: BWA-backtrack 双端 R2 的 .sai（sampe 输入）
+  output:
+    type: file
+    required: false
+    cli_arg: -f
+    description: aln 的 .sai 输出 / samse、sampe 的 SAM 输出（-f；缺省 stdout）
+  read_group:
+    type: string
+    required: false
+    cli_arg: -R
+    description: 'SAM 头 @RG 行（mem，如 "@RG\\tID:s1\\tSM:s1\\tLB:lib1\\tPL:ILLUMINA"）'
+  mark_split:
+    type: boolean
+    default: false
+    cli_arg: -M
+    description: mem 将更长匹配的拆分比对标记为次级（-M，Picard 兼容必需）
+  index_algorithm:
+    type: string
+    required: false
+    cli_arg: -a
+    default: bwtsw
+    description: 建索引算法（bwtsw 适合 >2Gb 基因组；默认自动，is 适合小基因组）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -t
+    description: 线程数（自动注入 mem/aln 的 -t）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 bwa 的额外参数（高级用法，慎用）
+outputs:
+  bwa_index:
+    type: file
+    format: bwa
+    description: index 产物：<prefix>.{bwt,pac,ann,amb,sa}
+  sai_file:
+    type: file
+    description: aln 产物 .sai（--output/-f 时）
+  sam_file:
+    type: file
+    format: sam
+    description: mem/samse/sampe 产物 SAM（-f 落盘或 stdout）
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/bwa（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba（bioconda::bwa）或 brew（homebrew-core bwa）安装 bwa。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    mem: 8
+    aln: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: bwa
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/bwa（aln/index/mem/sampe/samse，
+    pin bwa=0.7.19）信息见 README（执行请 nf modules install nf-core bwa）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/bwa
+    （aln/index/mem/mem-samblaster/sampe/samse/samxe）见 README（运行时靠 wrapper 句柄
+    "v<tag>/bio/bwa/<sub>" 由 Snakemake 解析）'

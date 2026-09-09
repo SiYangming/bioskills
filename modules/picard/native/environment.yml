@@ -1,0 +1,13 @@
+# picard native Conda 环境配方（离线 / 非容器兜底备选）
+# 在线推荐直接：mamba create -n picard -c conda-forge -c bioconda picard=3.5.0
+# 说明：Picard 为 noarch Java 包，openjdk 由 conda 依赖自动带入（picard launcher 在
+#       env/bin 下）；main.py 经 JAVA_TOOL_OPTIONS 注入 -Xmx 堆内存与 -Djava.io.tmpdir，
+#       java 自动读取。本地不再自建 Dockerfile/Apptainer.def（见模块 README「环境安装」）。
+name: picard-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - picard=3.5.0
+  - pyyaml>=6.0

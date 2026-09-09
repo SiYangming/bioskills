@@ -1,0 +1,15 @@
+# gatk native Conda 环境配方（离线 / 非容器兜底备选）
+# 在线推荐直接：
+#   mamba create -n gatk -c conda-forge -c bioconda gatk4=4.6.2.0        # 经典包（noarch）
+#   mamba create -n gatk -c conda-forge -c bioconda gatk4-main=4.7.0.0   # 官方最新 4.7.0.0
+# 说明：GATK 为 Java 包，openjdk 由 conda 依赖自动带入（env/bin/gatk launcher）；
+#       main.py 经 JAVA_TOOL_OPTIONS 注入 -Xmx 堆内存与 -Djava.io.tmpdir，java 自动读取。
+#       本地不再自建 Dockerfile/Apptainer.def（见模块 README「环境安装」）。
+name: gatk-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - gatk4-main=4.7.0.0   # 与 meta software_versions.native（官方 4.7.0.0）对齐；linux-64/osx-64
+  - pyyaml>=6.0

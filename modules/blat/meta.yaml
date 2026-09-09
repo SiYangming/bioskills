@@ -1,0 +1,173 @@
+software: blat
+canonical: blat
+category: alignment_utils
+description: 'BLAT（BLAST-Like Alignment Tool，UCSC Kent 工具族）是快速 mRNA/DNA/
+  蛋白序列比对工具（Kent WJ, Genome Res 2002;12:656-64）：把查询序列切 k-mer 建
+  索引后在目标基因组中找种子并延伸（比 BLAST 快数百倍、敏感度略低），经典用途为
+  mRNA/EST 对基因组定位、跨物种相似搜索与 UCSC Genome Browser 的 in-silico PCR/
+  批处理比对。单命令 blat：`blat <database> <query> <output.psl> [options]`，
+  输出 PSL/PSLX 等格式。**非 deprecated（2026-09 登记）**：UCSC 至今在
+  hgdownload 持续分发独立 blat 二进制（linux.x86_64 直链 200）；bioconda 有
+  blat=36 与 kent 系 ucsc-blat（最新 482）。使用定位：快速相似性搜索/跨物种
+  mRNA 定位；高精度通用比对仍推荐 minimap2 / BWA-MEM / BLAST。
+  '
+homepage: https://genome.ucsc.edu/FAQ/FAQblat.html
+license: Free for academic, nonprofit and personal use（UCSC 许可；商用需另行授权）
+deprecated: false
+software_versions:
+- id: blat_native
+  blat: 'v36（经典独立 BLAT release；UCSC hgdownload linux.x86_64/blat/blat
+    直链 2026-09-09 GET 200；bioconda blat=36 与其同源——kent 源码构建号另见
+    ucsc-blat 482/472）'
+  subcommands: 'blat（单命令：blat <database> <query> <output> → PSL/PSLX）'
+  bioconda: 'bioconda 两包：blat=36（独立 BLAT 重打包，license=Free for academic,
+    nonprofit and personal use）与 ucsc-blat=482（kent 工具族，2026-09-09
+    api.anaconda.org 核实 latest=482；nf-core/blat 模块 pin 472）'
+  build_route: '官方渠道齐全：UCSC hgdownload 官方二进制直链 200（持续分发）；
+    bioconda blat=36 / ucsc-blat=482 → quay.io/biocontainers 与
+    depot.galaxyproject.org 自动镜像；软件非 deprecated 但未自建容器配方（官方
+    镜像/conda 已覆盖）'
+  source: https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat
+  note: 'blat 单线程（无 -threads 多线程选项；--threads 仅占位接受不注入）；
+    输出 PSL 需下游 pslCDnaFilter/pslMap 等 UCSC 工具处理（同 hgdownload 套件）。'
+- id: blat_nextflow_nfcore
+  module_version: master（modules/nf-core/blat 存在；单模块无子目录：environment.yml/
+    main.nf/meta.yml/tests）
+  blat: 'ucsc-blat=472（modules/nf-core/blat/environment.yml：bioconda::ucsc-blat=472，
+    2026-09-09 raw 抓取核实）'
+  source: https://github.com/nf-core/modules/tree/master/modules/nf-core/blat
+  note: nf-core 有 blat 官方 module（可 nf-core modules install nf-core blat）；
+    版本以官方 environment.yml 为准（ucsc-blat 472）。
+- id: blat_snakemake_wrappers
+  blat: 官方无 wrapper（bio/blat 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 blat）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 blat）为兜底。'
+- id: blat_nextflow_local
+  blat: '未启用（未建 nextflow/ 目录；Nextflow 场景优先 nf-core/blat 官方模块
+    （nf modules install nf-core blat），缺失时以 native/ 兜底）'
+- id: blat_snakemake_local
+  blat: '未启用（未建 snakemake/ 目录；需要时用 shell: 调 native/main.py blat）'
+implementations:
+- id: blat_native
+  path: native
+  source_type: custom
+  type: native
+  version: "36"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「真实命令构造 + 执行」：blat 单子命令按 UCSC 用法构造
+    `blat <database> <query> <output> -t= -q= [-tileSize=] [-minScore=] ...`
+    命令行并执行（本地已装 blat 时真实运行产出 PSL；blat 单线程）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/blat（blat=36）与
+      https://anaconda.org/bioconda/ucsc-blat（ucsc-blat=482）
+    quay: quay.io/biocontainers/blat（bioconda 自动构建；另 ucsc-blat 镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/blat（同名 sif）
+    install_hint: 宿主机 conda 路线 mamba create -n blat-native -c conda-forge -c
+      bioconda blat=36（独立 blat 二进制在 PATH）；或直接下载 UCSC hgdownload
+      linux.x86_64/blat/blat 官方二进制（见 README「环境安装」）
+default_implementation: blat_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'blat 子命令：blat（database/query → PSL 比对）'
+  database:
+    type: string
+    required: false
+    description: 'blat：目标库（参考）——FASTA/.nib/.2bit 文件或 2bit/服务器查询
+      （如 genome.2bit；本驱动面向本地文件比对）'
+  query:
+    type: string
+    required: false
+    description: 'blat：查询序列文件（FASTA/FASTQ/.nib/.2bit；或 fasta 列表）'
+  output:
+    type: file
+    required: false
+    description: 'blat：输出文件（PSL/PSLX，按 --out-format）'
+  t_type:
+    type: string
+    required: false
+    default: dna
+    description: '-t=type 目标类型：dna/protein/dnax/rnax（默认 dna；mRNA vs 基因组
+      用 dnax/rnax）'
+  q_type:
+    type: string
+    required: false
+    default: dna
+    description: '-q=type 查询类型：dna/protein/dnax/rnax（默认 dna）'
+  out_format:
+    type: string
+    required: false
+    default: psl
+    description: '-out=fmt 输出格式：psl/pslx/axt/maf/sim4 等（默认 psl）'
+  tile_size:
+    type: integer
+    required: false
+    description: '-tileSize=N 种子长度（dna 默认 11；protein 默认 4/5）'
+  step_size:
+    type: integer
+    required: false
+    description: '-stepSize=N 种子步长（默认 =tileSize）'
+  min_score:
+    type: integer
+    required: false
+    default: 30
+    description: '-minScore=N 最小比对得分（默认 30）'
+  min_identity:
+    type: integer
+    required: false
+    description: '-minIdentity=N 最小一致率百分比（默认 90）'
+  fast_map:
+    type: boolean
+    required: false
+    default: false
+    description: '-fastMap 只找快速近似匹配（更快的低敏感模式）'
+  fine:
+    type: boolean
+    required: false
+    default: false
+    description: '-fine 高精度逐碱基精化（更慢）'
+  no_head:
+    type: boolean
+    required: false
+    default: false
+    description: '-noHead 输出不打印 PSL 头部'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数占位（blat 为单线程程序，--threads 接受但不注入命令行）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+outputs:
+  psl:
+    type: file
+    format: psl
+    description: blat 输出的 PSL 比对文件（-out=psl/pslx 等按 out_format）
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/blat（bioconda 自动构建；另有
+    ucsc-blat 的 biocontainers 镜像）
+  note: 官方渠道已覆盖（UCSC hgdownload 官方二进制 + bioconda blat=36 / ucsc-blat=482
+    → quay.io/biocontainers / depot.galaxyproject.org），本地不维护自建
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 用 conda/mamba（-c conda-forge -c
+    bioconda blat=36）或 UCSC 官方二进制。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    blat: 1
+    default: 1
+  note: blat 为单线程程序（--threads 占位）；内存随索引与查询规模增长，
+    default_mem_mb=8192 为调度语义建议。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: blat

@@ -1,0 +1,156 @@
+software: hisat2
+canonical: hisat2
+category: alignment_utils
+description: 'HISAT2 是基于图（graph FM-index）的剪接比对器，用于 RNA-seq reads
+  到参考基因组的快速、低内存比对：hisat2-build 建 HT2 索引（可含 SNP/剪接位点），
+  hisat2 做单端/双端比对（支持 --dta 下游转录本组装、--rna-strandness 链特异性），
+  输出 SAM。官网 http://daehwankimlab.github.io/hisat2/ ；GitHub https://github.com/DaehwanKimLab/hisat2。
+  '
+homepage: http://daehwankimlab.github.io/hisat2/
+license: GPL-3.0
+software_versions:
+- id: hisat2_native
+  hisat2: '2.2.3'
+  build_route: official biocontainer（quay.io/biocontainers/hisat2 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/hisat2
+  note: '官方最新 release v2.2.3（2026-07-31 实测 GitHub release/tag 与 bioconda hisat2=2.2.3
+    一致）；quay tag 2.2.3--h8471819_1（另有 2.2.3--h8471819_0）。官方 release 无预编译
+    资产（源码 tag 归档，make 编译）；brew：homebrew-core 无公式，brewsci/bio hisat2 公式
+    仍基于 v2.2.2 源码构建（**比官方最新低一版**）。需升级时 conda 改 pin hisat2=2.2.3。'
+- id: hisat2_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；modules/nf-core/hisat2 子目录 align/build/extractsplicesites）
+  hisat2: '2.2.3'
+  source: bioconda::hisat2=2.2.3 + samtools=1.24（modules/nf-core/hisat2/align/environment.yml）
+  note: nf-core 官方子模块 align/build/extractsplicesites 三个；align pin hisat2=2.2.3 +
+    samtools=1.24，与 native 一致。
+- id: hisat2_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  hisat2: '2.2.3'
+  wrapper_utils: '0.9.0'
+  source: bioconda hisat2=2.2.3 + samtools=1.24（bio/hisat2/align/environment.yaml）
+  note: 官方 bio/hisat2 提供 align/index 两个 wrapper（index 对应 hisat2-build）；
+    align pin hisat2=2.2.3 + samtools=1.24，与 native 一致。固定旧 tag 会回落版本。
+- id: hisat2_nextflow_local
+  hisat2: 未固定（官方 nf-core/hisat2 已覆盖；本地 nextflow 未建目录）
+- id: hisat2_snakemake_local
+  hisat2: 未固定（官方 bio/hisat2 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: hisat2_native
+  path: native
+  source_type: custom
+  type: native
+  version: '2.2.3'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令 index（hisat2-build）/ align（hisat2）直接构造真实命令，自动注入 -p 线程与 TMPDIR。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/hisat2
+    quay_biocontainers: quay.io/biocontainers/hisat2
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/hisat2%3A2.2.3--h8471819_1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda hisat2=2.2.3；
+      容器可用 quay.io/biocontainers/hisat2:2.2.3--h8471819_1 镜像
+default_implementation: hisat2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: hisat2 子命令：index（hisat2-build）| align（hisat2）
+  reference:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [fasta]
+    description: index 的参考 FASTA（可逗号分隔多文件）
+  index_base:
+    type: string
+    required: false
+    cli_arg: positional
+    description: index 输出索引 basename（生成 .1.ht2 … .8.ht2 族）
+  index:
+    type: string
+    required: false
+    cli_arg: -x
+    description: align 的 HT2 索引 basename（不含 .1.ht2 后缀）
+  reads1:
+    type: file
+    required: false
+    cli_arg: -1
+    format: [fastq, fastq.gz, fasta]
+    description: align 双端 mate1（可逗号多文件）
+  reads2:
+    type: file
+    required: false
+    cli_arg: -2
+    format: [fastq, fastq.gz, fasta]
+    description: align 双端 mate2
+  reads:
+    type: file
+    required: false
+    cli_arg: -U
+    format: [fastq, fastq.gz, fasta]
+    description: align 单端 reads（无双端时）
+  output:
+    type: file
+    required: false
+    cli_arg: -S
+    description: align 的 SAM 输出文件（缺省 stdout）
+  rna_strandness:
+    type: string
+    required: false
+    cli_arg: --rna-strandness
+    description: 链特异性 FR|RF|unstranded（dUTP 文库通常 RF）
+  dta:
+    type: boolean
+    default: false
+    cli_arg: --dta
+    description: align 输出兼容转录本组装（stringtie 用 --dta）
+  splice_sites:
+    type: file
+    required: false
+    cli_arg: --ss
+    description: index 的剪接位点文件（hisat2 extract_splice_sites.py 产物）
+  exons:
+    type: file
+    required: false
+    cli_arg: --exon
+    description: index 的外显子文件（hisat2 extract_exons.py 产物）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -p
+    description: 线程数（自动注入 align/index 的 -p）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 hisat2 / hisat2-build 的额外参数（高级用法，慎用）
+outputs:
+  ht2_index:
+    type: file
+    format: ht2
+    description: index 产物：<base>.{1..8}.ht2 + .{1..8}.ht2l（如 --large-index）
+  sam_file:
+    type: file
+    format: sam
+    description: align 产物 SAM（-S 落盘或 stdout）
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/hisat2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba（bioconda::hisat2）或 brew（brewsci/bio hisat2）安装 hisat2。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    align: 8
+    index: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: hisat2
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/hisat2（align/build/
+    extractsplicesites，pin hisat2=2.2.3）信息见 README（执行请 nf modules install nf-core hisat2 <sub>）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/hisat2
+    （align/index 两个 wrapper）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/hisat2/<sub>" 由 Snakemake 解析）'

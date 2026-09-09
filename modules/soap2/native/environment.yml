@@ -1,0 +1,20 @@
+# soap2 native 运行环境（conda 兜底；仅历史复现，软件已 deprecated）
+# -----------------------------------------------------------------------------
+# ⚠️ 本模块登记的是已淘汰软件（SOAPaligner/SOAP2 2.21；BGI 官网已停服，短读比对
+#    请改用 BWA / Bowtie2）。conda 路线仅为「历史复现」兜底：
+#   - bioconda 有 soapaligner=2.21（linux-64 + osx-64 各 build -0；license=GPL，
+#     依赖 zlib 1.2.11）
+#   - 版本锚点：soapaligner 2.21（2026-09-09 api.anaconda.org 核实存在）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate soap2-native     # 之后 soap / 2bwt-builder 在 PATH
+# 或一键：mamba create -n soap2-native -c conda-forge -c bioconda soapaligner=2.21
+name: soap2-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - soapaligner=2.21     # bioconda 历史包（linux-64/osx-64；license=GPL）

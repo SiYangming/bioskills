@@ -1,0 +1,202 @@
+software: picard
+canonical: picard
+category: alignment_utils
+description: 'Picard 是一组 Java 命令行工具，用于操作高通量测序数据格式
+  （SAM/BAM/CRAM/VCF/FASTQ）：MarkDuplicates 标记/去除 PCR 重复、SortSam 排序、
+  AddOrReplaceReadGroups 增补/替换 RG 标签、CollectInsertSizeMetrics 插入片段统计、
+  ValidateSamFile 校验 BAM、CreateSequenceDictionary 生成参考 .dict、
+  MergeSamFiles 合并 BAM、SamToFastq 转回 FASTQ 等。官方下载为单个 picard.jar。
+  官网 https://broadinstitute.github.io/picard/ ；GitHub https://github.com/broadinstitute/picard。
+  '
+homepage: https://broadinstitute.github.io/picard/
+license: MIT
+software_versions:
+- id: picard_native
+  picard: '3.5.0'
+  java: Java 17+（3.x 要求 Java 17；conda/brew 包自带 openjdk，官方 jar 需宿主自装）
+  build_route: official biocontainer（quay.io/biocontainers/picard / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/picard
+  note: '官方最新 release 3.5.0（2026-07-31 实测 GitHub release 与 bioconda picard=3.5.0
+    一致）；quay tag 3.5.0--hdfd78af_0。官方 release 资产为单个 picard.jar。
+    brew：homebrew-core 无 picard 公式，公式名为 picard-tools（stable 3.5.0，安装后提供
+    `picard` 可执行，与 meta 版本一致）。需升级时 conda 改 pin picard=3.5.0。'
+- id: picard_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；modules/nf-core/picard 子模块共 28 个）
+  picard: '3.5.0'
+  source: bioconda::picard=3.5.0（modules/nf-core/picard/markduplicates/environment.yml）
+  note: nf-core 官方子模块众多（addorreplacereadgroups/collectinsertsizemetrics/
+    collectmultiplemetrics/createsequencedictionary/markduplicates/mergesamfiles/sortsam/
+    validatesamfile 等 28 个）；markduplicates pin picard=3.5.0，与 native 一致。
+- id: picard_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  picard: '3.5.0'
+  wrapper_utils: '0.9.0'
+  source: bioconda picard=3.5.0 + samtools=1.24 + snakemake-wrapper-utils=0.9.0（bio/picard/markduplicates/environment.yaml）
+  note: 官方 bio/picard 提供 addorreplacereadgroups/collect*/createsequencedictionary/
+    markduplicates/mergesamfiles/revertsam/samtofastq/sortsam 等 16 个 wrapper；
+    markduplicates pin picard=3.5.0，与 native 一致。固定旧 wrapper tag 会回落版本。
+- id: picard_nextflow_local
+  picard: 未固定（官方 nf-core/picard 已覆盖；本地 nextflow 未建目录）
+- id: picard_snakemake_local
+  picard: 未固定（官方 bio/picard 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: picard_native
+  path: native
+  source_type: custom
+  type: native
+  version: '3.5.0'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令（markduplicates/sortsam/...）映射为真实 Picard 工具名并构造 I=/O= 风格参数；
+    JVM 堆内存经 JAVA_TOOL_OPTIONS 注入。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/picard
+    quay_biocontainers: quay.io/biocontainers/picard
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/picard%3A3.5.0--hdfd78af_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda picard=3.5.0；
+      容器可用 quay.io/biocontainers/picard:3.5.0--hdfd78af_0 镜像
+default_implementation: picard_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: picard 工具（小写）：markduplicates|sortsam|addorreplacereadgroups|
+      collectinsertsizemetrics|validatesamfile|createsequencedictionary|mergesamfiles|samtofastq
+  input:
+    type: file
+    required: false
+    cli_arg: I=
+    format: [bam, sam, cram]
+    description: 输入 SAM/BAM/CRAM（markduplicates/sortsam/addorreplacereadgroups/
+      collectinsertsizemetrics/validatesamfile/samtofastq）
+  inputs:
+    type: file
+    required: false
+    cli_arg: I=（可重复）
+    format: [bam]
+    description: mergesamfiles 的多个输入 BAM（可重复传入）
+  output:
+    type: file
+    required: false
+    cli_arg: O=
+    description: 输出 BAM / 校验汇总 / metrics 等（按工具语义）
+  metrics:
+    type: file
+    required: false
+    cli_arg: M=
+    description: MarkDuplicates / CollectInsertSizeMetrics 的 metrics 文本输出
+  reference:
+    type: file
+    required: false
+    cli_arg: R=
+    format: [fasta]
+    description: CreateSequenceDictionary 的参考 FASTA（生成同前缀 .dict）
+  fastq1:
+    type: file
+    required: false
+    cli_arg: F=
+    format: [fastq]
+    description: SamToFastq 输出的 R1 FASTQ
+  fastq2:
+    type: file
+    required: false
+    cli_arg: F2=
+    format: [fastq]
+    description: SamToFastq 输出的 R2 FASTQ（双端）
+  unpaired_fastq:
+    type: file
+    required: false
+    cli_arg: UNPAIRED=
+    format: [fastq]
+    description: SamToFastq 未配对 reads 输出
+  sort_order:
+    type: string
+    required: false
+    cli_arg: SORT_ORDER=
+    default: coordinate
+    description: SortSam/MergeSamFiles 排序（coordinate|queryname）
+  remove_duplicates:
+    type: boolean
+    default: false
+    cli_arg: REMOVE_DUPLICATES=
+    description: MarkDuplicates 是否直接去除重复（默认仅标记）
+  read_group_id:
+    type: string
+    required: false
+    cli_arg: RGID=
+    description: AddOrReplaceReadGroups 的 RG ID
+  sample_name:
+    type: string
+    required: false
+    cli_arg: RGSM=
+    description: AddOrReplaceReadGroups 的样本名（SM）
+  library:
+    type: string
+    required: false
+    cli_arg: RGLB=
+    description: AddOrReplaceReadGroups 的文库（LB）
+  platform:
+    type: string
+    required: false
+    cli_arg: RGPL=
+    description: AddOrReplaceReadGroups 的测序平台（PL）
+  platform_unit:
+    type: string
+    required: false
+    cli_arg: RGPU=
+    description: AddOrReplaceReadGroups 的 platform unit（PU，可选）
+  center:
+    type: string
+    required: false
+    cli_arg: RGCN=
+    description: AddOrReplaceReadGroups 的测序中心（CN，可选）
+  histogram:
+    type: file
+    required: false
+    cli_arg: H=
+    description: CollectInsertSizeMetrics 的直方图 PDF
+  threads:
+    type: integer
+    default: 4
+    description: CPU 提示（Picard 多线程工具有限，主要资源是 JVM 内存，见 optimization）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 picard 的额外参数（高级用法，慎用）
+outputs:
+  bam_out:
+    type: file
+    format: bam
+    description: markduplicates/sortsam/addorreplacereadgroups/mergesamfiles 输出 BAM
+  metrics_out:
+    type: file
+    description: MarkDuplicates/CollectInsertSizeMetrics 的 metrics 文件
+  fastq_out:
+    type: file
+    format: fastq
+    description: SamToFastq 输出 FASTQ
+  dict_out:
+    type: file
+    format: dict
+    description: CreateSequenceDictionary 输出 .dict
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/picard（bioconda 官方镜像，含 OpenJDK 底座；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需先装
+    java 17+ + picard（conda / brew picard-tools / 官方 jar 任选，见 README「环境安装」）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    JAVA_TOOL_OPTIONS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: picard
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/picard（28 子模块，pin picard=3.5.0）
+    信息见 README（执行请 nf modules install nf-core picard <sub>）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/picard
+    （16 个 wrapper）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/picard/<sub>" 由 Snakemake 解析）'

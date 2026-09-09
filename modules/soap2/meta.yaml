@@ -1,0 +1,197 @@
+software: soap2
+canonical: soap2
+category: alignment_utils
+description: 'SOAPaligner / SOAP2（soap2.21release，华大 BGI 出品）是 SOAP（Short
+  Oligonucleotide Analysis Package）家族的二代短读比对器：用 2way-BWT（BWT 压缩索引）
+  把 Illumina/Solexa 短读比对到参考基因组（Li R, Yu C, Li Y et al. Bioinformatics
+  2009;25:1966-7），比对速度快于 SOAPv1 一个数量级、内存占用低。程序族两个命令：
+  2bwt-builder（FASTA → 2way-BWT 索引）与 soap（SE/PE 比对，输出 SOAP 自定义格式，
+  需 soap2sam 转换 SAM）。**已淘汰（deprecated，2026-09 登记）**：BGI 官网已停服
+  （soap.genomics.org.cn 不可达），soap2.21release 之后长期停更，功能上被 BWA /
+  Bowtie2 全面替代。本模块只做「录入」：native 为「说明型 + 命令构造」驱动
+  （2bwt-builder / soap 两个子命令），不推荐新项目使用。
+  '
+homepage: http://soap.genomics.org.cn/soapaligner.html
+license: 'GPL（bioconda soapaligner=2.21 包元数据 license=GPL）；BGI 官方页面已不可达
+  （2026-09 核实 000），官方许可声明未能在线复核（历史惯例为学术免费、商用需 BGI 授权）'
+deprecated: true
+deprecated_note: '上游长期停更：soap2.21release 为最后发布（SOAP2 论文 2009；2.21
+  可执行文件时代约 2009-2011），BGI 官网 soap.genomics.org.cn 2026-09-09 探测不可达
+  （curl 000）；SourceForge soap2/soapaligner 项目 404。功能上被 BWA / Bowtie2
+  （短读比对）与 BWA-MEM / minimap2（长读）替代。2026-09 保留渠道：bioconda
+  soapaligner=2.21（历史包，quay.io/biocontainers 自动镜像）与 GigaScience 存档
+  github.com/gigascience/bgi-soap2（含 2.21 x86_64 预编译可执行文件）。'
+software_versions:
+- id: soap2_native
+  soap2: '2.21（soap2.21release；SOAP2 论文 Bioinformatics 2009；BGI 官网直链
+    http://soap.genomics.org.cn/down/soap2.21release.tar.gz 2026-09-09 探测不可达 000）'
+  subcommands: '2bwt-builder（参考 FASTA → 2way-BWT 索引）· soap（SE/PE 比对：
+    -D index -a/-b reads -o out [-p 线程]）'
+  bioconda: 'soapaligner=2.21（linux-64 + osx-64 各 1 个 build -0；license=GPL；
+    依赖 zlib 1.2.11；2026-09-09 api.anaconda.org 核实存在）'
+  build_route: '历史遗留渠道：bioconda soapaligner=2.21 → quay.io/biocontainers/
+    soapaligner:2.21--0 / depot.galaxyproject.org sif（自动构建，历史复现用）；
+    GigaScience 存档 github.com/gigascience/bgi-soap2（executables/2.21/x86_64/
+    soap 与 2bwt-builder，200）；SourceForge soap2/soapaligner 项目 404。软件
+    deprecated → 不产出自建 Dockerfile/Apptainer.def'
+  source: https://github.com/gigascience/bgi-soap2
+  note: 'soap 输出为 SOAP 自定义格式，转 SAM 需 soap2sam（历史转换器，官方渠道已随
+    BGI 官网不可达；2026-09 未找到稳定归档，未列入安装步骤）。2011 时代 x86_64
+    二进制对现代 glibc 兼容性未核实。'
+- id: soap2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/soap2 404）
+  soap2: —
+  source: —（nf-core/modules 仓库无 soap2 目录）
+  note: 2026-09-09 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/（bioconda soapaligner 或 GigaScience 存档）为兜底。
+- id: soap2_snakemake_wrappers
+  soap2: 官方无 wrapper（bio/soap2 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 soap2）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 soap / 2bwt-builder）为兜底。'
+- id: soap2_nextflow_local
+  soap2: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py 2bwt-builder/soap）'
+- id: soap2_snakemake_local
+  soap2: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调
+    native/main.py 2bwt-builder/soap）'
+implementations:
+- id: soap2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.21"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：2bwt-builder（建索引）与 soap（SE/PE 比对）两个
+    子命令按官方 man page 构造 SOAPaligner/soap2 命令行，不实际运行（软件 deprecated、
+    官网停服、无新用场景），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/soapaligner（soapaligner=2.21，
+      linux-64/osx-64 历史包）
+    quay: quay.io/biocontainers/soapaligner:2.21--0（bioconda 自动构建历史镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/soapaligner%3A2.21--0
+    install_hint: 宿主机 conda 路线 mamba create -n soap2-native -c conda-forge -c bioconda
+      soapaligner=2.21（二进制 soap/2bwt-builder 在 PATH）；或取 GigaScience 存档
+      github.com/gigascience/bgi-soap2 的 executables/2.21/x86_64 二进制
+      （解压到 ~/software/soap2.21release，见 README「环境安装」）
+default_implementation: soap2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'soap2 子命令：2bwt-builder（参考 FASTA → 2way-BWT 索引，仅命令构造）|
+      soap（SE/PE 短读比对命令构造）'
+  reference:
+    type: file
+    required: false
+    description: '2bwt-builder：参考基因组 FASTA（位置参数；索引文件生成在 FASTA
+      所在目录）'
+  index:
+    type: string
+    required: false
+    description: 'soap：-D 参考索引前缀名（2bwt-builder 产物 <ref>.index 去掉
+      .index 的部分，如 ref）'
+  reads_a:
+    type: file
+    required: false
+    description: 'soap：-a 查询文件（SE reads 或 PE read1，FASTA/FASTQ）'
+  reads_b:
+    type: file
+    required: false
+    description: 'soap：-b PE read2（省略则单端比对）'
+  output:
+    type: file
+    required: false
+    description: 'soap：-o 比对结果输出文件（SOAP 自定义格式，转 SAM 需 soap2sam）'
+  unpaired_out:
+    type: file
+    required: false
+    description: 'soap：-2 PE 比对时 mapped-but-unpaired reads 的输出文件'
+  min_insert:
+    type: integer
+    required: false
+    default: 400
+    description: 'soap：-m PE 允许最小插入片段长度（bp，默认 400）'
+  max_insert:
+    type: integer
+    required: false
+    default: 600
+    description: 'soap：-x PE 允许最大插入片段长度（bp，默认 600）'
+  filter_ns:
+    type: integer
+    required: false
+    default: 5
+    description: 'soap：-n 过滤含超过 n 个 N 的低质量 reads（默认 5）'
+  repeat_mode:
+    type: integer
+    required: false
+    default: 1
+    description: 'soap：-r 重复 hits 报告方式：0=不报；1=随机一个；2=全部（默认 1）'
+  seed_length:
+    type: integer
+    required: false
+    default: 256
+    description: 'soap：-l 3'' 端高错误率长 reads 先比对 5'' 端种子长度（默认 256
+      = 全长比对）'
+  mismatches:
+    type: integer
+    required: false
+    default: 5
+    description: 'soap：-v 一条 read 允许的错配总数（使用种子时，默认 5）'
+  gaps:
+    type: integer
+    required: false
+    default: 0
+    description: 'soap：-g 一条 read 允许的 gap 数（默认 0）'
+  match_mode:
+    type: integer
+    required: false
+    default: 4
+    description: 'soap：-M 每条 read/种子部分的匹配模式：0 精确；1 允许 1 错配；
+      2 允许 2 错配；4 找最佳 hits（默认 4）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认，不传）或正整数（soap -p threads；2bwt-builder 单线程）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入，SOAP2 无自身 tmp 选项）
+outputs:
+  bwt_index:
+    type: file
+    description: 2bwt-builder 在参考 FASTA 同目录生成的 2way-BWT 索引文件
+      （<ref>.bwt / .amb / .ann / .pac；若用 -r 另产出 <ref>.suf）
+  soap_alignment:
+    type: file
+    format: soap
+    description: soap -o 输出的 SOAP 自定义格式比对结果（列含 read 名/序列/质量/
+      染色体/位置/链/错配数…；转 SAM 需 soap2sam）
+  unpaired_output:
+    type: file
+    description: soap -2 输出的 PE 比对中 mapped-but-unpaired reads 结果
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    历史渠道：bioconda soapaligner=2.21（linux-64/osx-64，build -0）→
+    quay.io/biocontainers/soapaligner:2.21--0 与 depot.galaxyproject.org sif
+    （自动构建历史镜像，仅复现用）；宿主机安装登记在 README「环境安装」：
+    conda（soapaligner=2.21）/ Docker / Apptainer / GigaScience 存档二进制。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    '2bwt-builder': 1
+    soap: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: soap
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 soap2 官方子模块（2026-09-09 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

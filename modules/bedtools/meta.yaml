@@ -1,0 +1,185 @@
+software: bedtools
+canonical: bedtools
+category: genomic_intervals
+description: 'bedtools 是一组基因组区间算术（genome arithmetic）工具（C 程序）：
+  intersect（区间/reads 交集）、merge（合并相邻区间）、coverage（区间覆盖度）、
+  genomecov（全基因组深度直方图/bedgraph）、bamtobed（BAM→BED）、getfasta
+  （按区间取参考序列）、sort/subtract/groupby 等，用于区间集合运算与 ChIP-seq/
+  ATAC-seq/RNA-seq 等片段层分析。
+  官网 https://bedtools.readthedocs.io/ ；GitHub https://github.com/arq5x/bedtools2。
+  '
+homepage: https://bedtools.readthedocs.io/
+license: MIT
+software_versions:
+- id: bedtools_native
+  bedtools: '2.31.1'
+  build_route: official biocontainer（quay.io/biocontainers/bedtools / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bedtools
+  note: '官方最新 release v2.31.1（2023-11-07 实测 GitHub release 与 bioconda bedtools=2.31.1
+    一致）；quay tag 2.31.1--h13024bc_3（另有 2.31.1--hf5e1c6e_2/_1）。官方 release 资产仅
+    bedtools-2.31.1.tar.gz 源码（make 编译）；brew core bedtools=2.31.1 与 meta 一致。
+    需升级时 conda 改 pin bedtools=2.31.1。'
+- id: bedtools_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；modules/nf-core/bedtools 子模块共 23 个）
+  bedtools: '2.31.1'
+  source: bioconda::bedtools=2.31.1（modules/nf-core/bedtools/intersect/environment.yml）
+  note: nf-core 官方子模块众多（bamtobed/closest/complement/coverage/flank/genomecov/
+    getfasta/groupby/intersect/jaccard/makewindows/map/merge/slop/sort/subtract/
+    unionbedg 等 23 个）；intersect pin bedtools=2.31.1，与 native 一致。
+- id: bedtools_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  bedtools: '2.31.1'
+  source: bioconda bedtools=2.31.1 + htslib=1.24（bio/bedtools/intersect/environment.yaml）
+  note: 官方 bio/bedtools 提供 bamtobed/complement/coveragebed/genomecov/intersect/merge/
+    slop/sort/split 共 9 个 wrapper；intersect pin bedtools=2.31.1 + htslib=1.24
+    （该 wrapper 未依赖 snakemake-wrapper-utils）。固定旧 tag 会回落版本。
+- id: bedtools_nextflow_local
+  bedtools: 未固定（官方 nf-core/bedtools 已覆盖；本地 nextflow 未建目录）
+- id: bedtools_snakemake_local
+  bedtools: 未固定（官方 bio/bedtools 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: bedtools_native
+  path: native
+  source_type: custom
+  type: native
+  version: '2.31.1'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令 intersect/merge/sort/coverage/genomecov/bamtobed/getfasta/subtract 直接构造
+    真实 bedtools 命令（输出走 stdout），全部经 TMPDIR 优化。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bedtools
+    quay_biocontainers: quay.io/biocontainers/bedtools
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/bedtools%3A2.31.1--h13024bc_3
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bedtools=2.31.1；
+      容器可用 quay.io/biocontainers/bedtools:2.31.1--h13024bc_3 镜像
+default_implementation: bedtools_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: bedtools 子命令：intersect|merge|sort|coverage|genomecov|bamtobed|getfasta|subtract
+  a:
+    type: file
+    required: false
+    cli_arg: -a
+    description: intersect/coverage/subtract 的主区间/reads 文件 A（BED/BAM/VCF/GFF）
+  b:
+    type: file
+    required: false
+    cli_arg: -b
+    description: intersect/coverage/subtract 的对照文件 B（可多个/多文件）
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: merge/sort/genomecov/bamtobed 的输入文件（缺省 stdin）
+  fasta:
+    type: file
+    required: false
+    cli_arg: -fi
+    format: [fasta]
+    description: getfasta 的参考 FASTA（须 samtools faidx 建 .fai）
+  bed:
+    type: file
+    required: false
+    cli_arg: -bed
+    format: [bed]
+    description: getfasta 的区间 BED
+  genome:
+    type: file
+    required: false
+    cli_arg: -g
+    description: genomecov 的基因组大小文件（genome 或 .genome 两列）；sort 可选 -g
+  min_overlap:
+    type: number
+    required: false
+    cli_arg: -f
+    description: intersect 最小重叠比例（默认 1E-9）
+  v:
+    type: boolean
+    default: false
+    cli_arg: -v
+    description: intersect 反选（A 中不与 B 重叠者）
+  wa:
+    type: boolean
+    default: false
+    cli_arg: -wa
+    description: intersect 输出原 A 区间（与 B 重叠的 A）
+  wb:
+    type: boolean
+    default: false
+    cli_arg: -wb
+    description: intersect 同时输出重叠的 B 区间
+  loj:
+    type: boolean
+    default: false
+    cli_arg: -loj
+    description: intersect 左外连接（A 无重叠也输出，B 列补 .）
+  remove_all:
+    type: boolean
+    default: false
+    cli_arg: -A
+    description: subtract 移除 A 中与 B 有任何重叠的整条区间
+  counts:
+    type: boolean
+    default: false
+    cli_arg: -counts
+    description: coverage 输出每区间重叠计数而非逐碱基深度
+  bedgraph:
+    type: boolean
+    default: false
+    cli_arg: -bg
+    description: genomecov 输出 bedGraph 格式
+  cigar:
+    type: boolean
+    default: false
+    cli_arg: -cigar
+    description: bamtobed 保留 CIGAR 列（第 6 列）
+  stranded:
+    type: boolean
+    default: false
+    cli_arg: -s
+    description: merge 按链合并 / getfasta 取互补链（按 -bed 第 6 列链方向）
+  name:
+    type: boolean
+    default: false
+    cli_arg: -name
+    description: getfasta 用区间名作 FASTA 头
+  distance:
+    type: integer
+    required: false
+    cli_arg: -d
+    description: merge 允许的最大间隔距离
+  threads:
+    type: integer
+    default: 4
+    description: CPU 提示（bedtools 多线程支持有限，主要瓶颈在 sort 内存）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 bedtools 的额外参数（高级用法，慎用）
+outputs:
+  intervals_out:
+    type: string
+    description: 各子命令输出（BED/计数/FASTA/bedGraph）写到 stdout，可 shell 重定向
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/bedtools（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba（bioconda::bedtools）或 brew（homebrew-core bedtools）安装 bedtools。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: bedtools
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/bedtools（23 子模块，pin
+    bedtools=2.31.1）信息见 README（执行请 nf modules install nf-core bedtools <sub>）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/bedtools
+    （9 个 wrapper）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/bedtools/<sub>" 由 Snakemake 解析）'

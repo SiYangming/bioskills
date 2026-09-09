@@ -1,0 +1,168 @@
+software: blasr
+canonical: blasr
+category: alignment_utils
+description: 'BLASR（Basic Local Alignment with Successive Refinement；Chaisson &
+  Tesler, BMC Bioinformatics 2012;13:238，PacBio 官方研发）是首个面向 PacBio
+  单分子长读（SMRT CLR）的比对器：用 banded 比对 + 逐级精化把高错误率长读比对到
+  参考基因组/参考序列集合。程序族两个命令：sawriter（参考 FASTA → .sa 后缀数组
+  索引）与 blasr（reads + 参考 + .sa → 比对输出 SAM/BAM/其他）。**已淘汰
+  （deprecated，2026-09 登记）**：PacBio 官方 GitHub 仓库 PacificBiosciences/blasr
+  已不可达（404，官方组织已清理/归档），官方 README（pbmm2）明示「pbmm2 is the
+  official replacement for BLASR」；功能上被 minimap2 / pbmm2 替代。本模块只做
+  「录入」：native 为「说明型 + 命令构造」驱动（sawriter / blasr 两个子命令），
+  不推荐新项目使用。
+  '
+homepage: https://github.com/PacificBiosciences/blasr
+license: BSD-3-Clause-Clear（bioconda blasr 包元数据 license=BSD-3-Clause-Clear）
+deprecated: true
+deprecated_note: 'PacBio 官方仓库 PacificBiosciences/blasr 2026-09-09 在线核实
+  **不可达（GitHub 404，官方组织已清理/归档；blasr 的 wiki/README 均随之不可见）**。
+  官方继任者声明见 PacificBiosciences/pbmm2 README：「pbmm2 … is the official
+  replacement for BLASR」（minimap2 SMRT 包装）。上游最后维护约在 2019（源码 fork
+  mchaisso/blasr 末次提交 2019-04）；bioconda 停驻 blasr=5.3.5。替代工具：
+  minimap2 / pbmm2（PacBio BAM 原生）。'
+software_versions:
+- id: blasr_native
+  blasr: '5.3.5（bioconda 最新版本号；上游源码时代约 2019——官方仓库已 404，
+    以 bioconda/归档源码为准）'
+  subcommands: 'sawriter（参考 FASTA → .sa 索引）· blasr（reads+参考+.sa →
+    SAM/BAM 比对）'
+  bioconda: 'blasr=5.3.5（linux-64/osx-64 等，license=BSD-3-Clause-Clear；
+    2026-09-09 api.anaconda.org 核实 latest=5.3.5、7 个版本号在列）'
+  build_route: '官方渠道存在但为历史遗留：bioconda blasr=5.3.5 → quay.io/
+    biocontainers/blasr:5.3.5--* / depot.galaxyproject.org sif（自动构建，历史
+    复现用）；官方 GitHub 仓库 404 → 源码走 fork/归档（mchaisso/blasr 200）。
+    软件 deprecated → 不产出自建 Dockerfile/Apptainer.def'
+  source: https://github.com/mchaisso/blasr
+  note: 'blasr 依赖 HDF5（历史构建）；sawriter 与 blasr 均在 bioconda 包内。
+    官方仓库不可达（404），故以 bioconda 版本 5.3.5 为版本锚点。'
+- id: blasr_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/blasr 404）
+  blasr: —
+  source: —（nf-core/modules 仓库无 blasr 目录）
+  note: 2026-09-09 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/ 为兜底。
+- id: blasr_snakemake_wrappers
+  blasr: 官方无 wrapper（bio/blasr 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 blasr）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 sawriter / blasr）为兜底。'
+- id: blasr_nextflow_local
+  blasr: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py sawriter/blasr）'
+- id: blasr_snakemake_local
+  blasr: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调
+    native/main.py sawriter/blasr）'
+implementations:
+- id: blasr_native
+  path: native
+  source_type: custom
+  type: native
+  version: "5.3.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：sawriter（建 .sa 索引）与 blasr（长读比对）两个
+    子命令按官方用法构造命令行，不实际运行（软件 deprecated、官方仓库 404、无新用
+    场景），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/blasr（blasr=5.3.5，历史包）
+    quay: quay.io/biocontainers/blasr（bioconda 自动构建历史镜像，tag 含 5.3.5）
+    galaxyproject: https://depot.galaxyproject.org/singularity/blasr（同名 sif）
+    install_hint: 宿主机 conda 路线 mamba create -n blasr-native -c conda-forge -c
+      bioconda blasr=5.3.5（sawriter/blasr 在 PATH）；官方源码仓库 404 → 如需源码
+      走 fork mchaisso/blasr（见 README「环境安装」）
+default_implementation: blasr_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'blasr 子命令：sawriter（参考 FASTA → .sa 索引，仅命令构造）|
+      blasr（PacBio 长读比对命令构造）'
+  reference:
+    type: file
+    required: false
+    description: 'sawriter / blasr：参考基因组 FASTA'
+  out_sa:
+    type: file
+    required: false
+    description: 'sawriter：输出 .sa 索引文件路径'
+  reads:
+    type: file
+    required: false
+    description: 'blasr：输入 PacBio reads（FASTA/FASTQ/.bam；subreads）'
+  sa_file:
+    type: file
+    required: false
+    description: 'blasr：sawriter 产出的 .sa 索引（第三位置参数）'
+  out:
+    type: file
+    required: false
+    description: 'blasr：--out 输出文件（--bam 时 .bam，--sam 时 .sam）'
+  sam:
+    type: boolean
+    required: false
+    default: false
+    description: 'blasr：--sam 输出 SAM（默认输出为 blasr 原生格式）'
+  bam:
+    type: boolean
+    required: false
+    default: false
+    description: 'blasr：--bam 输出 BAM（PacBio 推荐；需 --out 以 .bam 结尾）'
+  nproc:
+    type: integer
+    required: false
+    default: 4
+    description: 'blasr：--nproc 线程数（默认 4）'
+  bestn:
+    type: integer
+    required: false
+    description: 'blasr：--bestn 每个 read 最多报告 hits 数（默认 10）'
+  min_pct_identity:
+    type: float
+    required: false
+    description: 'blasr：--minPctIdentity 最低比对一致率阈值（如 70）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认，透传 --nproc 4）或正整数（透传 --nproc N）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+outputs:
+  sa_index:
+    type: file
+    format: sa
+    description: sawriter 输出的 .sa 后缀数组索引文件
+  alignment_sam:
+    type: file
+    format: sam
+    description: blasr --sam 输出 SAM
+  alignment_bam:
+    type: file
+    format: bam
+    description: blasr --bam 输出 BAM（可含 PBI 索引）
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    官方渠道存在但为历史遗留：bioconda blasr=5.3.5 → quay.io/biocontainers/blasr 与
+    depot.galaxyproject.org sif（自动构建，仅复现用）；官方 GitHub 仓库 404（源码
+    走 fork mchaisso/blasr）。宿主机安装登记在 README「环境安装」：conda
+    （blasr=5.3.5）/ Docker / Apptainer。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    sawriter: 1
+    blasr: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: blasr
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 blasr 官方子模块（2026-09-09 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

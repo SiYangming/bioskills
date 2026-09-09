@@ -1,0 +1,22 @@
+# tophat2 native 运行环境（conda 兜底；软件已 deprecated，仅历史复现）
+# -----------------------------------------------------------------------------
+# ⚠️ 本模块登记的是已淘汰软件（TopHat2 2.1.1；官方 CCB 建议用 HISAT2/STAR 替代）。
+#    conda 路线仅为「历史复现」兜底：
+#   - bioconda 有 tophat=2.1.2（python>=3 兼容重建，依赖 bowtie2/boost-cpp/ncurses/
+#     setuptools；另有 2.1.1-py27 老构建 4 个）→ 本环境用 2.1.2（与 python=3.11
+#     兼容；官方 CCB 最新发布为 2.1.1，2026-09-09 api.anaconda.org 核实）
+#   - tophat 比对需 Bowtie2 基因组索引（依赖行一并装 bowtie2）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate tophat2-native     # 之后 tophat / bowtie2 在 PATH
+# 或一键：mamba create -n tophat2-native -c conda-forge -c bioconda tophat=2.1.2 bowtie2
+name: tophat2-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - tophat=2.1.2         # bioconda（python3 兼容重建；依赖自动带 bowtie2）
+  - bowtie2              # TopHat2 比对所需（BT2 索引 + 比对内核）

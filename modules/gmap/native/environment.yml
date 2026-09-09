@@ -1,0 +1,18 @@
+# gmap native 运行环境（conda；GMAP/GSNAP 非 deprecated，官方持续维护）
+# -----------------------------------------------------------------------------
+# - bioconda 有 gmap=2025.07.31（linux-64/osx-64/osx-arm64；2026-09-09
+#   api.anaconda.org 核实；perl-threaded 依赖）→ 本环境用 gmap=2025.07.31
+# - 官方源码包（备选）：http://research-pub.gene.com/gmap/src/gmap-gsnap-2025-07-31.tar.gz
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate gmap-native       # 之后 gmap_build / gmap / gsnap 在 PATH
+# 或一键：mamba create -n gmap-native -c conda-forge -c bioconda gmap=2025.07.31
+name: gmap-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - gmap=2025.07.31      # GMAP/GSNAP（依赖自动带 perl-threaded 等）

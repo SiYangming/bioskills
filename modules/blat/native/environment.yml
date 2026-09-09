@@ -1,0 +1,21 @@
+# blat native 运行环境（conda；UCSC BLAT 非 deprecated，仍持续分发）
+# -----------------------------------------------------------------------------
+# - bioconda 两包可选：
+#     blat=36      （独立 UCSC BLAT 重打包；与 hgdownload 官方二进制同源；
+#                   license=Free for academic, nonprofit and personal use）
+#     ucsc-blat=482（kent 工具族；nf-core/blat 官方模块 pin 472）
+#   2026-09-09 api.anaconda.org 核实
+# - 本环境用 blat=36（native 实现版本锚点 v36；提供 blat 单命令）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate blat-native       # 之后 blat 在 PATH
+# 或一键：mamba create -n blat-native -c conda-forge -c bioconda blat=36
+name: blat-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - blat=36              # 独立 UCSC BLAT（linux-64/osx-64）

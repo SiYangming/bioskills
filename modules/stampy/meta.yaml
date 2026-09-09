@@ -1,0 +1,175 @@
+software: stampy
+canonical: stampy
+category: alignment_utils
+description: 'Stampy（Lunter & Goodson, Genome Res 2011;21:936-9，牛津
+  Wellcome Trust Centre for Human Genetics）是高灵敏度的 Illumina 短读比对器：
+  用 15-mer hash 快速定位候选位置 + 快速 gapped aligner + 全概率 realigner（可
+  容忍最多 ~30 bp indel），特别适合样本与参考基因组存在变异/分歧的场景；经典用法
+  是与 BWA 组成 hybrid 管线（BWA 快筛 + Stampy 精细比对）。CLI 三个动作（Python2
+  驱动脚本 stampy.py）：-G 建基因组索引（.stidx）→ -H 建 hash（.sthash）→ -M 比对
+  （SAM 输出）。**已淘汰（deprecated，2026-09 登记）**：1.0.32 之后基本停更
+  （官方发行 tgz 时间戳 2017-11-06），强依赖 Python 2.7；官方下载点已迁移且当前
+  不可直连。本模块只做「录入」：native 为「说明型 + 命令构造」驱动（genome / hash /
+  map 三个子命令），不推荐新项目使用。
+  '
+homepage: http://www.well.ox.ac.uk/stampy
+license: '未核实（官方发行版内含许可声明，但 2026-09 官方下载点不可直连、GitHub
+  镜像无 LICENSE 文件——学术工具、以官方声明为准；不做臆断）'
+deprecated: true
+deprecated_note: '上游基本停更：官方最终版 stampy-1.0.32（内部 rev 3761，发行 tgz
+  时间戳 2017-11-06）之后无新发布；强依赖 Python 2.7（stampy.py 开头即检查
+  sys.version）。2026-09-09 在线核实：官方下载点 www.well.ox.ac.uk/stampy 302 →
+  www.chg.ox.ac.uk（页面 404，文件库直链被 CloudFront 403 拦截）；GitHub
+  najoshi/stampy（历史常用镜像）404；bioconda 无 stampy 包。功能上可被 BWA-MEM /
+  Bowtie2 / Novoalign 等现代比对器替代。'
+software_versions:
+- id: stampy_native
+  stampy: '1.0.32（官方发行 stampy-1.0.32r3761.tgz / stampy-latest.tgz，2017-11-06；
+    搜索引擎索引与多机构软件页可证；2026-09-09 官方直链 HEAD 404/403 未能下载复核
+    包内 version 字符串）'
+  subcommands: 'genome（stampy.py -G：建 .stidx）· hash（stampy.py -g -H：建
+    .sthash）· map（stampy.py -g -h -M：比对出 SAM）'
+  bioconda: '无（api.anaconda.org/search?name=stampy 无同名包，2026-09-09 核实；
+    bioconda 渠道不存在 stampy）'
+  build_route: '无 conda/官方镜像路线；官方下载点当前 404/403。源码需从镜像
+    （如 github.com/uwb-linux/stampy，raw 200）或历史 tgz 获取，配 Python 2.7
+    手工运行（stampy.py + 编译 maptools）。软件 deprecated → 不产出自建
+    Dockerfile/Apptainer.def'
+  source: https://github.com/uwb-linux/stampy
+  note: 'stampy 为 Python2 程序：驱动脚本 stampy.py 要求 python 2.7，还需同目录
+    编译好的 maptools 扩展（历史 make 构建，Python2 时代工具链）。'
+- id: stampy_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/stampy 404）
+  stampy: —
+  source: —（nf-core/modules 仓库无 stampy 目录）
+  note: 2026-09-09 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/ 为兜底。
+- id: stampy_snakemake_wrappers
+  stampy: 官方无 wrapper（bio/stampy 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 stampy）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 stampy.py）为兜底。'
+- id: stampy_nextflow_local
+  stampy: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py genome/hash/map）'
+- id: stampy_snakemake_local
+  stampy: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调
+    native/main.py genome/hash/map）'
+implementations:
+- id: stampy_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.32"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：genome（-G）/ hash（-H）/ map（-M）三个子命令
+    按官方 help 构造 stampy.py 命令行，不实际运行（软件 deprecated、依赖 Python2、
+    官方下载点不可直连），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: '无（bioconda 渠道无 stampy 包）'
+    quay: '无官方镜像（无 bioconda 包 → 无 biocontainers 自动镜像）'
+    install_hint: '宿主机手工路线：从镜像仓库获取 stampy 源码（如
+      github.com/uwb-linux/stampy，raw 200）或历史 tgz，解压到 ~/software/stampy-1.0.32，
+      用 Python 2.7 运行 stampy.py（需编译 maptools；详见 README「环境安装」）。
+      conda 仅提供驱动运行环境 python=3.11（见 native/environment.yml），不含 stampy'
+default_implementation: stampy_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'stampy 子命令：genome（stampy.py -G 建基因组索引 .stidx，仅命令
+      构造）| hash（stampy.py -g -H 建 hash .sthash，仅命令构造）| map（stampy.py
+      -g -h -M 比对，仅命令构造）'
+  prefix:
+    type: string
+    required: false
+    description: 'genome/hash：索引前缀名（-G/-g/-H PREFIX，产物 PREFIX.stidx /
+      PREFIX.sthash）'
+  reference:
+    type: file
+    required: false
+    description: 'genome：参考基因组 FASTA（.fa[.gz]，可多个）'
+  maxcount:
+    type: integer
+    required: false
+    description: 'hash：(-H) 重复 word 最大拷贝数（--maxcount=N，默认 200）'
+  species:
+    type: string
+    required: false
+    description: 'genome：物种标识（--species=S，写进 SAM @SQ 的 SP tag）'
+  assembly:
+    type: string
+    required: false
+    description: 'genome：组装标识（--assembly=S，写进 SAM @SQ 的 AS tag）'
+  genome_prefix:
+    type: string
+    required: false
+    description: 'map：-g PREFIX 基因组索引前缀（PREFIX.stidx）'
+  hash_prefix:
+    type: string
+    required: false
+    description: 'map：-h PREFIX hash 索引前缀（PREFIX.sthash）'
+  reads:
+    type: string
+    required: false
+    description: 'map：-M 输入 reads（FASTQ/FASTA/BAM；双端用逗号两文件）'
+  output:
+    type: file
+    required: false
+    description: 'map：-o 输出文件（默认 stdout）'
+  output_format:
+    type: string
+    required: false
+    default: sam
+    description: 'map：-f 输出格式（sam/maqtxt/maqmap/maqmapN，默认 sam）'
+  sensitive:
+    type: boolean
+    required: false
+    default: false
+    description: 'map：--sensitive 更敏感模式（约慢 25-50%）'
+  substitution_rate:
+    type: float
+    required: false
+    description: 'map：--substitutionrate=F 替换率（默认 0.001）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认，不传）或正整数（map -t N）
+outputs:
+  genome_index:
+    type: file
+    format: stidx
+    description: 'genome 输出 PREFIX.stidx（stampy 基因组索引）'
+  hash_index:
+    type: file
+    format: sthash
+    description: 'hash 输出 PREFIX.sthash（stampy hash 索引）'
+  sam_alignment:
+    type: file
+    format: sam
+    description: 'map 输出 SAM（-o；默认 stdout）'
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    无 conda 包/无官方镜像渠道（2026-09-09 核实 bioconda 无 stampy）。stampy 本体
+    为 Python2.7 程序，历史复现需手工部署；native/environment.yml 只含驱动运行环境
+    （python=3.11 + pyyaml），README「环境安装」登记手工部署步骤。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    genome: 1
+    hash: 1
+    map: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: stampy.py
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 stampy 官方子模块（2026-09-09 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

@@ -1,0 +1,186 @@
+software: bcftools
+canonical: bcftools
+category: variant_calling
+description: 'bcftools 是处理 BCF/VCF 的变异检测与后处理工具集（samtools 家族，
+  C 程序）：bcftools mpileup 从比对 BAM 生成位点信息、bcftools call 做变异检测/
+  基因型判定、view 做格式转换与子集过滤、sort/index 排序建索引、norm 左对齐归一化、
+  query/consensus 做灵活提取与一致性序列生成。
+  官网 https://samtools.github.io/bcftools/ ；GitHub https://github.com/samtools/bcftools。
+  '
+homepage: https://samtools.github.io/bcftools/
+license: MIT
+software_versions:
+- id: bcftools_native
+  bcftools: '1.24'
+  build_route: official biocontainer（quay.io/biocontainers/bcftools / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bcftools
+  note: '官方最新 release 1.24（2026-07-09 实测 GitHub release 与 bioconda bcftools=1.24
+    一致）；quay tag 1.24--h118bc1c_2（另有 1.24--h487d631_1/_0）。官方 release 资产仅
+    bcftools-1.24.tar.bz2 源码（make 编译）；brew core bcftools=1.24 与 meta 一致。
+    需升级时 conda 改 pin bcftools=1.24。'
+- id: bcftools_nextflow_nfcore
+  module_version: master（2026-09-09 抓取；modules/nf-core/bcftools 子模块共 30 个）
+  bcftools: '1.23.1'
+  source: bioconda::bcftools=1.23.1 + htslib=1.23.1（modules/nf-core/bcftools/call/environment.yml）
+  note: nf-core 官方子模块众多（annotate/call/concat/consensus/filter/index/isec/merge/
+    mpileup/norm/query/sort/stats/view 等 30 个）；call 子模块 pin 1.23.1，**低于** native 的
+    1.24（nf-core 尚未 bump）；以各子模块 environment.yml 为准。
+- id: bcftools_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09-02 release）
+  bcftools: '1.24'
+  wrapper_utils: '0.9.0'
+  source: bioconda bcftools=1.24 + snakemake-wrapper-utils=0.9.0（bio/bcftools/call/environment.yaml）
+  note: 官方 bio/bcftools 提供 call/concat/filter/fixploidy/index/merge/mpileup/norm/
+    reheader/sort/stats/view 共 12 个 wrapper；call pin bcftools=1.24，与 native 一致。
+    固定旧 wrapper tag 会回落版本，切 tag 后务必核对。
+- id: bcftools_nextflow_local
+  bcftools: 未固定（官方 nf-core/bcftools 已覆盖；本地 nextflow 未建目录）
+- id: bcftools_snakemake_local
+  bcftools: 未固定（官方 bio/bcftools 已覆盖；本地 snakemake 未建目录）
+implementations:
+- id: bcftools_native
+  path: native
+  source_type: custom
+  type: native
+  version: '1.24'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令 view/mpileup/call/sort/index/norm/query/consensus 直接构造真实 bcftools 命令，
+    sort 自动注入 -T 临时前缀，全部经 TMPDIR 优化。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bcftools
+    quay_biocontainers: quay.io/biocontainers/bcftools
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/bcftools%3A1.24--h118bc1c_2
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bcftools=1.24；
+      容器可用 quay.io/biocontainers/bcftools:1.24--h118bc1c_2 镜像
+default_implementation: bcftools_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: bcftools 子命令：view|mpileup|call|sort|index|norm|query|consensus
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [vcf, vcf.gz, bcf]
+    description: 输入 VCF/BCF（view/call/sort/index/norm/query/consensus）
+  bams:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [bam]
+    description: mpileup 的比对 BAM 列表（可多个，追加在 -f 参考之后）
+  fasta:
+    type: file
+    required: false
+    cli_arg: -f
+    format: [fasta]
+    description: 参考序列 FASTA（mpileup/call(-f 可选)/norm(-f 必需)/consensus(-f 必需)）
+  output_type:
+    type: string
+    required: false
+    cli_arg: -O
+    description: 输出类型 b|u|z|v（BCF/未压缩BCF/gzip VCF/未压缩 VCF）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（缺省 stdout）
+  include:
+    type: string
+    required: false
+    cli_arg: -i
+    description: view 包含表达式（如 'QUAL>30 && INFO/DP>10'）
+  exclude:
+    type: string
+    required: false
+    cli_arg: -e
+    description: view/consensus 排除表达式
+  sample:
+    type: string
+    required: false
+    cli_arg: -s
+    description: 样本子集（view/query）
+  region:
+    type: string
+    required: false
+    cli_arg: -r
+    description: 区域（如 chr1:1000-2000 或 ^chr2）
+  format:
+    type: string
+    required: false
+    cli_arg: -f
+    description: query 输出格式串（如 '%CHROM\\t%POS\\t%REF\\t%ALT\\n'）
+  list_samples:
+    type: boolean
+    default: false
+    cli_arg: -l
+    description: query 仅列出样本名
+  variants_only:
+    type: boolean
+    default: false
+    cli_arg: -v
+    description: call 仅输出变异位点
+  multiallelic:
+    type: string
+    required: false
+    cli_arg: -m
+    description: norm 多等位处理模式（-any/-snps/-indels/+any 等）
+  index_type:
+    type: string
+    required: false
+    cli_arg: '-t (tbi) / 默认 csi'
+    default: csi
+    description: index 类型（csi 默认；VCF 也可 tbi）
+  haplotype:
+    type: integer
+    required: false
+    cli_arg: -H
+    description: consensus 单倍型（1 或 2）
+  threads:
+    type: integer
+    default: 4
+    description: 线程提示（bcftools 各子命令线程支持不一，必要时经 extra_args 透传 --threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 bcftools 的额外参数（高级用法，慎用）
+outputs:
+  vcf_out:
+    type: file
+    format: [vcf, vcf.gz]
+    description: view/call/norm 产物 VCF（-o 落盘或 stdout）
+  bcf_out:
+    type: file
+    format: bcf
+    description: mpileup/call 产物 BCF（-O b 时）
+  index_file:
+    type: file
+    format: [csi, tbi]
+    description: index 产物 .csi/.tbi
+  consensus_fasta:
+    type: file
+    format: fasta
+    description: consensus 产物一致性序列 FASTA
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/bcftools（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba（bioconda::bcftools）或 brew（homebrew-core bcftools）安装 bcftools。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    mpileup: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: bcftools
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/bcftools（30 子模块，pin
+    bcftools=1.23.1）信息见 README（执行请 nf modules install nf-core bcftools <sub>）
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/bcftools
+    （12 个 wrapper）见 README（运行时靠 wrapper 句柄 "v<tag>/bio/bcftools/<sub>" 由 Snakemake 解析）'

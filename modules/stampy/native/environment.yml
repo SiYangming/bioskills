@@ -1,0 +1,19 @@
+# stampy native 驱动运行环境（不含 stampy 本体——软件已 deprecated、无 conda 渠道）
+# -----------------------------------------------------------------------------
+# ⚠️ 本模块登记的是已淘汰软件（Stampy 1.0.32；依赖 Python 2.7，官方下载点不可直连，
+#    请改用 BWA-MEM / Bowtie2 / Novoalign）。本 environment.yml 只提供驱动
+#    native/main.py 的运行环境（base.py 依赖 pyyaml），**不含 stampy**：
+#   - bioconda 渠道无 stampy 包（2026-09-09 api.anaconda.org 核实 404）
+#   - stampy 本体为 Python2.7 程序，历史复现需手工部署（见模块 README「环境安装」）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate stampy-native
+name: stampy-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  # 注意：无 stampy 依赖行（bioconda 渠道无该包；stampy 需 Python2.7 手工部署）

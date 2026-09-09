@@ -1,0 +1,173 @@
+software: tophat2
+canonical: tophat2
+category: transcriptome
+description: 'TopHat2（CCB 约翰霍普金斯大学，Tuxedo 工具家族；Kim D et al. Genome
+  Biol 2013;14:R36）是 RNA-seq 剪接感知比对器：先用 Bowtie/Bowtie2 把 reads 比对到
+  参考基因组，再分析比对结果识别外显子间剪接位点（可配合 -G GTF 注释建
+  transcriptome index）。单命令 tophat：`tophat [options] <genome_index_base>
+  <reads...>`，产物为 accepted_hits.bam / junctions.bed / align_summary.txt 等。
+  **已淘汰（deprecated，2026-09 登记）**：官方 CCB 页面明示 TopHat 进入低维护阶段、
+  "largely superseded by HISAT2"（同功能但更准更快）；上游最终发布 2.1.1（2016-02-23）。
+  本模块只做「录入」：native 为「说明型 + 命令构造」驱动（tophat 单子命令），
+  不推荐新项目使用。
+  '
+homepage: https://ccb.jhu.edu/software/tophat/index.shtml
+license: 'Boost Software License（bioconda tophat 包元数据 license=Boost Software
+  License；官方 CCB 页面未明示许可证——以发行源码内 LICENSE 为准，2026-09 未逐一
+  核对原文）'
+deprecated: true
+deprecated_note: '官方 CCB 页面（2026-09-09 核实 200）在 2.1.1 release note 中
+  明示：「TopHat has entered a low maintenance, low support stage as it is now
+  largely superseded by HISAT2 which provides the same core functionality (i.e.
+  spliced alignment of RNA-Seq reads), in a more accurate and much more
+  efficient way」。上游最终发布 2.1.1（2016-02-23），GitHub infphilo/tophat 有
+  v2.1.2 tag（社区提交）。替代工具：HISAT2 / STAR。'
+software_versions:
+- id: tophat2_native
+  tophat: '2.1.1（官方 CCB 最终发布，2016-02-23；源码 + Linux/Mac 二进制直链
+    2026-09-09 HEAD 均 200）；GitHub infphilo/tophat 另有 v2.1.2 tag（社区提交，
+    无官方发布页）'
+  subcommands: 'tophat（单命令：tophat [options] <genome_index_base> <reads...>
+    → accepted_hits.bam / junctions.bed）'
+  bioconda: 'tophat=2.1.2（bioconda 最新，2024+ 重建为 python>=3 兼容版，依赖
+    bowtie2/boost-cpp/ncurses；另有 2.1.1-py27 老构建 4 个；license=Boost
+    Software License；2026-09-09 api.anaconda.org 核实）'
+  build_route: '官方渠道存在：CCB 官方二进制直链 200（2.1.1，历史遗留但可下载）；
+    bioconda tophat=2.1.2（python3 兼容）→ quay.io/biocontainers/tophat 与
+    depot.galaxyproject.org sif。软件 deprecated → 不产出自建 Dockerfile/
+    Apptainer.def（容器仅登记官方自动构建镜像）'
+  source: https://ccb.jhu.edu/software/tophat/downloads/tophat-2.1.1.tar.gz
+  note: 'tophat 需 Bowtie2 索引（与 bowtie2 模块/conda 依赖联动）；2.1.1 官方
+    二进制为 2016 构建，对现代 glibc 兼容性未逐一核实（推荐 bioconda 2.1.2 或
+    CCB 源码编译）。'
+- id: tophat2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/tophat2 与 modules/nf-core/tophat 均 404）
+  tophat: —
+  source: —（nf-core/modules 仓库无 tophat 目录）
+  note: 2026-09-09 抓取 api.github.com 返回 404；nf-core 用 hisat2/star 替代；
+    Nextflow 场景不登记官方说明层。
+- id: tophat2_snakemake_wrappers
+  tophat: 官方无 wrapper（bio/tophat 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 tophat）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 tophat）为兜底。'
+- id: tophat2_nextflow_local
+  tophat: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py tophat）'
+- id: tophat2_snakemake_local
+  tophat: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调
+    native/main.py tophat）'
+implementations:
+- id: tophat2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：tophat 单子命令按官方 manual 构造
+    `tophat -o out -p N [-G gtf] [--transcriptome-index idx] <genome_index_base>
+    <reads...>` 命令行，不实际运行（软件 deprecated，官方建议 HISAT2/STAR），
+    主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/tophat（tophat=2.1.2，python3 兼容重建）
+    quay: quay.io/biocontainers/tophat（bioconda 自动构建官方镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/tophat（同名 sif）
+    install_hint: 宿主机 conda 路线 mamba create -n tophat2-native -c conda-forge -c
+      bioconda tophat=2.1.2 bowtie2（python3 兼容；二进制 tophat 在 PATH），或取
+      CCB 官方 2.1.1 二进制/源码（见 README「环境安装」）
+default_implementation: tophat2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'tophat2 子命令：tophat（RNA-seq 剪接比对命令构造，仅历史复现）'
+  genome_index_base:
+    type: string
+    required: false
+    description: 'tophat：位置参数——Bowtie/Bowtie2 基因组索引 basename（tophat2
+      默认用 bowtie2 索引 <base>.1.bt2/.bt2l）'
+  reads:
+    type: string
+    required: false
+    description: 'tophat：位置参数——reads 文件（FASTA/FASTQ；SE 给 1 个，PE 给
+      2 个（read1 read2），每文件可为逗号分隔列表；native/main.py 中可给多次）'
+  out_dir:
+    type: string
+    required: false
+    default: tophat_out
+    description: 'tophat：-o/--output-dir 输出目录（默认 tophat_out）'
+  gtf:
+    type: file
+    required: false
+    description: 'tophat：-G/--GTF 注释 GTF/GFF（给定时自动建 transcriptome
+      index）'
+  transcriptome_index:
+    type: string
+    required: false
+    description: 'tophat：--transcriptome-index <idx>（用预建 transcriptome 索引，
+      与 -G 二选一/配合）'
+  read_mismatches:
+    type: integer
+    required: false
+    description: 'tophat：-N/--read-mismatches 每条 read 允许错配数（默认 2）'
+  read_edit_dist:
+    type: integer
+    required: false
+    description: 'tophat：--read-edit-dist 最终比对允许 edit distance（默认 2）'
+  max_multihits:
+    type: integer
+    required: false
+    description: 'tophat：--max-multihits 多比对 read 最大报告数（默认 20）'
+  inner_dist:
+    type: integer
+    required: false
+    description: 'tophat：-r/--inner-dist 双端 inner distance 期望均值（PE 时）
+      ——历史流程常用'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认 4）或正整数（tophat -p/--num-threads）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+outputs:
+  accepted_hits:
+    type: file
+    format: bam
+    description: '<out_dir>/accepted_hits.bam（比对上的 reads；默认过滤多重比对）'
+  junctions:
+    type: file
+    format: bed
+    description: '<out_dir>/junctions.bed（剪接位点，含支持 reads 数）'
+  align_summary:
+    type: file
+    format: txt
+    description: '<out_dir>/align_summary.txt（reads 输入/比对计数统计）'
+  insertions_deletions:
+    type: file
+    format: bed
+    description: '<out_dir>/insertions.bed 与 deletions.bed（indel 检出）'
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    官方渠道存在：CCB 官方二进制 2.1.1（200，历史遗留）+ bioconda tophat=2.1.2
+    （python3 兼容）→ quay.io/biocontainers/tophat / depot.galaxyproject.org sif
+    （官方自动构建）。宿主机安装登记在 README「环境安装」；依赖 Bowtie2 索引。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    tophat: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: tophat
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 tophat 官方子模块（2026-09-09 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-08T15:32:13+00:00'
+generated_at: '2026-09-09T03:33:15+00:00'
 modules:
 - software: allpathslg
   canonical: allpathslg
@@ -55,6 +55,46 @@ modules:
     version: '39.52'
     priority: Medium
     entrypoint: ''
+- software: bcftools
+  canonical: bcftools
+  implementations:
+  - id: bcftools_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '1.24'
+    priority: High
+    entrypoint: ''
+- software: bedtools
+  canonical: bedtools
+  implementations:
+  - id: bedtools_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.31.1
+    priority: High
+    entrypoint: ''
+- software: blasr
+  canonical: blasr
+  implementations:
+  - id: blasr_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 5.3.5
+    priority: High
+    entrypoint: ''
+- software: blat
+  canonical: blat
+  implementations:
+  - id: blat_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '36'
+    priority: High
+    entrypoint: ''
 - software: bless
   canonical: bless
   implementations:
@@ -91,6 +131,16 @@ modules:
     path: snakemake
     version: 2.5.4
     priority: Medium
+    entrypoint: ''
+- software: bwa
+  canonical: bwa
+  implementations:
+  - id: bwa_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 0.7.19
+    priority: High
     entrypoint: ''
 - software: cutadapt
   canonical: cutadapt
@@ -197,6 +247,16 @@ modules:
     version: 3.0.0b1
     priority: Medium
     entrypoint: ''
+- software: gatk
+  canonical: gatk
+  implementations:
+  - id: gatk_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 4.7.0.0
+    priority: High
+    entrypoint: ''
 - software: genetribe
   canonical: genetribe
   implementations:
@@ -205,6 +265,16 @@ modules:
     impl: native
     path: native
     version: 1.2.1
+    priority: High
+    entrypoint: ''
+- software: gmap
+  canonical: gmap
+  implementations:
+  - id: gmap_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '2025-07-31'
     priority: High
     entrypoint: ''
 - software: gnu_sort
@@ -257,6 +327,16 @@ modules:
     path: snakemake
     version: '1.12'
     priority: Medium
+    entrypoint: ''
+- software: hisat2
+  canonical: hisat2
+  implementations:
+  - id: hisat2_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.2.3
+    priority: High
     entrypoint: ''
 - software: humann
   canonical: humann
@@ -440,6 +520,16 @@ modules:
     version: 6.4.0
     priority: Medium
     entrypoint: ''
+- software: picard
+  canonical: picard
+  implementations:
+  - id: picard_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 3.5.0
+    priority: High
+    entrypoint: ''
 - software: quantifypolya
   canonical: quantifypolya
   implementations:
@@ -524,6 +614,16 @@ modules:
     version: 2.13.0
     priority: High
     entrypoint: ''
+- software: soap2
+  canonical: soap2
+  implementations:
+  - id: soap2_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '2.21'
+    priority: High
+    entrypoint: ''
 - software: sra-tools
   canonical: sra-tools
   implementations:
@@ -540,6 +640,16 @@ modules:
     path: snakemake
     version: 3.4.1
     priority: Medium
+    entrypoint: ''
+- software: stampy
+  canonical: stampy
+  implementations:
+  - id: stampy_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.0.32
+    priority: High
     entrypoint: ''
 - software: star
   canonical: star
@@ -591,6 +701,16 @@ modules:
     path: snakemake
     version: 1.0.7
     priority: Medium
+    entrypoint: ''
+- software: tophat2
+  canonical: tophat2
+  implementations:
+  - id: tophat2_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.1.1
+    priority: High
     entrypoint: ''
 - software: transdecoder
   canonical: transdecoder

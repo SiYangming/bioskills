@@ -1,0 +1,161 @@
+software: gmap
+canonical: gmap
+category: alignment_utils
+description: 'GMAP/GSNAP 套件（Thomas Wu, Genentech）是剪接感知的基因组比对工具族：
+  GMAP（Wu & Watanabe, Bioinformatics 2005;21:1859-75）把 mRNA/EST（含全长
+  转录本/iso-seq）比对到基因组（容忍剪接与长 indel）；GSNAP（Wu & Nacu,
+  Bioinformatics 2010;26:873-81）把短读（含双端、SNP/indel 容忍、bisulfite 等）
+  快速比对到基因组（含 SNP-tolerant 与 fusion 检测）。程序族三个命令：gmap_build
+  （基因组 FASTA → GMAP 数据库）、gmap（mRNA/EST/长读比对）、gsnap（短读比对）。
+  **非 deprecated（2026-09 登记）**：官方持续维护（research-pub.gene.com 分发
+  源码包，2026-09-09 核实 gmap-gsnap-2025-07-31.v2.tar.gz 直链 200）；bioconda 有
+  gmap（最新 2025.07.31）。使用定位：剪接感知转录本/全长 cDNA 定位（GMAP）与
+  SNP 容忍短读比对（GSNAP）；RNA-seq 定量主流仍常选 STAR/HISAT2（本仓库另见
+  star 模块）。
+  '
+homepage: http://research-pub.gene.com/gmap/
+license: '学术/非商业免费（官方长期政策；商用需授权）。bioconda 元数据 top-level
+  license=Apache-2.0、具体 build attrs license=Non-commercial（2026-09-09 核实）；
+  以官方源码包内 LICENSE/授权声明为准'
+deprecated: false
+software_versions:
+- id: gmap_native
+  gmap: '2025-07-31（官方 gene.com 源码包 gmap-gsnap-2025-07-31.v2.tar.gz 直链 200；
+    官网主页展示版本为 2025-04-19——2025-07-31 为渠道可下载的最新源码包，
+    2026-09-09 探测无更新版本）'
+  subcommands: 'gmap_build（基因组 FASTA → GMAP 数据库）· gmap（mRNA/EST/长读
+    剪接比对）· gsnap（短读 SNP 容忍比对）'
+  bioconda: 'gmap=2025.07.31（linux-64/osx-64/osx-arm64 等，2026-09-09
+    api.anaconda.org 核实 latest=2025.07.31；perl-threaded 依赖）'
+  build_route: '官方渠道齐全：官方源码包直链 200（免编译需自行 make）+ bioconda
+    gmap=2025.07.31 → quay.io/biocontainers 与 depot.galaxyproject.org 自动镜像；
+    非 deprecated 但未自建容器配方（官方渠道已覆盖）'
+  source: http://research-pub.gene.com/gmap/src/gmap-gsnap-2025-07-31.v2.tar.gz
+  note: 'gmap_build 数据库默认建在当前目录（-D 指定目录）；GMAP 数据库新旧格式
+    不兼容（2021-12-17 后需重新 gmap_build）。参考数据亦可用 gmap 官网提供的
+    预建数据库（research-pub.gene.com 列表）。'
+- id: gmap_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/gmap 404）
+  gmap: —
+  source: —（nf-core/modules 仓库无 gmap 目录；RNA-seq 场景 nf-core 用
+    star/hisat2/salmon 等）
+  note: 2026-09-09 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需用时以 native/（gmap_build + gmap/gsnap）为兜底。
+- id: gmap_snakemake_wrappers
+  gmap: 官方无 wrapper（bio/gmap 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 gmap）
+  note: '2026-09-09 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 gmap_build/gmap/gsnap）为兜底。'
+- id: gmap_nextflow_local
+  gmap: '未启用（未建 nextflow/ 目录；需要时在 main.nf 以 shell: 调 native/main.py
+    gmap_build/gmap/gsnap）'
+- id: gmap_snakemake_local
+  gmap: '未启用（未建 snakemake/ 目录；需要时用 shell: 调 native/main.py
+    gmap_build/gmap/gsnap）'
+implementations:
+- id: gmap_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2025-07-31"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「真实命令构造 + 执行」：gmap_build（建库）/ gmap（mRNA/EST 剪接比对）/
+    gsnap（短读比对）三个子命令按官方 manual 构造并执行命令行（本地已装 gmap 时
+    真实运行）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/gmap（gmap=2025.07.31）
+    quay: quay.io/biocontainers/gmap（bioconda 自动构建官方镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/gmap（同名 sif）
+    install_hint: 宿主机 conda 路线 mamba create -n gmap-native -c conda-forge -c
+      bioconda gmap=2025.07.31（gmap_build/gmap/gsnap 在 PATH）；或官方源码包
+      make 编译（见 README「环境安装」）
+default_implementation: gmap_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'gmap 子命令：gmap_build（基因组 FASTA → GMAP 数据库）|
+      gmap（mRNA/EST/长读剪接比对）| gsnap（短读 SNP 容忍比对）'
+  reference:
+    type: file
+    required: false
+    description: 'gmap_build：参考基因组 FASTA（可 gzip，--gunzip 时）'
+  db_dir:
+    type: string
+    required: false
+    default: .
+    description: 'gmap_build/gmap/gsnap：-D 数据库目录（默认当前目录）'
+  db_name:
+    type: string
+    required: false
+    description: 'gmap_build/gmap/gsnap：-d 数据库名（gmap_build 建库名 /
+      比对时指定库）'
+  gunzip:
+    type: boolean
+    required: false
+    default: false
+    description: 'gmap_build：--gunzip 输入参考为 .gz（自动解压建库）'
+  reads:
+    type: string
+    required: false
+    description: 'gmap/gsnap：输入 reads 文件（FASTA/FASTQ；可多个/逗号列表；
+      gmap 双端给两个文件并用 -f sampe）'
+  format:
+    type: string
+    required: false
+    description: 'gmap：-f/--format 输出格式（samse/sampe/bed/gff3_gene 等；
+      RNA-seq 单端常见 samse、双端 sampe；默认 gmap 原生坐标输出）'
+  npaths:
+    type: integer
+    required: false
+    description: 'gmap/gsnap：-n/--npaths 每 read 报告比对路径数（默认 5）'
+  sam:
+    type: boolean
+    required: false
+    default: false
+    description: 'gsnap：-A sam 输出 SAM 比对（未给时 gsnap 默认亦 SAM——见
+      README 说明）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认 4）或正整数（gmap/gsnap -t N；gmap_build 建库亦
+      支持 -t）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+outputs:
+  gmap_db:
+    type: directory
+    description: gmap_build 在 <db_dir> 下生成 <db_name>/ 数据库（2021-12-17 后
+      新格式：含 genome/ 与 version/ 子目录）
+  gmap_alignment:
+    type: file
+    description: gmap 输出（-f samse/sampe → SAM；默认原生坐标格式）
+  gsnap_alignment:
+    type: file
+    description: gsnap 输出（SAM，默认 stdout）
+environment:
+  conda: environment.yml
+  container_official: quay.io/biocontainers/gmap（bioconda 自动构建官方镜像）
+  note: 官方渠道已覆盖（官方源码包 + bioconda gmap=2025.07.31 → quay.io/biocontainers /
+    depot.galaxyproject.org），本地不维护自建 Dockerfile/Apptainer.def；宿主机直跑
+    main.py 用 conda/mamba（-c conda-forge -c bioconda gmap=2025.07.31）或官方源码
+    make。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    gmap_build: 8
+    gmap: 8
+    gsnap: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gmap
