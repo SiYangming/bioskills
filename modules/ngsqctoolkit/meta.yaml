@@ -1,0 +1,184 @@
+software: ngsqctoolkit
+canonical: ngsqctoolkit
+category: qc
+description: 'NGSQCToolkit（NGS QC Toolkit）是 NIPGR（Patel & Jain, PLoS ONE 2012）
+  用 Perl 编写的 Roche 454 / Illumina NGS 数据 QC 工具包（2014 年 v2.3.3 后停止更新），
+  提供质量统计与过滤（QC/IlluQC.pl、QC/IlluQC_PRLL.pl 并行版）、3'' 端质量/长度修剪
+  （Trimming/TrimmingReads.pl）、模糊碱基 N 过滤（Trimming/AmbiguityFiltering.pl）、
+  同聚物修剪、Statistics/AvgQuality.pl、Statistics/N50Stat.pl 与格式转换
+  （Format-converter/*）等脚本集。
+
+  ⚠️ 已淘汰（deprecated，2026-09 登记）：功能被 Trimmomatic（Illumina PE/SE 修剪与
+  过滤）、fastp、cutadapt 取代，官方主页与下载均下线（404），不建议新项目使用。
+  本模块仅作历史参考登记：native 实现为「说明 + argv 构造」型驱动，真实调用被弃。
+  '
+homepage: https://www.nipgr.ac.in/NGSQCToolkit.php
+license: 'custom（官方未声明 SPDX license：主页/论文仅称 free / open source、学术免费
+  使用；2026-09 官网 404 且 GitHub 镜像无 LICENSE 文件，无法复核更细条款）'
+software_versions:
+- id: ngsqctoolkit_native
+  ngsqctoolkit: '2.3.3（官方最终版，2014-08 发布；以用户文档与 ILRI HPC 记录为准；
+    官网 zip 404 → 可获取本体以用户修复镜像 SiYangming/NGSQCToolkit tag v2.3.3
+    （2026-09-08）为准；作者 lab 镜像 mjain-lab 仅到 v2.3，无后续更新）'
+  perl: 'Perl 5（脚本为 2008-2014 时代 perl，未用现代语法；5.26+ 实测需注意
+    String::Approx 等 XS 模块重新编译）'
+  build_route: 官方渠道无（bioconda/conda-forge 无 ngsqctoolkit 包、无官方容器）→
+    已淘汰不维护容器配方；宿主机安装＝perl 环境（cpanm/conda-forge perl + bioconda
+    perl 模块）+ 官网 zip（2026-09 已 404，回退 GitHub 镜像 mjain-lab/NGSQCToolkit）
+  source: 'https://www.nipgr.ac.in/ngsqctoolkit/NGSQCToolkit_v2.3.3.zip（2026-09-08
+    核实 HTTP 404）；镜像①（旧，止于 v2.3）：https://github.com/mjain-lab/NGSQCToolkit
+    （作者 lab，release v2.3 / main 分支）；镜像②（修复版 2.3.3）：
+    https://github.com/SiYangming/NGSQCToolkit（fork 修复版，tag/release v2.3.3，
+    2026-09-08 登记，内容对应官方最终 2.3.3）'
+  note: '⚠️ deprecated（2026-09-08 登记）：软件自 2014 年起无维护，官网
+    nipgr.ac.in/NGSQCToolkit.php 与 v2.3.3 zip 均 404、旧域名 nipgr.res.in 已无法解析；
+    官方功能由 Trimmomatic / fastp / cutadapt 取代（本仓库另有 modules/trimmomatic、
+    modules/fastp、modules/cutadapt 可直接用），新项目请勿选用。唯一 GitHub 仓库
+    mjain-lab/NGSQCToolkit（作者 lab，Perl，2021-03 上传，pushed 2021-03 后无更新）
+    为源码留存镜像，非活跃维护分支。'
+- id: ngsqctoolkit_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ngsqctoolkit 404）
+  ngsqctoolkit: —
+  source: —（nf-core/modules 仓库 modules/nf-core/ngsqctoolkit 目录不存在，2026-09-08
+    抓取 api.github.com 返回 404）
+  note: deprecated 软件无 nf-core 子模块；Nextflow 场景请用 nf-core/fastp、nf-core/
+    fastqc 等替代工具模块。
+- id: ngsqctoolkit_snakemake_wrappers
+  ngsqctoolkit: 官方无 wrapper（bio/ngsqctoolkit 404）
+  source: —（snakemake-wrappers 仓库 bio/ngsqctoolkit 目录不存在，2026-09-08 抓取
+    api.github.com 返回 404）
+  note: deprecated 软件无 snakemake-wrappers wrapper；Snakemake 场景请用官方
+    bio/fastp、bio/trimmomatic、bio/cutadapt wrapper。
+- id: ngsqctoolkit_nextflow_local
+  ngsqctoolkit: 未启用（deprecated，不建议新建本地 nextflow 集成；需要时以
+    shell 步骤调 native/main.py 的历史命令构造作参考）
+- id: ngsqctoolkit_snakemake_local
+  ngsqctoolkit: 未启用（deprecated，不建议新建本地 snakemake 集成）
+implementations:
+- id: ngsqctoolkit_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.3.3"
+  priority: high
+  when_to_use: '仅历史参考 / 复现旧流程时使用（Agent 在 Function Calling / CLI 场景应
+    优先路由 trimmomatic / fastp / cutadapt 模块）。本实现为「说明 + argv 构造」型
+    驱动：子命令 qc / trim / ambig 分别构造历史脚本 IlluQC_PRLL.pl / TrimmingReads.pl /
+    AmbiguityFiltering.pl 的命令行并打印（或执行），并输出弃用提示。
+    ⚠️ deprecated：不要在新流程中使用，见 README「替代建议」。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/ngsqctoolkit（404 不存在，2026-09 核实）
+    quay_biocontainers: quay.io/biocontainers/ngsqctoolkit（bioconda 无包故无自动构建；
+      quay API 需认证未直接核实）
+    install_hint: 已淘汰 → 不产出自建容器配方；宿主机历史复现走
+      bash native/install.sh（perl 环境 + 官网 zip/镜像）或环境安装小节手动步骤。
+      新项目请改用 trimmomatic / fastp / cutadapt。
+default_implementation: ngsqctoolkit_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ngsqctoolkit 子命令：qc（IlluQC_PRLL.pl 质量过滤，历史命令构造）|
+      trim（TrimmingReads.pl 3' 端修剪）| ambig（AmbiguityFiltering.pl 去 N）
+  r1:
+    type: file
+    required: false
+    format: [fastq, fastq.gz]
+    description: PE 模式 R1（qc 用，随 -pe 传入）
+  r2:
+    type: file
+    required: false
+    format: [fastq, fastq.gz]
+    description: PE 模式 R2（qc 用，随 -pe 传入；单端请用 input）
+  input:
+    type: file
+    required: false
+    format: [fastq, fastq.gz]
+    description: 输入 reads（trim/ambig 的 -i；qc 单端模式 -se）
+  toolkit_dir:
+    type: string
+    required: false
+    description: 解压后的 NGSQCToolkit 根目录（含 QC/ Trimming/ 等子目录）；
+      缺省读环境变量 NGSQCTOOLKIT_ROOT（安装见 native/install.sh / README）
+  adapter:
+    type: string
+    required: false
+    default: N
+    description: qc 的接头/引物库：内置库编号 1..N、N=不过滤接头、或用户自备序列文件
+  phred:
+    type: string
+    required: false
+    default: A
+    description: qc 的 FASTQ 变体：1=Sanger(Phred+33) 2=Solexa 3/4=Illumina(Phred+64)
+      5=Illumina1.8+(Phred+33) A=自动检测
+  qual_cut:
+    type: integer
+    required: false
+    default: 20
+    description: qc -s 高质量 PHRED 阈值（默认 20）；trim -q 3' 端质量截短阈值
+  len_cut:
+    type: integer
+    required: false
+    description: qc -l HQ 长度百分比阈值（默认 70）；trim/ambig -n 保留最短 read 长度
+  max_n:
+    type: integer
+    required: false
+    default: 0
+    description: ambig -c 允许的最大 N 碱基数（与 -p/-t5/-t3 四者任选其一）
+  outdir:
+    type: string
+    required: false
+    description: 输出目录/文件名（qc 的 -o 输出目录；trim/ambig 的 -o 输出文件名）
+  threads:
+    type: integer
+    required: false
+    default: 1
+    description: qc -c CPU 数（IlluQC_PRLL.pl 并行度）
+  dry_run:
+    type: boolean
+    required: false
+    default: true
+    description: 只打印构造的命令行（默认不实际执行；deprecated 工具不建议真实运行）
+outputs:
+  qc_filtered:
+    type: file
+    format: fastq
+    description: IlluQC_PRLL.pl 输出的高质量过滤 reads（输出目录 -o，或默认
+      IlluQC_Filtered_files/；-z g 时为 .gz）
+  qc_stats:
+    type: file
+    description: QC 统计结果（文本/表格 + GD 图形；-t 1 文本 2 tab）
+  trimmed_reads:
+    type: file
+    format: fastq
+    description: TrimmingReads.pl 修剪输出（-o 指定的文件）
+  ambig_filtered:
+    type: file
+    format: fastq
+    description: AmbiguityFiltering.pl 去 N 后输出（-o 指定的文件）
+environment:
+  note: '⚠️ deprecated（2026-09 登记）：无官方 conda 包 / 容器（bioconda / conda-forge /
+    quay.io/biocontainers 均无 ngsqctoolkit，已在线核实）→ 按 AGENT.md「官方镜像优先」
+    规则不产出自建 Dockerfile/Apptainer.def（软件已淘汰，维护容器配方无意义）。
+    宿主机历史复现的兜底 conda 环境见 native/environment.yml（conda-forge perl +
+    cpanminus + bioconda perl-string-approx/perl-yaml/perl-gd/perl-gdgraph/
+    perl-gdtextutil，覆盖官方脚本所需 CPAN 依赖）；QC 图表所需的 GD::Text/GD::Text::*
+    若缺失可再 cpanm GDTextUtil。真实使用请改用 trimmomatic/fastp/cutadapt 模块。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    qc: 4
+    default: 2
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: perl
+  nextflow_note: 本模块未建 nextflow/ 目录；deprecated 软件无 nf-core 模块（2026-09
+    核实 404），Nextflow 场景改用 nf-core/fastp 等替代。
+  snakemake_include_hint: 本模块未建 snakemake/ 目录；deprecated 软件无 snakemake-
+    wrappers wrapper（2026-09 核实 404），Snakemake 场景改用官方 bio/fastp、
+    bio/trimmomatic、bio/cutadapt wrapper。

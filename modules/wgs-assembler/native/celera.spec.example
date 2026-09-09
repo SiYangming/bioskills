@@ -1,0 +1,99 @@
+# Celera Assembler（wgs-assembler 8.3rc2）runCA / PBcR 配置文件模板
+# -----------------------------------------------------------------------------
+# 历史参考（2026-09 归档；来源：经典 E. coli 教程 spec）。复制为 celera.spec 后
+# 按需修改；runCA -d <out_dir> -p <prefix> -s celera.spec <input.frg>。
+# PBcR 混合纠错仅纠错不组装时，把 doFragmentCorrection / unitigger 相关段裁掉并写：
+#   assemble = 0
+# 更完整的参数说明见官方 spec 模板：源码包内 doc/ 或
+#   https://sourceforge.net/p/wgs-assembler/wiki/（wiki 部分页面触发人机验证）。
+# -----------------------------------------------------------------------------
+
+# ---- 组装器核心（bogart unitigger）----
+unitigger = bogart
+utgErrorRate = 0.03
+utgErrorLimit = 1.5
+cnsErrorRate = 0.03
+cgwErrorRate = 0.03
+ovlErrorRate = 0.03
+merSize = 22
+merThresh = 800
+doFragmentCorrection = 1
+doExtendClearRanges = 1
+
+# ---- 骨架（scaffold）----
+scfGraphMaxEdges = 500
+scfMaxBubbles = 500
+scfMaxPopping = 100
+scfMinGapLength = 10
+scfMinOverlapLength = 10
+scfMaxOverhang = 100
+scfMinPairs = 3
+scfMaxMisjoinCoverage = 0.0
+scfMisjoinCoverageLimit = 0.0
+scfMaxInsertionErrors = 0.0
+
+# 短距离 / 长距离 / 超长 骨架路径容差（按 jump library 插入距离档位）
+scfMinGapLengthShort = 0
+scfMaxPathLengthShort = 0
+scfMaxPathDiffShort = 0
+scfMinGapLengthLong = 0
+scfMaxPathLengthLong = 0
+scfMaxPathDiffLong = 0
+scfMinGapLengthVeryLong = 0
+scfMaxPathLengthVeryLong = 0
+scfMaxPathDiffVeryLong = 0
+scfMinGapLengthSuperLong = 0
+scfMaxPathLengthSuperLong = 0
+scfMaxPathDiffSuperLong = 0
+
+# ---- meryl（k-mer）----
+merylMemory = 65536
+merylThreads = 4
+
+# ---- overlap 阶段（ovl）----
+ovlStoreMemory = 16384
+ovlThreads = 4
+ovlHashBits = 22
+ovlHashBlockLength = 20000000
+ovlRefBlockSize = 500000
+ovlCorrBatchSize = 1000000
+ovlCorrConcurrency = 2
+ovlCorrConcurrencyMax = 2
+ovlConcurrency = 2
+ovlConcurrencyMax = 2
+
+# ---- fragment 校正（frgCorr，PBcR 纠错时使用）----
+frgCorrThreads = 2
+frgCorrBatchSize = 100000
+frgCorrConcurrency = 2
+frgCorrConcurrencyMax = 2
+
+# ---- consensus（cns）----
+cnsMaxCoverage = 40
+cnsQVoffset = 0
+cnsConcurrency = 2
+cnsConcurrencyMax = 2
+cnsReAlign = 1
+cnsReAlignConcurrency = 2
+cnsReAlignConcurrencyMax = 2
+cnsReAlignMaxCoverage = 10
+cnsReAlignMinOlap = 40
+cnsReAlignMaxOlap = 100
+cnsReAlignMinRatio = 0.8
+cnsReAlignMaxRatio = 1.2
+cnsReAlignMinEnd = 10
+cnsReAlignMaxEnd = 20
+cnsReAlignMinLen = 20
+cnsReAlignMaxLen = 50
+cnsReAlignMinCov = 3
+cnsReAlignMaxCov = 10
+cnsReAlignMinErrs = 0
+cnsReAlignMaxErrs = 5
+cnsReAlignMinGap = 0
+cnsReAlignMaxGap = 5
+cnsReAlignMinIns = 0
+cnsReAlignMaxIns = 5
+cnsReAlignMinDel = 0
+cnsReAlignMaxDel = 5
+cnsReAlignMinSub = 0
+cnsReAlignMaxSub = 5

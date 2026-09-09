@@ -1,0 +1,241 @@
+software: allpathslg
+canonical: allpathslg
+category: assembly
+description: 'ALLPATHS-LG 是 Broad Institute 开发的**短读（Illumina）de novo 基因组
+  组装器**（Gnerre et al. PNAS 2011，doi:10.1073/pnas.1017351108），OLC/k-mer 混合
+  图算法，要求≥2 个文库（fragment 短插入重叠 + jumping 长插入）与高深度（≥100X）。
+  软件包同时包含两个质控/分析子工具：**FindErrors**（ErrorCorrectReads.pl——对 PE
+  reads 纠错、把 overlap 双端连成更长序列并评估基因组大小/重复/杂合率）与
+  **KmerSpectrumPlot.pl**（k-mer 频谱图）。**已淘汰（deprecated，2026-09 登记）**：
+  上游 ~2013 年后停止发布（最后源码 r52488），Broad FTP（ftp.broadinstitute.org）
+  已整体关闭、官网页面下线；Broad 官方推荐转用其它组装器。本模块只做「录入」：
+  native 为「说明 + argv 构造」型驱动（prepare / assemble / errorcorrect / kspec
+  四子命令），不推荐新项目使用。
+  '
+homepage: http://www.broadinstitute.org/software/allpaths-lg/blog/
+license: 'custom（Broad 自定义条款：免费学术/科研使用、发表需引用；2026-09 官网
+  与 FTP 已下线，无法复核现行更细条款，未使用 SPDX）'
+deprecated: true
+deprecated_note: '上游最后源码 r52488（~2013）后无发布；Broad FTP 已关闭
+  （ftp://ftp.broadinstitute.org 2026-09 不可达）、官网页面 www.broadinstitute.org/
+  software/allpaths-lg/ 已下线 → 官方分发点失效，仅能从历史存档/他人镜像恢复
+  （旧 homebrew-science 公式曾记录 r52488 tar.gz sha256：035b49cb…）。短读 de novo
+  组装替代工具：SPAdes / MaSuRCA / ABySS 等。'
+software_versions:
+- id: allpathslg_native
+  allpathslg: 'r52488（源码 allpathslg-52488.tar.gz；官网 LATEST_VERSION.tar.gz
+    指向即此版；2026-09 核实 Broad FTP 已关闭、无法下载）'
+  subcommands: 'prepare（PrepareAllPathsInputs.pl）· assemble（RunAllPathsLG）·
+    errorcorrect（ErrorCorrectReads.pl，即 FindErrors）· kspec（KmerSpectrumPlot.pl）'
+  sha256: '035b49cb21b871a6b111976757d7aee9c2513dd51af04678f33375e620998542
+    （r52488 tar.gz；来源：历史 homebrew-science allpaths-lg.rb，官网无摘要页）'
+  build_route: '无官方当前渠道（bioconda / conda-forge 无 allpathslg 包，2026-09
+    anaconda.org 404；nf-core / snakemake-wrappers 均 404；homebrew-core 与
+    brewsci/bio 无公式；旧 homebrew-science tap 已于 2016-2017 归档移除）。软件
+    deprecated → 不产出自建 Dockerfile/Apptainer.def；宿主机复现＝源码编译
+    （需历史存档恢复 tarball）：./configure --prefix=… && make && make install，
+    详见 README「环境安装」'
+  source: 'ftp://ftp.broadinstitute.org/pub/crd/ALLPATHS/Release-LG/latest_source_code/allpathslg-52488.tar.gz
+    （2026-09 已不可达，仅记录原址）；私有备份（本人仓库，2026-09-08 登记）：
+    https://github.com/SiYangming/ALLPATHS-LG —— private 仓库；含 tarball 源码
+    （source/allpathslg-52488.tar.gz）与 release v1.0 预编译资产（private，需 GitHub
+    鉴权）：
+      https://github.com/SiYangming/ALLPATHS-LG/releases/download/v1.0/ALLPATHS-LG_r52488.tar.gz
+        —— CentOS 6 时代预编译二进制包
+      https://github.com/SiYangming/ALLPATHS-LG/releases/download/v1.0/ALLPATHS-LG.CentOS8.1_1911_opt_biosoft.tar.gz
+        —— CentOS 8.1 预编译二进制包（历史教程推荐）
+    源码包恢复后核对 sha256 035b49cb…'
+  dependencies: '编译依赖：GCC ≥4.7（仅 Linux；文档实测 4.8 稳定）、GMP/MPFR/MPC、
+    libieee1284（作 libieee.so 链接）、graphviz；运行时 Perl 脚本需
+    Statistics::Descriptive 等 CPAN 模块'
+  note: 'RunAllPathsLG 等主程序无标准 --version（旧文档以 test 数据冒烟断言）；
+    2026-09 核实 bioconda/anaconda.org 404、nf-core/wrappers/brew 两源无公式。
+    软件对内存要求高（哺乳动物基因组官方推荐 512 G、小基因组 32 G）。'
+- id: allpathslg_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/allpathslg 404）
+  allpathslg: —
+  source: —（nf-core/modules 仓库 modules/nf-core/allpathslg 目录不存在，
+    2026-09-08 抓取 api.github.com 返回 404）
+  note: deprecated 软件无 nf-core 子模块；Nextflow 场景请用 nf-core/spades、
+    nf-core/fastp 等替代工具模块。
+- id: allpathslg_snakemake_wrappers
+  allpathslg: 官方无 wrapper（bio/allpathslg 404）
+  source: —（snakemake-wrappers 仓库 bio/allpathslg 目录不存在，2026-09-08 抓取
+    api.github.com 返回 404）
+  note: deprecated 软件无 snakemake-wrappers wrapper；Snakemake 场景请用官方
+    bio/spades 等替代 wrapper。
+- id: allpathslg_nextflow_local
+  allpathslg: '未启用（deprecated，不建议新建本地 nextflow 集成；需要时以
+    shell 步骤调 native/main.py 的历史命令构造作参考）'
+- id: allpathslg_snakemake_local
+  allpathslg: 未启用（deprecated，不建议新建本地 snakemake 集成）
+implementations:
+- id: allpathslg_native
+  path: native
+  source_type: custom
+  type: native
+  version: "r52488"
+  priority: high
+  when_to_use: '仅历史参考 / 复现旧流程时使用（Agent 在 Function Calling / CLI 场景
+    应优先路由 spades 等替代工具模块）。本实现为「说明 + argv 构造」型驱动：
+    子命令 prepare / assemble / errorcorrect / kspec 分别构造
+    PrepareAllPathsInputs.pl / RunAllPathsLG / ErrorCorrectReads.pl /
+    KmerSpectrumPlot.pl 的历史命令行并打印，并输出弃用提示。
+    ⚠️ deprecated：不要在新流程中使用，见 README「替代建议」。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/allpathslg（404 不存在，2026-09 核实）
+    install_hint: 已淘汰且官方下载点下线 → 无自动安装路线；历史复现需先从存档
+      恢复 r52488 tarball 再源码编译（见 README「环境安装」）。
+default_implementation: allpathslg_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: allpathslg 子命令：prepare（PrepareAllPathsInputs.pl 输入准备）|
+      assemble（RunAllPathsLG 组装）| errorcorrect（ErrorCorrectReads.pl / FindErrors
+      纠错）| kspec（KmerSpectrumPlot.pl k-mer 频谱绘图，历史命令构造）
+  data_dir:
+    type: string
+    required: false
+    description: 'prepare：DATA_DIR= 绝对路径输出目录（如 $PWD/<organism>.genome/data，
+      需与 in_libs.csv organism_name 对应）'
+  ploidy:
+    type: integer
+    required: false
+    default: 1
+    description: 'prepare：PLOIDY= 倍性（仅支持单/二倍体；1 或 2）'
+  in_groups_csv:
+    type: file
+    required: false
+    description: 'prepare：IN_GROUPS_CSV= 分组表（group_name,library_name,file_name，
+      file_name 可用 ? 通配 R1/R2）'
+  in_libs_csv:
+    type: file
+    required: false
+    description: 'prepare：IN_LIBS_CSV= 文库表（12 列：library_name,project_name,
+      organism_name,type,paired,frag_size,frag_stddev,insert_size,insert_stddev,
+      read_orientation,genomic_start,genomic_end）'
+  genome_size:
+    type: integer
+    required: false
+    description: 'prepare：GENOME_SIZE= 期望基因组大小（bp；可选）'
+  pre:
+    type: string
+    required: false
+    description: 'assemble：PRE= 工作根目录（含 organism/data 结构）'
+  ref_name:
+    type: string
+    required: false
+    description: 'assemble：REFERENCE_NAME= organism 名（同 in_libs.csv）'
+  data_subdir:
+    type: string
+    required: false
+    default: data
+    description: 'assemble：DATA_SUBDIR= 数据子目录名'
+  run:
+    type: string
+    required: false
+    default: run
+    description: 'assemble：RUN= run 目录名（可多 run 对比）'
+  subdir:
+    type: string
+    required: false
+    default: test
+    description: 'assemble：SUBDIR= 本次组装 subdir 名'
+  maxpar:
+    type: integer
+    required: false
+    default: 1
+    description: 'assemble：MAXPAR= 并行进程数（旧版限制 1 或 2）'
+  phred_encoding:
+    type: integer
+    required: false
+    default: 33
+    description: 'errorcorrect：PHRED_ENCODING= Phred 编码（33=Sanger）'
+  reads_out:
+    type: string
+    required: false
+    description: 'errorcorrect：READS_OUT= 输出前缀（如 illumina）'
+  paired_reads_a:
+    type: file
+    required: false
+    description: 'errorcorrect：PAIRED_READS_A_IN= 双端 R1 FASTQ'
+  paired_reads_b:
+    type: file
+    required: false
+    description: 'errorcorrect：PAIRED_READS_B_IN= 双端 R2 FASTQ'
+  paired_sep:
+    type: integer
+    required: false
+    description: 'errorcorrect：PAIRED_SEP= 插入片段长度（bp；负值表示先反向互补
+      ——jumping/mate-pair 数据需先 fastq_rc 再纠错再 rc 还原）'
+  paired_stdev:
+    type: integer
+    required: false
+    description: 'errorcorrect：PAIRED_STDEV= 插入片段标准差'
+  keep_kspec:
+    type: boolean
+    required: false
+    default: false
+    description: 'errorcorrect：KEEP_KMER_SPECTRA=1 保留 k-mer 频谱（供 kspec 绘图）'
+  fill_fragments:
+    type: boolean
+    required: false
+    default: false
+    description: 'errorcorrect：FILL_FRAGMENTS=1 填充片段（把 overlap 双端连成更长序列）'
+  spectra:
+    type: boolean
+    required: false
+    default: true
+    description: 'kspec：KmerSpectrumPlot.pl SPECTRA=1 生成频谱图（在
+      <reads_out>.fastq.kspec 目录内运行）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认）或正整数（占位；旧版工具多用 MAXPAR/环境并行）
+outputs:
+  data_prepared:
+    type: directory
+    description: prepare 产物 <DATA_DIR>/ 下 frag_reads_orig.fastb/.pairs/.qualb、
+      jump_reads_orig.*、ploidy、read_cache 等（进 RunAllPathsLG 前格式）
+  assembly:
+    type: file
+    format: fasta
+    description: assemble 产物 <PRE>/<REFERENCE_NAME>/data/<RUN>/ASSEMBLIES/
+      <SUBDIR>/final.assembly.fasta；EfastaToFasta SPLIT_DIR=scaffolds 拆出各
+      scaffold .fsa（内部 gap 以 n/N 记）
+  corrected_reads:
+    type: file
+    format: fastq
+    description: errorcorrect 输出 <READS_OUT>.paired.A.fastq/.B.fastq（校正双端）
+      ／ <READS_OUT>.fastq.kspec/（k-mer 频谱目录）
+  kmer_spectrum:
+    type: file
+    format: eps
+    description: kspec 输出 <reads_out>.fastq.kspec/kmer_spectrum.*.eps（.log.lin/
+      .lin.lin/.log.log，可 convert 转 png）
+environment:
+  note: '⚠️ deprecated（2026-09 登记）：无官方 conda 包 / 容器（bioconda /
+    conda-forge 404）→ 不产出自建 Dockerfile/Apptainer.def（软件已淘汰、官方下载
+    点下线，维护容器配方无意义）。宿主机历史复现唯一路线＝存档 tarball 源码编译
+    （GCC 4.8、GMP/MPFR/MPC、libieee1284→libieee、graphviz），见 README「环境安装」；
+    native 驱动本身仅需 python3 + pyyaml（native/environment.yml）。真实使用请改用
+    spades / fastp 等模块。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    errorcorrect: 4
+    default: 2
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: RunAllPathsLG
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；deprecated 软件无
+    nf-core / snakemake-wrappers 官方子模块（2026-09-08 核实 404），Nextflow /
+    Snakemake 场景改用 spades 等替代工具模块。

@@ -1,0 +1,14 @@
+# allpathslg native 驱动运行环境（仅 main.py；软件本体 deprecated、官方下载点已下线）
+# -----------------------------------------------------------------------------
+# ⚠️ 本 environment.yml 只覆盖 native/main.py（说明型驱动）的运行依赖（python +
+#    pyyaml）。ALLPATHS-LG 本体（r52488）无 conda 包（bioconda/conda-forge 404，
+#    2026-09 核实）且 Broad FTP 已关闭 → 历史复现需从存档恢复 tarball 源码编译：
+#    ./configure --prefix=~/software/allpathslg && make -j && make install
+#    （GCC ≥4.7/4.8、GMP、MPFR、MPC、libieee1284→libieee、graphviz），见 README。
+# 创建：conda env create -f environment.yml && conda activate allpathslg-native
+name: allpathslg-native
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pyyaml>=6.0

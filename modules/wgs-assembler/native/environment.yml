@@ -1,0 +1,23 @@
+# wgs-assembler native 运行环境（conda 兜底；仅历史复现，软件已 deprecated）
+# -----------------------------------------------------------------------------
+# ⚠️ 本模块登记的是已淘汰软件（Celera Assembler wgs-8.3rc2，OLC 组装器；
+#    PacBioToCA/PBcR 为其 PacBio 纠错扩展，官方 wiki 建议改用 Canu）。conda
+#    路线仅为「历史复现」兜底：
+#   - bioconda 有 wgs-assembler=8.3（最后更新 2017-02-22，perl 5.22.0 老构建
+#     pl5.22.0_0，仅 linux-64；依赖 2017 时代 blasr/falcon/pbdagcon 等历史包）
+#   - conda 渠道无 perl-statistics-descriptive（2026-09-08 核实 404）→ PBcR
+#     驱动脚本若报缺该 Perl 模块，请在环境内自行 cpanm Statistics::Descriptive
+#     （推荐主路线是官方源码编译，见 native/install.sh --method source）
+#
+# 创建：
+#   conda env create -f environment.yml
+#   conda activate wgs-assembler-native   # 之后 runCA / fastqToCA / PBcR 在 PATH
+# 或一键：bash native/install.sh --method conda
+name: wgs-assembler-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  - wgs-assembler=8.3    # bioconda 历史包（linux-64；2017-02 后未维护，对应上游 8.3rc2 时代）

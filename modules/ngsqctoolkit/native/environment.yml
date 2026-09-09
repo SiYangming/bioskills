@@ -1,0 +1,26 @@
+# ngsqctoolkit native conda 兜底环境（⚠️ deprecated，仅历史复现离线/非容器备选）
+#
+# 说明（2026-09-08 核实）：
+#   - bioconda / conda-forge 均无 ngsqctoolkit 本体包（api.anaconda.org 404）→ 本文件
+#     只提供「perl 运行时 + 官方脚本所需 CPAN 依赖的 conda 打包版」，脚本包本体经
+#     native/install.sh 或 README「环境安装 §4」从官网 zip / GitHub 镜像获取。
+#   - conda-forge: perl=5.32（2026-09 核实 latest 5.32.1.1）、perl-app-cpanminus
+#   - bioconda: perl-string-approx(3.27) / perl-yaml(1.30) / perl-gd(2.84) /
+#     perl-gdgraph(1.56) / perl-gdtextutil(0.86)（2026-09 核实均存在；GD::Text 系
+#     CPAN GDTextUtil 发行版、GD::Graph 系 CPAN GDGraph 发行版的 conda 打包，
+#     覆盖官方脚本的 QC 图表依赖）
+#   - 建立后建议用该 env 的 perl 实测：perl -e 'require String::Approx; require YAML;
+#     require GD; print qq(OK\n)'
+name: ngsqctoolkit-native
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - perl=5.32
+  - perl-app-cpanminus
+  - perl-string-approx
+  - perl-yaml
+  - perl-gd
+  - perl-gdgraph
+  - perl-gdtextutil

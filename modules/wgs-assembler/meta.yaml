@@ -1,0 +1,220 @@
+software: wgs-assembler
+canonical: wgs-assembler
+category: assembly
+description: 'Celera Assembler（wgs-assembler，wgs-8.3rc2）是经典
+  Overlap-Layout-Consensus（OLC）组装器（Celera Genomics 开发、人类基因组计划
+  时期；Myers et al. Science 2000），支持 Sanger / 454 / Illumina 等多平台测序
+  组装（runCA 主入口：fastqToCA → .frg → runCA → .ctg/.scf）。PacBioToCA /
+  PBcR 是其 PacBio 长读纠错/组装扩展（用 Illumina 短读 hybrid 纠错或高覆盖
+  自纠错）。**已淘汰（deprecated，2026-09 登记）**：上游 2015-05-24 发布
+  wgs-8.3rc2 后停更，官方 wiki 明示「please use Canu instead. Celera Assembler
+  is no longer being maintained」——新项目请用 Canu（PBcR 官方继任者）/ Flye /
+  hifiasm。本模块只做「录入」：native 为「说明 + 命令构造」型驱动（fastqtoca /
+  pbcr / runca 三子命令），不推荐新项目使用。
+  '
+homepage: http://wgs-assembler.sourceforge.net/
+license: GPL-2.0
+deprecated: true
+deprecated_note: '上游 2015-05-24 发布 wgs-8.3rc2 后停止发布（sourceforge 文件区
+  无更新，2026-09 在线核实）；官方 wiki 首页与 PBcR 页均声明「Celera Assembler
+  is no longer being maintained, please use Canu instead」。替代工具：Canu /
+  Flye / hifiasm + HiFi 工具链（ccs/lima）。PacBioToCA/PBcR 属 Celera Assembler
+  软件的一部分，不单独成模块（2026-09 由 modules/pacbiotoca 并入本模块）。'
+software_versions:
+- id: wgs_assembler_native
+  wgs_assembler: '8.3rc2（sourceforge 文件区最新发布，2015-05-24 源码包
+    wgs-8.3rc2.tar.bz2；另有 2015-05-24 Linux_amd64 / 2015-12-22 Darwin_amd64
+    预编译包。上游无正式 8.3，只有 rc1/rc2）'
+  subcommands: 'fastqtoca（Illumina FASTQ → .frg）· pbcr（PBcR 纠错/组装）·
+    runca（runCA OLC 组装：.frg + spec → .ctg/.scf）'
+  bioconda: 'wgs-assembler 8.3（linux-64；2017-02-22 最后更新，perl 5.22.0 老构建
+    pl5.22.0_0；对应上游 8.3rc2 时代源码——上游无正式 8.3，推断未逐一核对 recipe）
+    2026-09 仍可查但多年未维护'
+  build_route: '官方渠道存在但为历史遗留：bioconda wgs-assembler=8.3 →
+    quay.io/biocontainers/wgs-assembler:8.3--pl5.22.0_0 / depot.galaxyproject.org
+    sif（自动构建、2017 年后未随上游更新，仅历史复现用）。软件 deprecated →
+    不产出自建 Dockerfile/Apptainer.def；宿主机安装以官方源码编译登记
+    （native/install.sh），或 bioconda 8.3 历史包 / 官方 8.3rc2 预编译二进制'
+  source: https://sourceforge.net/projects/wgs-assembler/files/wgs-assembler/wgs-8.3/wgs-8.3rc2.tar.bz2
+  perl: 'Statistics::Descriptive（PBcR 等 Perl 驱动脚本依赖；经 cpanm 安装，见
+    native/install.sh）'
+  note: '无 --version 版本输出（可执行文件 runCA/fastqToCA/PBcR 均无版本旗标）→
+    版本断言退化为判二进制存在；2026-09 核实 nf-core / snakemake-wrappers /
+    homebrew-core / brewsci-bio 均无该软件；wiki 可达（http 200，部分页面触发
+    Cloudflare 人机验证）。'
+- id: wgs_assembler_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/wgs-assembler 404）
+  wgs_assembler: —
+  source: —（nf-core/modules 仓库无 wgs-assembler 目录）
+  note: 2026-09-08 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/（源码编译 / 官方 8.3rc2 预编译）为兜底。
+- id: wgs_assembler_snakemake_wrappers
+  wgs_assembler: 官方无 wrapper（bio/wgs-assembler 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 wgs-assembler）
+  note: '2026-09-08 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 PBcR / runCA）为兜底。'
+- id: wgs_assembler_nextflow_local
+  wgs_assembler: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以
+    shell: 调 native/main.py runca/pbcr）'
+- id: wgs_assembler_snakemake_local
+  wgs_assembler: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调
+    native/main.py runca/pbcr）'
+implementations:
+- id: wgs_assembler_native
+  path: native
+  source_type: custom
+  type: native
+  version: "8.3rc2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：fastqtoca / pbcr / runca 三个子命令按历史教程
+    构造 Celera 命令行（fastqToCA → .frg；PBcR 混合纠错 / 自纠错；runCA OLC
+    组装），不实际运行（软件 deprecated、无新用场景），主要供历史复现与文档化
+    调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/wgs-assembler（wgs-assembler=8.3，
+      2017-02 后未维护）
+    quay: quay.io/biocontainers/wgs-assembler:8.3--pl5.22.0_0（历史镜像，仅复现）
+    galaxyproject: https://depot.galaxyproject.org/singularity/wgs-assembler%3A8.3--pl5.22.0_0
+    install_hint: 宿主机一键 bash native/install.sh（源码编译路线：sourceforge
+      tarball → cd kmer && make install；cd src && make → ~/software/wgs-8.3rc2；
+      Perl 依赖 Statistics::Descriptive 经 cpanm），详见 README「环境安装」
+default_implementation: wgs_assembler_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: wgs-assembler 子命令：fastqtoca（Illumina 双端 FASTQ → .frg
+      命令构造）| pbcr（fastqToCA + PBcR 纠错/组装命令构造）| runca（fastqToCA
+      + runCA OLC 组装命令构造，注明已废弃）
+  insertsize_mean:
+    type: integer
+    required: false
+    default: 177
+    description: fastqToCA -insertsize 期望插入片段均值（bp；与 stddev 成对给出）
+  insertsize_stddev:
+    type: integer
+    required: false
+    default: 25
+    description: fastqToCA -insertsize 插入片段标准差（bp）
+  library_name:
+    type: string
+    required: true
+    description: '-libraryname/-l 文库 UID 名（无空格/逗号），fastqtoca 与 pbcr
+      均必填'
+  mate1:
+    type: file
+    required: false
+    description: 'fastqtoca：Illumina 双端 read1 FASTQ（与 mate2 一起经 -mates
+      f1,f2 传入）'
+  mate2:
+    type: file
+    required: false
+    description: 'fastqtoca：Illumina 双端 read2 FASTQ（与 mate1 配对）'
+  reads:
+    type: file
+    required: false
+    description: 'fastqtoca：单端 FASTQ（-reads；与双端 -mates 二选一）'
+  frg_out:
+    type: file
+    required: false
+    description: 'fastqtoca：输出 .frg 文件路径（缺省仅构造并打印命令；提供时用
+      shell 重定向写 stdout）'
+  spec:
+    type: file
+    required: false
+    description: 'pbcr / runca：CA spec 文件（-s；pbcr 时 assemble=0 仅纠错不组装；
+      完整 runCA spec 参数模板见 native/celera.spec.example）'
+  fastq:
+    type: file
+    required: false
+    description: 'pbcr：PacBio 长读 FASTA/FASTQ（历史教程写法 -fastq
+      pacbio.fasta；8.3 wiki 现写为 fastqFile= 位置参数，见 README）'
+  genome_size:
+    type: integer
+    required: false
+    description: 'pbcr：期望基因组大小 bp（-genomeSize N；可写于 spec）'
+  max_coverage:
+    type: integer
+    required: false
+    default: 40
+    description: 'pbcr：截断覆盖度（-maxCoverage 40；PBcR 8.3 默认校正最长 40X，
+      亦可写于 spec）'
+  illumina_frg:
+    type: file
+    required: false
+    description: 'pbcr：位置参数 frg（fastqToCA 产出的高保真 Illumina frg，作为
+      混合纠错的 trusted 序列；省略则进入自纠错模式）'
+  length:
+    type: integer
+    required: false
+    description: 'pbcr：保留的 PacBio 片段最小长度（-length，可选）'
+  partitions:
+    type: integer
+    required: false
+    description: 'pbcr：consensus 分区数（-partitions，可选）'
+  out_dir:
+    type: string
+    required: false
+    default: .
+    description: 'runca：组装输出目录（runCA -d <dir>；结果在 <dir>/<prefix>/
+      <stage>/ 下分层）'
+  prefix:
+    type: string
+    required: true
+    description: 'runca：组装输出前缀（runCA -p <prefix>，如 E_coli）'
+  frg:
+    type: file
+    required: false
+    description: 'runca：位置参数——fastqToCA 产出的 .frg 库文件（Celera 组装
+      输入；可多个）'
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程数：auto（默认）或正整数（PBcR 8.3 用 -t threads）
+outputs:
+  frg:
+    type: file
+    format: frg
+    description: fastqToCA 输出的 Celera .frg 库文件（fastqtoca 子命令 stdout /
+      --frg-out）
+  corrected_reads:
+    type: file
+    format: fasta
+    description: pbcr 输出 <libraryname>.fasta/.qual/.fastq（校正后 reads）与
+      <libraryname>.frg（LIB 消息，可直接喂 runCA）
+  log:
+    type: file
+    format: log
+    description: pbcr 输出 <libraryname>.log（每条校正序列的来源/坐标）
+  assembly_contigs:
+    type: file
+    format: fasta
+    description: runca 输出 <out_dir>/<prefix>/9-terminator/<prefix>.ctg.fasta
+      （Contig 序列；另有 .scf.fasta Scaffold / .ctg.fastq/.scf.fastq 含质量 /
+      *.ctgStore、*.scfStore 二进制中间文件）
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    官方渠道存在但为历史遗留：bioconda wgs-assembler=8.3（2017-02 后未维护）→
+    quay.io/biocontainers 与 depot.galaxyproject.org 有自动构建镜像/tag
+    8.3--pl5.22.0_0（仅历史复现用，不建议新项目依赖）；宿主机安装登记在 README
+    「环境安装」：conda（wgs-assembler=8.3 历史包）/ Docker / Apptainer /
+    官方源码编译（native/install.sh）。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    pbcr: 8
+    runca: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: runCA
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 wgs-assembler 官方子模块（2026-09-08 核实 404），且软件 deprecated →
+    不登记官方说明层，历史复现一律以 native 驱动为兜底。
