@@ -1,5 +1,5 @@
 version: '1.0'
-generated_at: '2026-09-09T03:33:15+00:00'
+generated_at: '2026-09-11T03:21:18+00:00'
 modules:
 - software: allpathslg
   canonical: allpathslg
@@ -9,6 +9,16 @@ modules:
     impl: native
     path: native
     version: r52488
+    priority: High
+    entrypoint: ''
+- software: antismash
+  canonical: antismash
+  implementations:
+  - id: antismash_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 8.0.4
     priority: High
     entrypoint: ''
 - software: aspera-connect
@@ -37,6 +47,16 @@ modules:
     path: snakemake
     version: 2.5.2
     priority: Medium
+    entrypoint: ''
+- software: barrnap
+  canonical: barrnap
+  implementations:
+  - id: barrnap_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.10.6
+    priority: High
     entrypoint: ''
 - software: bbmap
   canonical: bbmap
@@ -83,6 +103,16 @@ modules:
     impl: native
     path: native
     version: 5.3.5
+    priority: High
+    entrypoint: ''
+- software: blast
+  canonical: blast
+  implementations:
+  - id: blast_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.17.0
     priority: High
     entrypoint: ''
 - software: blat
@@ -140,6 +170,16 @@ modules:
     impl: native
     path: native
     version: 0.7.19
+    priority: High
+    entrypoint: ''
+- software: cd-hit
+  canonical: cd-hit
+  implementations:
+  - id: cd_hit_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 4.8.1
     priority: High
     entrypoint: ''
 - software: cutadapt
@@ -267,6 +307,36 @@ modules:
     version: 1.2.1
     priority: High
     entrypoint: ''
+- software: genometools
+  canonical: genometools
+  implementations:
+  - id: genometools_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.6.6
+    priority: High
+    entrypoint: ''
+- software: glimmer
+  canonical: glimmer
+  implementations:
+  - id: glimmer_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '3.02'
+    priority: High
+    entrypoint: ''
+- software: glimmerhmm
+  canonical: glimmerhmm
+  implementations:
+  - id: glimmerhmm_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 3.0.4
+    priority: High
+    entrypoint: ''
 - software: gmap
   canonical: gmap
   implementations:
@@ -338,6 +408,23 @@ modules:
     version: 2.2.3
     priority: High
     entrypoint: ''
+- software: hmmer
+  canonical: hmmer
+  implementations:
+  - id: hmmer_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '3.4'
+    priority: High
+    entrypoint: ''
+  - id: hmmer2_native
+    source_type: custom
+    impl: native
+    path: native2
+    version: 2.3.2
+    priority: Medium
+    entrypoint: python main.py
 - software: humann
   canonical: humann
   implementations:
@@ -346,6 +433,16 @@ modules:
     impl: native
     path: native
     version: '3.9'
+    priority: High
+    entrypoint: ''
+- software: infernal
+  canonical: infernal
+  implementations:
+  - id: infernal_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.1.5
     priority: High
     entrypoint: ''
 - software: isoseq3
@@ -412,6 +509,26 @@ modules:
     version: '0.9'
     priority: High
     entrypoint: ''
+- software: ltr_retriever
+  canonical: ltr_retriever
+  implementations:
+  - id: ltr_retriever_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 3.0.5
+    priority: High
+    entrypoint: ''
+- software: mafft
+  canonical: mafft
+  implementations:
+  - id: mafft_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '7.525'
+    priority: High
+    entrypoint: ''
 - software: minimap2
   canonical: minimap2
   implementations:
@@ -428,6 +545,26 @@ modules:
     path: snakemake
     version: '2.31'
     priority: Medium
+    entrypoint: ''
+- software: misa
+  canonical: misa
+  implementations:
+  - id: misa_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '2.1'
+    priority: High
+    entrypoint: ''
+- software: muscle
+  canonical: muscle
+  implementations:
+  - id: muscle_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '5.3'
+    priority: High
     entrypoint: ''
 - software: musket
   canonical: musket
@@ -457,6 +594,16 @@ modules:
     impl: native
     path: native
     version: 2.3.3
+    priority: High
+    entrypoint: ''
+- software: ninja
+  canonical: ninja
+  implementations:
+  - id: ninja_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '1.00'
     priority: High
     entrypoint: ''
 - software: omiga
@@ -530,6 +677,16 @@ modules:
     version: 3.5.0
     priority: High
     entrypoint: ''
+- software: primer3
+  canonical: primer3
+  implementations:
+  - id: primer3_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.6.1
+    priority: High
+    entrypoint: ''
 - software: quantifypolya
   canonical: quantifypolya
   implementations:
@@ -550,6 +707,46 @@ modules:
     version: '2.3'
     priority: High
     entrypoint: ''
+- software: recon
+  canonical: recon
+  implementations:
+  - id: recon_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '1.10'
+    priority: High
+    entrypoint: ''
+- software: repeatmasker
+  canonical: repeatmasker
+  implementations:
+  - id: repeatmasker_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 4.2.4
+    priority: High
+    entrypoint: ''
+- software: repeatmodeler
+  canonical: repeatmodeler
+  implementations:
+  - id: repeatmodeler_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.0.9
+    priority: High
+    entrypoint: ''
+- software: repeatscout
+  canonical: repeatscout
+  implementations:
+  - id: repeatscout_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 1.0.7
+    priority: High
+    entrypoint: ''
 - software: riborf
   canonical: riborf
   implementations:
@@ -568,6 +765,26 @@ modules:
     impl: native
     path: native
     version: '0.46'
+    priority: High
+    entrypoint: ''
+- software: rmblast
+  canonical: rmblast
+  implementations:
+  - id: rmblast_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.17.1
+    priority: High
+    entrypoint: ''
+- software: rnammer
+  canonical: rnammer
+  implementations:
+  - id: rnammer_native
+    source_type: custom
+    impl: native
+    path: native
+    version: '1.2'
     priority: High
     entrypoint: ''
 - software: rsem
@@ -729,6 +946,16 @@ modules:
     version: 5.7.1
     priority: Medium
     entrypoint: ''
+- software: trf
+  canonical: trf
+  implementations:
+  - id: trf_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 4.10.0rc2
+    priority: High
+    entrypoint: ''
 - software: trimmomatic
   canonical: trimmomatic
   implementations:
@@ -737,6 +964,16 @@ modules:
     impl: native
     path: native
     version: '0.39'
+    priority: High
+    entrypoint: ''
+- software: trnascan-se
+  canonical: trnascan-se
+  implementations:
+  - id: trnascan_se_native
+    source_type: custom
+    impl: native
+    path: native
+    version: 2.0.13
     priority: High
     entrypoint: ''
 - software: ultra
