@@ -1,0 +1,118 @@
+software: ltr_retriever
+canonical: ltr_retriever
+category: repeat_analysis
+description: 'LTR_retriever（上游 oushujun/LTR_retriever）是 LTR 反转录转座子（LTR-RT）
+  的敏感识别与注释工具：读取基因组 FASTA 与 LTRharvest（genometools）产出的候选文件，经结构筛选、
+  去冗余（CD-HIT）、蛋白/DNA TE 污染剔除与 TEsorter 分类，输出非冗余 LTR-RT 库（LTRlib.fa）、
+  全基因组注释（GFF3）与 LTR Assembly Index（LAI）。它是 RepeatModeler -LTRStruct 与 LTR 注释
+  流程的核心组件，依赖 LTRharvest（见 modules/genometools）、CD-HIT（modules/cd-hit）等工具。
+  '
+homepage: https://github.com/oushujun/LTR_retriever
+# License: GPL-3.0-or-later（anaconda.org/bioconda/ltr_retriever 与 bioconda recipe 均记录）
+license: GPL-3.0-or-later
+software_versions:
+- id: ltr_retriever_native
+  ltr_retriever: '3.0.5'
+  build_route: official biocontainer（quay.io/biocontainers/ltr_retriever / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/ltr_retriever
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 ltr_retriever=3.0.5（noarch: generic，GPL-3.0-or-later；2026-09 核实 anaconda API
+    与 bioconda recipe，历史版本 2.9.x→3.0.0→…→3.0.5）。官方容器
+    quay.io/biocontainers/ltr_retriever:3.0.5--hdfd78af_0。宿主机直跑 main.py 时用 conda/mamba 安装
+    ltr_retriever=3.0.5（bioconda run 依赖 perl / perl-text-soundex / cd-hit / repeatmasker / rmblast /
+    tesorter / libstdcxx-ng，会一并装入；RepeatMasker / TEsorter 再带入 HMMER / trf / MAFFT 等比对依赖）。'
+- id: ltr_retriever_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  ltr_retriever: 官方无模块（modules/nf-core/ltr_retriever 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ltr_retriever
+    返回 404：nf-core 官方无 ltr_retriever 子模块，Nextflow 场景暂无官方模块可登记；需要时以
+    ltr_retriever_native 为兜底。'
+- id: ltr_retriever_snakemake_wrappers
+  ltr_retriever: 官方无 wrapper（bio/ltr_retriever 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ltr_retriever
+    返回 404（登记「官方无」）。Snakemake 场景暂无官方 wrapper 可登记；需要时以 ltr_retriever_native 为兜底。'
+implementations:
+- id: ltr_retriever_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.0.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    run 子命令包装官方 LTR_retriever 主脚本：读取基因组 FASTA 与 LTRharvest 候选（-genome / -inharvest），
+    自动注入 -threads 与 TMPDIR。官方产物以「基因组文件名」为前缀写入当前工作目录（官方无 -output_dir，
+    驱动亦不提供；请先 cd 到目标目录，见 README「工作目录约定」）。
+    容器走官方镜像（quay.io/biocontainers/ltr_retriever，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/ltr_retriever
+    quay_biocontainers: quay.io/biocontainers/ltr_retriever
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda ltr_retriever=3.0.5；容器可用
+      quay.io/biocontainers/ltr_retriever:3.0.5--hdfd78af_0 镜像（bioconda 自动构建，tag 以 quay /
+      depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: ltr_retriever_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ltr_retriever 子命令：run（包装官方 LTR_retriever 主脚本）
+  genome:
+    type: file
+    required: true
+    cli_arg: -genome
+    description: 基因组序列 FASTA（LTR_retriever -genome；建议使用短而简单的序列名）
+  inharvest:
+    type: file
+    required: true
+    cli_arg: -inharvest
+    description: LTRharvest 候选文件（LTR_retriever -inharvest；由 gt ltrharvest 产出，见 modules/genometools）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -threads
+    description: 线程数（自动注入 -threads；官方默认 4，本驱动 per_subcommand_threads.run 默认 8）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 LTR_retriever 的额外参数（如 -minlen/-max_ratio/-noanno/-step/-stop，高级用法慎用）
+outputs:
+  ltrlib_fa:
+    type: file
+    format: fasta
+    description: '<genome>.LTRlib.fa：非冗余 LTR-RT 库（供 RepeatMasker -lib 注释基因组）'
+  redundant_ltrlib_fa:
+    type: file
+    format: fasta
+    description: '<genome>.LTRlib.redundant.fa：含冗余的全部 LTR-RT 序列'
+  gff3:
+    type: file
+    format: gff3
+    description: '<genome>.out.gff3：全基因组 LTR-RT 注释（-noanno 时无）'
+  pass_list:
+    type: file
+    format: txt
+    description: '<genome>.pass.list：通过结构筛选的完整 LTR-RT 列表'
+  lai:
+    type: file
+    format: txt
+    description: '<genome>.out.LAI：LTR Assembly Index（由包内 LAI 脚本计算）'
+environment:
+  container_official: quay.io/biocontainers/ltr_retriever（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 ltr_retriever=3.0.5。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    run: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: LTR_retriever
+  note: LTR_retriever 主脚本为 Perl（conda 包内以 bash 包装器调用 perl 执行；包内另有 LAI 及
+    convert_ltr_struc.pl / convert_MGEScan3.0.pl / convert_ltrdetector.pl 包装器）；-threads 支持并行
+    （官方默认 4，本驱动默认注入 8）；官方无 -output_dir，产物以基因组文件名为前缀写入当前工作目录。

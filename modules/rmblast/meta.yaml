@@ -1,0 +1,158 @@
+software: rmblast
+canonical: rmblast
+category: sequence_search
+description: >
+  RMBlast（"RepeatMasker compatible version of the standard NCBI BLAST+ suite"，bioconda 包名
+  rmblast、bioconda recipe 名 RMBlast）是 NCBI BLAST+ 的分支/补丁版：在标准 BLAST+ 套件基础上
+  以 RMBlast patch（isb-<ver>+-rmblast.patch）加入 rmblastn（面向 RepeatMasker 的重复序列搜索
+  优化），并随包提供 makeblastdb / blastdbcmd / blastn / blastp 等全套 BLAST+ 二进制。
+  它是 RepeatMasker（-e ncbi / rmblast 引擎）与 RepeatModeler 的搜索引擎依赖——这两个工具如何
+  安装本引擎，统一指向本模块「环境安装」节。标准 NCBI BLAST+（无需 RepeatMasker 兼容语义）见
+  modules/blast。
+homepage: https://www.repeatmasker.org/rmblast
+license: OSL-2.1
+software_versions:
+- id: rmblast_native
+  rmblast: '2.17.1（上游官方预编译二进制包，首选安装方式）；2.17.0（官方容器 / bioconda 备选）'
+  build_route: 上游官方预编译二进制包（rmblast-2.17.1+-x64-linux.tar.gz，首选）；官方源码编译
+    （NCBI BLAST+ 2.17.0 源码 + isb-2.17.1+-rmblast.patch.gz，保留）；official biocontainer
+    （quay.io/biocontainers/rmblast / depot.galaxyproject.org）与 bioconda 为备选
+  source: https://www.repeatmasker.org/rmblast/rmblast-2.17.1+-x64-linux.tar.gz（预编译包）；
+    https://anaconda.org/bioconda/rmblast（conda 备选）
+  note: '**安装首选上游官方预编译二进制包**（2.17.1，Linux x86_64 / macOS arm64；官网明示不为
+    所有平台构建，Linux 包需 GLIBC ≥ 2.34，老发行版用 "Linux (Older OS versions)" 包）；
+    官方**源码编译路线一并保留**（NCBI BLAST+ 2.17.0 源码 + RMBlast 2.17.1 补丁）。
+    备选路线：官方容器 quay.io/biocontainers/rmblast:2.17.0--hbfc2172_1（depot.galaxyproject.org
+    同 tag）与 bioconda rmblast=2.17.0，包内 bin/ 实核（2026-09 解包 bioconda linux-64 包）：rmblastn
+    与全套 BLAST+ 二进制（makeblastdb/blastn/blastp/blastx/tblastn/tblastx/psiblast/rpsblast/
+    blastdbcmd/blastdb_aliastool/dustmasker/segmasker/windowmasker 等）随包提供；brew（brewsci/bio
+    tap 的 rmblast 公式，当前 2.14.1）。预编译包 2.17.1 与容器/conda 2.17.0 为同一主版本（2.17.1
+    修复 2.17.0 的 ungapped→gapped 性能回归），详见 README「版本差异声明」。'
+- id: rmblast_nextflow_nfcore
+  rmblast: 官方无（modules/nf-core/rmblast 404）
+  source: —
+  note: '2026-09 在线核实 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/rmblast
+    返回 404（nf-core modules 无 rmblast 子模块）；Nextflow 场景暂无官方模块可登记，需要时
+    以 rmblast_native 为兜底（或用标准 BLAST+ 的 modules/nf-core/blast/*，见 modules/blast）。'
+- id: rmblast_snakemake_wrappers
+  rmblast: 官方无 wrapper（bio/rmblast 404）
+  source: —
+  note: '2026-09 在线核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/rmblast
+    返回 404（bio/ 下含 blast 等，无 rmblast）；Snakemake 场景暂无官方 wrapper 可登记，需要时
+    以 rmblast_native 为兜底（或参照官方 bio/blast wrapper，见 modules/blast）。'
+implementations:
+- id: rmblast_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.17.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用；RepeatMasker /
+    RepeatModeler 的 ncbi/rmblast 引擎依赖）的首选目标。makeblastdb 建核苷酸/蛋白 BLAST 库
+    （-in/-dbtype/-out）、rmblastn 面向 RepeatMasker 的核苷酸重复序列搜索
+    （-query/-db/-out/--outfmt/-evalue），自动把 --threads 注入 -num_threads 并设 TMPDIR。
+    安装首选**上游官方预编译二进制包**（2.17.1，见 container_ref.upstream_prebuilt 与 README §1）；
+    官方容器/conda 为备选路线（2.17.0，同一主版本）。'
+  container_ref:
+    upstream_prebuilt: https://www.repeatmasker.org/rmblast/rmblast-2.17.1+-x64-linux.tar.gz（**首选安装方式**：
+      上游官方预编译二进制包，2.17.1；Linux x86_64；macOS arm64 见 rmblast-2.17.1+-arm64-macosx.tar.gz；
+      需 GLIBC ≥ 2.34，老发行版用官网 "Linux (Older OS versions)" 包；解压到用户前缀
+      ~/software/rmblast-2.17.1/ 并写 PATH → rmblastn -version 断言 2.17.1+）
+    upstream_source: https://www.repeatmasker.org/rmblast/（官方源码路线，保留：NCBI BLAST+ 2.17.0 源码 +
+      isb-2.17.1+-rmblast.patch.gz，构建到 ~/software/rmblast-2.17.1）
+    bioconda: https://anaconda.org/bioconda/rmblast（备选：conda 路线，2.17.0）
+    quay_biocontainers: quay.io/biocontainers/rmblast（备选：官方镜像，2.17.0）
+    install_hint: 首选上游官方预编译包（免 conda/免编译）：curl -O rmblast-2.17.1+-x64-linux.tar.gz →
+      tar zxf 到 ~/software/ → PATH 加 ~/software/rmblast-2.17.1/bin（见 README「环境安装」§1）；
+      备选：mamba create -n <env> -c conda-forge -c bioconda rmblast=2.17.0 或容器
+      quay.io/biocontainers/rmblast:2.17.0--hbfc2172_1；源码编译见 README「环境安装」§5
+default_implementation: rmblast_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: rmblast 子命令：makeblastdb|rmblastn
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: makeblastdb 的输入 FASTA（建库对象；可位置参数或 --input 提供）
+  dbtype:
+    type: string
+    default: nucl
+    cli_arg: -dbtype
+    description: makeblastdb 库类型：nucl（核苷酸，供 rmblastn）| prot（蛋白）
+  db_prefix:
+    type: string
+    required: false
+    cli_arg: -out
+    description: makeblastdb 输出库前缀（basename；生成 .nhr/.nin/.nsq 或 .phr/.pin/.psq 索引族）
+  query:
+    type: file
+    required: false
+    cli_arg: -query
+    description: rmblastn 的查询序列 FASTA
+  db:
+    type: string
+    required: false
+    cli_arg: -db
+    description: rmblastn 的 BLAST 库前缀（makeblastdb 的 -out 值）
+  output:
+    type: file
+    required: false
+    cli_arg: -out
+    description: rmblastn 结果输出文件（缺省 stdout；驱动用 -out 落盘）
+  outfmt:
+    type: string
+    default: '6'
+    cli_arg: -outfmt
+    description: 结果格式（默认 6 表格；可写 "6 qseqid sseqid pident evalue bitscore" 指定列）
+  evalue:
+    type: number
+    required: false
+    cli_arg: -evalue
+    description: 期望值阈值（E-value；越小越严格）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -num_threads
+    description: 线程数（注入 -num_threads；仅 rmblastn 生效——makeblastdb 为单线程建库，
+      该选项被接受但不注入命令行，见 native 实现说明）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应程序的额外参数（如 rmblastn -task rmblastn -max_target_seqs 5，高级用法慎用）
+outputs:
+  blast_db:
+    type: file
+    format: blastdb
+    description: makeblastdb 产物：<db_prefix>.{nhr,nin,nsq,...}（nucl）或 {phr,pin,psq,...}（prot）索引族
+  blast_result:
+    type: file
+    format: txt
+    description: rmblastn 产物：比对结果（outfmt 6 表格或自定义列；缺省 stdout、-out 落盘）
+environment:
+  container_official: quay.io/biocontainers/rmblast（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 安装首选**上游官方预编译二进制包**（rmblast-2.17.1+-x64-linux.tar.gz，解压到
+    ~/software/rmblast-2.17.1 并写 PATH，免 conda/免编译，见 README「环境安装」§1）；官方亦提供
+    源码编译路线（§5，NCBI BLAST+ 2.17.0 源码 + isb-2.17.1+-rmblast.patch.gz），**两条官方路线均保留**。
+    容器/conda 为备选（官方镜像已覆盖 bioconda→quay.io/biocontainers→depot.galaxyproject.org），
+    本地不再维护 Dockerfile/Apptainer.def。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    makeblastdb: 4
+    rmblastn: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: rmblastn
+  note: 驱动按子命令解析对应二进制（makeblastdb / rmblastn）；rmblastn 注入 -num_threads、
+    全子命令接受 --tmpdir 并写入 TMPDIR（makeblastdb 单线程，--threads 被接受但不注入）。
+    execution.binary 登记 rmblastn 为代表性入口；安装首选上游官方预编译二进制包（2.17.1，
+    见 README「环境安装」§1），官方源码编译（§5）与容器/conda 备选一并保留；
+    nextflow/snakemake 官方层缺失情况见 README 与 software_versions。

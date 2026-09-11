@@ -1,0 +1,118 @@
+software: mafft
+canonical: mafft
+category: multiple_alignment
+description: 'MAFFT（Multiple Alignment using Fast Fourier Transform，cbrc.jp）是多序列比对（MSA）
+  的行业标准工具：基于快速傅里叶变换的渐进式/迭代精化算法，把多条核酸或氨基酸序列比对为等长
+  比对（FASTA/clustal 等），并提供 --auto（自动选择策略）与 linsi/einsi/ginsi 等高精度模式。
+  它是 RepeatModeler（LTR 结构流程，经 LTR_retriever 调用）与通用基因/注释流程的常见依赖，
+  亦用于 rRNA/基因序列集的比对与进化树构建前置。本模块登记 bioconda 现行版本 7.525。
+  '
+homepage: https://mafft.cbrc.jp/alignment/software/
+# License: BSD-3-Clause（上游与 homebrew-core mafft 公式 license 均为 BSD-3-Clause，2026-09 在线核实）；SPDX: BSD-3-Clause
+license: BSD-3-Clause
+software_versions:
+- id: mafft_native
+  mafft: '7.525'
+  build_route: official biocontainer（quay.io/biocontainers/mafft / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/mafft
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    mafft=7.525（bioconda 现行，linux-64 build h031d066_1；conda_platforms linux-64/linux-aarch64/
+    osx-64），官方容器 tag quay.io/biocontainers/mafft:7.525--h031d066_1（depot.galaxyproject.org
+    有同名 sif）；包内提供 mafft 主程序与 linsi/einsi/ginsi/xinsi/qinsi/nwns/fftns 等别名脚本、
+    mafft-profile / mafft-sparsecore.rb / mafft-homologs.rb 等配套脚本；宿主机直跑 main.py 时用
+    conda/mamba 安装 mafft=7.525（或 brew 当前 7.526，见 README）。'
+- id: mafft_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  mafft: '7.520（align）/ 7.525（guidetree）'
+  source: bioconda::mafft=7.520（modules/nf-core/mafft/align/environment.yml，含 conda-forge::pigz=2.8）；
+    bioconda::mafft=7.525（modules/nf-core/mafft/guidetree/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/mafft（子模块 align + guidetree，2026-09 在线核实；以官方
+    在线目录为准）；align 子模块 pin bioconda::mafft=7.520（低于 bioconda 现行 7.525），guidetree
+    子模块 pin 7.525；组装 Nextflow 时用 nf modules install 安装（见 README 官方登记节）。'
+- id: mafft_snakemake_wrappers
+  mafft: 官方无 wrapper（bio/mafft 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/mafft
+    返回 404（登记「官方无」）。Snakemake 场景暂无官方 wrapper 可登记，需要时以 mafft_native 为
+    兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: mafft_native
+  path: native
+  source_type: custom
+  type: native
+  version: "7.525"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    align 子命令包装 mafft 做多序列比对：输入 FASTA → 比对结果 FASTA（缺省 stdout，-o 写文件），
+    默认注入 --auto 自动选择策略，--method 可选 linsi/einsi/ginsi 等高精度模式，自动注入 --thread
+    与 TMPDIR；version 子命令打印 mafft --version。容器走官方镜像（quay.io/biocontainers/mafft，
+    见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mafft
+    quay_biocontainers: quay.io/biocontainers/mafft
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda mafft=7.525；容器可用
+      quay.io/biocontainers/mafft:7.525--h031d066_1 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: mafft_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: mafft 子命令：align|version（align 包装 mafft 多序列比对；version 打印 mafft --version）
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: align 输入序列 FASTA（多序列核酸/氨基酸；位置参数亦可；可 .gz）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: align 比对结果输出文件（缺省 stdout；mafft 无 -o，由驱动把捕获的 stdout 写盘）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（驱动注入为 mafft 的 --thread N；注意 MAFFT 线程参数为 --thread 而非 --threads；align 默认 8）
+  auto:
+    type: boolean
+    default: true
+    cli_arg: --auto
+    description: 是否启用 mafft --auto（自动按序列数与长度选择策略，默认开；--no-auto 关闭，走默认
+      FFT-NS-2 高速模式）
+  method:
+    type: string
+    required: false
+    description: 可选高精度模式：linsi|einsi|ginsi（分别映射 --maxiterate 1000 --localpair /
+      --genafpair / --globalpair）；写 auto 等价 --auto；其它取值作为原始 mafft 选项透传（高级用法，慎用）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 mafft 的额外参数（如 --adjustdirection --reorder --clustalout --maxiterate 1000，
+      高级用法，慎用）
+outputs:
+  alignment_fasta:
+    type: file
+    format: fasta
+    description: align 产物：多序列比对结果（等长比对，缺省 stdout、-o 写文件；顺序默认输入顺序，
+      加 --reorder 按比对结果重排）
+environment:
+  container_official: quay.io/biocontainers/mafft（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba（或 brew）安装 mafft。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    align: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: mafft
+  note: align 包装官方 mafft（默认 --auto，注入 --thread；大序列集内存/时间随序列数与长度上升，
+    建议 --thread 并配合精简序列集）；version 调用 mafft --version。execution.binary 登记 mafft
+    为代表性入口；nextflow/snakemake 官方层见 README 与 software_versions。

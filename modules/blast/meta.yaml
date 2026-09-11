@@ -1,0 +1,138 @@
+software: blast
+canonical: blast
+category: sequence_search
+description: >
+  BLAST+（NCBI BLAST+；alias ncbi-blast+，即 Debian 包名 ncbi-blast+、nf-core 目录名 blast）是
+  序列相似性搜索的行业标准套件：以 makeblastdb 为核苷酸/蛋白序列建立 BLAST 库，用 blastn
+  （核苷酸 query vs 核苷酸库）、blastp（蛋白 query vs 蛋白库）做局部比对搜索，输出默认表格
+  outfmt 6 或自定义格式；是生物信息教学课件里的基础序列比对/建库工具，也是 RNAmmer（hmmer2
+  之外）、antiSMASH 等工具的运行依赖（这些工具如何安装本工具，统一指向本模块「环境安装」节）。
+homepage: https://blast.ncbi.nlm.nih.gov/Blast.cgi
+# License: NCBI BLAST+ 为美国联邦政府作品/公共领域类（US Government Work；NCBI 官方发布不附带
+# 限制性许可）。SPDX 无标准标识可表达，故不臆造 SPDX 标识，登记与 nf-core modules 一致的说明字符串。
+license: US-Government-Work
+software_versions:
+- id: blast_native
+  blast: '2.17.0'
+  build_route: official biocontainer（quay.io/biocontainers/blast / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/blast
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda blast=2.17.0（现行最新，2026-03 起发布；官方容器 quay.io/biocontainers/blast:2.17.0--hb02a186_1，
+    depot.galaxyproject.org 同 tag），随包提供 blastn/blastp/makeblastdb/blastdbcmd/tblastn 等全套二进制。
+    宿主机直跑 main.py 时用 conda/mamba 安装 blast=2.17.0，或 brew（homebrew-core blast 2.17.0）。'
+- id: blast_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  blast: '2.17.0'
+  source: bioconda::blast=2.17.0（modules/nf-core/blast/{blastn,blastp,blastdbcmd,makeblastdb,tblastn,updateblastdb}/environment.yml）
+  note: '参考信息：本模块未建 nextflow/ 目录；nf-core 官方 modules/nf-core/blast/ 下有 blastn/blastp/blastdbcmd/
+    makeblastdb/tblastn/updateblastdb 六个子模块（2026-09 在线核实），全部 pin bioconda::blast=2.17.0；
+    组装 Nextflow 流程时用 nf-core modules install 安装（见 README 官方登记节）。'
+- id: blast_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  blast: '2.17.0'
+  source: bioconda blast=2.17.0（bio/blast/{blastn,makeblastdb}/environment.yaml）
+  note: 'snakemake-wrappers 官方有 bio/blast/blastn 与 bio/blast/makeblastdb 两个扁平 wrapper
+    （wrapper.py + environment.yaml + meta.yaml + test，无子目录；2026-09 在线核实，v9.17.1 tag 含该 wrapper），
+    environment.yaml pin blast=2.17.0；可直接粘贴的 rule wrapper: 示例见 README。'
+implementations:
+- id: blast_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.17.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    makeblastdb 建核苷酸/蛋白 BLAST 库（-in/-dbtype/-out）、blastn 核苷酸比对、blastp 蛋白比对
+    （-query/-db/-out/--outfmt/-evalue），自动把 --threads 注入 -num_threads 并设 TMPDIR；
+    容器走官方镜像（quay.io/biocontainers/blast，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/blast
+    quay_biocontainers: quay.io/biocontainers/blast
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda blast=2.17.0；容器可用
+      quay.io/biocontainers/blast:2.17.0--hb02a186_1 镜像（bioconda 自动构建，tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: blast_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: blast 子命令：makeblastdb|blastn|blastp
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: makeblastdb 的输入 FASTA（建库对象；可位置参数或 --input 提供）
+  dbtype:
+    type: string
+    default: nucl
+    cli_arg: -dbtype
+    description: makeblastdb 库类型：nucl（核苷酸，供 blastn）| prot（蛋白，供 blastp）
+  db_prefix:
+    type: string
+    required: false
+    cli_arg: -out
+    description: makeblastdb 输出库前缀（basename；生成 .nhr/.nin/.nsq 或 .phr/.pin/.psq 索引族）
+  query:
+    type: file
+    required: false
+    cli_arg: -query
+    description: blastn/blastp 的查询序列 FASTA
+  db:
+    type: string
+    required: false
+    cli_arg: -db
+    description: blastn/blastp 的 BLAST 库前缀（makeblastdb 的 -out 值）
+  output:
+    type: file
+    required: false
+    cli_arg: -out
+    description: blastn/blastp 结果输出文件（缺省 stdout；驱动用 -out 落盘）
+  outfmt:
+    type: string
+    default: '6'
+    cli_arg: -outfmt
+    description: 结果格式（默认 6 表格；可写 "6 qseqid sseqid pident evalue bitscore" 指定列）
+  evalue:
+    type: number
+    required: false
+    cli_arg: -evalue
+    description: 期望值阈值（E-value；越小越严格）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -num_threads
+    description: 线程数（注入 -num_threads；仅 blastn/blastp 生效——makeblastdb 为单线程建库，
+      该选项被接受但不注入命令行，见 native 实现说明）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应 BLAST 程序的额外参数（如 -task blastn-short -max_target_seqs 5，高级用法慎用）
+outputs:
+  blast_db:
+    type: file
+    format: blastdb
+    description: makeblastdb 产物：<db_prefix>.{nhr,nin,nsq,...}（nucl）或 {phr,pin,psq,...}（prot）索引族
+  blast_result:
+    type: file
+    format: txt
+    description: blastn/blastp 产物：比对结果（outfmt 6 表格或自定义列；缺省 stdout、-out 落盘）
+environment:
+  container_official: quay.io/biocontainers/blast（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 blast（或用 brew 的 blast 公式）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    makeblastdb: 4
+    blastn: 4
+    blastp: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: blastn
+  note: 驱动按子命令解析对应二进制（makeblastdb / blastn / blastp）；blastn/blastp 注入 -num_threads、
+    全子命令接受 --tmpdir 并写入 TMPDIR（makeblastdb 单线程，--threads 被接受但不注入）。
+    execution.binary 登记 blastn 为代表性入口；nextflow/snakemake 官方层见 README 与 software_versions。

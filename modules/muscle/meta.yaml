@@ -1,0 +1,115 @@
+software: muscle
+canonical: muscle
+category: multiple_alignment
+description: 'MUSCLE（MUltiple Sequence Comparison by Log-Expectation，drive5.com / rcedgar/muscle）
+  是多序列比对（MSA）工具：v3（3.8.x，公共领域）以迭代精化算法快速生成等长比对，是旧版
+  antiSMASH 的比对依赖（教学课件常安装 muscle 3.8.31）；v5（5.x，2021 年重写，GPL-3.0-only）
+  以 PPP 算法与 Super5 大规模算法提供更高精度，并可扩展到数千序列/结构。本模块登记 bioconda
+  现行版本 5.3，native 驱动内做「版本探测 + 双 CLI 适配」（v3: -in/-out；v5: -align/-output）
+  以同时兼容教学 v3 与现代 v5。
+  '
+# homepage：v3 官网 https://www.drive5.com/muscle/（v3 手册 https://www.drive5.com/muscle/manual/）；
+# v5 官方仓库 https://github.com/rcedgar/muscle（v5 手册 https://drive5.com/muscle5/manual/）
+homepage: https://www.drive5.com/muscle/
+# License（2026-09 在线核实）：v5 = GPL-3.0-only（rcedgar/muscle 仓库；brewsci/bio 公式 license GPL-3.0-only）；
+# v3 = public domain（drive5.com/muscle/license.htm「donated to the public domain」）。SPDX: GPL-3.0-only（native 登记 v5）。
+license: GPL-3.0-only
+software_versions:
+- id: muscle_native
+  muscle: '5.3'
+  build_route: official biocontainer（quay.io/biocontainers/muscle / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/muscle
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 latest = 5.3（linux-64 build h9948957_3，2025-07；另有 h4ac6f70_0），官方容器 tag
+    quay.io/biocontainers/muscle:5.3--h9948957_3（depot.galaxyproject.org 有同名 sif），
+    conda_platforms linux-64 / linux-aarch64 / osx-64 / osx-arm64；
+    教学旧版 v3 仍可装：bioconda muscle=3.8.31（2015，linux-64/osx-64 build 0）与 muscle=3.8.1551
+    （最新 build h9948957_9 / osx-arm64 h4675bf2_9，2025-07）；v3 与 v5 的 CLI 完全不同
+    （见 README「版本差异声明」），native 驱动按 `muscle -version` 输出自动适配。
+    宿主机直跑 main.py 时用 conda/mamba 装 muscle=5.3，或 brew（brewsci/bio，见 README）。'
+- id: muscle_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  muscle: '3.8.1551'
+  source: bioconda::muscle=3.8.1551（modules/nf-core/muscle/environment.yml，扁平模块）
+  note: 'nf-core 官方 modules/nf-core/muscle 存在（扁平结构：environment.yml + main.nf + meta.yml + tests/，
+    2026-09 在线核实，以官方在线目录为准）；pin bioconda::muscle=3.8.1551（v3，公共领域），
+    容器 quay.io/biocontainers/muscle:3.8.1551--h7d875b9_6，script 走 v3 CLI（-in/-fastaout/-clwout/-loga）；
+    组装 Nextflow 时用 nf-core modules install 安装（见 README 官方登记节）。'
+- id: muscle_snakemake_wrappers
+  muscle: '5.3'
+  wrapper_tag: v9.17.1
+  wrapper_utils: 随 v9.17.1（该 wrapper 未 pin snakemake-wrapper-utils）
+  source: bioconda muscle=5.3（bio/muscle/environment.yaml，扁平 wrapper；tag v9.17.1）
+  note: 'snakemake-wrappers 有 bio/muscle（扁平 wrapper：wrapper.py + environment.yaml +
+    environment.linux-64.pin.txt + meta.yaml + test/；2026-09 在线核实，v9.17.1 tag）；
+    environment.yaml pin muscle=5.3（v5），wrapper 走 v5 CLI（muscle -threads N -align <fa> -output <aln>，
+    params.super5 可切 -super5）；可直接粘贴的规则见 README。'
+implementations:
+- id: muscle_native
+  path: native
+  source_type: custom
+  type: native
+  version: "5.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    align 子命令包装 muscle 做多序列比对：输入 FASTA → 等长比对 FASTA；驱动先探测 muscle 版本
+    （v3/v5）再拼对应参数（v3: -in/-out，单线程；v5: -align/-output/-threads），自动注入线程
+    （仅 v5）与 TMPDIR；容器走官方镜像（quay.io/biocontainers/muscle，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/muscle
+    quay_biocontainers: quay.io/biocontainers/muscle
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda muscle=5.3（教学 v3 可装
+      muscle=3.8.31 或 3.8.1551）；容器可用 quay.io/biocontainers/muscle:5.3--h9948957_3
+      镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: muscle_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: muscle 子命令：仅 align（多序列比对）
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: align 输入序列 FASTA（多序列核酸/氨基酸；位置参数或 -i/--input/--in/--align；可 .gz）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: align 比对结果输出文件（驱动映射 v3 -out / v5 -output；v3 缺省可写 stdout，
+      v5 的 -output 必填，故驱动在未给 -o 时用临时文件承接后回显 stdout）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（驱动注入为 v5 的 -threads N；v3 单线程无该选项，自动忽略）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 muscle 的额外参数（高级用法，慎用；v5 的 -super5 等模式选项会替换 -align 语义）
+outputs:
+  alignment_fasta:
+    type: file
+    format: fasta
+    description: align 产物：多序列比对结果（等长比对 FASTA）
+environment:
+  container_official: quay.io/biocontainers/muscle（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba（或 brew）安装 muscle。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    align: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: muscle
+  note: align 包装官方 muscle（驱动按探测到的版本注入参数：v3 -in/-out（单线程，无 -threads）；v5
+    -align/-output/-threads）；大序列集内存/时间随序列数与长度上升，建议 --threads；nextflow/snakemake
+    官方层见 README 与 software_versions。

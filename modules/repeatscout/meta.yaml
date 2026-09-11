@@ -1,0 +1,129 @@
+software: repeatscout
+canonical: repeatscout
+category: repeat_analysis
+description: 'RepeatScout 是基于 de Bruijn 式 l-mer 种子图的基因组从头（de novo）重复序列家族
+  发现工具：build_lmer_table 先统计全基因组 l-mer 频率表，RepeatScout 以高频种子为起点做
+  banded 双序列延伸并迭代扣减种子计数，输出重复家族共有序列 FASTA（供 RepeatMasker -lib 屏蔽，
+  或作为 RepeatModeler 的 RECON/RepeatScout 挖掘管线核心组件）。上游为 Dfam consortium 维护版
+  （Dfam-consortium/RepeatScout，v1.0.7 新增 -ranges 坐标表）。多数场景无需单独调用：repeatmodeler
+  的 RepeatModeler 会自动跑 build_lmer_table + RepeatScout（见 modules/repeatmodeler）。
+  '
+homepage: https://github.com/Dfam-consortium/RepeatScout
+# License: CC0 1.0 Universal（上游 v1.0.7 LICENSE 与 bioconda recipe 一致登记，2026-09 在线核实）；SPDX: CC0-1.0
+# 注：原始 RepeatScout（Price/Jones/Pevzner, 2005，旧站 repeatscout.bioprojects.org 已失效）为 GPL 系；
+#     现行 Dfam 维护版仓库已改以 CC0 授权，本模块按实际上游登记 CC0-1.0。
+license: CC0-1.0
+software_versions:
+- id: repeatscout_native
+  repeatscout: '1.0.7'
+  build_route: official biocontainer（quay.io/biocontainers/repeatscout / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/repeatscout
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda repeatscout 现行 1.0.7（2024-11-28 发布，linux-64 build h7b50bb2_1；旧版 1.0.6 仍然可装）；
+    同一 conda 包同时提供 build_lmer_table 与 RepeatScout 两个二进制（以及 filter-stage-*.prl 等 Perl 脚本）；
+    v1.0.7 新增 -ranges（延伸坐标 TSV，RepeatModeler 2.x 依赖；pre-1.0.7 会因缺该产物报错）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 repeatscout=1.0.7。'
+- id: repeatscout_nextflow_nfcore
+  repeatscout: 官方无 nf-core 模块（modules/nf-core/repeatscout 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/repeatscout
+    返回 404（与预判一致，登记「官方无」）；Nextflow 场景无官方子模块，需要时以 repeatscout_native
+    为兜底，或经由 repeatmodeler 官方子模块间接使用 RepeatScout。'
+- id: repeatscout_snakemake_wrappers
+  repeatscout: 官方无 wrapper（bio/repeatscout 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/repeatscout
+    返回 404（登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以 repeatscout_native
+    为兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: repeatscout_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.7"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    build_lmer_table 子命令调 build_lmer_table 建 l-mer 频率表，predict 子命令调 RepeatScout
+    以该频率表从头发现重复家族并输出共有序列 FASTA（供 RepeatMasker -lib）；自动注入 TMPDIR
+    （两个二进制均为单线程，--threads 仅作为运行期选项被接受、不注入命令行）。
+    容器走官方镜像（quay.io/biocontainers/repeatscout，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/repeatscout
+    quay_biocontainers: quay.io/biocontainers/repeatscout
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda repeatscout=1.0.7；容器可用
+      quay.io/biocontainers/repeatscout:1.0.7--h7b50bb2_1 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: repeatscout_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: repeatscout 子命令：build_lmer_table|predict（build_lmer_table 建 l-mer 频率表；predict 调 RepeatScout 产出重复家族共有序列）
+  sequence:
+    type: file
+    required: true
+    cli_arg: -sequence
+    description: 输入基因组/序列 FASTA（build_lmer_table 亦可用位置参数；predict 用 -sequence/--sequence）
+  freq:
+    type: file
+    required: true
+    cli_arg: -freq
+    description: build_lmer_table 的「输出」l-mer 频率表；predict 的「输入」频率表（两处同名，语义相反）
+  lmer_length:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: l-mer 长度（官方参数 -l，默认 ceil(log4(L)+1)、L 为序列总长）；build_lmer_table 与
+      RepeatScout 必须使用同一取值，二者不一致会导致结果错误。别名 -L（本驱动兼容，官方为小写 -l）
+  min_repeat_length:
+    type: integer
+    required: false
+    cli_arg: -goodlength
+    description: predict 可报告的最短重复长度（官方 RepeatScout -goodlength，默认 50；本驱动别名
+      --min-repeat-length）。注意官方 -l 是 l-mer 长度而非最小重复长度
+  output:
+    type: file
+    required: false
+    cli_arg: -output
+    description: predict 输出的重复家族共有序列 FASTA（官方 -output，必填；本驱动另有 -o 别名）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程数（build_lmer_table / RepeatScout 均为单线程 C 程序，仅作为运行期选项被接受、不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 build_lmer_table / RepeatScout 的额外参数（如 -ranges、-tandemdist、-stopafter，高级用法，慎用）
+outputs:
+  lmer_freq:
+    type: file
+    format: tsv
+    description: build_lmer_table 产物：l-mer 频率表（制表符分隔，供 predict -freq 复用）
+  repeat_library:
+    type: file
+    format: fasta
+    description: predict 产物：重复家族共有序列 FASTA（供 RepeatMasker -lib 屏蔽；亦可作 filter-stage-1.prl 输入）
+environment:
+  container_official: quay.io/biocontainers/repeatscout（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 repeatscout（同一包装入两个二进制）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    build_lmer_table: 1
+    predict: 1
+    default: 1
+  note: build_lmer_table 与 RepeatScout 均为单线程 C 程序（无并行参数），--threads 仅满足统一 CLI 契约；
+    RepeatScout 对大基因组需要大量内存（真核全基因组可达数十 GB），default_mem_mb 供上层调度器参考。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: RepeatScout
+  note: 驱动内含两个官方可执行（同属 bioconda repeatscout 包）：build_lmer_table 建 l-mer 频率表、
+    predict 调 RepeatScout 产出重复家族共有序列；execution.binary 登记 RepeatScout 作为代表性入口
+    （用法见 README）。多数场景由 RepeatModeler（modules/repeatmodeler）内部调用，无需单独运行。

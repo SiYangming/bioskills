@@ -1,0 +1,149 @@
+software: genometools
+canonical: genometools
+category: genome_analysis
+description: 'GenomeTools 是集合成单一二进制 `gt` 的基因组分析工具集（C 库 libgenometools），
+  含序列/注释处理、重复序列分析等大量子命令；本模块聚焦重复序列分析链路中的两个子命令：
+  suffixerator（为基因组 FASTA 建增强后缀数组 ESA 索引）与 ltrharvest（基于该索引预测
+  LTR 反转录转座子，输出 FASTA 与 GFF3）。GenomeTools 的 LTRharvest 是 RepeatModeler
+  （-LTRStruct）与 LTR_retriever 流程的 LTR 结构发现依赖。
+  '
+homepage: https://genometools.org/
+# License: BSD（bioconda recipe 记录，https://anaconda.org/bioconda/genometools-genometools）；
+# 注：homebrew-core 公式同一软件登记为 ISC，二者均为宽松许可，版本/许可以官方仓库为准。
+license: BSD
+software_versions:
+- id: genometools_native
+  genometools: '1.6.6'
+  conda_package: genometools-genometools
+  build_route: 上游官方预编译二进制包（GitHub release assets，首选：gt-1.6.6-Linux_x86_64-64bit-complete.tar.gz）；
+    官方源码编译（并列保留：源码归档 + make cairo=no）；official biocontainer
+    （quay.io/biocontainers/genometools-genometools / depot.galaxyproject.org）备选
+  source: https://github.com/genometools/genometools/releases/download/v1.6.6/gt-1.6.6-Linux_x86_64-64bit-complete.tar.gz（官方预编译包）；
+    https://anaconda.org/bioconda/genometools-genometools（conda 备选）
+  note: '**安装首选官方预编译二进制包**（GitHub release v1.6.6 assets：Linux x86_64 / macOS arm64 complete 与
+    barebone、Windows zip）；官方**源码编译路线一并保留**（tag 源码归档，make -j4 cairo=no）。
+    备选路线：bioconda 现行包名 genometools-genometools（=1.6.6，BSD；历史包名 genometools 仅到 1.2.1，
+    很旧，勿用），官方容器 quay.io/biocontainers/genometools-genometools:1.6.6--py311h21ec246_1（2025-10
+    build），brew install genometools。包内提供单一二进制 gt（子命令 gt suffixerator / gt ltrharvest）。'
+- id: genometools_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  genometools: 官方无模块（modules/nf-core/genometools 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/genometools
+    返回 404：nf-core 官方无 genometools 子模块，Nextflow 场景暂无官方模块可登记；需要时以
+    genometools_native 为兜底，或参照官方其它模块自行封装。'
+- id: genometools_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  genometools: '1.6.6'
+  source: bioconda genometools-genometools=1.6.6（bio/genometools/{gff3,gff3validator}/environment.yaml）
+  note: '官方 snakemake-wrappers 有 bio/genometools（2026-09 在线核实，子模块 gff3 + gff3validator，
+    均 pin genometools-genometools=1.6.6）；两者封装的是 GFF3 生成/校验（gt gff3 / gt gff3validator），
+    不含 LTRharvest 链路，LTR 结构发现仍走 native。'
+implementations:
+- id: genometools_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.6.6"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    suffixerator 子命令建 ESA 索引（-db/-indexname，默认注入教学索引开关 -tis/-suf/-lcp/-des/-ssp/
+    -sds/-dna），ltrharvest 子命令基于索引预测 LTR 反转录转座子（-index/-out/-outinner/-gff3）；
+    gt 的两个子命令均无线程参数，--threads 仅作为运行期选项被接受（不注入），--tmpdir 注入 TMPDIR。
+    容器走官方镜像（quay.io/biocontainers/genometools-genometools，见 software_versions）。
+    安装首选上游官方预编译二进制包（GitHub release v1.6.6 assets，见 container_ref.upstream_prebuilt 与
+    README §1）；官方源码编译（§2）并列保留。'
+  container_ref:
+    upstream_prebuilt: https://github.com/genometools/genometools/releases/download/v1.6.6/gt-1.6.6-Linux_x86_64-64bit-complete.tar.gz（**首选安装方式**：
+      官方预编译包 v1.6.6，Linux x86_64 complete 版；macOS arm64 见 gt-1.6.6-Darwin_arm64-64bit-complete.tar.gz，
+      Windows 见 gt-1.6.6-Windows_x86_64-64bit.zip；另有 -barebone 版；解压到用户前缀
+      ~/software/gt-1.6.6-Linux_x86_64-64bit-complete/ 并写 PATH → gt -version 断言 1.6.6）
+    upstream_source: https://github.com/genometools/genometools/releases/tag/v1.6.6（官方源码归档路线，保留：
+      v1.6.6.tar.gz → make -j4 cairo=no，产物 bin/gt）
+    bioconda: https://anaconda.org/bioconda/genometools-genometools（备选：conda 包名 genometools-genometools）
+    quay_biocontainers: quay.io/biocontainers/genometools-genometools（备选：官方镜像）
+    install_hint: 首选官方预编译包（curl -L -O gt-1.6.6-Linux_x86_64-64bit-complete.tar.gz → tar zxf 到
+      ~/software/ → PATH 加 .../bin，见 README「环境安装」§1）；官方源码编译见 §2；
+      备选 mamba create -n <env> -c conda-forge -c bioconda genometools-genometools=1.6.6 或容器
+      quay.io/biocontainers/genometools-genometools:1.6.6--py311h21ec246_1（tag 以 quay / depot 为准）
+default_implementation: genometools_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: genometools(gt) 子命令：suffixerator|ltrharvest（suffixerator 建 ESA 索引，ltrharvest 预测 LTR）
+  db:
+    type: file
+    required: false
+    cli_arg: -db
+    description: suffixerator 输入基因组 FASTA（gt -db 接受单文件；多文件请在 extra_args 中扩展）
+  indexname:
+    type: string
+    required: false
+    cli_arg: -indexname
+    description: suffixerator 输出索引前缀（产物 <indexname>.{esq,ssp,des,sds,suf,lcp,md5}）
+  index:
+    type: string
+    required: false
+    cli_arg: -index
+    description: ltrharvest 的 ESA 索引前缀（必需；指向 suffixerator -indexname 的产物）
+  out:
+    type: file
+    required: false
+    cli_arg: -out
+    description: ltrharvest 预测到的 LTR 反转录转座子 FASTA 输出
+  outinner:
+    type: file
+    required: false
+    cli_arg: -outinner
+    description: ltrharvest 预测到的内部区域（inner region）FASTA 输出
+  gff3:
+    type: file
+    required: false
+    cli_arg: -gff3
+    description: ltrharvest 预测结果的 GFF3 输出
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（运行时选项；gt suffixerator / ltrharvest 原生无线程参数，仅接受不注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 gt 子命令的额外参数（如 ltrharvest -seed/-maxlenltr/-similar，高级用法慎用）
+outputs:
+  esa_index:
+    type: file
+    format: genometools-esa-index
+    description: suffixerator 产物：<indexname>.{esq,ssp,des,sds,suf,lcp,md5}（供 ltrharvest/其它 gt 子命令使用）
+  ltr_fasta:
+    type: file
+    format: fasta
+    description: ltrharvest 产物：预测的 LTR 反转录转座子序列（-out）
+  ltr_inner_fasta:
+    type: file
+    format: fasta
+    description: ltrharvest 产物：预测的内部区域序列（-outinner）
+  ltr_gff3:
+    type: file
+    format: gff3
+    description: ltrharvest 产物：预测的 LTR 反转录转座子 GFF3 注释（-gff3）
+environment:
+  container_official: quay.io/biocontainers/genometools-genometools（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 genometools-genometools。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    suffixerator: 4
+    ltrharvest: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gt
+  note: gt 为子命令式 CLI（gt suffixerator / gt ltrharvest）；两子命令均无线程参数，--threads 仅作
+    运行期选项被接受、不注入命令行（见 README「性能优化约定」）。

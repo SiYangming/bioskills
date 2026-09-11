@@ -1,0 +1,148 @@
+software: trf
+canonical: trf
+category: repeat_analysis
+description: 'TRF（Tandem Repeats Finder）是串联重复序列查找的事实标准工具：无需预先
+  指定重复单元，直接在 FASTA 中定位并展示串联重复（周期 1–2000 bp），输出重复汇总表
+  （HTML）/逐条注释数据文件（*.dat）/N 屏蔽序列（*.mask）。它是 RepeatMasker 内部集成
+  与 RepeatModeler 的关键依赖，也常单独用于基因组重复序列的快速扫描与教学演示（对应
+  module 提供的 scan 子命令，包装官方 trf 二进制）。
+  '
+homepage: https://tandem.bu.edu/trf/trf.html
+license: AGPL-3.0-or-later
+software_versions:
+- id: trf_native
+  trf: '4.10.0rc2'
+  build_route: official biocontainer（quay.io/biocontainers/trf / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/trf
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 trf=4.10.0rc2（build 0，2025-06 发布，官方容器 quay.io/biocontainers/trf:4.10.0rc2--h7b50bb2_0）；
+    上一稳定版为 4.09.1（bioconda build 7，官方容器 tag 以 quay 页面为准），两者 CLI 兼容。
+    宿主机直跑 main.py 时用 conda/mamba 安装（mamba create -c conda-forge -c bioconda trf=4.10.0rc2）。'
+- id: trf_snakemake_wrappers
+  trf: '4.10.0rc2'
+  wrapper_tag: v9.17.1
+  source: bioconda trf=4.10.0rc2（bio/trf/environment.yaml，扁平 wrapper）
+  note: '官方 snakemake-wrappers 有 bio/trf（2026-09 在线核实；v9.17.1 tag 含该 wrapper，
+    扁平结构 wrapper.py + environment.yaml + meta.yaml + test/）；本模块无本地 snakemake/ 修订，
+    README 官方登记节给出可直接粘贴的 wrapper: 调用示例。'
+- id: trf_nextflow_nfcore
+  trf: 官方无（modules/nf-core/trf 404）
+  module_version: —
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/trf
+    返回 404，nf-core 官方无 trf 子模块，Nextflow 场景暂无官方实现可登记（需要时以 trf_native
+    为兜底，或参照本库其它模块自建本地 nextflow/ 规则）。'
+implementations:
+- id: trf_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.10.0rc2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    scan 子命令在 FASTA 中查找串联重复，按上游位置参数顺序注入 7 个数值参数（匹配权重/不匹配权重/
+    INDEL 权重/匹配概率/INDEL 概率/最小得分/最大周期），并支持 -m（屏蔽序列）/ -d（*.dat）/ -h（上游语义：
+    关闭默认 HTML 输出并自动开启 -d）；trf 单线程，--threads 仅作运行期协议位、不注入命令行。
+    容器走官方镜像（quay.io/biocontainers/trf，见 software_versions）。'
+default_implementation: trf_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: trf 子命令：scan（在 FASTA 中查找串联重复）
+  genome_fasta:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 待分析序列 FASTA（trf 的 <File> 位置参数；可含多条序列，产物写到输入文件同目录）
+  match_weight:
+    type: integer
+    default: 2
+    cli_arg: positional
+    description: 匹配权重 Match（上游推荐 2；≥1）
+  mismatch_weight:
+    type: integer
+    default: 7
+    cli_arg: positional
+    description: 不匹配罚分 Mismatch（上游推荐 7；常用 3/5/7，越大越严格）
+  indel_weight:
+    type: integer
+    default: 7
+    cli_arg: positional
+    description: INDEL 罚分 Delta（上游推荐 7；常用 3/5/7）
+  match_prob:
+    type: integer
+    default: 80
+    cli_arg: positional
+    description: 匹配概率 PM（支持 80/75，上游推荐 80）
+  indel_prob:
+    type: integer
+    default: 10
+    cli_arg: positional
+    description: INDEL 概率 PI（支持 10/20，上游推荐 10）
+  min_score:
+    type: integer
+    default: 50
+    cli_arg: positional
+    description: 报告所需最小比对得分 Minscore（上游推荐 50）
+  max_period:
+    type: integer
+    default: 500
+    cli_arg: positional
+    description: 报告的最大重复周期 MaxPeriod（程序可查 1–2000，可用此参数缩小范围）
+  mask:
+    type: boolean
+    default: false
+    cli_arg: -m
+    description: 生成 N 屏蔽后的序列文件（*.mask；trf -m）
+  data:
+    type: boolean
+    default: false
+    cli_arg: -d
+    description: 生成逐条重复的数据文件（*.dat，无标签、便于脚本处理；trf -d）
+  html:
+    type: boolean
+    default: false
+    cli_arg: -h
+    description: '对应 trf 的 -h：关闭默认 HTML 输出（TRF 默认即产出 HTML 汇总/比对文件，
+      该开关反而抑制之，并自动开启 -d）；教学命令 trf genome.fasta 2 7 7 80 10 50 500 -m -d -h 即含此开关。'
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程数协议位（trf 单线程，驱动接受但不注入命令行；保留以统一接口）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 trf 的额外选项（如 -f 记录侧翼序列、-r 关闭冗余消除、-l <n>、-ngs），慎用
+outputs:
+  dat_file:
+    type: file
+    format: dat
+    description: '数据文件（-d）：<input>.<match>.<mismatch>.<delta>.<pm>.<pi>.<minscore>.<maxperiod>.dat，逐条重复注释'
+  mask_file:
+    type: file
+    format: fasta
+    description: '屏蔽序列（-m）：<input>.<params>.mask，重复位点被替换为 N 的 FASTA'
+  html_file:
+    type: file
+    format: html
+    description: 'HTML 汇总/比对文件（默认产出，-h 关闭）：<input>.<params>.1.html / *.txt.html（多序列含 *.summary.html）'
+environment:
+  container_official: quay.io/biocontainers/trf（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda trf 由 biocontainer 自动构建），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 trf。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    scan: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: trf
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 官方无 trf 子模块（404，见 software_versions），
+    Nextflow 场景暂无官方实现可登记；Snakemake 官方有 bio/trf wrapper（见 README 官方登记节）。

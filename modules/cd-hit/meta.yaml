@@ -1,0 +1,116 @@
+software: cd-hit
+canonical: cd-hit
+category: sequence_clustering
+description: 'CD-HIT（Cluster Database at High Identity with Tolerance）是基于贪心增量聚类 +
+  短词过滤的高通量序列去冗余/聚类工具：按相似度阈值（-c，默认 0.9）把高度相似的蛋白（cd-hit）
+  或核酸（cd-hit-est）序列聚为一簇，每簇保留一条代表序列，并输出 .clstr 簇明细。用于蛋白家族
+  去冗余、转录组/组装去冗余、宏基因组 OTU 聚类，也是 RepeatModeler 等教学流程的依赖工具。
+  '
+homepage: http://www.bioinformatics.org/cd-hit/
+# License: GNU GPL v2（上游 weizhongli/cdhit 为 GPL-2.0；brewsci/bio 公式记 GPL-2.0-or-later，
+# nf-core meta 记 "GPL v2"；2026-09 在线核实）；SPDX: GPL-2.0-or-later
+license: GPL-2.0-or-later
+software_versions:
+- id: cd_hit_native
+  cd_hit: '4.8.1'
+  build_route: official biocontainer（quay.io/biocontainers/cd-hit / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/cd-hit
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda cd-hit=4.8.1（现行最新，linux-64 build h5ca1c30_13，2025-04 发布；4.8.1 为上游
+    V4.8.1-2019-0228 之后唯一维护版本），包内含 cd-hit / cd-hit-est / cd-hit-2d / cd-hit-est-2d 等
+    全部可执行文件。宿主机直跑 main.py 时用 conda/mamba 安装 cd-hit=4.8.1。'
+- id: cd_hit_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  cd_hit: '4.8.1'
+  source: bioconda::cd-hit=4.8.1（modules/nf-core/cdhit/{cdhit,cdhitest}/environment.yml）
+  note: '参考信息：本模块未建 nextflow/ 目录；nf-core 官方目录名为 cdhit（非 cd-hit），含
+    cdhit（蛋白聚类，包装 cd-hit）与 cdhitest（核酸聚类，包装 cd-hit-est）两个子模块，
+    均 pin bioconda::cd-hit=4.8.1（2026-09 在线核实）；组装 Nextflow 流程时用
+    nf modules install nf-core cdhit cdhit cdhitest 安装（见 README 官方登记节）。'
+- id: cd_hit_snakemake_wrappers
+  cd_hit: 官方无 wrapper（bio/cdhit、bio/cd-hit 均 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio
+    下无 cd 开头的任何目录（bio/cdhit 与 bio/cd-hit 均 404）；Snakemake 场景暂无官方 wrapper
+    可登记，需要时以 cd_hit_native 为兜底（或自建本地 snakemake/ 规则）。'
+implementations:
+- id: cd_hit_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.8.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    protein(=cd-hit) 蛋白序列去冗余/聚类、est(=cd-hit-est) 核酸（EST/转录组）去冗余/聚类，
+    按 -c 相似度阈值聚类并输出代表序列 + .clstr 簇明细；自动注入 -T 线程与 TMPDIR；
+    容器走官方镜像（quay.io/biocontainers/cd-hit，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/cd-hit
+    quay_biocontainers: quay.io/biocontainers/cd-hit
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda cd-hit=4.8.1；容器可用
+      quay.io/biocontainers/cd-hit:4.8.1--h5ca1c30_13 镜像（bioconda 自动构建，tag 以 quay /
+      depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: cd_hit_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: cd-hit 子命令：protein（包装 cd-hit，蛋白聚类）| est（包装 cd-hit-est，核酸聚类）
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 输入 FASTA（protein 为蛋白序列；est 为核酸序列，可 .gz）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出代表序列 FASTA 路径（同时在 <output>.clstr 写簇明细）
+  identity:
+    type: number
+    default: 0.9
+    cli_arg: -c
+    description: 相似度阈值（0.0-1.0，默认 0.9；越接近 1 聚类越严格、代表序列越多）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -T
+    description: 线程数（自动注入 -T；cd-hit 原生默认 1）
+  memory:
+    type: integer
+    required: false
+    cli_arg: -M
+    description: 内存上限 MB（-M；0 表示不限制；缺省不注入则用 cd-hit 自身默认 800）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 cd-hit / cd-hit-est 的额外参数（如 -n 5 -G 1 -aS 0.9 -g 1，高级用法，慎用）
+outputs:
+  representative_fasta:
+    type: file
+    format: fasta
+    description: 代表序列 FASTA（<output>：每簇一条去冗余后的代表序列）
+  cluster_file:
+    type: file
+    format: clstr
+    description: 簇明细文件（<output>.clstr：逐簇列出成员序列及相似度）
+environment:
+  container_official: quay.io/biocontainers/cd-hit（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 cd-hit。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    protein: 4
+    est: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: cd-hit
+  note: protein 包装 cd-hit（蛋白）、est 包装 cd-hit-est（核酸）；cd-hit 无独立临时目录参数，
+    中间文件随输出目录生成，临时目录由 TMPDIR 环境变量透传（见 optimization.env_vars）。
+    作为 RepeatModeler 等流程的依赖时，安装方式指向本模块 README「环境安装」。

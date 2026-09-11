@@ -1,0 +1,169 @@
+software: glimmer
+canonical: glimmer
+category: gene_prediction
+description: 'Glimmer3（Gene Locator and Interpolated Markov ModelER，别名 glimmer3）是原核生物
+  基因组基因预测系统：用长 ORF 训练集构建插值上下文模型（ICM），再据 ICM 预测编码基因，输出每条
+  基因的坐标与打分（<tag>.predict / <tag>.detail）。上游以「一组命令行程序」发布（long-orfs 选训练
+  ORF → extract 提取训练序列 → build-icm 建 ICM → glimmer3 预测），非一步式流程；Glimmer3 是旧版
+  antiSMASH 的基因预测依赖（现代 antiSMASH 改用 prodigal / glimmerhmm）。上游 3.02 为最终版本
+  （2013 起停更，bioconda 包 2015 年入库、2022 年最后重建），本模块登记 bioconda 3.02。
+  '
+homepage: http://ccb.jhu.edu/software/glimmer/
+# License: 包内 LICENSE 为经典 Artistic License（Perl 风格 Artistic-1.0，2026-09 按 glimmer302b 源码包内 LICENSE 核实）；
+#          bioconda recipe 记为 license: Custom（license_file: LICENSE）。SPDX: Artistic-1.0
+license: Artistic-1.0
+software_versions:
+- id: glimmer_native
+  glimmer: '3.02'
+  build_route: official biocontainer（quay.io/biocontainers/glimmer / depot.galaxyproject.org）；
+    上游无预编译资产，源码编译需覆盖 CXXDEFS（见 note）
+  source: https://ccb.jhu.edu/software/glimmer/glimmer302b.tar.gz（官方源码包）；
+    https://anaconda.org/bioconda/glimmer（conda 备选）
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    glimmer=3.02 由 bioconda 官方提供（官方容器 quay.io/biocontainers/glimmer:3.02--h87f3376_6，
+    2022-02 构建；上游仅发源码包 glimmer302b.tar.gz，无预编译资产，由 biocontainer 自编译覆盖）。
+    **官方 tar 解压后 bin/ 为空目录（实测 0 文件），程序须由 src/ 编译产出**；现代工具链直接 make 会因
+    src/c_make.gen 里写死的 CXXDEFS=-D__cplusplus 与 libc++/libstdc++ 头文件冲突而报
+    "cannot combine with previous char16_t declaration specifier" 等错误中断，须改为 make CXXDEFS= -j4
+    （macOS Apple clang 与现代 GCC 均实测通过，2026-09，产出 14 个程序，四步链端到端跑通）；
+    课件旧路线为 GCC 4.4.3 时代的 Allow-glimmer-to-compile-on-g-4.4.3.patch（课件私有补丁，无公开地址）。
+    包内 bin/ 实际清单（按 glimmer302b 源码 src/{Glimmer,Util,ICM} 的 Makefile PROGS 核实）：
+    glimmer3、long-orfs、build-icm、extract、multi-extract、anomaly、test、entropy-profile、
+    entropy-score、start-codon-distrib、uncovered、window-acgt、build-fixed、score-fixed，另有
+    scripts/ 下的 g3-from-scratch.csh / g3-from-training.csh / g3-iterated.csh 及若干 .awk。
+    宿主机直跑 main.py 时用 conda/mamba 安装 glimmer=3.02；源码编译见 README 环境安装 §4。'
+- id: glimmer_nextflow_nfcore
+  glimmer: 官方无 nf-core 模块（modules/nf-core/glimmer 404）
+  source: —
+  note: '2026-09 在线核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/glimmer
+    返回 404（官方无 glimmer 模块）；Nextflow 场景暂无官方模块可登记，需要时以 glimmer_native 为兜底。'
+- id: glimmer_snakemake_wrappers
+  glimmer: 官方无 wrapper（bio/glimmer 404）
+  source: —
+  note: '2026-09 在线核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/glimmer
+    返回 404（bio/ 目录下无 glimmer）；Snakemake 场景暂无官方 wrapper 可登记，需要时以 glimmer_native
+    为兜底（或在本模块 native/ 基础上自建本地规则）。'
+implementations:
+- id: glimmer_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.02"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    long_orfs（包装 long-orfs：基因组 FASTA → 训练 ORF 坐标）、build_icm（包装 build-icm：
+    训练序列 → ICM 模型）、glimmer3（包装 glimmer3：基因组 + ICM → <tag>.predict/.detail 基因预测）；
+    Glimmer3 各程序单线程，--threads 仅作协议位（不注入命令行），--tmpdir 注入 TMPDIR。
+    容器走官方镜像（quay.io/biocontainers/glimmer，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/glimmer
+    quay_biocontainers: quay.io/biocontainers/glimmer
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda glimmer=3.02；容器可用
+      quay.io/biocontainers/glimmer:3.02--h87f3376_6 镜像（bioconda 自动构建；tag 以 quay /
+      depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: glimmer_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: glimmer 子命令：long_orfs|build_icm|glimmer3（对应 long-orfs|build-icm|glimmer3）
+  sequence:
+    type: file
+    required: false
+    cli_arg: positional
+    description: long_orfs 输入基因组 FASTA（long-orfs 的 <sequence-file>，位置参数）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: '输出：long_orfs 的 ORF 坐标文件、build_icm 的 ICM 模型文件、glimmer3 的输出前缀 <tag>'
+  train:
+    type: file
+    required: false
+    cli_arg: positional
+    description: build_icm 输入训练序列（extract 产出的多序列 FASTA；build-icm 从 stdin 读，驱动代为重定向）
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: glimmer3 输入基因组 FASTA（glimmer3 的 <sequence-file>，位置参数）
+  icm:
+    type: file
+    required: false
+    cli_arg: positional
+    description: glimmer3 输入 ICM 模型（glimmer3 的 <icm-file>，build_icm 产出）
+  max_olap:
+    type: integer
+    required: false
+    cli_arg: --max-olap
+    description: 最大允许基因重叠长度（long-orfs / glimmer3 原生 -o，默认 50；驱动层 -o 保留给 --output）
+  gene_len:
+    type: integer
+    required: false
+    cli_arg: -g
+    description: 最小基因长度（glimmer3 --gene_len；long-orfs 对应 --min-len）
+  threshold:
+    type: number
+    required: false
+    cli_arg: -t
+    description: glimmer3 判定为基因的分数阈值 --threshold（教学常用 -t30）
+  cutoff:
+    type: number
+    required: false
+    cli_arg: -t
+    description: long_orfs 熵距离截断 --cutoff（教学常用 -t 1.15）
+  linear:
+    type: boolean
+    required: false
+    cli_arg: -l
+    description: 假定线性基因组（不做环形 wraparound；long-orfs / glimmer3 均支持）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程数（Glimmer3 各程序单线程，仅作协议位记录，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层程序（long-orfs / build-icm / glimmer3）的额外参数（高级用法，慎用）
+outputs:
+  longorfs_coords:
+    type: file
+    format: txt
+    description: long_orfs 产物：训练 ORF 坐标文件（<id> <start> <stop> <frame> <entropy>）
+  icm_model:
+    type: file
+    format: icm
+    description: build_icm 产物：插值上下文模型（ICM）
+  predict:
+    type: file
+    format: txt
+    description: glimmer3 产物：<tag>.predict（预测基因坐标 + 打分）
+  detail:
+    type: file
+    format: txt
+    description: glimmer3 产物：<tag>.detail（预测细节）
+environment:
+  container_official: quay.io/biocontainers/glimmer（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 glimmer。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    long_orfs: 1
+    build_icm: 1
+    glimmer3: 1
+    default: 1
+  note: Glimmer3 各程序为单线程实现，--threads 仅作协议位记录（不注入命令行）；大基因组按内存
+    需求调高 default_mem_mb。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: glimmer3
+  note: 驱动包装官方 glimmer 包内程序（long-orfs / build-icm / glimmer3）；教学四步链第 2 步
+    extract 为同包原生程序（见 README「实战示例」）；nextflow/snakemake 官方层缺失情况见 README
+    与 software_versions。

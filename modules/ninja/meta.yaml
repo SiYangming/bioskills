@@ -1,0 +1,136 @@
+software: ninja
+canonical: ninja
+category: sequence_clustering
+description: 'NINJA（Nearly Infinite Neighbor Joining Application，TravisWheelerLab）
+  是面向大规模序列的邻居合并（neighbor-joining）与单链接聚类工具，可只考察少量 taxon 对
+  即完成 NJ 搜索；其 cluster_only 版主命令为 Ninja，按成对进化距离做单链接聚类
+  （--out_type c，默认），也可输出距离矩阵（--out_type d）。NINJA 是 RepeatModeler
+  的重复序列聚类依赖（多数场景由 modules/repeatmodeler 调用）。官方 conda/容器包名为
+  ninja-nj（注意：conda-forge 的 ninja 是构建系统 ninja，同名的不同软件，勿混）。'
+homepage: https://github.com/TravisWheelerLab/NINJA
+license: MIT
+software_versions:
+- id: ninja_native
+  ninja: '1.00'
+  version_string: '1.00-cluster_only'
+  conda_package: ninja-nj
+  build_route: official biocontainer（quay.io/biocontainers/ninja-nj / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/ninja-nj
+  note: '官方镜像优先（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均已维护），
+    本地不再自建容器；bioconda 包名 ninja-nj=1.00（MIT，Nearly Infinite Neighbor Joining
+    Application），由 1.00-cluster_only 源码构建，可执行文件为 Ninja，版本串 Ninja -v 输出
+    "Version 1.00-cluster_only"；官方容器 tag 形如 ninja-nj:1.00--h9948957_1（与 depot sif 互通）。
+    宿主机直跑 main.py 时用 conda/mamba 装 ninja-nj=1.00，或 native/install.sh 双路线
+    （conda / 源码编译）。'
+- id: ninja_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ninja 404）
+  ninja: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/ninja 目录）
+  note: 2026-09 在线核实 nf-core/modules 无 modules/nf-core/ninja（404）；Nextflow 场景以
+    native/ 宿主机驱动或官方 biocontainer 直跑为兜底。
+- id: ninja_snakemake_wrappers
+  ninja: 官方无 wrapper（bio/ninja 404）
+  source: —（snakemake-wrappers 仓库无 bio/ninja 目录）
+  note: 2026-09 在线核实 snakemake-wrappers 无 bio/ninja（404）；Snakemake 场景以 native/
+    宿主机驱动为兜底。
+implementations:
+- id: ninja_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.00"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    cluster 包装 Ninja 做序列聚类 / 距离矩阵：输入比对 FASTA（--in_type a）或距离矩阵（--in_type d），
+    默认 --out_type c 单链接聚类（--cluster_cutoff 默认 0.03，输出 cluster_id<TAB>name），
+    --out_type d 输出距离矩阵；自动注入 --threads（-T）。多数场景由 modules/repeatmodeler 调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/ninja-nj
+    quay_biocontainers: quay.io/biocontainers/ninja-nj
+    depot_galaxyproject: https://depot.galaxyproject.org/singularity/ninja-nj%3A1.00--h9948957_1
+    upstream: https://github.com/TravisWheelerLab/NINJA
+    upstream_legacy: https://github.com/TravisWheelerLab/ninja-old（cluster_only C++ 源码仓库，
+      原 TravisWheelerLab/NINJA 于 2026 年改版为 Rust 实现后，C++ 版本归档至 ninja-old）
+    install_hint: 推荐 mamba create -n ninja -c conda-forge -c bioconda ninja-nj=1.00；容器可用
+      quay.io/biocontainers/ninja-nj:1.00--h9948957_1 镜像（bioconda 自动构建，见 README
+      「容器与 Conda 链接」）
+default_implementation: ninja_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ninja 子命令：cluster（包装 Ninja：比对 FASTA / 距离矩阵 → 聚类或距离矩阵）
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 输入文件（Ninja --in；默认 --in_type a：比对 FASTA；--in_type d：Phylip 距离矩阵）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出文件（Ninja --out；--out_type c 聚类表，--out_type d 距离矩阵）
+  in_type:
+    type: string
+    required: false
+    cli_arg: --in_type
+    description: 输入类型：a（比对 FASTA，默认）| d（距离矩阵）
+  out_type:
+    type: string
+    required: false
+    cli_arg: --out_type
+    description: 输出类型：c（单链接聚类，默认）| d（距离矩阵）
+  corr_type:
+    type: string
+    required: false
+    cli_arg: --corr_type
+    description: 距离校正类型（可选）：n | j | k | s | m（缺省由 Ninja 按输入自动选择）
+  cluster_cutoff:
+    type: float
+    required: false
+    default: 0.03
+    cli_arg: --cluster_cutoff
+    description: 单链接聚类距离阈值（默认 0.03；仅 --out_type c 时有意义）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    cli_arg: --threads
+    description: 线程数（Ninja 原生 --threads / -T，自动注入）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录协议位（注入 TMPDIR 环境变量）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 Ninja 的额外参数（高级用法，慎用）
+outputs:
+  clusters:
+    type: file
+    format: tsv
+    description: cluster（--out_type c，默认）产物：cluster_id<TAB>name 每序列一行
+  distance_matrix:
+    type: file
+    format: phylip
+    description: cluster（--out_type d）产物：Phylip 风格距离矩阵
+environment:
+  container_official: quay.io/biocontainers/ninja-nj（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda ninja-nj=1.00 → quay.io/biocontainers/ninja-nj → depot.galaxyproject.org），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 装 ninja-nj=1.00，
+    或 bash native/install.sh（conda / 源码编译双路线）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    cluster: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Ninja
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 无 modules/nf-core/ninja（2026-09 核实 404），
+    snakemake-wrappers 无 bio/ninja（2026-09 核实 404），缺失情况见 README 与 software_versions。

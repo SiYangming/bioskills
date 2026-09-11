@@ -1,0 +1,132 @@
+software: recon
+canonical: recon
+category: repeat_analysis
+description: 'RECON（REpeat CONstructor）是基因组重复序列家族的从头（de novo）识别与分类工具：
+  以全基因组自身比对产出的 MSP（Maximum Scoring Pairs）为输入，经 eledef→eleredef→edgeredef→famdef
+  四阶段聚类与图分析，把重复拷贝归并为重复家族；输出 summary/eles（家族-元素成员表）与
+  summary/families（家族统计）。RECON 多为 RepeatModeler 的组成部分（见 modules/repeatmodeler），
+  少数场景单独运行；本模块提供 pipeline（run_recon.sh 全流程）与 eledef（阶段 1）两个子命令。
+  '
+homepage: http://eddylab.org/software/recon/
+license: GPL-2.0-or-later
+software_versions:
+- id: recon_native
+  recon: '1.10'
+  build_route: official biocontainer（quay.io/biocontainers/recon / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/recon
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 recon=1.10（1.08 亦存），官方容器 quay.io/biocontainers/recon:1.10--hab16a5f_1（linux-64，
+    2026 build；osx-arm64=h9e3228c_1）。包内 bin/ 清单（以包内实际为准，2026-09 实测）：
+    run_recon.sh（主驱动脚本）、eledef / eleredef / edgeredef / famdef（四阶段 C 程序，均支持 -l 日志级别、
+    eledef 支持 -v 打印版本）、imagespread（RECON 1.08 兼容 shim，包内 ./bin 一并安装）。
+    各阶段为串行 C 程序，无并行参数。宿主机直跑 main.py 时用 conda/mamba 安装 recon=1.10；容器走官方镜像。
+    上游现维护于 https://github.com/Dfam-consortium/RECON（tag 1.10）。'
+- id: recon_nextflow_nfcore
+  recon: 官方无模块（nf-core recon 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/recon
+    返回 404；nf-core 无 recon 子模块。RepeatModeler 场景请用 nf-core repeatmodeler（见 modules/repeatmodeler）。'
+- id: recon_snakemake_wrappers
+  recon: 官方无 wrapper（bio/recon 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/recon
+    返回 404；Snakemake 场景暂无官方 wrapper 可登记，需要时以 recon_native 为兜底。'
+implementations:
+- id: recon_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.10"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    pipeline 包装 run_recon.sh（四阶段全流程，输出 summary/eles + summary/families）；eledef 包装阶段 1
+    （MSP → 初始元素库）。均接受 --threads/--tmpdir 接口（RECON 串行，--threads 不注入）。
+    容器走官方镜像（quay.io/biocontainers/recon，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/recon
+    quay_biocontainers: quay.io/biocontainers/recon
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda recon=1.10；容器可用
+      quay.io/biocontainers/recon:1.10--hab16a5f_1 镜像（bioconda 自动构建，见 README「容器与 Conda 链接」）
+default_implementation: recon_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: recon 子命令：pipeline|eledef（pipeline=run_recon.sh 全流程，eledef=阶段 1）
+  seq_list:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 序列名清单文件（首行为序列总数，其后每行一个序列名，须按字典序排序）
+  msp:
+    type: file
+    required: true
+    cli_arg: positional
+    description: MSP 比对文件（每行一条局部比对：score %iden q_start q_end q_name s_start s_end s_name）
+  workdir:
+    type: string
+    required: false
+    cli_arg: -o/--workdir
+    description: 流水线工作目录（summary/、ele_store/ 等产物写入此处；缺省在临时目录下新建并回显路径）
+  sections:
+    type: integer
+    required: false
+    default: 1
+    cli_arg: --sections
+    description: pipeline 透传给 run_recon.sh 的 num_sections（仅旧 1.08 imagespread 使用；新版 eledef 忽略）
+  method:
+    type: string
+    required: false
+    default: single
+    cli_arg: --method
+    description: eledef 聚类方法：single|double（对应官方 usage 的 single|double）
+  cutoff:
+    type: float
+    required: false
+    cli_arg: --cutoff
+    description: eledef 可选的聚类 cutoff（官方 usage 的 [cutoff]，缺省用内建默认）
+  level:
+    type: integer
+    required: false
+    cli_arg: -l/--level
+    description: 日志级别（0=silent 1=error 2=warn 3=info 默认 4=debug）
+  bin_dir:
+    type: string
+    required: false
+    cli_arg: --bin-dir
+    description: pipeline 的可执行文件目录（默认取 run_recon.sh 所在目录；run_recon.sh 需在此找到四阶段二进制）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（接口一致保留；RECON 各阶段为串行 C 程序，不注入）
+outputs:
+  eles:
+    type: file
+    format: tsv
+    description: pipeline 产物 summary/eles：family_index element_index strand sequence start end
+  families:
+    type: file
+    format: tsv
+    description: pipeline 产物 summary/families：family_index copy_count unknown
+  workdir:
+    type: string
+    format: directory
+    description: 工作目录（含 summary/、ele_store/、ele_def_res/、ele_redef_res/、edge_redef_res/ 等）
+environment:
+  container_official: quay.io/biocontainers/recon（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda 自动构建 quay.io/biocontainers/recon），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 recon=1.10。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  note: RECON 四阶段为串行 C 程序，无并行参数；--threads 仅作接口一致保留（不注入）。MEMDEBUG/ASSERT 等高诊断
+    构建需自编译（make TUNABLES=...），官方包为默认优化构建。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: run_recon.sh
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 无 recon 子模块（404），RepeatModeler 场景见 nf-core repeatmodeler
+  snakemake_note: 本模块未建 snakemake/ 目录；官方 snakemake-wrappers 无 bio/recon（404）

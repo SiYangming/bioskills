@@ -1,0 +1,139 @@
+software: glimmerhmm
+canonical: glimmerhmm
+category: gene_prediction
+description: 'glimmerhmm（GlimmerHMM，The Johns Hopkins University CCB）是**真核基因预测**工具：
+  基于广义隐马尔可夫模型（GHMM），融合 GeneSplicer 剪接位点模型与 GlimmerM 决策树，用
+  8 阶插值 Markov 模型（IMM）建模编码/非编码区，在真核基因组中预测基因（起始/内部/终止/
+  单外显子四类外显子 + 各相位内含子 + 基因间区），输出 GFF3 或原生表格结果。教学/依赖语境：
+  antiSMASH 真菌模式（<8.0 需外部安装；`--genefinding-tool glimmerhmm`）依赖它做真菌基因预测，
+  典型直接用法 `glimmerhmm genome.fasta -d <训练目录> -g -o out.gff`。注：上游长期停留在 3.0.4
+  （2004 年论文，最后更新 3.0.4c）；无并行参数（单线程）。
+  '
+homepage: https://ccb.jhu.edu/software/glimmerhmm/
+# License: Artistic License（包内 info/licenses/LICENSE 为原始 "The Artistic License"，
+# bioconda about.license 记 "Artistic License"，2026-09 在线核实）；SPDX: Artistic-1.0
+license: Artistic-1.0
+software_versions:
+- id: glimmerhmm_native
+  glimmerhmm: '3.0.4'
+  build_route: official biocontainer（quay.io/biocontainers/glimmerhmm / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/glimmerhmm
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    glimmerhmm=3.0.4 由 bioconda 官方提供（当前 linux-64 build pl5321h503566f_10，
+    osx-64 pl5321h5eaf441_10，osx-arm64 pl5321haef7865_10，linux-aarch64 pl5321h80f0ee0_10；
+    perl 5.32 运行时；官方容器 quay.io/biocontainers/glimmerhmm:3.0.4--pl5321h503566f_10）。
+    包内提供 3 个入口：bin/glimmerhmm（主程序）、bin/glimmhmm.pl（多序列拆分 Perl 包装）、
+    bin/trainGlimmerHMM（自定义训练）；训练模型随包置于
+    $PREFIX/share/glimmerhmm/trained_dir/<species>（物种：arabidopsis/rice/human/zebrafish/
+    Celegans，**无真菌模型**——antiSMASH 真菌模式自带训练集，经 --training-dir 传入）。
+    宿主机直跑 main.py 时用 conda/mamba 安装 glimmerhmm=3.0.4。'
+- id: glimmerhmm_nextflow_nfcore
+  glimmerhmm: 官方无（modules/nf-core/glimmerhmm 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/glimmerhmm
+    返回 404（nf-core modules 无 glimmerhmm）；Nextflow 场景暂无官方子模块可登记，需要时以
+    glimmerhmm_native 为兜底（自建本地 nextflow/ 规则，或 shell 直调）。'
+- id: glimmerhmm_snakemake_wrappers
+  glimmerhmm: 官方无 wrapper（bio/glimmerhmm 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/glimmerhmm
+    返回 404（bio/ 目录下无 glimmerhmm）；Snakemake 场景暂无官方 wrapper 可登记，需要时以
+    glimmerhmm_native 为兜底。'
+implementations:
+- id: glimmerhmm_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.0.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    predict 包装 glimmerhmm 做真核基因预测：基因组 FASTA → GFF3（-g）或原生表格结果，
+    训练目录由驱动从包前缀自动解析（--species，随包 5 个物种模型）或用 --training-dir 指定
+    自定义模型（如 antiSMASH 真菌模式训练集）；自动注入 TMPDIR（glimmerhmm 单线程，--threads
+    仅协议位）。容器走官方镜像（quay.io/biocontainers/glimmerhmm，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/glimmerhmm
+    quay_biocontainers: quay.io/biocontainers/glimmerhmm
+    install_hint: 推荐 mamba create -n glimmerhmm-native -c conda-forge -c bioconda glimmerhmm=3.0.4；
+      容器可用 quay.io/biocontainers/glimmerhmm:3.0.4--pl5321h503566f_10 镜像（bioconda 自动构建，
+      见 README「容器与 Conda 链接」）
+default_implementation: glimmerhmm_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: glimmerhmm 子命令：predict（包装 glimmerhmm：真核基因组 FASTA → 基因预测）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: predict 输入真核基因组 FASTA（单条或多条 contig；可 .gz，由驱动解压到临时目录）
+  training_dir:
+    type: file
+    required: false
+    cli_arg: -d
+    description: 训练目录（含 config.file 的物种模型目录，如 glimmerhmm 包内
+      $PREFIX/share/glimmerhmm/trained_dir/<species>，或 antiSMASH 真菌模式自带训练集）；
+      缺省由驱动从包前缀（$CONDA_PREFIX / 二进制所在前缀）自动解析
+  species:
+    type: string
+    default: arabidopsis
+    cli_arg: --species
+    description: 未显式给 --training-dir 时，从包内 trained_dir 选取的物种模型
+      （arabidopsis|rice|human|zebrafish|Celegans；默认 arabidopsis；驱动按 --d 覆盖）
+  gff:
+    type: boolean
+    default: false
+    cli_arg: -g
+    description: 输出 GFF3 格式（缺省为 GlimmerHMM 原生表格结果）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 预测结果写入该文件（缺省 stdout；配 -n 时写 file.1/file.2…）
+  no_partial:
+    type: boolean
+    default: false
+    cli_arg: -f
+    description: 不做部分（partial）基因预测（glimmerhmm 原生 -f 语义）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程协议位（glimmerhmm 单线程，无并行参数——接受但不注入命令行；仅为统一契约）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 glimmerhmm 的额外参数（如 -n 3 / -p domains.txt / -v，高级用法，慎用）
+outputs:
+  gff3:
+    type: file
+    format: gff
+    description: predict -g 产物：GFF3 基因/外显子注释（首行 GFF3 版本头 gff-version 3，含 sequence-region 与 mRNA/CDS 记录）
+  predictions:
+    type: file
+    format: txt
+    description: predict 不加 -g 时的产物：GlimmerHMM 原生预测表格（Predicted genes/exons）
+environment:
+  container_official: quay.io/biocontainers/glimmerhmm（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 glimmerhmm（训练模型随包装入）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: glimmerhmm
+  note: 'predict 包装官方 glimmerhmm（3.0.4，单线程；-g 输出 GFF3、-o 写文件、-f 禁部分基因、
+    训练目录 -d 指定；映射自实测 USAGE: glimmerhmm <genome-file> <training-dir> [options]）。
+    测试仅自省 + 契约断言，PATH 含 glimmerhmm 时追加合成基因组最小真跑（断言 GFF3 版本头 gff-version 3）。
+    execution.binary 登记 glimmerhmm 为代表性入口（同包含 glimmhmm.pl / trainGlimmerHMM）；
+    nf-core/snakemake-wrappers 官方层均缺失，见 README 与 software_versions。'
