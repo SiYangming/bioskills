@@ -1,0 +1,139 @@
+# misa native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方源包，禁 miniconda）
+#
+# 背景：MISA（misa.pl v2.1）无官方镜像 / 无 conda 包 —— 2026-09 核实 bioconda（404）、
+#       quay.io/biocontainers（401 = 仓库不存在）、depot.galaxyproject.org（无）、brew /
+#       nf-core modules / snakemake-wrappers（均 404）。官方仅发布源码包
+#       https://webblast.ipk-gatersleben.de/misa/misa_sourcecode_25082020.zip
+#       （v2.1，2020-08-25；misa.pl + misa.ini，纯 Perl，无需编译）。
+#       本配方：debian:bookworm-slim + apt（perl + python3 驱动）+ 官方源包解包部署。
+#
+# 构建（在仓库 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build misa-2.1.sif misa/native/Apptainer.def
+# 运行（容器内 CLI = misa.pl；misa.pl 只从当前工作目录读 misa.ini）：
+#   apptainer run -B $PWD:/data -H /data misa-2.1.sif -help
+#   驱动 main.py：apptainer exec misa-2.1.sif python3 /opt/skill/main.py detect \
+#       /data/genome.fasta --outdir /data/misa_out
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software misa
+    Version 2.1
+    misa_version 2.1
+    org.bioskills.software misa
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt (perl) + official source zip (misa.pl)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    misa/native/main.py /opt/skill/main.py
+    misa/meta.yaml /opt/skill/misa/meta.yaml
+    misa/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：运行 perl + python3/python3-yaml（供 main.py 驱动）+ 构建期 curl/unzip
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        ca-certificates \
+        curl \
+        unzip \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方源包下载 + sha256 校验 + 部署 misa.pl / misa.ini
+    curl -fSL -o /tmp/misa.zip \
+        "https://webblast.ipk-gatersleben.de/misa/misa_sourcecode_25082020.zip"
+    echo "43d90953489dbf428f4ed051a099a942314d3ccbea6226a7c72fd44216b243b8  /tmp/misa.zip" | sha256sum -c -
+    mkdir -p /tmp/misa_src /opt/misa
+    unzip -q -o /tmp/misa.zip -d /tmp/misa_src
+    test -f /tmp/misa_src/misa.pl
+    test -f /tmp/misa_src/misa.ini
+    install -m 0755 /tmp/misa_src/misa.pl /usr/local/bin/misa.pl
+    install -m 0644 /tmp/misa_src/misa.ini /opt/misa/misa.ini
+
+    # 3) 冒烟 A：GFF: false → <fasta>.misa + <fasta>.statistics（下游 misa_primer3.pl 需要的形态）
+    mkdir -p /tmp/smoke_a /tmp/smoke_b
+    cd /tmp/smoke_a
+    printf 'definition(unit_size,min_repeats): 1-10 2-6 3-5 4-5 5-5 6-5\ninterruptions(max_difference_for_2_SSRs): 100\nGFF: false\n' > misa.ini
+    printf '>seq1\nACGTACGTACGTACGTACGTACGTTTTTTTTTTTTTTTTTTCAGCAGCAGCAGCAGCAGCAGAAAAAAAAGGGGGGGGGGGG\n' > genome.fasta
+    misa.pl genome.fasta 2>/dev/null
+    test -s genome.fasta.misa
+    test -s genome.fasta.statistics
+    grep -q '^seq1' genome.fasta.misa
+
+    # 冒烟 B：官方 misa.ini（GFF: true）→ 逐序列 .gff，且**不产出 .misa**（v2.1 产物互斥）
+    cd /tmp/smoke_b
+    cp /opt/misa/misa.ini .
+    printf '>seq1\nACGTACGTACGTACGTACGTACGTTTTTTTTTTTTTTTTTTCAGCAGCAGCAGCAGCAGCAGAAAAAAAAGGGGGGGGGGGG\n' > genome.fasta
+    misa.pl genome.fasta 2>/dev/null
+    test -f seq1.gff
+    test ! -e genome.fasta.misa
+    cd /
+    rm -rf /tmp/misa_src /tmp/misa.zip /tmp/smoke_a /tmp/smoke_b
+
+    # 4) 仅构建期下载工具移除 + 清理四连
+    apt-get purge -y curl unzip
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/misa.pl "$@"
+
+%test
+    # 非交互自检：misa.pl 迷你 SSR 检测 + 驱动可自省（misa.pl 无 --version/-v）
+    set -eux
+    mkdir -p /tmp/misa_test /tmp/misa_test_gff && cd /tmp/misa_test
+    printf 'definition(unit_size,min_repeats): 1-10 2-6 3-5 4-5 5-5 6-5\ninterruptions(max_difference_for_2_SSRs): 100\nGFF: false\n' > misa.ini
+    printf '>seq1\nACGTACGTACGTACGTACGTACGTTTTTTTTTTTTTTTTTTCAGCAGCAGCAGCAGCAGCAGAAAAAAAAGGGGGGGGGGGG\n' > genome.fasta
+    /usr/local/bin/misa.pl genome.fasta 2>/dev/null
+    test -s genome.fasta.misa
+    grep -q '^seq1' genome.fasta.misa
+    cd /tmp/misa_test_gff
+    cp /opt/misa/misa.ini .
+    printf '>seq1\nACGTACGTACGTACGTACGTACGTTTTTTTTTTTTTTTTTTCAGCAGCAGCAGCAGCAGCAGAAAAAAAAGGGGGGGGGGGG\n' > genome.fasta
+    /usr/local/bin/misa.pl genome.fasta 2>/dev/null
+    test -f seq1.gff
+    test ! -e genome.fasta.misa
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/misa_commands.txt
+    grep -q '^detect' /tmp/misa_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/misa_schema.json
+    test -s /tmp/misa_schema.json
+    rm -rf /tmp/misa_test /tmp/misa_test_gff /tmp/misa_commands.txt /tmp/misa_schema.json
+
+%help
+    misa native Apptainer 镜像（自建：apt 最小化 + 官方源包 misa_sourcecode_25082020.zip，v2.1）。
+    CLI 用法：apptainer run -B $PWD:/data -H /data misa-2.1.sif genome.fasta
+              （misa.pl 只从当前工作目录读 misa.ini；镜像内自带一份在 /opt/misa/misa.ini）
+    驱动用法：apptainer exec misa-2.1.sif python3 /opt/skill/main.py detect /data/genome.fasta --outdir /data/misa_out
+    说明：官方渠道（bioconda/quay biocontainers/depot/brew/nf-core/snakemake-wrappers）2026-09 全无
+    → 自建镜像；misa.pl 无 --version（版本以 -help 头部 version 2.1 为准，且 -help 退出码 255）；
+    misa.ini 的 GFF: true 会改为逐序列 .gff 输出且**不再产出 .misa**（下游引物设计需要 .misa）。

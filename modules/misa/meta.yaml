@@ -1,0 +1,147 @@
+software: misa
+canonical: misa
+category: repeat_analysis
+description: 'MISA（MIcroSAtellite identification tool，IPK Gatersleben 的 misa.pl，v2.1 2020-08-25）
+  用 Perl 实现，从 FASTA 中识别完美 SSR（unit size 1-6）与复合 SSR（两个 SSR 间距不超过
+  interruptions 阈值）：输入 <FASTA> + 当前工作目录下的 misa.ini（搜索参数），输出
+  <FASTA>.misa 位点表（ID / SSR nr. / SSR type / SSR / size / start / end）与 <FASTA>.statistics
+  统计报告；misa.ini 置 GFF: true 时改为逐序列输出 <序列 ID>.gff（此时不再产出 .misa）。
+  SSR 侧翼引物设计由 misa_primer3.pl（MISA 衍生 helper，依赖 primer3_core + ParaFly）承担，
+  见 subworkflow/misa_primer3（MISA + Primer3 SSR 检测与引物设计组合）。
+  '
+homepage: https://webblast.ipk-gatersleben.de/misa/
+# License：IPK Gatersleben 官方源包（misa_sourcecode_25082020.zip）未随附 LICENSE / 未声明 SPDX，
+# 官方站点与 MISA-web 仅声明可自由使用（学术引用 Thiel et al. 2003 / Beier et al. 2017）；
+# 2026-09 在线核实 https://webblast.ipk-gatersleben.de/misa/ 无许可条款 → SPDX NOASSERTION。
+license: Other（IPK 未声明 SPDX；免费学术使用，SPDX NOASSERTION，引用 Thiel 2003 / Beier 2017）
+software_versions:
+- id: misa_native
+  misa: '2.1'
+  build_route: 'apt + 官方源码包（Debian bookworm-slim + perl；官方 misa_sourcecode_25082020.zip 解包部署 misa.pl/misa.ini）'
+  source: https://webblast.ipk-gatersleben.de/misa/misa_sourcecode_25082020.zip
+  note: '官方渠道（bioconda / quay.io/biocontainers / depot.galaxyproject.org）2026-09 核实**全无**
+    misa 包（bioconda API 404 "misa" could not be found；无 misa-web / misa-tools 等别名；brew、
+    nf-core modules、snakemake-wrappers 亦 404）→ 走自建兜底（apt 最小化 + 官方源码包）。
+    v2.1 源包仅含 misa.pl（20148 B，sha256 4712f29a0c57ff4aee1cc248cba20bcc879ef5d3b2ea6f5f1162cbc391c59abb）
+    与 misa.ini（158 B，sha256 2dc25894c4d85314ae53eb7e615474285424c667e3b985d2ccde9b31edb4a6a2），
+    与 GitHub SiYangming/SSR_marker_design 备份升级后的 v2.1 文件 sha256 一致（2026-09 核对）。
+    ⚠️ 产物互斥：misa.ini 的 GFF: true 会让 misa.pl 改为逐序列写 <序列 ID>.gff，**不再产出 .misa**；
+    下游 misa_primer3.pl / p3_in.pl 需要 .misa，故 MISA→Primer3 链路须用 GFF: false（本驱动默认）。'
+- id: misa_nextflow_nfcore
+  misa: 官方无模块（modules/nf-core/misa 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/misa
+    返回 404（登记「官方无」）；Nextflow 场景暂无官方 nf-core 子模块可登记，需要时以 misa_native
+    为兜底（或自行 nf modules 引入第三方模块）。
+- id: misa_snakemake_wrappers
+  misa: 官方无 wrapper（bio/misa 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/misa
+    返回 404（登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以 misa_native
+    为兜底（若走 SSR 引物设计组合，见 subworkflow/misa_primer3）。'
+implementations:
+- id: misa_native
+  path: native
+  source_type: custom
+  type: native
+  version: '2.1'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    detect 包装 misa.pl：输入 FASTA（+ 可选 --ini 自定义 misa.ini，未给时按 --min-repeats /
+    --interruptions / --gff 生成默认 misa.ini），在 --outdir 内产出 <fasta>.misa + <fasta>.statistics
+    （或 --gff 时的逐序列 <序列 ID>.gff）。misa.pl 单线程（默认 default_cpus=1），全基因组检测为
+    I/O + 正则扫描型，速度很快（真菌基因组秒级）。容器走自建兜底（官方无镜像，见 README「环境安装」）。'
+  container_ref:
+    dockerfile: native/Dockerfile
+    apptainer_def: native/Apptainer.def
+    install_hint: 官方渠道无 misa 包/镜像 → 自建（debian:bookworm-slim + perl + 官方源码包）；
+      宿主机一键安装见 native/install.sh（无 conda 包可装，走官方源码包部署到用户前缀）
+default_implementation: misa_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: misa 子命令：detect（包装 misa.pl：FASTA → <fasta>.misa / <fasta>.statistics / <序列>.gff）
+  fasta:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入序列文件（FASTA，单文件可含多条序列；--input 等价）
+  outdir:
+    type: string
+    default: .
+    cli_arg: --outdir
+    description: '输出目录（默认当前目录，与教学 `misa.pl genome.fasta` 产物落在 cwd 的行为一致）：
+      驱动在其中写 misa.ini、建立指向输入 FASTA 的同名软链，并让 misa.pl 以 cwd=outdir + 相对文件名
+      运行，使 <fasta>.misa / <fasta>.statistics / 逐序列 .gff 全部落在 outdir'
+  ini:
+    type: file
+    required: false
+    cli_arg: --ini
+    description: '自定义 misa.ini（搜索参数：definition(unit_size,min_repeats) / interruptions /
+      GFF）；未给时由 --min-repeats + --interruptions + --gff 生成默认 ini。注意 misa.pl 只从
+      当前工作目录读 misa.ini（无命令行参数），驱动会把该 ini 落到 --outdir 下'
+  min_repeats:
+    type: string
+    default: 1-10 2-6 3-5 4-5 5-5 6-5
+    cli_arg: --min-repeats
+    description: '生成默认 misa.ini 时的 definition(unit_size,min_repeats) 取值（官方 v2.1 默认
+      1-10 2-6 3-5 4-5 5-5 6-5，即 1/2/3/4/5/6 bp 基序的最少重复数）'
+  interruptions:
+    type: integer
+    default: 100
+    cli_arg: --interruptions
+    description: 生成默认 misa.ini 时的 interruptions(max_difference_for_2_SSRs) 取值（复合 SSR 中两个 SSR 之间允许的最大碱基数，官方默认 100）
+  gff:
+    type: boolean
+    default: false
+    cli_arg: --gff
+    description: '生成默认 misa.ini 时写 GFF: true（逐序列输出 <序列 ID>.gff，GFF3 格式）。
+      ⚠️ 与 .misa 互斥：开启后 misa.pl 不再产出 .misa（下游 misa_primer3.pl 需要 .misa，故默认关闭）'
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程数（协议位：misa.pl 为 Perl 单线程脚本，驱动不强加/不注入）
+outputs:
+  misa_table:
+    type: file
+    format: tsv
+    description: 'detect 主产物 <fasta>.misa（制表符分隔，表头 ID/SSR nr./SSR type/SSR/size/start/end；
+      复合 SSR 的 SSR type 为 c（相邻）/c*（含间隔碱基）。GFF: true 时不产出本文件）'
+  statistics:
+    type: file
+    format: txt
+    description: 'detect 副产物 <fasta>.statistics（Specifications / RESULTS OF MICROSATELLITE SEARCH：
+      各基序类别与重复次数分布、SSR 数量、含 SSR 序列数等统计报告）'
+  gff_files:
+    type: file
+    format: gff3
+    description: '--gff 时产出的逐序列 GFF3 文件 <序列 ID>.gff（MISA feature：region / microsatellite /
+      monomeric_repeat / repeat_region，Note 含具体 motif）；与 misa_table 互斥'
+environment:
+  # conda: —（官方无 bioconda 包 / 无镜像；容器走自建 apt 路线，无独立 conda env 文件）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）2026-09 核实全无 misa
+    → 自建兜底：debian:bookworm-slim + apt --no-install-recommends（perl + python3/python3-yaml 供
+    main.py 驱动）+ 官方 misa_sourcecode_25082020.zip 解包部署 misa.pl；禁 miniconda。
+    宿主机安装见 native/install.sh（官方源码包 + PATH，无需 root）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 2048
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    detect: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: misa.pl
+  note: 'detect 包装 misa.pl（执行名 misa.pl；misa.pl 无 --version，版本以 `misa.pl -help` 头部
+    「Release date: 25/08/20 (version 2.1)」为准，且 -help 走 die 退出码 255）。misa.pl 单线程、
+    default_cpus=1，不强加线程参数。官方 nf-core / snakemake-wrappers 层均 404（2026-09 在线核实，
+    见 README「官方实现登记」），未建 nextflow/、snakemake/ 目录。'

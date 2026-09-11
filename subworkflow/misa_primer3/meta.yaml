@@ -1,0 +1,118 @@
+# custom / misa_primer3 复合流程元数据
+#
+# 流程：MISA 检测 SSR（misa.pl）-> 准备 Primer3 设置文件 -> misa_primer3.pl 批量设计 SSR 侧翼引物
+#       （内部：逐位点提取侧翼序列生成 Primer3 设置 -> ParaFly 并行调用 primer3_core -> TSV + GFF3）
+# 依赖原子技能：modules/misa（检测） + modules/primer3（primer3_core 二进制）
+# 额外外部依赖：perl、ParaFly（bioconda parafly；--CPU 并行用）
+# 桥接脚本 native/misa_primer3.pl 与设置模板 native/p3_settings.txt 均为 vendored 资产
+# （来源 https://github.com/SiYangming/SSR_marker_design，见流程文档「资产来源」节）。
+
+id: custom_misa_primer3
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "SSR 分子标记开发组合：MISA 检测 SSR（misa.pl）→ misa_primer3.pl 提取侧翼并批量设计 PCR 引物（ParaFly 并行 primer3_core）→ TSV 引物表 + GFF3 注释"
+
+description: |
+  把「SSR 检测 → 侧翼引物设计」的经典教学链路（MISA + Primer3）提炼为可复用的 subworkflow
+  （参照 subworkflow/fastp_bwa_samtools / sratools_pipeline 形态）：
+  1) meta 声明 stages / inputs / outputs（本文件）；
+  2) 编排入口 native/main.py（--list-stages / --dry-run（默认）/ --real）逐 stage 构造命令：
+     stage 1 misa_detect        → python modules/misa/native/main.py detect（产出 <genome>.misa）
+     stage 2 prepare_p3_settings→ 由 native/p3_settings.txt 生成 Primer3 设置文件（去注释/空行 +
+                                  重写 PRIMER_THERMODYNAMIC_PARAMETERS_PATH，或删行回退内置默认参数）
+     stage 3 misa_primer3_design→ perl native/misa_primer3.pl --CPU N（ParaFly 并行 primer3_core）
+  3) 引擎集成要点：Snakemake / Nextflow 形态与参数契约并入 misa_primer3.md「引擎集成」节。
+
+agent_guidance:
+  when_to_use: "用户要基于基因组/转录组序列批量开发 SSR（微卫星）分子标记、需要 SSR 位点表与批量 PCR 引物（含 GFF3 注释）时；或需要复现 MISA + Primer3 教学链路（misa.pl + misa_primer3.pl）时。"
+  recommendation_priority: "Medium（SSR 标记开发专用组合；全基因组规模建议先按染色体拆分并行）"
+
+stages:
+  - id: misa_detect
+    software: misa
+    implementation: misa_native
+    purpose: "MISA 检测 SSR：FASTA → <genome>.misa（位点表）+ <genome>.statistics；固定 GFF: false（.misa 与 GFF 输出互斥，下游需要 .misa）"
+  - id: prepare_p3_settings
+    software: primer3
+    implementation: primer3_native
+    purpose: "生成 Primer3 批量设计用设置文件：原生 p3_settings.txt 去注释/空行 + 把 PRIMER_THERMODYNAMIC_PARAMETERS_PATH 指向真实 primer3_config（探测不到则删该行，回退 primer3_core 编译内置参数）"
+  - id: misa_primer3_design
+    software: primer3
+    implementation: primer3_native
+    purpose: "misa_primer3.pl 逐位点提取 SSR 两侧翼（默认 300 bp）生成 Primer3 设置，经 ParaFly --CPU N 并行调用 primer3_core，输出引物表 TSV（每记录最多 5 对引物）与 GFF3"
+
+inputs:
+  genome:
+    type: file
+    required: true
+    description: "输入基因组/序列 FASTA（单文件可含多条序列）"
+  outdir:
+    type: string
+    default: results
+    description: "输出目录：<outdir>/misa/（MISA 产物）、<outdir>/misa_primer3.out、<outdir>/misa_primer3.gff3、<outdir>/misa_primer3/（中间产物）"
+  threads:
+    type: integer
+    default: 8
+    description: "并行数（透传 misa_primer3.pl 的 --CPU，经 ParaFly 并行调用 primer3_core；primer3_core 单线程）"
+  p3_setting_file:
+    type: file
+    required: false
+    description: "自定义 Primer3 设置文件；未给时由 native/p3_settings.txt 自动生成到 <outdir>/p3_settings_file"
+  gff3_out:
+    type: file
+    required: false
+    default: "{outdir}/misa_primer3.gff3"
+    description: "GFF3 输出路径（--no-gff3 可关闭）"
+  misa_ini:
+    type: file
+    required: false
+    description: "透传 modules/misa detect 的自定义 misa.ini（注意须 GFF: false，否则拿不到 .misa）"
+  flanking_length:
+    type: integer
+    default: 300
+    description: "设计引物时提取的 SSR 两侧翼长度（misa_primer3.pl --flanking_length）"
+  min_product_length:
+    type: integer
+    default: 100
+    description: "引物最小产物长度（misa_primer3.pl --min_product_length）"
+  max_product_length:
+    type: integer
+    default: 250
+    description: "引物最大产物长度（misa_primer3.pl --max_product_length）"
+
+outputs:
+  misa_table:
+    path_pattern: "{outdir}/misa/<genome>.misa"
+  misa_statistics:
+    path_pattern: "{outdir}/misa/<genome>.statistics"
+  p3_settings_file:
+    path_pattern: "{outdir}/p3_settings_file（未显式给 --p3-setting-file 时生成）"
+  primer_table:
+    path_pattern: "{outdir}/misa_primer3.out"
+    description: "TSV 引物表：ID / SSR nr. / SSR type / SSR / size / start / end + 每记录最多 5 对引物（left/right 序列、Tm、长度、产物长度）"
+  gff3:
+    path_pattern: "{outdir}/misa_primer3.gff3（默认开启）"
+  intermediates:
+    path_pattern: "{outdir}/misa_primer3/misa_primer3.tmp/<ID>.out（每位点 Primer3 设置与 primer3_core 原始输出）、misa_primer3.commands"
+
+execution:
+  entrypoint: "python subworkflow/misa_primer3/native/main.py --list-stages | --dry-run（默认）| --real（见同目录 misa_primer3.md「编排入口」）"
+  dependencies_in_skills:
+    - misa/native          # detect stage：modules/misa/native/main.py（misa.pl v2.1）
+    - primer3/native       # primer3_core 二进制（由 misa_primer3.pl 直接调用；modules/primer3）
+  external_dependencies:
+    - perl                 # misa_primer3.pl
+    - ParaFly              # --CPU 并行（bioconda parafly）
+  fallback_note: "misa/primer3 native 未就绪时用 native/main.py --dry-run 演示各 stage 命令形态；
+    --real 需 PATH 内有 misa.pl、primer3_core、ParaFly、perl（见 misa_primer3.md「环境准备」）。"
+  test_command: "bash native/test/run_test.sh"
+
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  per_subcommand_threads:
+    misa_primer3_design: 8
+    default: 8
