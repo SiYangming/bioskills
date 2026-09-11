@@ -1,0 +1,137 @@
+software: barrnap
+canonical: barrnap
+category: rna_annotation
+description: 'barrnap（BAsic Rapid Ribosomal RNA Predictor，tseemann）是快速 rRNA 基因预测工具：
+  以 infernal 协方差模型（CM）在基因组中预测 5S/5.8S/16S/18S/23S/28S 核糖体 RNA（rRNA），
+  默认输出 GFF3 到 stdout（--outseq 可另存 hit 序列 FASTA）；v1.10 起支持 bac/arc/fun 域
+  （细菌/古菌/真菌·真核），0.9 时代为 euk/bac/arc/mito 四域；生物信息教学中用作已停止维护的
+  RNAmmer 的 rRNA 预测替代工具。注：上游 2026-04 发布 v1.10.x 重大版本（由核苷酸 HMM+局部比对
+  改为 CM 全局搜索），CLI 与 0.9 不同（--kingdom 取值、--lencutoff/--reject 移除等），
+  版本差异见 README「版本差异声明」。
+  '
+homepage: https://github.com/tseemann/barrnap
+# License: GNU GPL v3（上游 GitHub LICENSE 为 GPL-3.0，2026-09 在线核实）；SPDX: GPL-3.0
+license: GPL-3.0
+software_versions:
+- id: barrnap_native
+  barrnap: '1.10.6'
+  build_route: official biocontainer（quay.io/biocontainers/barrnap / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/barrnap
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    barrnap=1.10.6（2026-04 起发布，perl 5.32 noarch build pl5321hdfd78af_0），conda 包随装
+    infernal/aragorn/seqkit/bedtools/transtermhp/pyrodigal/taxonkit 等运行依赖；
+    ⚠️ v1.10.x 重写版 CLI 与 0.9 不同：--kingdom 取值 bac/arc/fun（默认 bac；0.9 的 euk 由 fun
+    覆盖、mito 模型移除），--lencutoff/--reject 已移除（由 --evalue 阈值替代）；
+    驱动 main.py 按安装版本自动兼容（0.9 环境保留 euk/mito/lencutoff）。宿主机直跑 main.py 时用
+    conda/mamba 安装 barrnap=1.10.6；注：1.10.6 包内 --version 自报 1.10.5（上游未 bump 内部
+    版本串），不影响功能与版本登记。'
+- id: barrnap_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  barrnap: '0.9'
+  source: bioconda::barrnap=0.9（modules/nf-core/barrnap/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/barrnap（单模块扁平结构：environment.yml + main.nf +
+    meta.yml，无子目录；2026-09 在线核实，以官方在线目录为准），pin bioconda::barrnap=0.9
+    （经典 0.9 CLI：kingdom 取 euk/bac/arc/mito、支持 --lencutoff/--reject）；组装 Nextflow 时
+    用 nf modules install 安装（见 README 官方登记节）。'
+- id: barrnap_snakemake_wrappers
+  barrnap: '1.10.6'
+  wrapper_tag: v9.17.1
+  source: bioconda barrnap=1.10.6（bio/barrnap/environment.yaml，无独立 snakemake-wrapper-utils 依赖）
+  note: 'snakemake-wrappers 官方存在 bio/barrnap（扁平 wrapper：wrapper.py + environment.yaml +
+    meta.yaml + test/，无子目录；2026-09 在线核实，v9.17.1 tag 含该 wrapper）；params 契约：
+    kingdom（默认 bac）+ extra，input.fasta → output.gff（可选 output.fasta → 追加 --outseq）。'
+implementations:
+- id: barrnap_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.10.6"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    scan 包装 barrnap 做 rRNA（默认）/RNA 注释：基因组 FASTA → GFF3（缺省 stdout，-o 写文件，
+    --outseq 另存 hit 序列 FASTA）；自动注入 --threads 与 TMPDIR；驱动针对登记的 barrnap=1.10.6
+    CLI（kingdom bac/arc/fun）并按安装版本兼容 0.9 旧参数（euk→fun 映射 / mito、lencutoff 提示）。
+    容器走官方镜像（quay.io/biocontainers/barrnap，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/barrnap
+    quay_biocontainers: quay.io/biocontainers/barrnap
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda barrnap=1.10.6；容器可用
+      quay.io/biocontainers/barrnap:1.10.6--pl5321hdfd78af_0 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: barrnap_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: barrnap 子命令：scan（包装 barrnap：基因组 FASTA → GFF3，默认仅 rRNA 扫描）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: scan 输入基因组 FASTA（也接受 GBK/EMBL/FASTQ，可 .gz；教学用合成小基因组即可）
+  kingdom:
+    type: string
+    default: bac
+    cli_arg: --kingdom
+    description: 域模型。barrnap>=1.10（bioconda 现行 1.10.6）取 bac|arc|fun（默认 bac；fun 覆盖
+      0.9 的 euk 真核域）；barrnap 0.9（nf-core/brew pin）取 euk|bac|arc|mito。驱动按安装版本
+      自动兼容：现代版收到 euk 时警告并映射为 fun，mito 报错提示（0.9 已移除该模型）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入；scan 默认 8；barrnap 原生默认 1）
+  outseq:
+    type: file
+    required: false
+    cli_arg: --outseq
+    description: 可选：把预测到的 RNA（rRNA hit）序列输出到该 FASTA 文件（GFF3 仍走 stdout/-o）
+  evalue:
+    type: number
+    required: false
+    cli_arg: --evalue
+    description: 相似性 e-value 阈值（barrnap>=1.10 默认 0.001；0.9 默认 1e-6）
+  lencutoff:
+    type: number
+    required: false
+    cli_arg: --lencutoff
+    description: '0.9 时代按比例长度阈值标记 partial 基因（0.9 默认 0.8）；barrnap>=1.10 已移除
+      该参数——驱动在现代版上自动忽略并警告（仅 0.9 环境注入命令行）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: GFF3 输出文件（缺省 stdout；由驱动把捕获的 stdout 写入该文件）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 barrnap 的额外参数（如 --quiet --incseq --addids，高级用法，慎用）
+outputs:
+  gff3:
+    type: file
+    format: gff
+    description: scan 产物：GFF3 rRNA（/RNA）注释，缺省 stdout、-o 写文件（首行 ##gff-version 3）
+  rrna_fasta:
+    type: file
+    format: fasta
+    description: scan 加 --outseq 时的产物：预测 RNA（rRNA hit）序列 FASTA
+environment:
+  container_official: quay.io/biocontainers/barrnap（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 barrnap（依赖随包装入）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    scan: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: barrnap
+  note: scan 包装官方 barrnap（v1.10.6 默认仅 --rrna 扫描；CM 搜索在临时目录进行，中间文件自动清理；
+    驱动按安装版本适配 CLI：>=1.10 用 bac/arc/fun 并告警 euk→fun，0.9 用 euk/bac/arc/mito）。
+    execution.binary 登记 barrnap 为代表性入口；nextflow/snakemake 官方层见 README 与 software_versions。

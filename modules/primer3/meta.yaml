@@ -1,0 +1,138 @@
+software: primer3
+canonical: primer3
+category: primer_design
+description: 'Primer3（primer3_core，primer3-org 维护）是通用 PCR/测序引物设计的开源引擎：
+  通过 stdin 读入 Primer3 设置文本（SEQUENCE_ID / SEQUENCE_TEMPLATE / PRIMER_TASK /
+  PRIMER_PRODUCT_SIZE_RANGE ...，= 结尾），在 stdout 输出满足 Tm/GC/产物大小约束的引物对。
+  生物信息教学典型用法（课件）：MISA（misa.pl）检测 SSR 后由 misa_primer3.pl 生成 p3_settings_file
+  并调用 primer3_core 批量设计 SSR 侧翼引物（primer3_core < p3_settings_file > primer3.out）；
+  本模块 design 子命令包装 primer3_core，支持直接喂入 settings 文件（positional / --input），
+  或 --template/--id/--product-min/--product-max 便捷参数自动组装最小 settings 后交给 primer3_core。
+  '
+homepage: https://primer3.org/
+# License: 官方仓库 primer3-org/primer3 LICENSE 为 GNU GPL v2（Version 2, June 1991，2026-09 在线核实）；
+# bioconda 亦记 GPLv2；brew formula 标 GPL-2.0-or-later AND GPL-3.0-or-later（源内个别文件），SPDX 以官方主 LICENSE 登记 GPL-2.0
+license: GPL-2.0
+software_versions:
+- id: primer3_native
+  primer3: '2.6.1'
+  build_route: official biocontainer（quay.io/biocontainers/primer3 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/primer3
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    primer3=2.6.1（2019-04 上游发布后长期未 bump；bioconda 现行 build 2.6.1-7，quay tag
+    2.6.1--pl5321h503566f_7，2026-09 在线核实）随包装入 perl>=5.32.1/libcxx（primer3 本体为 C，
+    perl 用于自带脚本）；宿主机直跑 main.py 时用 conda/mamba 安装 primer3=2.6.1（提供 primer3_core /
+    oligotm / ntdpal / ntthal / primer3_masker 等）。'
+- id: primer3_nextflow_nfcore
+  primer3: 官方无模块（modules/nf-core/primer3 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/primer3
+    返回 404（登记「官方无」）；Nextflow 场景暂无官方 nf-core 子模块可登记，需要时以 primer3_native
+    为兜底（或自行 nf modules 引入第三方模块）。
+- id: primer3_snakemake_wrappers
+  primer3: 官方无 wrapper（bio/primer3 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/primer3
+    返回 404（登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以 primer3_native
+    为兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: primer3_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.6.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    design 包装 primer3_core：喂入 primer3 设置文本（settings 文件 positional/--input）做引物设计，
+    或 --template/--id/--product-min/--product-max 便捷参数自动组装最小 settings（SEQUENCE_ID/
+    SEQUENCE_TEMPLATE/PRIMER_TASK=generic/PRIMER_PRODUCT_SIZE_RANGE）再交给 primer3_core；
+    结果 stdout/-o 输出。primer3_core 为单线程程序，驱动不强加线程参数（批量并行建议按位点拆分多个
+    design 调用，见 README）。容器走官方镜像（quay.io/biocontainers/primer3，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/primer3
+    quay_biocontainers: quay.io/biocontainers/primer3
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda primer3=2.6.1；容器可用
+      quay.io/biocontainers/primer3:2.6.1--pl5321h503566f_7 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: primer3_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: primer3 子命令：design（包装 primer3_core：Primer3 设置文本 → 引物设计结果）
+  settings_file:
+    type: file
+    required: false
+    cli_arg: positional
+    description: design 的 Primer3 设置文本路径（每行 TAG=VALUE，块尾 '=' 结束；也可用 --input 指定；
+      缺省时由 --template 等便捷参数组装最小 settings）。教学中的 p3_settings_file（misa_primer3.pl 生成）即此类文件
+  template:
+    type: string
+    required: false
+    cli_arg: --template
+    description: 便捷模式：SEQUENCE_TEMPLATE 模板序列（DNA/IUPAC，内部空白自动去除并转大写；与
+      settings_file 互斥），由驱动组装最小 settings（SEQUENCE_ID/SEQUENCE_TEMPLATE/PRIMER_TASK=generic/
+      PRIMER_PRODUCT_SIZE_RANGE）后喂给 primer3_core
+  seq_id:
+    type: string
+    required: false
+    cli_arg: --id
+    description: 便捷模式：SEQUENCE_ID（默认 seq；教学/批量建议写位点名如 CL1，便于结果回溯）
+  product_min:
+    type: integer
+    default: 100
+    cli_arg: --product-min
+    description: 便捷模式：产物大小下限（组装 PRIMER_PRODUCT_SIZE_RANGE=<min>-<max>；默认 100）
+  product_max:
+    type: integer
+    default: 300
+    cli_arg: --product-max
+    description: 便捷模式：产物大小上限（组装 PRIMER_PRODUCT_SIZE_RANGE=<min>-<max>；默认 300；
+      SSR 侧翼引物教学常取 100-300）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 设计结果输出文件（默认 stdout；由驱动把捕获的 stdout 写入该文件；等价 > file）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: --threads
+    description: 线程数（协议位：primer3_core 为单线程程序，驱动不强加/不注入；批量并行建议
+      GNU parallel 按位点拆分多个 design 调用，见 README「实战示例」）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 primer3_core 的额外参数（高级用法，慎用）：如 --strict_tags（仅输出 TAG=VALUE）、
+      --io_version=4、--format_output（人类可读格式）、--p3_settings_file=FILE 等
+outputs:
+  primer3_output:
+    type: file
+    format: txt
+    description: design 产物（stdout 或 -o 文件）：primer3_core 引物设计结果——含 PRIMER_LEFT_0_SEQUENCE /
+      PRIMER_RIGHT_0_SEQUENCE / PRIMER_PAIR_PRODUCT_SIZE 等键（默认格式含 "PRIMER PICKING RESULTS FOR ..."
+      头部；--strict_tags/--io_version=4 可切到纯 TAG=VALUE 便于脚本解析）
+environment:
+  container_official: quay.io/biocontainers/primer3（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 primer3（C 程序编译安装亦可，
+    见 README「### 4. 二进制包安装」）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 512
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    design: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: primer3_core
+  note: design 包装 primer3_core（执行名 primer3_core；settings 经 stdin 喂入、结果取 stdout，由驱动
+    重定向 -o/--output 写文件，与教学 primer3_core < p3_settings_file > primer3.out 等价）。
+    execution.binary 登记 primer3_core 为代表性入口。线程说明：primer3_core 单线程，default_cpus=1，
+    不强加线程参数；批量设计（如 MISA SSR 全基因组位点）建议 GNU parallel 并行跑多个 design。
+    官方 nf-core / snakemake-wrappers 层均 404（2026-09 在线核实，见 README「官方实现登记」），
+    未建 nextflow//snakemake/ 目录。

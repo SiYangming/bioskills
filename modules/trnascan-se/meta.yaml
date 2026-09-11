@@ -1,0 +1,142 @@
+software: trnascan-se
+canonical: trnascan-se
+category: genome_annotation
+description: 'tRNAscan-SE 2.0（UCSC Lowe Lab）是 tRNA 基因预测的事实标准工具：以 Infernal
+  covariance models（随机上下文无关文法，SCFG）为主搜索引擎，默认真核模型直接预测基因组中的
+  tRNA 基因（-B 切原核模型、-A 切古菌模型），输出标准表格（-o）、二级结构（-f，.ss）、
+  统计（-m，.stats）；v2.0.9+ 内置 -j/--gff 直接出 GFF3。教学典型用法（生物信息课件）：
+  tRNAscan-SE -o tRNA.out -f tRNA.ss -m tRNA.stats genome.fasta（真核默认）与
+  tRNAscan-SE -B -o Ecoli_tRNA.out -f Ecoli_tRNA.ss -m Ecoli_tRNA.stats genome.ecoli.fasta
+  （原核 -B）。
+  '
+homepage: http://lowelab.ucsc.edu/tRNAscan-SE/
+# License: 上游 GitHub LICENSE 为 GPLv3 全文（GitHub 检测 spdx GPL-3.0，2026-09 核实）；
+# bioconda recipe 与 nf-core meta 记为 GPL v3 / GPL-3.0-or-later，SPDX 以 GPL-3.0 登记
+license: GPL-3.0
+software_versions:
+- id: trnascan_se_native
+  trnascan_se: '2.0.13'
+  build_route: official biocontainer（quay.io/biocontainers/trnascan-se / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/trnascan-se
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    trnascan-se=2.0.13（上游 2026-07-05 发 v2.0.13；bioconda build 2.0.13-0，quay tag
+    2.0.13--pl5321hab16a5f_0）随包装入 infernal>=1.1.4 / perl>=5.32.1 及全部 covariance model
+    （真核/原核/古菌模型文件在 conda 包内，装好即可跑，无需另配）；宿主机直跑 main.py 时用
+    conda/mamba 安装 trnascan-se=2.0.13。驱动不强加线程参数（主程序无 -pa；并行靠序列切分或
+    v2.0.13+ 新增 --thread，见 README）。'
+- id: trnascan_se_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  trnascan_se: '2.0.12'
+  source: bioconda::trnascan-se=2.0.12（modules/nf-core/trnascanse/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/trnascanse（官方目录名 trnascanse，无连字符——与
+    canonical 拼写差异，按在线目录登记）；为扁平单模块（modules/nf-core/trnascanse/ 下直接
+    main.nf + meta.yml + environment.yml，无子模块拆分，仅 tests/），pin bioconda::trnascan-se=2.0.12
+    （低于 bioconda 现行 2.0.13，迁移时注意）；组装 Nextflow 用 nf modules install nf-core
+    trnascanse 安装（见 README）。'
+- id: trnascan_se_snakemake_wrappers
+  trnascan_se: 官方无 wrapper（bio/trnascan-se 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/trnascan-se
+    返回 404（登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以 trnascan_se_native
+    为兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: trnascan_se_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.13"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    scan 包装 tRNAscan-SE 2.0 主程序：真核（默认）/ 原核（-B）两种模型搜索，映射 -o（表格）/-f
+    （二级结构）/-m（统计）；v2.0.9+ 的 -j GFF3、-a FASTA、-b BED 等经 --extra-args 透传。
+    自动注入 TMPDIR（tRNAscan-SE 源码读取 $ENV{TMPDIR} 放置中间文件）；不强加线程参数（无
+    -pa；并行靠按序列切分，或 2.0.13+ 经 --extra-args "--thread N" 透传 Infernal 多线程）。
+    容器走官方镜像（quay.io/biocontainers/trnascan-se，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/trnascan-se
+    quay_biocontainers: quay.io/biocontainers/trnascan-se
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda trnascan-se=2.0.13；容器可用
+      quay.io/biocontainers/trnascan-se:2.0.13--pl5321hab16a5f_0 镜像（bioconda 自动构建，tag 以
+      quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: trnascan_se_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: trnascan-se 子命令：scan（包装 tRNAscan-SE 2.0 主程序；tRNAscanSE2GFF3.pl 等
+      外部脚本不属于发行本体，不作为子命令，见 README）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 待预测 tRNA 的基因组/序列 FASTA（位置参数；教学用合成小基因组即可，全基因组建议
+      按序列切分并行，见 README「实战示例」）
+  out:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 表格输出文件（默认 stdout；教学惯例如 tRNA.out / Ecoli_tRNA.out）
+  ss:
+    type: file
+    required: false
+    cli_arg: -f
+    description: 二级结构输出文件（-f/--struct，.ss 格式，默认不输出；教学惯例如 tRNA.ss）
+  stats:
+    type: file
+    required: false
+    cli_arg: -m
+    description: 统计输出文件（-m/--stats，.stats，默认不输出；教学惯例如 tRNA.stats）
+  prokaryote:
+    type: boolean
+    default: false
+    cli_arg: -B
+    description: 原核模型模式（-B/--bacterial；默认真核模型。古菌用 -A 等其它模型经 --extra-args 透传）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（协议位：tRNAscan-SE 主程序无 -pa，驱动不强加/不注入；大规模并行建议
+      GNU parallel 按序列切分，或 v2.0.13+ 经 --extra-args "--thread N" 显式透传给 Infernal）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 tRNAscan-SE 的额外参数（高级用法，慎用）：如 -A（古菌）、-j x.gff（GFF3，
+      v2.0.9+）、-a x.fa、-b x.bed、--thread 4（v2.0.13+）等
+outputs:
+  out_file:
+    type: file
+    format: txt
+    description: scan 表格产物（-o 指定路径，默认 stdout）：逐 tRNA 的序列名/坐标/反密码子/得分/内含子等列
+  ss_file:
+    type: file
+    format: ss
+    description: scan 加 -f 时的二级结构产物：每个预测 tRNA 的 cloverleaf 结构（.ss，可转 RNAplot 绘图）
+  stats_file:
+    type: file
+    format: stats
+    description: scan 加 -m 时的统计产物：tRNA 总数/假基因/内含子/各 isotype 反密码子统计（.stats）
+environment:
+  container_official: quay.io/biocontainers/trnascan-se（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 trnascan-se（模型文件随包，
+    装好即用，无需另配 Infernal/模型）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    scan: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: tRNAscan-SE
+  note: '驱动包装 tRNAscan-SE 2.0 主程序（执行名 tRNAscan-SE，注意大小写）；execution.binary
+    登记 tRNAscan-SE 为代表性入口。线程说明：主程序无 -pa 概念（v1 亦无），v2.0.13 起新增
+    --thread <n>（转发 Infernal cmsearch，仅默认 Infernal 模式可用、不可与 -e/-t/-C/-L 共存），
+    驱动不强加线程参数；大规模并行建议按序列切分后以 GNU parallel 并发跑多个 scan。转 GFF3 有
+    两条路：v2.0.9+ 内置 -j/--gff（extra_args 透传），老教程的 tRNAscanSE2GFF3.pl 为独立 perl
+    脚本（不属于发行本体，README 提及但不作为子命令）。'

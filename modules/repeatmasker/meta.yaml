@@ -1,0 +1,137 @@
+software: repeatmasker
+canonical: repeatmasker
+category: repeat_analysis
+description: 'RepeatMasker 是屏蔽并注释基因组中已知重复序列（转座子 / 简单串联重复 /
+  低复杂度区）的行业标准工具：基于 RepBase / Dfam 重复库、以 RMBlast（rmblastn）为默认
+  搜索引擎，输出被 N 屏蔽的序列（*.masked）与逐位点重复注释（*.out，-gff 可另出 GFF3）；
+  亦支持 -lib 传入 RepeatModeler 等自建的自定义重复库做物种特异屏蔽 / 注释，
+  是 repeatmodeler 模块（de novo 建库）的下游屏蔽环节。
+  '
+homepage: https://www.repeatmasker.org/
+# License: Open Software License v2.1（上游 GitHub LICENSE 与 bioconda recipe / repeatmasker.org 一致，2026-09 核实）；SPDX: OSL-2.1
+license: OSL-2.1
+software_versions:
+- id: repeatmasker_native
+  repeatmasker: '4.2.4'
+  build_route: official biocontainer（quay.io/biocontainers/repeatmasker / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/repeatmasker
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    repeatmasker=4.2.4（bioconda noarch build pl5321hdfd78af_0，2026-06 起发布）随包装入
+    rmblast>=2.17.0 / hmmer / trf / perl / h5py / famdb 等依赖（-species 走 FamDB/Dfam，
+    -lib 走自定义库，见 README）；宿主机直跑 main.py 时用 conda/mamba 安装 repeatmasker=4.2.4。'
+- id: repeatmasker_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  repeatmasker: '4.1.5'
+  source: bioconda::repeatmasker=4.1.5（modules/nf-core/repeatmasker/{repeatmasker,rmouttogff3}/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/repeatmasker（子模块 repeatmasker + rmouttogff3，
+    2026-09 在线核实，按在线目录登记）；两子模块均 pin bioconda::repeatmasker=4.1.5，低于
+    bioconda 现行 4.2.4，迁移时注意版本差异；组装 Nextflow 用 nf modules install 安装。'
+- id: repeatmasker_snakemake_wrappers
+  repeatmasker: 官方无 wrapper（bio/repeatmasker 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/repeatmasker
+    返回 404（登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以
+    repeatmasker_native 为兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: repeatmasker_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.2.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    mask 调用 RepeatMasker（-species 走 RepBase/Dfam 库、-lib 走 RepeatModeler 等自定义库，
+    -gff 出 GFF3），query_species_tree 调用 RepeatMasker 发行内 util/queryRepeatDatabase.pl -tree
+    列出重复库内可用 -species 物种名；自动注入 -pa 线程与 TMPDIR；execution.binary 登记
+    RepeatMasker 为代表性入口。容器走官方镜像（quay.io/biocontainers/repeatmasker，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/repeatmasker
+    quay_biocontainers: quay.io/biocontainers/repeatmasker
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda repeatmasker=4.2.4；容器可用
+      quay.io/biocontainers/repeatmasker:4.2.4--pl5321hdfd78af_0 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: repeatmasker_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: repeatmasker 子命令：mask|query_species_tree（mask 包装 RepeatMasker；query_species_tree 包装 util/queryRepeatDatabase.pl -tree）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: mask 输入基因组 FASTA（位置参数；教学用合成小基因组 / 单条染色体即可，真核全基因组耗时见 README）
+  species:
+    type: string
+    required: false
+    cli_arg: -species
+    description: 重复库内物种 / 分类群名（须为库内有效 NCBI 分类名，先跑 query_species_tree 查可用名；与 -lib 至少给一项）
+  lib:
+    type: file
+    required: false
+    cli_arg: -lib
+    description: 自定义重复库 FASTA（如 RepeatModeler 产出的 consensi.fa / RM_*.families；与 -species 至少给一项）
+  dir:
+    type: string
+    required: false
+    cli_arg: -dir
+    description: 输出目录（默认当前目录；产物 <genome>.masked / .out / .tbl 于其下）
+  engine:
+    type: string
+    default: ncbi
+    cli_arg: -e
+    description: 搜索引擎（默认 ncbi；ncbi 与 rmblast 均为 RMBlast/rmblastn 引擎别名；亦支持 crossmatch / abblast / wublast / hmmer）
+  gff:
+    type: boolean
+    default: false
+    cli_arg: -gff
+    description: 追加输出 GFF3 重复注释（<genome>.out.gff）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -pa
+    description: 并行任务数（mask 自动注入 -pa；query_species_tree 仅作为运行期选项被接受）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 RepeatMasker 的额外参数（如 -xsmall -cutoff 3.7 -no_is 等常用项，高级用法，慎用）
+outputs:
+  masked_fasta:
+    type: file
+    format: fasta
+    description: mask 产物：<genome>.masked（重复区间被 N 屏蔽后的序列）
+  out_annotation:
+    type: file
+    format: out
+    description: mask 产物：<genome>.out（RepeatMasker 表格重复注释；.tbl 为按重复类汇总）
+  gff_file:
+    type: file
+    format: gff
+    description: mask 加 -gff 时的产物：<genome>.out.gff（GFF3 重复注释）
+  species_tree:
+    type: string
+    description: query_species_tree 输出到 stdout 的重复库物种树（用于挑选 -species 可用名）
+environment:
+  container_official: quay.io/biocontainers/repeatmasker（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 repeatmasker（依赖随包装入；
+    -species 需 Dfam/FamDB 或 RepBase 重复库，-lib 自定义库则无需数据库配置）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    mask: 4
+    query_species_tree: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: RepeatMasker
+  note: 驱动内含两个官方入口（同属 repeatmasker 发行）：mask 调 RepeatMasker（默认 -e ncbi，
+    ncbi/rmblast 均为 rmblastn/RMBlast 别名）；query_species_tree 调 util/queryRepeatDatabase.pl
+    -tree（经典 RepBase 安装随发行提供；RepeatMasker>=4.2 改用 FamDB/Dfam 后该脚本不再随发行，
+    届时查 -species 名请用 famdb 工具，见 README「实战示例 §3」）。execution.binary 登记
+    RepeatMasker 作为代表性入口。

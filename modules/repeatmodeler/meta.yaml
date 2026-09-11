@@ -1,0 +1,122 @@
+software: repeatmodeler
+canonical: repeatmodeler
+category: repeat_analysis
+description: 'RepeatModeler 是基因组从头（de novo）重复序列家族识别与建模工具：
+  BuildDatabase 把基因组 FASTA 建成 BLAST 库，RepeatModeler -database 自动运行
+  RECON/RepeatScout/LTR_retriever 等挖掘管线并经 RMBlast 聚类，产出物种特异共有重复库
+  （RM_*.families / consensi.fa(.classified)），直接供 RepeatMasker -lib 做全基因组屏蔽。
+  依赖（RECON/RepeatScout/RMBlast/TRF/RepeatMasker/cd-hit 等）由 bioconda 包一并装入，
+  本模块不单独管理。
+  '
+homepage: https://www.repeatmasker.org/RepeatModeler/
+# License: Open Software License v2.1（bioconda recipe 与上游 GitHub 一致登记，2026-09 核实）；SPDX: OSL-2.1
+license: OSL-2.1
+software_versions:
+- id: repeatmodeler_native
+  repeatmodeler: '2.0.9'
+  build_route: official biocontainer（quay.io/biocontainers/repeatmodeler / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/repeatmodeler
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    repeatmodeler=2.0.9（noarch，build pl5321hdfd78af_0，2026-07-25 发布）会把 RECON/RepeatScout/
+    RMBlast>=2.17/TRF/RepeatMasker>=4.2.4/cd-hit/LTR_retriever 等依赖一并装入（本模块不单独管理）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 repeatmodeler=2.0.9。'
+- id: repeatmodeler_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  repeatmodeler: '2.0.5'
+  source: bioconda::repeatmodeler=2.0.5（modules/nf-core/repeatmodeler/{builddatabase,repeatmodeler}/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/repeatmodeler（子模块 builddatabase + repeatmodeler，2026-09
+    在线核实，与任务预判「官方无」不符，按在线目录登记）；两子模块均 pin bioconda::repeatmodeler=2.0.5，
+    低于 bioconda 现行 2.0.9，迁移时注意版本差异；组装 Nextflow 用 nf modules install 安装。'
+- id: repeatmodeler_snakemake_wrappers
+  repeatmodeler: 官方无 wrapper（bio/repeatmodeler 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/repeatmodeler
+    返回 404（与预判一致，登记「官方无」）；Snakemake 场景暂无官方 wrapper 可登记，需要时以
+    repeatmodeler_native 为兜底（或参照同库其它模块自建本地规则）。'
+implementations:
+- id: repeatmodeler_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.9"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    build_db 子命令调用 BuildDatabase（-name/-engine）建 BLAST 库，model 子命令调用 RepeatModeler
+    （-database/-engine/-pa/--LTRStruct）跑从头建库链路并产出供 RepeatMasker -lib 的共有序列；
+    自动注入线程与 TMPDIR；execution.binary 登记 BuildDatabase 为代表性入口。
+    容器走官方镜像（quay.io/biocontainers/repeatmodeler，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/repeatmodeler
+    quay_biocontainers: quay.io/biocontainers/repeatmodeler
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda repeatmodeler=2.0.9；容器可用
+      quay.io/biocontainers/repeatmodeler:2.0.9--pl5321hdfd78af_0 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: repeatmodeler_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: repeatmodeler 子命令：build_db|model（build_db 包装 BuildDatabase，model 包装 RepeatModeler）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: build_db 输入基因组 FASTA（教学/小基因组示例；真核大基因组耗时数十 GB 级，按需分染色体）
+  name:
+    type: string
+    required: false
+    cli_arg: -name
+    description: build_db 输出的数据库名（必需；RepeatModeler -database 指向该库名）
+  engine:
+    type: string
+    default: ncbi
+    cli_arg: -engine
+    description: 搜索引擎（默认 ncbi；bioconda 包内为 RMBlast 兼容的 NCBI 引擎）
+  database:
+    type: string
+    required: false
+    cli_arg: -database
+    description: model 的数据库名（必需；指向 BuildDatabase -name 的产物）
+  ltr_struct:
+    type: boolean
+    default: false
+    cli_arg: --LTRStruct
+    description: model 启用 LTR 结构发现（LTR_retriever；更慢，真核大基因组按需）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -pa
+    description: 线程数（model 自动注入 -pa；build_db 原生无并行参数，仅接受该运行期选项不注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 BuildDatabase / RepeatModeler 的额外参数（高级用法，慎用）
+outputs:
+  database:
+    type: file
+    format: repeatmodeler-db
+    description: build_db 产物：<name>-index/ 目录（BLAST 库）与 <name>.translation（六框翻译库）
+  consensus_fasta:
+    type: file
+    format: fasta
+    description: model 产物：RM_*/consensi.fa(.classified) 与 RM_*.families，供 RepeatMasker -lib 使用
+environment:
+  container_official: quay.io/biocontainers/repeatmodeler（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 repeatmodeler（依赖随包装入）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    model: 8
+    build_db: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: BuildDatabase
+  note: 驱动内含两个官方可执行（同属 bioconda repeatmodeler 包）：build_db 调 BuildDatabase、model 调
+    RepeatModeler；execution.binary 登记 BuildDatabase 作为代表性入口（用法见 README）。

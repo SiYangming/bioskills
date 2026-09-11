@@ -1,0 +1,151 @@
+software: antismash
+canonical: antismash
+category: secondary_metabolism
+description: 'antismash（antiSMASH，antibiotics & Secondary Metabolite Analysis SHell）是
+  次级代谢产物生物合成基因簇（BGC）预测与注释工具：在细菌/真菌基因组中快速鉴定
+  PKS/NRPS/萜烯/RiPP 等 100+ 类 BGC，预测产物与核心生物合成酶、并做 ClusterBlast /
+  KnownClusterBlast / MiBIG 等比较分析，输出 HTML 可视化报告 + 各 region 的 GenBank/
+  JSON 结构化结果。教学典型用法：先 download-antismash-databases 下载数据库（数 GB，
+  含 Pfam/Resfam/ClusterBlast/MiBIG 等），再 antismash -c 8 --taxon fungi genome.gbk
+  或 antismash my_input.gbk 分析。注：v7 起输出目录参数由旧版 --outputfolder 改名为
+  --output-dir，--taxon 取值 bacteria/fungi。
+  '
+homepage: https://antismash.secondarymetabolites.org/
+# License: AGPL-3.0-or-later（anaconda.org/bioconda/antismash、bioconda-recipe、brewsci/bio
+# formula 与上游源码 LICENSE 四方一致，2026-09 在线核实）；SPDX 记 AGPL-3.0-or-later
+license: AGPL-3.0-or-later
+software_versions:
+- id: antismash_native
+  antismash: '8.0.4'
+  build_route: official biocontainer（quay.io/biocontainers/antismash / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/antismash
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    antismash=8.0.4（noarch，build 串 pyhdfd78af_0 / pyhdfd78af_1；官方容器
+    quay.io/biocontainers/antismash:8.0.4--pyhdfd78af_1，2026-03 更新，亦存 _0；
+    容器内自带 antismash 与 download-antismash-databases 两个入口）；conda 安装依赖多
+    （hmmer2/hmmer/diamond/fasttree/prodigal/blast/meme 等随包装入）；
+    ⚠️ 首次运行前必须 download-antismash-databases 下载数 GB 数据库（Pfam/Resfam/
+    ClusterBlast/MiBIG/CompaRiPPson 等，~15GB 磁盘），或 docker run 官方全量镜像
+    antismash/standalone（Docker Hub 备用，含数据库）；v7 起 --outputfolder 更名为
+    --output-dir（驱动按登记的 8.0.4 CLI 使用 --output-dir）；下载器参数为 --database-dir
+    （7.x/8.x 一致）。宿主机直跑 main.py 时用 conda/mamba 安装 antismash=8.0.4。'
+- id: antismash_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  antismash: '8.0.1'
+  antismash_lite: '7.1.0'
+  source: bioconda::antismash=8.0.1 + bioconda::antismash-lite=7.1.0（modules/nf-core/antismash/
+    {antismash,antismashdownloaddatabases,antismashlite,antismashlitedownloaddatabases}/
+    environment.yml；容器 quay.io/nf-core/antismash:8.0.1--pyhdfd78af_0）
+  note: 'nf-core 官方存在 modules/nf-core/antismash/（2026-09 在线核实，以官方在线目录为准），
+    四个子模块：antismash（完整版，pin antismash=8.0.1）、antismashdownloaddatabases（下载
+    数据库）、antismashlite（精简版，pin antismash-lite=7.1.0）、antismashlitedownloaddatabases；
+    组装 Nextflow 流程时用 nf modules install 安装（见 README 官方登记节）。
+    full 子模块 main.nf 注：不含 on-the-fly 注释（--genefinding-tool none），基因注释单独成模块。'
+- id: antismash_snakemake_wrappers
+  antismash: 官方无 wrapper（bio/antismash 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/antismash
+    返回 404；Snakemake 场景暂无官方 wrapper 可登记，需要时以 antismash_native 为兜底。'
+implementations:
+- id: antismash_native
+  path: native
+  source_type: custom
+  type: native
+  version: "8.0.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    run 包装 antismash 做 BGC 预测（GBK/EMBL/FASTA → HTML 报告 + region GenBank/JSON，
+    自动注入 --cpus 与 TMPDIR）；download_db 包装 download-antismash-databases 下载运行
+    数据库（可选输出目录，映射为 --database-dir）。容器走官方镜像
+    （quay.io/biocontainers/antismash，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/antismash
+    quay_biocontainers: quay.io/biocontainers/antismash
+    install_hint: 推荐 mamba create -n antismash -c conda-forge -c bioconda antismash=8.0.4；
+      容器可用 quay.io/biocontainers/antismash:8.0.4--pyhdfd78af_1 镜像（bioconda 自动构建，
+      见 README「容器与 Conda 链接」；数据库需另下或换用含库的 Docker Hub antismash/standalone）
+default_implementation: antismash_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: antismash 子命令：run（BGC 预测分析）| download_db（下载运行数据库）
+  input_gbk:
+    type: file
+    required: false
+    cli_arg: positional
+    description: run 的输入序列文件（GenBank .gbk/.gbff，也接受 EMBL/FASTA；细菌/真菌基因组）
+  cpus:
+    type: integer
+    default: 8
+    cli_arg: -c
+    description: 并行 CPU 数（run；等价 antismash -c/--cpus；驱动默认 8）
+  taxon:
+    type: string
+    default: bacteria
+    cli_arg: --taxon
+    description: 输入物种分类（antismash v7+ 取值 bacteria|fungi，默认 bacteria；真菌教学示例用 fungi）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: --output-dir
+    description: run 的结果输出目录（v7 起 --output-dir，v6 及更早为 --outputfolder；缺省为
+      输入文件同目录下以输入名命名的目录）；download_db 时指数据库安装目录（映射为
+      download-antismash-databases 的 --database-dir）
+  genefinding_tool:
+    type: string
+    required: false
+    cli_arg: --genefinding-tool
+    description: 基因预测工具覆盖（如 prodigal / glimmerhmm / none；缺省按 --taxon 智能选择，教学可选传）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --threads
+    description: 运行期线程覆盖（驱动注入 run 的 --cpus；download_db 无并行参数时忽略）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 antismash / download-antismash-databases 的额外参数（高级用法，慎用）
+outputs:
+  html_report:
+    type: file
+    format: html
+    description: run 产物：index.html 可视化 BGC 报告（含 regions.js、css/images/js 附属资源）
+  region_gbk:
+    type: file
+    format: genbank
+    description: run 产物：各 BGC region 的 *_regionNNN.gbk（含基因簇功能注释）
+  json_results:
+    type: file
+    format: json
+    description: run 产物：结构化结果 genome.json / region 级 json（下游 BiG-SCAPE 等可读）
+  databases_dir:
+    type: file
+    format: directory
+    description: download_db 产物：antismash 运行数据库目录（pfam/resfam/clusterblast/mibig 等，数 GB）
+environment:
+  container_official: quay.io/biocontainers/antismash（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；Docker Hub 官方 antismash/standalone（含数据库全量镜像，~9GB）作
+    补充渠道登记（见 README「容器与 Conda 链接」）；宿主机直跑 main.py 时用 conda/mamba 安装
+    antismash（依赖随包装入，需另跑 download-antismash-databases 下载数据库）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    download_db: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: antismash
+  note: run 包装官方 antismash（v8.0.4，BGC 预测；--output-dir 为 v7+ 参数，CPU 由 --cpus 注入，
+    运行需已下载数据库并耗时较长——测试仅自省/构造断言，绝不在测试内真跑分析）；
+    download_db 包装 download-antismash-databases（8.x/7.x 数据库目录参数 --database-dir）。
+    execution.binary 登记 antismash 为代表性入口；nf-core/snakemake-wrappers 官方层见
+    README 与 software_versions。

@@ -1,0 +1,149 @@
+software: infernal
+canonical: infernal
+category: rna_annotation
+description: 'Infernal（INFERence of RNA ALignment，Eddy lab）基于协方差模型（CM，
+  兼顾 RNA 序列与二级结构一致性的 profile-SCFG）搜索 RNA 序列/结构同源，是 Rfam
+  数据库的官方搜索工具：cmpress 压缩/索引 CM 数据库（生成 .cm.i1f/.cm.i1m/.cm.i1p/.cm.i1i
+  索引族），cmsearch 用 CM 集合搜索 DNA/RNA 序列数据库（输出主结果 + --tblout 表格）。
+  生物信息教学中典型用途为用 Rfam.cm 对基因组做 ncRNA（rRNA/tRNA 等）注释与质检
+  （cmsearch --cut_ga --nohmmonly --rfam --noali）；barrnap 等工具亦内嵌调用它。
+  '
+homepage: http://eddylab.org/infernal/
+# License: 上游 GitHub LICENSE 声明 "Infernal source code is distributed ... under the terms of the BSD
+#   three-clause license"（2026-09 在线核实；bioconda 页面亦记 BSD-3-Clause；网传 GPL-3.0 不实）
+# SPDX: BSD-3-Clause
+license: BSD-3-Clause
+software_versions:
+- id: infernal_native
+  infernal: '1.1.5'
+  build_route: official biocontainer（quay.io/biocontainers/infernal / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/infernal
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    infernal=1.1.5（perl 5.32 build，官方容器 tag 1.1.5--pl5321h7b50bb2_4，2026-09 在线核实，
+    以 quay / depot.galaxyproject.org 页面为准）；cmpress/cmsearch 等可执行文件 + Rfam perl 脚本
+    随包装入；宿主机直跑 main.py 时用 conda/mamba 安装 infernal=1.1.5。'
+- id: infernal_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  infernal: '1.1.5'
+  source: bioconda::infernal=1.1.5（modules/nf-core/infernal/cmsearch/environment.yml）
+  note: 'nf-core 官方存在 modules/nf-core/infernal 单子模块 cmsearch（cmsearch 用 CM 集合搜索
+    序列库 → 主输出 + tblout；2026-09 在线核实，以官方在线目录为准）；组装 Nextflow 时用
+    nf modules install 安装（见 README 官方登记节）。'
+- id: infernal_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  infernal: '1.1.5'
+  source: bioconda infernal=1.1.5（bio/infernal/{cmpress,cmscan}/environment.yaml，无独立 snakemake-wrapper-utils 依赖）
+  note: 'snakemake-wrappers 官方存在 bio/infernal（子目录 cmpress + cmscan，均压 Rfam/CM 库的
+    cmscan 家族，无 cmsearch wrapper；2026-09 在线核实，v9.17.1 tag 含该 wrapper）；
+    规则示例见 README 官方登记节。'
+implementations:
+- id: infernal_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    cmpress 压缩/索引 CM 数据库（Rfam.cm → .cm.i1f/.cm.i1m/.cm.i1p/.cm.i1i），cmsearch 用 CM
+    集合搜索基因组/序列库（自动注入 --cpu 线程，教学典型 --cut_ga --nohmmonly --rfam --noali
+    --tblout/-o）；容器走官方镜像（quay.io/biocontainers/infernal，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/infernal
+    quay_biocontainers: quay.io/biocontainers/infernal
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda infernal=1.1.5；容器可用
+      quay.io/biocontainers/infernal:1.1.5--pl5321h7b50bb2_4 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+default_implementation: infernal_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: infernal 子命令：cmpress|cmsearch（cmpress=索引 CM 库，cmsearch=CM 搜索序列库）
+  cm_database:
+    type: file
+    required: false
+    cli_arg: positional
+    description: CM 数据库文件（.cm，如 Rfam.cm；cmpress/cmsearch 共用，cmpress 后生成 .cm.i1f 等索引族）
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: cmsearch 的搜索目标序列库（基因组/转录组 FASTA 或 FASTQ，可 .gz；cmpress 不需要）
+  cut_ga:
+    type: boolean
+    default: false
+    cli_arg: --cut_ga
+    description: 用模型 GA 收集阈值（gathering cutoff）作为报告/包含阈值（Rfam 教学典型开关）
+  nohmmonly:
+    type: boolean
+    default: false
+    cli_arg: --nohmmonly
+    description: 关闭 HMM-only 快速模式，强制走完整 CM 流程（Rfam 教学典型开关，慢但更准）
+  rfam:
+    type: boolean
+    default: false
+    cli_arg: --rfam
+    description: 使用 Rfam 专属搜索选项（仅当用 Rfam.cm 库搜索时使用，Rfam 教学典型开关）
+  noali:
+    type: boolean
+    default: false
+    cli_arg: --noali
+    description: 主输出中不显示比对（省空间/加快，Rfam 教学典型开关）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入 cmsearch 的 --cpu；cmpress 单线程快跑不注入）
+  tblout:
+    type: file
+    required: false
+    cli_arg: --tblout
+    description: cmsearch 表格输出文件（每命中一行、易解析，如 rfam_out.tab；官方推荐）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: cmsearch 主输出文件（如 rfam_out.txt；缺省 stdout 由驱动落盘/管道）
+  evalue:
+    type: number
+    required: false
+    cli_arg: -E
+    description: 报告阈值 E-value（如 1e-5；与 --cut_ga 二选一风格，Rfam 教学默认走 --cut_ga）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 cmpress（如 -f 强制重建索引）/ cmsearch 的额外参数（高级用法，慎用）
+outputs:
+  cm_index:
+    type: file
+    description: cmpress 产物：<cm>.i1f/.cm.i1m/.cm.i1p/.cm.i1i 索引族（与 .cm 同目录，供 cmsearch 用）
+  cmsearch_output:
+    type: file
+    format: txt
+    description: cmsearch 主输出（命中列表/比对；-o 写文件，缺省 stdout 由驱动落盘）
+  tblout_file:
+    type: file
+    format: tab
+    description: cmsearch --tblout 表格输出（每命中一行，教学统计下游如 awk/课件脚本直接解析）
+environment:
+  container_official: quay.io/biocontainers/infernal（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 infernal（cmsearch/cmpress
+    随包装入）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    cmsearch: 8
+    cmpress: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: cmsearch
+  note: cmpress/cmsearch 包装官方 infernal（登记 1.1.5）；cmpress 为索引子命令（单线程快跑、
+    不注入 --cpu，线程值仅作调度提示），cmsearch 自动注入 --cpu；nextflow/snakemake 官方层见
+    README 与 software_versions（nf-core 仅 cmsearch 子模块，snakemake-wrappers 仅 cmpress+cmscan）。
