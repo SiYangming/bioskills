@@ -1,0 +1,24 @@
+# RNAmmer native 宿主 conda 依赖配方（非官方维护包）
+# -----------------------------------------------------------------------------
+# 官方渠道（bioconda rnammer / quay.io/biocontainers / depot.galaxyproject.org）
+# 均无 RNAmmer（2026-09 核实）→ 本文件只解决 HMMER2 + Perl + XML::Simple 运行依赖；
+# RNAmmer 1.2 源码为 CBS DTU 官网注册制下载，无法由 conda 获取，需用户注册下载后按
+# README「环境安装（官方渠道无镜像：宿主机安装）」③ 就地配置 INSTALL_PATH / HMMSEARCH_BINARY。
+#
+# 创建：
+#   mamba env create -f environment.yml
+#   conda run -n rnammer perl -MXML::Simple -e1              # 断言 Perl 依赖
+#   conda run -n rnammer hmmsearch2 -h                      # 断言 HMMER2（bioconda hmmer2 包内二进制带 2 后缀）
+# 或一键：bash native/install.sh --method conda
+name: rnammer
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11          # native/main.py 运行（base.py 依赖 pyyaml）
+  - pyyaml>=6.0
+  # HMMER 2.x：bioconda hmmer2 为 2.3.2；教学用 hmmer-2.2g 请走 install.sh --method manual 源码编译
+  - hmmer2
+  - perl                 # rnammer 主脚本解释器
+  - perl-xml-simple      # XML::Simple（rnammer 输出 XML 依赖）
+  - perl-xml-parser      # XML::Parser（XML::Simple 底层依赖，通常随 perl-xml-simple 带入）

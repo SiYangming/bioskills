@@ -1,0 +1,159 @@
+software: rnammer
+canonical: rnammer
+category: rna_annotation
+description: 'RNAmmer 1.2（CBS DTU 出品）是基于 HMM（隐马尔可夫模型）的 rRNA 基因预测工具，
+  Perl 编写，主命令 rnammer：对细菌/古菌/真核基因组预测 5S/5.8S、16S/18S、23S/28S rRNA 基因，
+  输出 rRNA 序列 FASTA（-f）、HMMER 搜索报告（-h）、XML（-xml）与 GFF2（-gff）；域由 -S 指定
+  （bac|arc|euk），-multi 双链并行预测全部 rRNA 类型，-m 可限定分子类型（tsu|ssu|lsu）。
+  运行须搭配 HMMER 2.x（教学用 hmmer-2.2g）与 Perl 模块 XML::Simple。'
+homepage: https://services.healthtech.dtu.dk/services/RNAmmer-1.2/
+license: Custom academic license (registration required; see homepage)
+software_versions:
+- id: rnammer_native
+  rnammer: '1.2'
+  hmmer: 'HMMER 2.x（教学用 hmmer-2.2g；bioconda hmmer2 为 2.3.2，RNAmmer 对 HMMER 版本敏感）'
+  perl_deps: 'Perl 模块 XML::Simple（经 XML::Parser / XML::SAX::Expat）'
+  build_route: 官方渠道全无（bioconda rnammer 404、quay.io/biocontainers 无 rnammer 镜像、
+    depot.galaxyproject.org 无、nf-core modules 无 modules/nf-core/rnammer、snakemake-wrappers
+    无 bio/rnammer，2026-09 在线核实）→ 注册制源码 + 宿主 conda/perl 路线（RNAmmer 1.2 源码为
+    CBS DTU 官网注册制下载，无法在容器内公开拉取）
+  source: https://services.healthtech.dtu.dk/services/RNAmmer-1.2/（注册制源码下载页；HMMER2 可选
+    conda https://anaconda.org/bioconda/hmmer2 或官方源码 http://eddylab.org/software/hmmer/hmmer-2.2g.tar.gz）
+  source_mirror: https://github.com/SiYangming/rnammer-1.2（自建归档镜像仓库，已归档/只读；私有仓库，
+    访问需仓库授权；可作注册制源码的替代来源）
+  note: 'canonical/目录名沿用 rnammer；版本 1.2 为官网现行版；构建路线 = 注册制源码 + 宿主 conda/perl；
+    一键安装见 native/install.sh（conda / manual 双路线），详细步骤见 README「环境安装（官方渠道无镜像：宿主机安装）」。'
+- id: rnammer_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/rnammer 404）
+  rnammer: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/rnammer 目录）
+  note: 2026-09 在线核实 nf-core/modules 无 modules/nf-core/rnammer（404）；Nextflow 场景以 native/
+    宿主机驱动为兜底。
+- id: rnammer_snakemake_wrappers
+  rnammer: 官方无 wrapper（bio/rnammer 404）
+  source: —（snakemake-wrappers 仓库无 bio/rnammer 目录）
+  note: 2026-09 在线核实 snakemake-wrappers 无 bio/rnammer（404）；Snakemake 场景以 native/
+    宿主机驱动为兜底。
+implementations:
+- id: rnammer_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。scan 包装
+    rnammer 做 HMM 法 rRNA 基因预测：基因组 FASTA（-S bac|arc|euk，默认 -multi 双链）→ rRNA 序列 FASTA（-f）
+    + HMMER 报告（-h）+ XML（-xml）+ GFF2（-gff）；--molecules/-m 可限定 tsu|ssu|lsu。rnammer 无线程参数
+    （--multi 自带双链并行），--threads/--tmpdir 为协议位。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/rnammer（不存在；2026-09 核实 404）
+    quay_biocontainers: quay.io/biocontainers/rnammer（不存在；2026-09 核实无该镜像）
+    upstream: https://services.healthtech.dtu.dk/services/RNAmmer-1.2/（注册制源码下载页，需 edu 邮箱申请下载链接）
+    source_archive_mirror: https://github.com/SiYangming/rnammer-1.2（自建归档镜像仓库，已归档/只读；
+      私有仓库需授权访问；可替代注册制下载获取 rnammer-1.2 源码包）
+    hmmer2_bioconda: https://anaconda.org/bioconda/hmmer2（可选 HMMER2 conda 包；版本 2.3.2，教学用官方
+      hmmer-2.2g 源码编译）
+    install_hint: 宿主机安装 bash native/install.sh（conda / manual 双路线）；manual 路线需 --rnammer-tarball
+      传入注册下载的 rnammer-1.2 源码包，安装后须配置脚本内 INSTALL_PATH / HMMSEARCH_BINARY（见 README）
+default_implementation: rnammer_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: rnammer 子命令：scan（包装 rnammer：基因组 FASTA → rRNA 预测，默认 -multi 双链全部类型）
+  genome_fasta:
+    type: file
+    required: true
+    cli_arg: positional
+    description: scan 输入基因组 FASTA（位置参数；单条或多条 contig 均可；教学用真核/原核基因组）
+  kingdom:
+    type: string
+    required: true
+    cli_arg: -S
+    description: 域模型（rnammer 必填）：arc（古菌）| bac（细菌）| euk（真核）
+  multi:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -multi
+    description: 双链并行预测全部 rRNA 类型（默认 true，注入 -multi；--no-multi 关闭，仅按 -m 指定类型预测）
+  molecules:
+    type: string
+    required: false
+    cli_arg: -m
+    description: 分子类型（逗号分隔）：tsu（5S/8S）| ssu（16S/18S）| lsu（23S/28S）| tsu,ssu,lsu；
+      缺省由 rnammer 自行决定
+  out_fasta:
+    type: file
+    required: false
+    cli_arg: -f
+    description: 预测 rRNA 序列输出 FASTA
+  hmmreport:
+    type: file
+    required: false
+    cli_arg: -h
+    description: HMMER 搜索报告输出文件（rnammer 原生 -h；驱动以 --hmmreport 暴露，避免与 --help 冲突）
+  xml:
+    type: file
+    required: false
+    cli_arg: -xml
+    description: 预测结果 XML 输出文件
+  gff:
+    type: file
+    required: false
+    cli_arg: -gff
+    description: 预测结果 GFF2 输出文件
+  threads:
+    type: integer
+    required: false
+    default: 4
+    cli_arg: --threads
+    description: 线程数协议位（rnammer 无线程参数，不注入命令行；-multi 自带双链并行）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录协议位（注入 TMPDIR 环境变量；rnammer 中间文件走该目录）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 rnammer 的额外参数（高级用法，慎用）
+outputs:
+  rrna_fasta:
+    type: file
+    format: fasta
+    description: scan -f 产物：预测的 rRNA 基因序列 FASTA
+  hmmreport:
+    type: file
+    format: text
+    description: scan -h 产物：HMMER2 hmmsearch 搜索报告
+  xml:
+    type: file
+    format: xml
+    description: scan -xml 产物：预测结果 XML（可进一步用配套脚本转 GFF）
+  gff2:
+    type: file
+    format: gff
+    description: scan -gff 产物：rRNA 基因注释 GFF2
+environment:
+  note: 官方渠道无该软件镜像/conda 包（bioconda rnammer 404、quay.io/biocontainers 无 rnammer、
+    depot.galaxyproject.org 无，2026-09 核实）→ 无官方维护。RNAmmer 1.2 源码为 CBS DTU 官网注册制
+    下载，采用宿主机安装路线（宿主 conda/perl：hmmer2 + perl + XML::Simple，或官方 hmmer-2.2g 源码编译 +
+    系统 perl；RNAmmer 源码由用户注册下载后本地配置）；一键安装见 native/install.sh，详细步骤见 README
+    「环境安装（官方渠道无镜像：宿主机安装）」。Docker/Apptainer：官方渠道无公开镜像，如需容器请自备
+    注册下载的源码包后本地构建。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    scan: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: rnammer
+  note: scan 包装宿主机安装的 rnammer（RNAmmer 无线程参数，--threads/--tmpdir 为协议位；-multi 自带
+    双链并行）；rnammer 依赖 HMMER2 hmmsearch 与 Perl XML::Simple，配置见 README 环境安装节；
+    nf-core / snakemake-wrappers 官方均无（2026-09 核实 404）。
