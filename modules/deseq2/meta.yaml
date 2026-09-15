@@ -1,0 +1,138 @@
+software: deseq2
+canonical: deseq2
+category: differential_expression
+description: 'DESeq2 是基于负二项分布的 RNA-seq 差异表达分析 R/Bioconductor 包：以 raw count
+  矩阵与分组表为输入，DESeq() 采用 shrinkage 方法估计离散度并拟合 GLM，results() 依据负二项
+  Wald 检验输出 log2FoldChange / pvalue / padj，vst()/rlog() 提供方差稳定转换用于热图与聚类。
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动实现 analyze / vst / check
+  三个分析动作。conda 包名 bioconductor-deseq2。
+  '
+homepage: https://bioconductor.org/packages/DESeq2/
+license: LGPL-3.0-or-later
+software_versions:
+- id: deseq2_native
+  DESeq2: '1.50.2'
+  build_route: official biocontainer（bioconda → quay.io/biocontainers → depot.galaxyproject.org；本地不自建配方）
+  source: https://anaconda.org/bioconda/bioconductor-deseq2
+  note: '2026-09-11 核实 bioconda 最新 1.50.2；quay.io/biocontainers/bioconductor-deseq2:1.50.2--r45ha27e39d_0；
+    depot 同期镜像 1.46.0--r44he5774e6_1（tag 与 quay 不完全同步）。宿主机直跑 main.py 用 conda/mamba 安装
+    bioconductor-deseq2，或 docker run 官方镜像。'
+- id: deseq2_nextflow_nfcore
+  module_version: nf-core master（2026-09-11 抓取）
+  DESeq2: '1.34.0'
+  source: bioconda::bioconductor-deseq2=1.34.0 + bioconductor-limma=3.50.0（modules/nf-core/deseq2/differential/environment.yml）
+  note: 'nf-core 有 deseq2/differential 一个子模块（2026-09-11 核实存在），其 environment.yml pin 较旧（1.34.0）；
+    迁移到 nf-core 时版本会回落到 1.34.0，注意与 native 1.50.2 的接口差异。'
+- id: deseq2_snakemake_wrappers
+  DESeq2: '1.50.2'
+  wrapper_tag: v9.17.1
+  source: bioconductor-deseq2=1.50.2（bio/deseq2/{wald,deseqdataset}/environment.yaml，另含 bioconductor-biocparallel=1.44.0 / bioconductor-apeglm=1.32.0）
+  note: '官方有 bio/deseq2 两个 wrapper 子模块：deseqdataset（读入计数集）、wald（Wald 检验）；2026-09-11 核实存在，
+    wrapper_tag 取最新 release v9.17.1。'
+- id: deseq2_nextflow_local
+  DESeq2: 未启用（官方 nf-core 已有 deseq2/differential，本地不再自建 nextflow 目录）
+- id: deseq2_snakemake_local
+  DESeq2: 未启用（官方 snakemake-wrappers 已有 bio/deseq2，本地不再自建 snakemake 目录）
+implementations:
+- id: deseq2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.50.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行按参数生成的 R 脚本，调用 DESeq()/results() 完成差异表达分析；
+    vst 子命令导出 vst/rlog 归一化矩阵；check 子命令校验包可加载。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-deseq2
+    quay_biocontainers: quay.io/biocontainers/bioconductor-deseq2:1.50.2--r45ha27e39d_0
+    galaxyproject: depot.galaxyproject.org/singularity/bioconductor-deseq2:1.46.0--r44he5774e6_1
+    install_hint: 宿主机 mamba create -n deseq2 -c conda-forge -c bioconda bioconductor-deseq2（或 native/install.sh）；
+      容器 docker run quay.io/biocontainers/bioconductor-deseq2:1.50.2--r45ha27e39d_0
+default_implementation: deseq2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: deseq2 子命令：analyze|vst|check
+  counts:
+    type: file
+    required: true
+    cli_arg: positional
+    description: raw count 矩阵（行=基因，列=样品，Tab 分隔；首列基因 ID，首行样品 ID）
+  coldata:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 分组表（Tab 分隔；首列样品 ID，含 condition 列，行名须与 counts 列名一致）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出文件（analyze：结果表；vst：归一化表达矩阵）
+  design:
+    type: string
+    required: false
+    default: '~condition'
+    description: DESeq2 设计公式（默认 ~condition）
+  contrast:
+    type: string
+    required: false
+    default: condition,treatment,control
+    description: 对比三元组 factor,treatment,control（默认 condition,treatment,control）
+  min_count:
+    type: integer
+    required: false
+    default: 10
+    description: 低表达过滤的 count 阈值（默认 10）
+  min_samples:
+    type: integer
+    required: false
+    default: 3
+    description: 至少多少个样品满足 count 阈值才保留基因（默认 3）
+  transform:
+    type: string
+    required: false
+    default: vst
+    description: vst 子命令的转换方法：vst|rlog（默认 vst）
+  blind:
+    type: boolean
+    required: false
+    default: false
+    description: vst 子命令的 blind 转换开关（默认 FALSE，使用设计信息）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射到 BiocParallel register(MulticoreParam(n))；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  result:
+    type: file
+    format: txt
+    description: analyze 输出的差异表达结果表（baseMean/log2FoldChange/lfcSE/stat/pvalue/padj，按 padj 排序）
+  normalized_matrix:
+    type: file
+    format: txt
+    description: vst 输出的归一化表达矩阵（vst/rlog 转换后的 assay）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-deseq2（官方镜像；tag 1.50.2--r45ha27e39d_0，depot 同步 1.46.0--r44he5774e6_1，见 README「容器与 Conda 链接」）
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）已覆盖，本地不维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-deseq2，或经 native/install.sh（conda 优先，无 conda 时 BiocManager）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 8
+    vst: 4
+    check: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 官方已有 modules/nf-core/deseq2/differential（2026-09-11 核实），
+    其 environment.yml pin bioconductor-deseq2=1.34.0，执行请用 nf-core modules install，缺失时以 native/ 兜底。

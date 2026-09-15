@@ -1,0 +1,188 @@
+software: snpeff
+canonical: snpeff
+category: variant_annotation
+description: 'SnpEff 是变异功能注释与效应预测工具箱（Java）：snpEff eff 按基因/转录本对
+  VCF 变异注释功能影响（missense_variant / nonsense_variant / synonymous_variant /
+  frameshift_variant / splice_donor_variant / splice_acceptor_variant 等），snpEff build
+  用参考 FASTA + GTF/GFF3 构建自定义数据库，download / databases 管理预构建数据库。
+  官网 http://pcingola.github.io/SnpEff/ ；GitHub https://github.com/pcingola/SnpEff。
+  '
+homepage: http://pcingola.github.io/SnpEff/
+license: LGPL-3.0
+software_versions:
+- id: snpeff_native
+  snpeff: 5.4.0c
+  java: Java 17+（bioconda/quay 镜像自带 openjdk 依赖；官方 zip 需宿主自备 JRE）
+  build_route: official biocontainer（quay.io/biocontainers/snpeff / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/snpeff
+  note: '官方渠道已维护（bioconda 最新 5.4.0c；quay tag 5.4.0c--hdfd78af_0；depot sif 200），
+    本地不自建容器。宿主机直跑 main.py 用 conda/mamba 安装 snpeff（提供 snpEff wrapper），
+    或官方 snpEff_latest_core.zip 解压后 java -jar snpEff.jar（需自备 JRE）。JVM 堆内存
+    经 JAVA_OPTS 透传（优化项）。官方预编译 zip 仅以 latest 分发（无版本化资产），故二进制
+    路线不内嵌 sha256。'
+- id: snpeff_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  snpeff: 5.4.0c
+  source: bioconda::snpeff=5.4.0c（modules/nf-core/snpeff/{snpeff,download}/environment.yml）
+  note: nf-core 有 snpeff/snpeff 与 snpeff/download 两个子模块，均 pin bioconda::snpeff=5.4.0c。
+- id: snpeff_snakemake_wrappers
+  wrapper_tag: v9.17.1（snakemake-wrappers 最新 release，2026-09 抓取）
+  snpeff: 5.4.0c
+  wrapper_utils: 0.9.0
+  source: snpeff=5.4.0c + bcftools=1.24 + snakemake-wrapper-utils=0.9.0（bio/snpeff/{annotate,download}/environment.yaml）
+  note: 官方 bio/snpeff 提供 annotate / download 两个 wrapper，pin snpeff=5.4.0c；切 tag 后核对。
+- id: snpeff_nextflow_local
+  snpeff: 未启用（官方 nf-core/snpeff 已覆盖；本地未建 nextflow/）
+- id: snpeff_snakemake_local
+  snpeff: 未启用（官方 bio/snpeff 已覆盖；本地未建 snakemake/）
+implementations:
+- id: snpeff_native
+  path: native
+  source_type: custom
+  type: native
+  version: "5.4.0c"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 eff / build / download / databases 映射 snpEff 命令；JVM 堆内存经 JAVA_OPTS 注入。
+    SnpEff 单线程，--threads 仅作接口统一。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/snpeff
+    quay_biocontainers: quay.io/biocontainers/snpeff
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/snpeff%3A5.4.0c--hdfd78af_0
+    upstream_prebuilt: https://downloads.sourceforge.net/project/snpeff/snpEff_latest_core.zip
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda snpeff=5.4.0c；容器可用
+      quay.io/biocontainers/snpeff:5.4.0c--hdfd78af_0 镜像（tag 见 README）
+default_implementation: snpeff_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'snpeff 子命令：eff（变异注释）| build（构建数据库）| download（下载数据库）|
+      databases（列出可用数据库）'
+  genome:
+    type: string
+    required: true
+    cli_arg: positional
+    description: SnpEff 数据库名（如 GRCh38.105 / hg38 / 自定义 malassezia_sympodialis）
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [vcf, vcf.gz]
+    description: eff 的输入变异文件（VCF；SnpEff 自 stdin/文件读取，输出到 stdout）
+  reference:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [fasta]
+    description: build 的参考基因组 FASTA（SnpEff 从数据库目录读取，此处仅登记）
+  config:
+    type: file
+    required: false
+    cli_arg: -c
+    description: snpEff.config 路径（自定义数据库时指明）
+  csv_stats:
+    type: file
+    required: false
+    cli_arg: -csvStats
+    description: 输出 CSV 格式统计信息
+  html_stats:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 输出 HTML 格式汇总报告
+  updown:
+    type: integer
+    required: false
+    cli_arg: -ud
+    description: 上游/下游扩展距离（用于分析 UTR 区域，文档示例 500）
+  interval:
+    type: file
+    required: false
+    cli_arg: -interval
+    description: 仅注释指定区间（BED 文件）
+  input_format:
+    type: string
+    required: false
+    cli_arg: -i
+    description: 输入格式（vcf|gatk|bed）
+  output_format:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出格式（vcf|gatk|bed）；注意与文件输出 --output 区分
+  gtf22:
+    type: boolean
+    default: false
+    cli_arg: -gtf22
+    description: build 时使用 GTF 注释（含 -gtf22 兼容 2.2 版）
+  gff3:
+    type: boolean
+    default: false
+    cli_arg: -gff3
+    description: build 时使用 GFF3 注释
+  no_check_cds:
+    type: boolean
+    default: false
+    cli_arg: -noCheckCds
+    description: build 跳过 CDS 检查（加速）
+  no_stats:
+    type: boolean
+    default: false
+    cli_arg: -noStats
+    description: eff 跳过统计（加速）
+  output:
+    type: file
+    required: false
+    cli_arg: （stdout 重定向）
+    description: eff 注释结果输出文件（SnpEff 写 stdout，驱动捕获后落盘）
+  threads:
+    type: integer
+    default: 1
+    description: 接口统一用；SnpEff 单线程，不传给 snpEff
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（经 JAVA_OPTS -Djava.io.tmpdir 与环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 snpEff 的额外参数（高级用法，慎用）
+outputs:
+  annotated_vcf:
+    type: file
+    format: vcf
+    description: eff 输出的功能注释 VCF（INFO 增加 ANN 字段）
+  csv_stats:
+    type: file
+    format: csv
+    description: eff -csvStats 输出的 CSV 统计
+  html_report:
+    type: file
+    format: html
+    description: eff -s 输出的 HTML 汇总报告
+environment:
+  container_official: quay.io/biocontainers/snpeff（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需 java + snpEff
+    （conda bioconda snpeff，或官方 snpEff_latest_core.zip 解压后 java -jar）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+  per_subcommand_threads:
+    eff: 1
+    build: 1
+    download: 1
+    databases: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: snpEff
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/snpeff 有 snpeff 与 download 两个子模块
+    （pin bioconda::snpeff=5.4.0c），执行请 nf modules install nf-core snpeff snpeff download。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/snpeff
+    有 annotate / download 两个 wrapper（wrapper: "v9.17.1/bio/snpeff/<sub>"，由 Snakemake 运行时解析）。'

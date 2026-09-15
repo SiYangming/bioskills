@@ -1,0 +1,123 @@
+software: fusionmap
+canonical: fusionmap
+category: fusion_detection
+description: 'FusionMap 是基于 RNA-seq（也可 gDNA-seq）数据的融合基因检测工具，把 junction-spanning
+  reads 直接比对到基因组，无需先验融合信息即可在碱基分辨率上检测单端/双端数据的融合事件（含
+  reference indexing / read filtering / fusion alignment / reporting 于一体）。软件用 C# 编写，
+  运行速度快。⚠️ 商业/许可受限：官方声明 **free for noncommercial use**（非商业免费），商业用途需
+  向 OmicSoft（omicsoft.com）获取授权；官方渠道 bioconda/quay/depot 均无镜像/包（2026-09 核实）。
+
+  '
+homepage: https://www.omicsoft.com/fusionmap/
+license: 'Free for noncommercial use (commercial license required)'
+software_versions:
+- id: fusionmap_native
+  fusionmap: '2015-03-31'
+  build_route: 自建容器（debian:bookworm-slim + apt 最小化 + mono-runtime + 官方 omicsoft 预编译
+    tar.gz；官方渠道 bioconda → quay.io/biocontainers → depot.galaxyproject.org 均无 → 自建兜底）
+  source: https://www.omicsoft.com/download/fusionmap/（预编译 tar.gz；教学文档直链
+    http://www.omicsoft.com/downloads/fusionmap/FusionMap_2015-03-31.tar.gz，2026-09 自动下载
+    返回 403，为 Cloudflare 反爬/许可下载页，实际安装请从官方下载页获取并接受许可）
+  note: '版本 2015-03-31（官方最后一次发布，软件已停止更新，后续并入 Oshell/OmicScript 工具包）。
+    Windows 版为 FusionMap.exe（Linux 下可用 mono 运行）；官方另提供 Linux 直接可执行的构建。
+    **商业/许可受限**：非商业免费、商业需授权；自建镜像仅供本地/非商业使用，不得再分发。
+    官方渠道（bioconda/quay biocontainers/depot）2026-09 核实全无；nf-core / snakemake-wrappers
+    404；Homebrew（core + brewsci/bio）无公式。'
+- id: fusionmap_nextflow_nfcore
+  fusionmap: 官方无模块
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/fusionmap
+    返回 404；Nextflow 场景需自定义或降级 native。
+- id: fusionmap_snakemake_wrappers
+  fusionmap: 官方无 wrapper
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/fusionmap
+    返回 404；Snakemake 场景需自定义或降级 native。
+- id: fusionmap_nextflow_local
+  fusionmap: 未启用占位（本模块未建 nextflow/ 目录）
+- id: fusionmap_snakemake_local
+  fusionmap: 未启用占位（本模块未建 snakemake/ 目录）
+implementations:
+- id: fusionmap_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2015-03-31"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    覆盖 detect 子命令（--fusion DetectFusion --input <fastq...> --ref <Ref> --output <dir> --thread N）。
+    ⚠️ 商业/许可受限，仅限非商业用途；自建镜像/源码不随仓库再分发。'
+  container_ref:
+    omicsoft: https://www.omicsoft.com/download/fusionmap/（官方下载页，需接受许可）
+    bioconda: 无（api.anaconda.org/package/bioconda/fusionmap 404，2026-09）
+    quay_biocontainers: 无（quay.io/api/v1/repository/biocontainers/fusionmap 未授权/不存在）
+    depot_galaxyproject: 无 sif（depot.galaxyproject.org/singularity/fusionmap:2015-03-31 → 404）
+    install_hint: 官方渠道全无 → 自建容器（native/Dockerfile + Apptainer.def：debian:bookworm-slim
+      + apt 最小化 + mono-runtime + 官方预编译 tar.gz）或从官方下载页取包本地使用（用户前缀，免 root）
+default_implementation: fusionmap_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: fusionmap 子命令：detect（官方 `--fusion DetectFusion` 融合检测）
+  input:
+    type: file
+    required: true
+    cli_arg: --input
+    format:
+    - fastq
+    - fastq.gz
+    description: 输入 RNA-seq reads（FASTQ，单端一个 / 双端两个，可多个）
+  ref:
+    type: string
+    required: true
+    cli_arg: --ref
+    description: FusionMap 参考数据目录（官方包内 Data/Ref，或自建索引目录）
+  output:
+    type: string
+    required: true
+    cli_arg: --output
+    description: 输出目录（存放融合检测结果报告）
+  fusion:
+    type: string
+    required: false
+    cli_arg: --fusion
+    default: DetectFusion
+    description: 操作模式（--fusion，默认 DetectFusion）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --thread
+    description: 线程数（自动注入 --thread）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 FusionMap 的额外参数（高级用法，慎用）
+outputs:
+  fusion_report:
+    type: file
+    format: tsv
+    description: 融合检测结果报告（FusionMap 输出目录内的 fusion 报告文件；表头含 FusionID /
+      JunctionReads / SpanningFrags 等，以官方报告格式为准）
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 全无，2026-09 核实；故走自建 Dockerfile + Apptainer.def）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '2015-03-31 无官方镜像/conda 包（bioconda/quay biocontainers/depot 全无，2026-09 核实）→
+    自建 apt 最小化 + 官方预编译 tar.gz 配方（debian:bookworm-slim + mono-runtime 以支持
+    FusionMap.exe，或 Linux 直接可执行构建）。**商业/许可受限**：非商业免费；自建镜像仅供
+    本地非商业使用，不得再分发。宿主机装 mono 后可直接运行 Windows 版 FusionMap.exe；'
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    MONO_THREADS_PER_CPU: '10'
+  per_subcommand_threads:
+    detect: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: FusionMap

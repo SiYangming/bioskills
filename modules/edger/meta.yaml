@@ -1,0 +1,132 @@
+software: edger
+canonical: edger
+category: differential_expression
+description: 'edgeR 是基于负二项分布的 RNA-seq 差异表达分析 R/Bioconductor 经典工具：以 raw
+  count 矩阵与分组表为输入，calcNormFactors() 采用 TMM 归一化，estimateDisp() 估计离散度，
+  exactTest() 做两组精确检验（topTags() 汇总 FDR），特别适合处理生物学重复。
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动实现 analyze / norm / check
+  三个分析动作。conda 包名 bioconductor-edger。
+  '
+homepage: https://bioconductor.org/packages/edgeR/
+license: GPL-2.0-or-later
+software_versions:
+- id: edger_native
+  edgeR: '4.8.2'
+  build_route: official biocontainer（bioconda → quay.io/biocontainers → depot.galaxyproject.org；本地不自建配方）
+  source: https://anaconda.org/bioconda/bioconductor-edger
+  note: '2026-09-11 核实 bioconda 最新 4.8.2；quay.io/biocontainers/bioconductor-edger:4.8.2--r45h262fe30_1；
+    depot.galaxyproject.org 同步 4.8.2--r45h262fe30_1（HTTP 200）。宿主机直跑 main.py 用 conda/mamba 安装
+    bioconductor-edger，或 docker run 官方镜像。'
+- id: edger_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/edger 404）
+  edgeR: '—'
+  source: —（nf-core/modules 仓库 modules/nf-core/edger 目录不存在）
+  note: '2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/edger 返回 404；
+    注意 nf-core/limma/differential 的 environment.yml 间接 pin bioconductor-edger=4.0.16，但无独立 edgeR 模块。'
+- id: edger_snakemake_wrappers
+  edgeR: 官方无 wrapper（bio/edger 404）
+  source: —（snakemake-wrappers 仓库 bio/edger 目录不存在）
+  note: '2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/edger 返回 404；
+    Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。'
+- id: edger_nextflow_local
+  edgeR: 未启用（官方缺失时按 native 容器在 main.nf 中声明 Rscript 步骤）
+- id: edger_snakemake_local
+  edgeR: "未启用（需要时用 shell: 调 native/main.py analyze）"
+implementations:
+- id: edger_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.8.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行按参数生成的 R 脚本，调用 DGEList/calcNormFactors/estimateDisp/
+    exactTest/topTags 完成差异表达分析；norm 子命令导出 TMM 归一化因子；check 校验包可加载。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-edger
+    quay_biocontainers: quay.io/biocontainers/bioconductor-edger:4.8.2--r45h262fe30_1
+    galaxyproject: depot.galaxyproject.org/singularity/bioconductor-edger:4.8.2--r45h262fe30_1
+    install_hint: 宿主机 mamba create -n edger -c conda-forge -c bioconda bioconductor-edger（或 native/install.sh）；
+      容器 docker run quay.io/biocontainers/bioconductor-edger:4.8.2--r45h262fe30_1
+default_implementation: edger_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: edger 子命令：analyze|norm|check
+  counts:
+    type: file
+    required: true
+    cli_arg: positional
+    description: raw count 矩阵（行=基因，列=样品，Tab 分隔；首列基因 ID，首行样品 ID）
+  coldata:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 分组表（Tab 分隔；首列样品 ID，含 condition 列，行名须与 counts 列名一致）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出文件（analyze：结果表；norm：归一化因子表）
+  pair:
+    type: string
+    required: false
+    default: control,treatment
+    description: 两组比较 control,treatment（默认 control,treatment）
+  cpm_cutoff:
+    type: float
+    required: false
+    default: 1.0
+    description: 低表达过滤 CPM 阈值（默认 1）
+  min_samples:
+    type: integer
+    required: false
+    default: 3
+    description: 至少多少个样品满足 CPM 阈值才保留基因（默认 3）
+  adjust:
+    type: string
+    required: false
+    default: BH
+    description: 多重检验校正方法（默认 BH）
+  method:
+    type: string
+    required: false
+    default: TMM
+    description: norm 子命令的归一化方法：TMM|TMMwsp|RLE|upperquartile|none（默认 TMM）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射 BLAS 线程环境变量；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  result:
+    type: file
+    format: txt
+    description: analyze 输出的差异表达结果表（logFC/logCPM/PValue/FDR）
+  norm_factors:
+    type: file
+    format: txt
+    description: norm 输出的样品归一化因子表（group/lib.size/norm.factors）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-edger（官方镜像；tag 4.8.2--r45h262fe30_1，depot 同步同 tag，见 README「容器与 Conda 链接」）
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）已覆盖，本地不维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-edger，或经 native/install.sh（conda 优先，无 conda 时 BiocManager）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 8
+    norm: 4
+    check: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 edgeR 官方子模块（2026-09-11 核实 404），
+    Nextflow/Snakemake 场景以 native Rscript 驱动为兜底。

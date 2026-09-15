@@ -1,0 +1,133 @@
+software: limma
+canonical: limma
+category: differential_expression
+description: 'limma 是基于线性模型的差异表达分析 R/Bioconductor 包：最初面向微阵列，现广泛用于
+  RNA-seq（limma-voom 流程）——以 raw count 矩阵与分组表为输入，calcNormFactors() 归一化后
+  voom() 做均值-方差建模并转为 log2-CPM，lmFit() 拟合线性模型，eBayes() 经验贝叶斯收缩，
+  topTable() 输出 logFC/P.Value/adj.P.Val/B，适合复杂实验设计。以 R 函数库形态分发（无独立
+  命令行二进制），本模块以 Rscript 驱动实现 analyze / voom / check。conda 包名 bioconductor-limma。
+  '
+homepage: https://bioconductor.org/packages/limma/
+license: GPL-2.0-or-later
+software_versions:
+- id: limma_native
+  limma: '3.66.0'
+  build_route: official biocontainer（bioconda → quay.io/biocontainers → depot.galaxyproject.org；本地不自建配方）
+  source: https://anaconda.org/bioconda/bioconductor-limma
+  note: '2026-09-11 核实 bioconda 最新 3.66.0；quay.io/biocontainers/bioconductor-limma:3.66.0--r45h01b2380_0；
+    depot.galaxyproject.org 同期镜像 3.62.1--r44h15a9599_1（tag 与 quay 不完全同步）。limma-voom 流程还需 edgeR
+    （bioconductor-edger）。'
+- id: limma_nextflow_nfcore
+  module_version: nf-core master（2026-09-11 抓取）
+  limma: '3.58.1'
+  source: bioconda::bioconductor-limma=3.58.1 + bioconductor-edger=4.0.16（modules/nf-core/limma/differential/environment.yml）
+  note: 'nf-core 有 limma/differential 一个子模块（2026-09-11 核实存在），其 environment.yml pin 较旧（3.58.1）；
+    nf-core/deseq2/differential 亦间接 pin bioconductor-limma=3.50.0。迁移时注意版本回落。'
+- id: limma_snakemake_wrappers
+  limma: 官方无 wrapper（bio/limma 404）
+  source: —（snakemake-wrappers 仓库 bio/limma 目录不存在）
+  note: '2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/limma 返回 404；
+    Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。'
+- id: limma_nextflow_local
+  limma: 未启用（官方 nf-core 已有 limma/differential，本地不再自建 nextflow 目录）
+- id: limma_snakemake_local
+  limma: "未启用（需要时用 shell: 调 native/main.py analyze）"
+implementations:
+- id: limma_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.66.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行按参数生成的 R 脚本，走 limma-voom 流程；voom 子命令导出
+    log2-CPM 归一化矩阵；check 校验包可加载。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-limma
+    quay_biocontainers: quay.io/biocontainers/bioconductor-limma:3.66.0--r45h01b2380_0
+    galaxyproject: depot.galaxyproject.org/singularity/bioconductor-limma:3.62.1--r44h15a9599_1
+    install_hint: 宿主机 mamba create -n limma -c conda-forge -c bioconda bioconductor-limma（或 native/install.sh）；
+      容器 docker run quay.io/biocontainers/bioconductor-limma:3.66.0--r45h01b2380_0
+default_implementation: limma_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: limma 子命令：analyze|voom|check
+  counts:
+    type: file
+    required: true
+    cli_arg: positional
+    description: raw count 矩阵（行=基因，列=样品，Tab 分隔；首列基因 ID，首行样品 ID）
+  coldata:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 分组表（Tab 分隔；首列样品 ID，含 condition 列，行名须与 counts 列名一致）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出文件（analyze：结果表；voom：log2-CPM 归一化矩阵）
+  design:
+    type: string
+    required: false
+    default: '~condition'
+    description: 设计公式（默认 ~condition，经 model.matrix(design, data=coldata) 展开）
+  coef:
+    type: integer
+    required: false
+    default: 2
+    description: topTable 提取的系数列（默认 2）
+  cpm_cutoff:
+    type: float
+    required: false
+    default: 1.0
+    description: 低表达过滤 CPM 阈值（默认 1）
+  min_samples:
+    type: integer
+    required: false
+    default: 3
+    description: 至少多少个样品满足 CPM 阈值才保留基因（默认 3）
+  adjust:
+    type: string
+    required: false
+    default: BH
+    description: 多重检验校正方法（默认 BH）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射 BLAS 线程环境变量；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  result:
+    type: file
+    format: txt
+    description: analyze 输出的差异表达结果表（logFC/AveExpr/t/P.Value/adj.P.Val/B）
+  voom_matrix:
+    type: file
+    format: txt
+    description: voom 输出的 log2-CPM 归一化表达矩阵（v$E）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-limma（官方镜像；tag 3.66.0--r45h01b2380_0，depot 同步 3.62.1--r44h15a9599_1，见 README「容器与 Conda 链接」）
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）已覆盖，本地不维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-limma（limma-voom 还需 bioconductor-edger），或经 native/install.sh。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 8
+    voom: 4
+    check: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 官方已有 modules/nf-core/limma/differential（2026-09-11 核实），
+    其 environment.yml pin bioconductor-limma=3.58.1 + bioconductor-edger=4.0.16，执行请用 nf-core modules install，
+    缺失时以 native/ 兜底。snakemake-wrappers 无 bio/limma（404）。

@@ -1,0 +1,140 @@
+software: ggrepel
+canonical: ggrepel
+category: visualization
+description: 'ggrepel 是 CRAN ggplot2 扩展 R 包：为散点/火山图等提供不重叠的文本与标签几何对象
+  （geom_text_repel/geom_label_repel），差异表达分析中常用于在火山图上标注 top-N 差异基因名。
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动 ggrepel::geom_text_repel()
+  在火山图上标注基因标签并输出图片。conda 包名规范名为 r-ggrepel（conda-forge 最新 0.9.8；
+  bioconda 仅 0.6.5），目录名 canonical 取 ggrepel。对应 docs/09.md「5.2 ggplot2 火山图」注释的标签部分。
+  '
+homepage: https://cran.r-project.org/package=ggrepel
+license: GPL-3
+software_versions:
+- id: ggrepel_native
+  r-ggrepel: '0.9.8'
+  r: R >= 4.1（conda r-base / 官方镜像自带 R）
+  build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
+  source: https://anaconda.org/conda-forge/r-ggrepel
+  note: 'conda-forge r-ggrepel 最新 0.9.8（与 CRAN ggrepel 0.9.8 一致）；bioconda 频道仅 0.6.5，
+    对应官方镜像 quay.io/biocontainers/r-ggrepel:0.6.5--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本，
+    仅在火山图示例中以注释形式演示 geom_text_repel。ggrepel 依赖 ggplot2（NeedsCompilation: yes，含 Rcpp）。'
+- id: ggrepel_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ggrepel 404）
+  r-ggrepel: —
+  source: —（nf-core/modules 仓库 modules/nf-core/ggrepel 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ggrepel
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: ggrepel_snakemake_wrappers
+  r-ggrepel: 官方无 wrapper（bio/ggrepel 404）
+  source: —（snakemake-wrappers 仓库 bio/ggrepel 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ggrepel
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+implementations:
+- id: ggrepel_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.9.8"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    label 子命令以 Rscript 运行 ggrepel::geom_text_repel() 在火山图上标注 top-N 基因标签。'
+  container_ref:
+    conda_forge: https://anaconda.org/conda-forge/r-ggrepel
+    bioconda: https://anaconda.org/bioconda/r-ggrepel
+    quay_biocontainers: quay.io/biocontainers/r-ggrepel:0.6.5--r3.3.2_0
+    galaxyproject: depot.galaxyproject.org/singularity/r-ggrepel:0.6.5--r3.3.2_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda r-ggrepel；容器可用
+      quay.io/biocontainers 官方镜像（见 README 环境安装）
+default_implementation: ggrepel_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ggrepel 子命令：label（火山图基因标签）'
+  deg_table:
+    type: file
+    required: true
+    description: 差异分析结果表（Tab 分隔，含 log2FoldChange 与 padj 列；首列为基因名）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出图片路径（按扩展名 *.pdf 或 *.png）
+  top:
+    type: integer
+    required: false
+    default: 20
+    description: 标注的 top-N 基因（按 padj 升序，默认 20）
+  max_overlaps:
+    type: integer
+    required: false
+    default: 20
+    cli_arg: --max-overlaps
+    description: geom_text_repel 的最大重叠数（默认 20；值越大标注越多）
+  lfc_col:
+    type: string
+    required: false
+    default: log2FoldChange
+    cli_arg: --lfc-col
+    description: log2FC 列名（默认 log2FoldChange）
+  padj_col:
+    type: string
+    required: false
+    default: padj
+    cli_arg: --padj-col
+    description: 校正 p 值列名（默认 padj）
+  lfc_cutoff:
+    type: float
+    required: false
+    default: 1.0
+    cli_arg: --lfc-cutoff
+    description: 'log2FC 绝对值阈值（默认 1；分组着色与虚线位置）'
+  padj_cutoff:
+    type: float
+    required: false
+    default: 0.05
+    cli_arg: --padj-cutoff
+    description: padj 阈值（默认 0.05）
+  title:
+    type: string
+    required: false
+    description: 图标题（默认 Volcano Plot with Gene Labels）
+  width:
+    type: float
+    required: false
+    default: 8
+    description: 输出宽度（英寸，默认 8）
+  height:
+    type: float
+    required: false
+    default: 6
+    description: 输出高度（英寸，默认 6）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（ggrepel/ggplot2 为单线程绘图，仅作接口统一并设置 BLAS 线程环境变量）
+outputs:
+  labeled_volcano:
+    type: file
+    format: [pdf, png]
+    description: 带基因标签的火山图（geom_text_repel 不重叠标注 top-N 基因名）
+environment:
+  container_official: quay.io/biocontainers/r-ggrepel（tag 以 quay / depot.galaxyproject.org 为准，见
+    README「容器与 Conda 链接」）
+  note: 官方镜像已由 bioconda 维护（quay.io/biocontainers/r-ggrepel，tag 0.6.5--r3.3.2_0，R 较老），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 r-ggrepel（conda-forge 0.9.8）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    label: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

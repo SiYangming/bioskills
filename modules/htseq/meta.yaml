@@ -1,0 +1,155 @@
+software: htseq
+canonical: htseq
+category: transcriptome
+description: 'HTSeq 是用于处理高通量测序数据的 Python 库，其命令行工具 htseq-count 从比对结果
+  （SAM/BAM）与参考注释（GTF/GFF）按特征（默认 exon）与分组属性（默认 gene_id）计算基因表达量，
+  计数策略灵活（union / intersection-strict / intersection-nonempty），适合定制化定量分析。
+
+  '
+homepage: https://htseq.readthedocs.io/
+license: GPL-3.0-only
+software_versions:
+- id: htseq_native
+  htseq: '2.1.2'
+  build_route: official biocontainer（quay.io/biocontainers/htseq / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/htseq
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 版本 2.1.2（bioconda latest，2026-09 核实）。官方另有 PyPI 发行（pip install HTSeq==2.1.2，
+    requires_python>=3.10）。官方容器 tag：quay.io/biocontainers/htseq:2.1.2--py311h0e292b2_3
+    （depot 已验证 200）。宿主机直跑 main.py 时用 conda/mamba 安装 htseq=2.1.2。'
+- id: htseq_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  htseq: '2.0.3'
+  source: bioconda::htseq=2.0.3（modules/nf-core/htseq/count/environment.yml）
+  note: nf-core 有 htseq/count 子模块（2026-09 抓取目录 HTTP 200），pin bioconda::htseq=2.0.3；
+    与 native 2.1.2 相差一个 minor，计数逻辑在 2.x 内基本稳定，跨引擎迁移请核对。
+- id: htseq_snakemake_wrappers
+  htseq: 官方无 wrapper（bio/htseq 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/htseq
+    返回 404；Snakemake 场景请使用官方 nf-core 或降级 native。
+- id: htseq_nextflow_local
+  htseq: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: htseq_snakemake_local
+  htseq: 未启用占位（本模块未建 snakemake/ 本地规则）
+implementations:
+- id: htseq_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    覆盖 htseq-count（定量）子命令（-f/-r/-s/-a/-t/-i/-m），计数写 stdout（可用 --output 落盘）。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/htseq
+    quay_biocontainers: quay.io/biocontainers/htseq
+    depot_galaxyproject: depot.galaxyproject.org/singularity/htseq:2.1.2--py311h0e292b2_3
+    pypi: https://pypi.org/project/HTSeq/
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda htseq=2.1.2（或 pip install
+      HTSeq==2.1.2）；容器可用 quay.io/biocontainers/htseq:2.1.2--py311h0e292b2_3（depot sif 同 tag）
+default_implementation: htseq_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: htseq 子命令：count（htseq-count 定量）
+  samfile:
+    type: file
+    required: true
+    cli_arg: positional
+    format:
+    - sam
+    - bam
+    description: 输入比对文件（SAM/BAM，位置参数；须与 -f 指定的格式一致）
+  gfffile:
+    type: file
+    required: true
+    cli_arg: positional
+    format:
+    - gtf
+    - gff
+    description: 参考注释文件（GTF/GFF，位置参数，位于 samfile 之后）
+  format:
+    type: string
+    required: false
+    cli_arg: -f
+    default: sam
+    description: 输入文件格式（-f：sam 或 bam）
+  order:
+    type: string
+    required: false
+    cli_arg: -r
+    default: name
+    description: 比对记录排序方式（-r：name 或 pos，需与输入一致）
+  stranded:
+    type: string
+    required: false
+    cli_arg: -s
+    default: 'no'
+    description: '链特异性（-s：yes / no / reverse）'
+  minaqual:
+    type: integer
+    required: false
+    cli_arg: -a
+    default: 10
+    description: 最小比对质量（-a，低于该值的比对被忽略）
+  featuretype:
+    type: string
+    required: false
+    cli_arg: -t
+    default: exon
+    description: 计数特征类型（-t，默认 exon）
+  idattr:
+    type: string
+    required: false
+    cli_arg: -i
+    default: gene_id
+    description: 分组属性（-i，默认 gene_id；转录本水平可用 transcript_id）
+  mode:
+    type: string
+    required: false
+    cli_arg: -m
+    default: union
+    description: '计数模式（-m：union / intersection-strict / intersection-nonempty）'
+  samout:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出带 HTSeq 注释的 SAM/BAM（-o，可选）
+  output:
+    type: file
+    required: false
+    description: 将 htseq-count 计数结果（默认 stdout）写入该文件（驱动层重定向，非 htseq 参数）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 htseq-count 的额外参数（高级用法，慎用）
+outputs:
+  counts:
+    type: file
+    format: tsv
+    description: 计数表（每行一个 feature + 末尾 __no_feature/__ambiguous/__too_low_aQual/__not_aligned/__alignment_not_unique 统计行）
+  samout:
+    type: file
+    format: sam
+    description: 带 htseq 注释的比对文件（提供 -o 时）
+environment:
+  container_official: quay.io/biocontainers/htseq（bioconda 官方镜像；tag 2.1.2--py311h0e292b2_3，depot.galaxyproject.org 互通，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 htseq（或 pip install HTSeq）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    count: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: htseq-count

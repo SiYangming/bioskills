@@ -1,0 +1,134 @@
+software: kallisto
+canonical: kallisto
+category: transcriptome
+description: 'Kallisto 是基于伪比对（pseudoalignment）的快速转录组定量工具：kallisto index 为转录本构建
+  de Bruijn 图索引，kallisto quant 不生成完整比对结果而直接估计转录本丰度（est_counts/TPM），速度极快、内存占用低。
+
+  '
+homepage: https://pachterlab.github.io/kallisto/
+license: BSD-2-Clause
+software_versions:
+- id: kallisto_native
+  kallisto: '0.46.2'
+  build_route: official biocontainer（quay.io/biocontainers/kallisto / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/kallisto
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；kallisto=0.46.2
+    由官方镜像/conda 提供（quay tag 0.46.2--h60f4f9f_2），宿主机直跑 main.py 时用 conda/mamba 安装，或使用官方预编译二进制（linux-x64 / macos-x64）。'
+- id: kallisto_nextflow_nfcore
+  module_version: master（2026-09 抓取）
+  kallisto: '0.51.1'
+  source: bioconda::kallisto=0.51.1（modules/nf-core/kallisto/{index,quant}/environment.yml）
+  note: nf-core 有 kallisto/index 与 kallisto/quant 两个子模块，均 pin bioconda::kallisto=0.51.1；与 native 版 0.46.2 相差多个 minor。
+- id: kallisto_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09 抓取 snakemake-wrappers 最新 release）
+  kallisto: '0.52.0'
+  source: kallisto=0.52.0（bio/kallisto/{index,quant}/environment.yaml）
+  note: 官方有 kallisto/index、kallisto/quant 两个 wrapper，均 pin kallisto=0.52.0。
+implementations:
+- id: kallisto_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.46.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    index / quant / inspect 链路，自动注入线程。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/kallisto
+    quay_biocontainers: quay.io/biocontainers/kallisto
+    upstream_prebuilt: https://github.com/pachterlab/kallisto/releases/download/v0.46.2/kallisto_linux-v0.46.2.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda kallisto=0.46.2；容器可用 quay.io/biocontainers/kallisto:0.46.2--h60f4f9f_2
+      镜像（tag 见 README）
+    note: 官方 release 提供 linux-x64（kallisto_linux-v0.46.2.tar.gz）与 macos-x64（kallisto_mac-v0.46.2.tar.gz）预编译二进制包，另有源码编译路线
+default_implementation: kallisto_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'kallisto 子命令：index|quant|inspect'
+  transcripts:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 转录本 FASTA（index 输入）
+  index:
+    type: string
+    required: false
+    cli_arg: -i
+    description: 索引路径（index 输出 / quant、inspect 输入）
+  left:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 双端 r1（quant；单端模式下为 reads）
+  right:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 双端 r2（quant）
+  single:
+    type: boolean
+    default: false
+    cli_arg: --single
+    description: 单端模式（需配合 -l/-s）
+  fragment_length:
+    type: float
+    required: false
+    cli_arg: -l
+    description: 单端平均片段长度
+  fragment_sd:
+    type: float
+    required: false
+    cli_arg: -s
+    description: 单端片段长度标准差
+  kmer:
+    type: integer
+    required: false
+    cli_arg: -k
+    description: index 的 k-mer 长度（默认 31）
+  bootstrap:
+    type: integer
+    default: 100
+    cli_arg: -b
+    description: bootstrap 重采样次数（默认 100）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: quant 输出目录
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入 -t）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 kallisto 的额外参数（高级用法，慎用）
+outputs:
+  index_file:
+    type: file
+    description: kallisto 索引文件（--index 产物）
+  quant_dir:
+    type: file
+    format: directory
+    description: quant 输出目录（含 abundance.tsv / abundance.h5 / run_info.json）
+environment:
+  container_official: quay.io/biocontainers/kallisto（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方同时提供 linux-x64 / macos-x64 预编译二进制包与源码编译两条路线（已核实）；宿主机直跑 main.py 时用 conda/mamba 安装 kallisto。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    index: 4
+    quant: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: kallisto

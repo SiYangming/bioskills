@@ -1,0 +1,122 @@
+software: star-fusion
+canonical: star-fusion
+category: fusion_detection
+description: 'STAR-Fusion 是基于 STAR 比对器的融合基因检测工具：先用 STAR 把 RNA-seq reads
+  比对到基因组并提取融合支持 reads，再结合 CTAT 资源库（genome lib，含基因注释/融合参考/序列）
+  进行融合预测，速度快、准确性高，是目前最流行的融合基因检测工具之一（推荐）。需要预先准备
+  CTAT_resource_lib（--genome_lib_dir）。
+
+  '
+homepage: https://github.com/STAR-Fusion/STAR-Fusion
+license: BSD-3-Clause
+software_versions:
+- id: star_fusion_native
+  star_fusion: '1.15.1'
+  build_route: official biocontainer（quay.io/biocontainers/star-fusion / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/star-fusion
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 版本 1.15.1（bioconda latest，2026-09 核实；noarch 包 star-fusion-1.15.1-hdfd78af_1）。
+    官方容器 tag：quay.io/biocontainers/star-fusion:1.15.1--hdfd78af_1（depot 已验证 200）。
+    STAR-Fusion 主程序为 Perl 脚本（GitHub master 内 $VERSION=1.15.0；bioconda 打包为 1.15.1）；
+    运行时**必须**提供 CTAT_resource_lib（--genome_lib_dir，可从 CTAT 下载或本地构建）。
+    宿主机直跑 main.py 时用 conda/mamba 安装 star-fusion=1.15.1。'
+- id: star_fusion_nextflow_nfcore
+  star_fusion: 官方无模块
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/star-fusion
+    返回 404；Nextflow 场景需自定义或降级 native。
+- id: star_fusion_snakemake_wrappers
+  star_fusion: 官方无 wrapper
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/star-fusion
+    返回 404；Snakemake 场景需自定义或降级 native。
+- id: star_fusion_nextflow_local
+  star_fusion: 未启用占位（本模块未建 nextflow/ 目录）
+- id: star_fusion_snakemake_local
+  star_fusion: 未启用占位（本模块未建 snakemake/ 目录）
+implementations:
+- id: star_fusion_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.15.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    覆盖 detect 子命令（--genome_lib_dir <CTAT_resource_lib> --left_fq R1 --right_fq R2 --output_dir . --CPU N）。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/star-fusion
+    quay_biocontainers: quay.io/biocontainers/star-fusion
+    depot_galaxyproject: depot.galaxyproject.org/singularity/star-fusion:1.15.1--hdfd78af_1
+    github: https://github.com/STAR-Fusion/STAR-Fusion
+    ctat: https://github.com/NCIP/CTAT_genome_lib_build_DIR（CTAT 资源库下载/构建）
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda star-fusion=1.15.1；容器可用
+      quay.io/biocontainers/star-fusion:1.15.1--hdfd78af_1（depot sif 同 tag）
+default_implementation: star_fusion_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: star-fusion 子命令：detect（融合基因检测）
+  genome_lib_dir:
+    type: string
+    required: true
+    cli_arg: --genome_lib_dir
+    description: CTAT 资源库目录（包含 STAR 索引、注释与融合参考；可从 CTAT 下载或本地构建）
+  left_fq:
+    type: file
+    required: true
+    cli_arg: --left_fq
+    format:
+    - fastq
+    - fastq.gz
+    description: 输入 reads mate1（双端 R1；单端时即唯一输入）
+  right_fq:
+    type: file
+    required: false
+    cli_arg: --right_fq
+    format:
+    - fastq
+    - fastq.gz
+    description: 输入 reads mate2（双端 R2；单端数据省略）
+  output_dir:
+    type: string
+    required: true
+    cli_arg: --output_dir
+    description: 输出目录（生成 star-fusion.fusion_predictions*.tsv）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --CPU
+    description: CPU 线程数（自动注入 --CPU）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 STAR-Fusion 的额外参数（高级用法，慎用）
+outputs:
+  fusion_predictions:
+    type: file
+    format: tsv
+    description: 融合基因预测结果 star-fusion.fusion_predictions.tsv
+  fusion_predictions_abridged:
+    type: file
+    format: tsv
+    description: 简化版结果 star-fusion.fusion_predictions.abridged.tsv
+environment:
+  container_official: quay.io/biocontainers/star-fusion（bioconda 官方镜像；tag 1.15.1--hdfd78af_1，depot.galaxyproject.org 互通，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 star-fusion。运行前须准备 CTAT_resource_lib（--genome_lib_dir）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    detect: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: STAR-Fusion

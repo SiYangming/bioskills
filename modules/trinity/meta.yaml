@@ -1,0 +1,169 @@
+software: trinity
+canonical: trinity
+category: transcriptome
+description: 'Trinity 是 Broad Institute 开发的转录组组装套件，由 Inchworm（k-mer 组装 unique 序列）、Chrysalis（聚类并构建 De Bruijn 图）、Butterfly（解析可变剪接 isoform）三个模块组成；既支持无参考的 de novo 组装，也支持基于比对 BAM 的 genome-guided 组装，并自带 TrinityStats.pl / align_and_estimate_abundance.pl / abundance_estimates_to_matrix.pl 等下游统计、定量与表达矩阵工具。
+
+  '
+homepage: https://github.com/trinityrnaseq/trinityrnaseq/
+license: BSD-3-Clause
+software_versions:
+- id: trinity_native
+  trinity: '2.11.0'
+  build_route: official biocontainer（quay.io/biocontainers/trinity / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/trinity
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；trinity=2.11.0
+    由官方镜像/conda 提供（quay tag 2.11.0--h5ef6573_1），宿主机直跑 main.py 时用 conda/mamba 安装，无 conda 时按官方 FULL 源码包编译（make -j 4 && make plugins）。'
+- id: trinity_nextflow_nfcore
+  module_version: master（2026-09 抓取）
+  trinity: '2.15.2'
+  source: bioconda::trinity=2.15.2（modules/nf-core/trinity/environment.yml，nf-core 扁平模块）
+  note: nf-core 的 trinity 为扁平模块（modules/nf-core/trinity/main.nf，无子命令目录），pin bioconda::trinity=2.15.2；与 native 版 2.11.0 相差两个 minor。
+- id: trinity_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09 抓取 snakemake-wrappers 最新 release）
+  trinity: '2.15.2'
+  source: trinity=2.15.2（bio/trinity/environment.yaml，扁平 wrapper）
+  note: '官方 wrapper 为扁平结构（wrapper.py + environment.yaml），pin trinity=2.15.2；运行时靠 wrapper: "vX.Y.Z/bio/trinity" 句柄解析。'
+implementations:
+- id: trinity_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.11.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖 de
+    novo / genome-guided 组装与 stats / align_estimate / abundance_matrix 下游链路，自动注入线程。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/trinity
+    quay_biocontainers: quay.io/biocontainers/trinity
+    upstream_source: https://github.com/trinityrnaseq/trinityrnaseq/releases/download/v2.11.0/trinityrnaseq-v2.11.0.FULL.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda trinity=2.11.0；容器可用 quay.io/biocontainers/trinity:2.11.0--h5ef6573_1
+      镜像（tag 见 README）
+    note: 官方仅提供 FULL 源码归档（需 make 编译 + make plugins），已核实无官方预编译二进制包
+default_implementation: trinity_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'trinity 子命令：denovo|genome_guided|stats|longest_isoforms|align_estimate|abundance_matrix'
+  left:
+    type: file
+    required: false
+    cli_arg: --left
+    description: 左端 fastq（多样本用逗号分隔；denovo/align_estimate 使用）
+  right:
+    type: file
+    required: false
+    cli_arg: --right
+    description: 右端 fastq（双端测序；denovo/align_estimate 使用）
+  bam:
+    type: file
+    required: false
+    cli_arg: --genome_guided_bam
+    description: 已排序的基因组比对 BAM（genome_guided 使用）
+  fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: Trinity.fasta / Trinity-GG.fasta（stats/longest_isoforms 使用）
+  transcripts:
+    type: file
+    required: false
+    cli_arg: --transcripts
+    description: 定量所用转录本 FASTA（align_estimate 使用）
+  results:
+    type: map
+    required: false
+    cli_arg: positional
+    description: 各样本定量结果文件列表（abundance_matrix 使用，如 *.genes.results）
+  seqtype:
+    type: string
+    default: fq
+    cli_arg: --seqType
+    description: 序列类型 fq|fa
+  max_memory:
+    type: string
+    default: 2G
+    cli_arg: --max_memory
+    description: Trinity Jellyfish/Butterfly 最大内存（如 2G/20G）
+  genome_guided_max_intron:
+    type: integer
+    default: 10000
+    cli_arg: --genome_guided_max_intron
+    description: genome-guided 组装最大内含子长度
+  jaccard_clip:
+    type: boolean
+    default: false
+    cli_arg: --jaccard_clip
+    description: 去除高表达基因的过度组装（基因密集物种）
+  normalize_reads:
+    type: boolean
+    default: false
+    cli_arg: --normalize_reads
+    description: 对测序深度进行归一化
+  ss_lib_type:
+    type: string
+    required: false
+    cli_arg: --SS_lib_type
+    description: 链特异性类型（RF=fr-firststrand / FR=fr-secondstrand）
+  est_method:
+    type: string
+    default: RSEM
+    cli_arg: --est_method
+    description: 表达量估计方法（RSEM/eXpress；align_estimate/abundance_matrix 使用）
+  aln_method:
+    type: string
+    default: bowtie2
+    cli_arg: --aln_method
+    description: 比对方法（bowtie/bowtie2；align_estimate 使用）
+  out_prefix:
+    type: string
+    default: genes
+    cli_arg: --out_prefix
+    description: 表达矩阵输出前缀（abundance_matrix 使用）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --CPU
+    description: 线程数（自动注入 --CPU / --threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 Trinity / util 脚本的额外参数（高级用法，慎用）
+outputs:
+  assembly_dir:
+    type: file
+    format: directory
+    description: de novo / genome-guided 组装输出目录（含 Trinity.fasta / Trinity-GG.fasta）
+  stats_report:
+    type: file
+    format: txt
+    description: TrinityStats.pl 组装统计报告（contig 数 / N50）
+  longest_isoforms:
+    type: file
+    format: fasta
+    description: extract_longest_isoforms_from_TrinityFasta.pl 输出的每基因最长 isoform
+  expression_matrix:
+    type: file
+    format: tsv
+    description: abundance_estimates_to_matrix.pl 输出的 counts/TMM/TPM 表达矩阵
+environment:
+  container_official: quay.io/biocontainers/trinity（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方同时提供 FULL 源码归档（需 make 编译），已核实无预编译二进制包；宿主机直跑 main.py 时用 conda/mamba 安装 trinity。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    denovo: 8
+    genome_guided: 8
+    align_estimate: 4
+    abundance_matrix: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Trinity

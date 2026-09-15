@@ -1,0 +1,265 @@
+software: ensembl-vep
+canonical: ensembl-vep
+category: variant_annotation
+description: 'VEP（Variant Effect Predictor）是 Ensembl 的变异注释工具（Perl）：vep 预测变异
+  对基因/转录本/蛋白序列的影响（Consequence / IMPACT / SIFT / PolyPhen 等，支持 --cache 本地
+  缓存与 --fork 并行），vep_install 下载/构建缓存数据库，filter_vep 对注释结果做过滤。
+  官网 https://www.ensembl.org/info/docs/tools/vep/index.html ；GitHub
+  https://github.com/Ensembl/ensembl-vep。
+  '
+homepage: https://www.ensembl.org/info/docs/tools/vep/index.html
+license: Apache-2.0
+software_versions:
+- id: ensembl-vep_native
+  ensembl_vep: 116.2
+  perl: Perl 5（bioconda/quay 镜像自带 perl + 依赖）
+  build_route: official biocontainer（quay.io/biocontainers/ensembl-vep / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/ensembl-vep
+  note: '官方渠道已维护（bioconda 最新 116.2；quay tag 116.2--pl5321h2a3209d_0；depot sif 200），
+    本地不自建容器。宿主机直跑 main.py 用 conda/mamba 安装 ensembl-vep（提供 vep / vep_install /
+    filter_vep），或官方源码 release（git clone / release tarball + perl INSTALL.pl）。
+    文档 07 §10 示例用 --cache_version 104；本模块 native 版本登记为当前 116.2。'
+- id: ensembl-vep_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  ensembl_vep: 116.1
+  source: bioconda::ensembl-vep=116.1 + htslib=1.23.1 + perl-math-cdf=0.1（modules/nf-core/ensemblvep/{vep,filtervep,download}/environment.yml）
+  note: nf-core 子模块名 ensemblvep（含 vep / filtervep / download 三个），pin bioconda::ensembl-vep=116.1
+    （**低于** bioconda 最新 116.2）。
+- id: ensembl-vep_snakemake_wrappers
+  wrapper_tag: v9.17.1（snakemake-wrappers 最新 release，2026-09 抓取）
+  ensembl_vep: 116.1 / 116.2（子 wrapper 不同）
+  wrapper_utils: —
+  source: bio/vep/{annotate,cache,plugins}/environment.yaml（annotate pin ensembl-vep=116.1 + bcftools=1.24；
+    cache pin ensembl-vep=116.2；plugins pin python=3.14.7）
+  note: 官方 snakemake-wrappers 目录名为 vep（非 ensembl-vep），提供 annotate / cache / plugins 三个 wrapper。
+- id: ensembl-vep_nextflow_local
+  ensembl_vep: 未启用（官方 nf-core/ensemblvep 已覆盖；本地未建 nextflow/）
+- id: ensembl-vep_snakemake_local
+  ensembl_vep: 未启用（官方 bio/vep 已覆盖；本地未建 snakemake/）
+implementations:
+- id: ensembl-vep_native
+  path: native
+  source_type: custom
+  type: native
+  version: "116.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 annotate（vep 注释）/ cache（vep_install 下载缓存）/ filter（filter_vep 过滤）；
+    --fork 并行经 --threads 注入。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/ensembl-vep
+    quay_biocontainers: quay.io/biocontainers/ensembl-vep
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/ensembl-vep%3A116.2--pl5321h2a3209d_0
+    upstream_source: https://github.com/Ensembl/ensembl-vep/archive/refs/tags/release/116.2.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda ensembl-vep=116.2；容器可用
+      quay.io/biocontainers/ensembl-vep:116.2--pl5321h2a3209d_0 镜像（tag 见 README）
+default_implementation: ensembl-vep_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ensembl-vep 子命令：annotate（vep 注释）| cache（vep_install 缓存）| filter（filter_vep 过滤）'
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    format: [vcf, vcf.gz]
+    description: 输入 VCF（annotate / filter）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（VCF 或制表符文本）
+  cache:
+    type: boolean
+    default: true
+    cli_arg: --cache
+    description: 使用本地缓存数据库（速度更快；文档默认开启）
+  dir_cache:
+    type: string
+    required: false
+    cli_arg: --dir_cache
+    description: 缓存目录（如 ~/.vep）
+  cache_version:
+    type: integer
+    required: false
+    cli_arg: --cache_version
+    description: 缓存版本（文档示例 104；须与缓存文件一致）
+  species:
+    type: string
+    required: false
+    cli_arg: --species
+    description: 物种名（如 homo_sapiens）
+  assembly:
+    type: string
+    required: false
+    cli_arg: --assembly
+    description: 参考基因组版本（如 GRCh38）
+  vcf:
+    type: boolean
+    default: false
+    cli_arg: --vcf
+    description: 输出 VCF 格式（否则默认 VEP 文本格式）
+  tab:
+    type: boolean
+    default: false
+    cli_arg: --tab
+    description: 输出制表符分隔格式
+  force_overwrite:
+    type: boolean
+    default: false
+    cli_arg: --force_overwrite
+    description: 强制覆盖输出文件
+  sift:
+    type: string
+    required: false
+    cli_arg: --sift
+    description: SIFT 致病性预测（b=both 评分和预测）
+  polyphen:
+    type: string
+    required: false
+    cli_arg: --polyphen
+    description: PolyPhen 致病性预测（b=both）
+  symbol:
+    type: boolean
+    default: false
+    cli_arg: --symbol
+    description: 输出基因符号
+  protein:
+    type: boolean
+    default: false
+    cli_arg: --protein
+    description: 输出蛋白质变化
+  biotype:
+    type: boolean
+    default: false
+    cli_arg: --biotype
+    description: 输出转录本 biotype
+  canonical:
+    type: boolean
+    default: false
+    cli_arg: --canonical
+    description: 仅注释经典转录本
+  hgvs:
+    type: boolean
+    default: false
+    cli_arg: --hgvs
+    description: 输出 HGVS 命名
+  numbers:
+    type: boolean
+    default: false
+    cli_arg: --numbers
+    description: 输出外显子/内含子编号
+  domains:
+    type: boolean
+    default: false
+    cli_arg: --domains
+    description: 输出蛋白结构域
+  regulatory:
+    type: boolean
+    default: false
+    cli_arg: --regulatory
+    description: 输出调控区域注释
+  ccds:
+    type: boolean
+    default: false
+    cli_arg: --ccds
+    description: 输出 CCDS 注释
+  uniprot:
+    type: boolean
+    default: false
+    cli_arg: --uniprot
+    description: 输出 UniProt 注释
+  tsl:
+    type: boolean
+    default: false
+    cli_arg: --tsl
+    description: 输出转录本支持水平（TSL）
+  appris:
+    type: boolean
+    default: false
+    cli_arg: --appris
+    description: 输出 APPRIS 注释
+  merged:
+    type: boolean
+    default: false
+    cli_arg: --merged
+    description: 使用合并（Ensembl + RefSeq）缓存
+  everything:
+    type: boolean
+    default: false
+    cli_arg: --everything
+    description: 输出全部可用注释
+  fasta:
+    type: file
+    required: false
+    cli_arg: --fasta
+    description: 参考 FASTA（--hgvs 等需要；须与 assembly 一致）
+  auto:
+    type: string
+    required: false
+    cli_arg: -a
+    description: cache 子命令的 vep_install AUTO 串（如 cf=缓存+FASTA）
+  convert:
+    type: boolean
+    default: false
+    cli_arg: --CONVERT
+    description: cache 子命令将缓存转换为当前格式
+  filter_expr:
+    type: string
+    required: false
+    cli_arg: -f
+    description: filter 子命令的过滤表达式（如 'IMPACT is HIGH'）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --fork
+    description: annotate 的并行线程数（--fork）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 VEP 的额外参数（高级用法，慎用）
+outputs:
+  annotated_vcf:
+    type: file
+    format: vcf
+    description: annotate 输出的注释 VCF（INFO 增加 CSQ 字段）
+  annotated_tab:
+    type: file
+    format: tsv
+    description: annotate --tab 输出的制表符注释结果
+  cache_dir:
+    type: directory
+    description: cache 子命令下载/转换的缓存目录
+  filtered_out:
+    type: file
+    description: filter 子命令过滤后的输出
+environment:
+  container_official: quay.io/biocontainers/ensembl-vep（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需 vep（conda
+    bioconda ensembl-vep，或官方源码 release + perl INSTALL.pl）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PERL5LIB: '{tmpdir}/perl5lib'
+  per_subcommand_threads:
+    annotate: 8
+    cache: 1
+    filter: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: vep
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core 模块名为 ensemblvep（含 vep / filtervep /
+    download 三个子模块，pin bioconda::ensembl-vep=116.1），执行请 nf modules install nf-core
+    ensemblvep vep filtervep download。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers 目录名为 vep
+    （bio/vep/{annotate,cache,plugins}；wrapper: "v9.17.1/bio/vep/annotate"，由 Snakemake 运行时解析）。'

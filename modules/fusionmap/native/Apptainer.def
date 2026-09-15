@@ -1,0 +1,126 @@
+# fusionmap native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方预编译 tar.gz，禁 miniconda）
+#
+# 背景：FusionMap（RNA-seq 融合基因检测，C# 编写）无官方镜像（bioconda / quay.io/biocontainers /
+#       depot.galaxyproject.org 2026-09 核实全无；nf-core / snakemake-wrappers / Homebrew 亦无）。
+#       官方发布为 OmicSoft 预编译 tar.gz（FusionMap_2015-03-31.tar.gz）：Windows 版为
+#       FusionMap.exe（Linux 下用 mono 运行），官方另有 Linux 直接可执行的构建。
+#       本配方：debian:bookworm-slim + apt 最小化（mono-runtime 等）+ 官方 tar.gz。
+#
+# ⚠️ 商业/许可受限：FusionMap 官方声明 free for noncommercial use（非商业免费），商业用途需向
+#    OmicSoft 获取授权。构建本镜像 = 下载并打包官方软件，**仅供本地非商业使用，不得再分发**。
+#    官方下载经 Cloudflare/许可页，自动化 curl 通常返回 403（2026-09 实测）；构建若失败，请从
+#    官方下载页获取包后自行部署（见 native/install.sh --tarball）。本配方未实际构建验证。
+#
+# 构建（在仓库根执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build ../fusionmap.sif fusionmap/native/Apptainer.def
+# 运行（容器内 CLI = FusionMap launcher，原生优先，否则 mono 运行 .exe）：
+#   apptainer run -B $PWD:/data -H /data fusionmap.sif \
+#       --fusion DetectFusion --input /data/reads.fastq --ref /data/Ref --output /data/out --thread 8
+#   驱动 main.py：apptainer exec fusionmap.sif python3 /opt/skill/main.py detect --input ... --ref ... --output ...
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software fusionmap
+    Version 2015-03-31
+    org.bioskills.software fusionmap
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt minimal + OmicSoft prebuilt tarball
+    license Free for noncommercial use (commercial license required)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    fusionmap/native/main.py /opt/skill/main.py
+    fusionmap/meta.yaml /opt/skill/fusionmap/meta.yaml
+    fusionmap/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：运行（mono-runtime 供 FusionMap.exe；python3/python3-yaml 供 main.py 驱动）
+    #    + ca-certificates/curl（构建期下载，末段 purge）+ procps
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        mono-runtime \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方预编译包下载 + 解压部署 /opt/fusionmap
+    #    （⚠️ 商业/许可受限；自动化下载多因 Cloudflare/许可页 403 失败，可改用 --tarball 本地部署）
+    curl -fSL -o /tmp/fusionmap.tar.gz \
+        "http://www.omicsoft.com/downloads/fusionmap/FusionMap_2015-03-31.tar.gz"
+    mkdir -p /opt/fusionmap
+    tar -xzf /tmp/fusionmap.tar.gz -C /opt/fusionmap
+    BIN_NATIVE="$(find /opt/fusionmap -maxdepth 3 -type f -name FusionMap -perm -111 | head -1)"
+    BIN_EXE="$(find /opt/fusionmap -maxdepth 3 -type f -name 'FusionMap.exe' | head -1)"
+    test -n "${BIN_NATIVE}${BIN_EXE}"
+    rm -f /tmp/fusionmap.tar.gz
+
+    # 3) launcher（/usr/local/bin/FusionMap）：原生优先，否则 mono 运行 FusionMap.exe
+    if [ -z "$BIN_NATIVE" ]; then
+        cat > /usr/local/bin/FusionMap <<EOF
+#!/usr/bin/env bash
+exec mono "$BIN_EXE" "\$@"
+EOF
+    else
+        cat > /usr/local/bin/FusionMap <<EOF
+#!/usr/bin/env bash
+exec "$BIN_NATIVE" "\$@"
+EOF
+    fi
+    chmod 0755 /usr/local/bin/FusionMap
+
+    # 4) 仅构建期下载工具移除 + 清理四连（mono-runtime/python3 保留）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/FusionMap "$@"
+
+%test
+    # 非交互自检：launcher 存在 + 驱动可自省
+    set -eux
+    test -x /usr/local/bin/FusionMap
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/fm_commands.txt
+    grep -q '^detect' /tmp/fm_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/fm_schema.json
+    test -s /tmp/fm_schema.json
+    rm -rf /tmp/fm_commands.txt /tmp/fm_schema.json
+
+%help
+    fusionmap native Apptainer 镜像（自建：apt 最小化 + OmicSoft 官方预编译包 2015-03-31）。
+    ⚠️ 商业/许可受限：非商业免费，商业用途需授权；不得再分发。
+    CLI 用法：apptainer run fusionmap.sif --fusion DetectFusion --input reads.fastq --ref Ref --output out --thread 8
+    驱动用法：apptainer exec fusionmap.sif python3 /opt/skill/main.py detect --input reads.fastq --ref Ref --output out --thread 8
+    挂载示例：apptainer run -B $PWD:/data -H /data fusionmap.sif --fusion DetectFusion --input /data/reads.fastq --ref /data/Ref --output /data/out --thread 8
+    说明：官方渠道（bioconda/quay biocontainers/depot）全无 → 自建镜像；Windows 版 .exe 由 mono 运行，
+    Linux 直接可执行构建由 launcher 直接调用。

@@ -1,0 +1,142 @@
+software: pheatmap
+canonical: pheatmap
+category: visualization
+description: 'pheatmap 是 CRAN 热图绘制 R 包：以基因表达矩阵（行基因、列样品）为输入，绘制带双向层次聚类、
+  行列标准化、颜色映射、行列注释与树高控制的表达热图，可直接输出 PDF/PNG。差异基因表达可视化常用工具，
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动 pheatmap() 完成绘图（可选 log2 转换）。
+  conda 包名规范名为 r-pheatmap（conda-forge 最新 1.0.13；bioconda 仅 1.0.8），目录名 canonical 取 pheatmap。
+  '
+homepage: https://cran.r-project.org/package=pheatmap
+license: GPL-2
+software_versions:
+- id: pheatmap_native
+  r-pheatmap: '1.0.13'
+  r: R >= 4.1（conda r-base / 官方镜像自带 R）
+  build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
+  source: https://anaconda.org/conda-forge/r-pheatmap
+  note: 'conda-forge r-pheatmap 最新 1.0.13（与 CRAN pheatmap 1.0.13 一致）；bioconda 频道仅 1.0.8，
+    对应官方镜像 quay.io/biocontainers/r-pheatmap:1.0.8--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本。
+    宿主机推荐 conda-forge 现版本；如需容器且要新 R，可在容器内自装 1.0.13。'
+- id: pheatmap_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/pheatmap 404）
+  r-pheatmap: —
+  source: —（nf-core/modules 仓库 modules/nf-core/pheatmap 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/pheatmap
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: pheatmap_snakemake_wrappers
+  r-pheatmap: 官方无 wrapper（bio/pheatmap 404）
+  source: —（snakemake-wrappers 仓库 bio/pheatmap 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/pheatmap
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+implementations:
+- id: pheatmap_native
+  path: native
+  source_type: custom
+  type: native
+  priority: high
+  version: "1.0.13"
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    plot 子命令以 Rscript 运行 pheatmap() 绘制差异基因表达热图（标准化/聚类/注释/输出 PDF 或 PNG）。'
+  container_ref:
+    conda_forge: https://anaconda.org/conda-forge/r-pheatmap
+    bioconda: https://anaconda.org/bioconda/r-pheatmap
+    quay_biocontainers: quay.io/biocontainers/r-pheatmap:1.0.8--r3.3.2_0
+    galaxyproject: depot.galaxyproject.org/singularity/r-pheatmap:1.0.8--r3.3.2_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda r-pheatmap；容器可用
+      quay.io/biocontainers 官方镜像（见 README 环境安装）
+default_implementation: pheatmap_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'pheatmap 子命令：plot（绘制热图）'
+  matrix:
+    type: file
+    required: true
+    description: 表达矩阵（行基因、列样品，Tab 分隔；含首行样品名与首列基因名）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出图片路径（按扩展名 *.pdf 或 *.png）
+  scale:
+    type: string
+    required: false
+    default: row
+    description: '标准化方式：none|row|column（默认 row，按行标准化）'
+  log2:
+    type: boolean
+    required: false
+    default: true
+    description: 绘图前是否做 log2(x+1) 转换（默认开）
+  cluster_rows:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: --cluster-rows
+    description: 是否对行（基因）聚类（默认开）
+  cluster_cols:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: --cluster-cols
+    description: 是否对列（样品）聚类（默认开）
+  show_rownames:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --show-rownames
+    description: 是否显示基因名（默认关，基因过多时不宜开）
+  show_colnames:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: --show-colnames
+    description: 是否显示样品名（默认开）
+  annotation:
+    type: file
+    required: false
+    description: 列注释表（行样品、列注释；可选，如 condition）
+  title:
+    type: string
+    required: false
+    description: 图标题（默认 Differential Gene Expression Heatmap）
+  width:
+    type: float
+    required: false
+    default: 8
+    description: 输出宽度（英寸，默认 8）
+  height:
+    type: float
+    required: false
+    default: 10
+    description: 输出高度（英寸，默认 10）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（pheatmap 为单线程绘图，仅作接口统一并设置 BLAS 线程环境变量）
+outputs:
+  heatmap:
+    type: file
+    format: [pdf, png]
+    description: 差异基因表达热图（含双向聚类树、行标准化颜色映射、可选列注释）
+environment:
+  container_official: quay.io/biocontainers/r-pheatmap（tag 以 quay / depot.galaxyproject.org 为准，见
+    README「容器与 Conda 链接」）
+  note: 官方镜像已由 bioconda 维护（quay.io/biocontainers/r-pheatmap，tag 1.0.8--r3.3.2_0，R 较老），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 r-pheatmap（conda-forge 1.0.13）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    plot: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

@@ -1,0 +1,112 @@
+# soapfuse native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 SourceForge 预编译包，禁 miniconda）
+#
+# 背景：SOAPfuse（BGI 双端 RNA-seq 融合基因检测，Perl 实现）无官方镜像（bioconda /
+#       quay.io/biocontainers / depot.galaxyproject.org 2026-09 核实全无；nf-core /
+#       snakemake-wrappers / Homebrew 亦无）。官方发布为 SourceForge 预编译包
+#       SOAPfuse-v1.27.tar.gz（2016-01-19）；运行依赖 perl（>=5.8.5）+ samtools + bedtools。
+#       本配方：debian:bookworm-slim + apt 最小化（perl/samtools/bedtools）+ 官方预编译包。
+#       v1.27 起需把 SOAPfuse perl 模块目录加入 PERL5LIB（官方 wiki 说明），已通过 %environment 设置。
+#
+# 构建（在仓库根执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build ../soapfuse.sif soapfuse/native/Apptainer.def
+# 运行（数据库/config 需挂载）：
+#   apptainer run -B $PWD:/data -H /data soapfuse.sif \
+#       -c /data/config.txt -fd /data/raw_data -l /data/sample.list -o /data/out
+#   驱动 main.py：apptainer exec soapfuse.sif python3 /opt/skill/main.py run -c ... -fd ... -l ... -o ...
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software soapfuse
+    Version 1.27
+    org.bioskills.software soapfuse
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt minimal (perl/samtools/bedtools) + SourceForge prebuilt tarball
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    soapfuse/native/main.py /opt/skill/main.py
+    soapfuse/meta.yaml /opt/skill/soapfuse/meta.yaml
+    soapfuse/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：运行（perl + samtools + bedtools 为 SOAPfuse 流程依赖；python3/python3-yaml
+    #    供 main.py 驱动）+ ca-certificates/curl（构建期下载，末段 purge）+ procps
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        perl \
+        samtools \
+        bedtools \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方预编译包下载 + 解压部署 /opt/soapfuse
+    curl -fSL -o /tmp/soapfuse.tar.gz \
+        "https://downloads.sourceforge.net/project/soapfuse/SOAPfuse_Package/SOAPfuse-v1.27.tar.gz"
+    mkdir -p /opt/soapfuse
+    tar -xzf /tmp/soapfuse.tar.gz -C /opt/soapfuse --strip-components=1
+    test -f /opt/soapfuse/SOAPfuse-RUN.pl
+    chmod 0755 /opt/soapfuse/SOAPfuse-RUN.pl
+    rm -f /tmp/soapfuse.tar.gz
+
+    # 3) 暴露 SOAPfuse-RUN.pl（驱动按 `perl SOAPfuse-RUN.pl ...` 解析）
+    ln -sf /opt/soapfuse/SOAPfuse-RUN.pl /usr/local/bin/SOAPfuse-RUN.pl
+
+    # 4) 仅构建期下载工具移除 + 清理四连（perl/samtools/bedtools/python3 保留）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+    export PERL5LIB=/opt/soapfuse/source:/opt/soapfuse/source/bin:/opt/soapfuse
+
+%runscript
+    exec perl /opt/soapfuse/SOAPfuse-RUN.pl "$@"
+
+%test
+    # 非交互自检：主脚本 + perl 可用 + 驱动可自省
+    set -eux
+    test -f /opt/soapfuse/SOAPfuse-RUN.pl
+    perl -e 'print "perl ok\n"'
+    test -x /usr/local/bin/SOAPfuse-RUN.pl || test -L /usr/local/bin/SOAPfuse-RUN.pl
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/sf_commands.txt
+    grep -q '^run' /tmp/sf_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/sf_schema.json
+    test -s /tmp/sf_schema.json
+    rm -rf /tmp/sf_commands.txt /tmp/sf_schema.json
+
+%help
+    soapfuse native Apptainer 镜像（自建：apt 最小化 + SourceForge 官方预编译包 v1.27）。
+    CLI 用法：apptainer run soapfuse.sif -c config.txt -fd raw_data -l sample.list -o out/
+    驱动用法：apptainer exec soapfuse.sif python3 /opt/skill/main.py run -c config.txt -fd raw_data -l sample.list -o out/
+    挂载示例：apptainer run -B $PWD:/data -H /data soapfuse.sif -c /data/config.txt -fd /data/raw_data -l /data/sample.list -o /data/out
+    说明：官方渠道（bioconda/quay biocontainers/depot）全无 → 自建镜像；运行依赖 perl/samtools/bedtools，
+    v1.27 起 PERL5LIB 指向 SOAPfuse perl 模块目录（%environment 已设置）。

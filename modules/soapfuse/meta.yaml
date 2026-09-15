@@ -1,0 +1,136 @@
+software: soapfuse
+canonical: soapfuse
+category: fusion_detection
+description: 'SOAPfuse 是华大基因（BGI）开发的融合基因检测工具，从双端 RNA-seq 数据中高效、
+  准确地检测融合转录本，具有高灵敏度和高特异性（Perl 实现，仅支持 Linux，全流程约需 8G 内存；
+  当前仅针对人类 RNA-seq 数据设计）。依赖较多（Perl 模块、samtools、bedtools 等），需先配置
+  数据库与 config.txt。⚠️ 官方渠道 bioconda/quay/depot 均无镜像/包（2026-09 核实），走自建兜底。
+
+  '
+homepage: https://sourceforge.net/projects/soapfuse/
+license: GPL-3.0
+software_versions:
+- id: soapfuse_native
+  soapfuse: '1.27'
+  build_route: 自建容器（debian:bookworm-slim + apt 最小化 perl/samtools/bedtools + 官方 SourceForge
+    预编译包；官方渠道 bioconda → quay.io/biocontainers → depot.galaxyproject.org 均无 → 自建兜底）
+  source: https://downloads.sourceforge.net/project/soapfuse/SOAPfuse_Package/SOAPfuse-v1.27.tar.gz
+    （SourceForge soapfuse 最新发布，2016-01-19，42,827,101 bytes；md5 4f85e1cc8fe82eebd70fa377b9452e36，
+    摘自 SourceForge best_release.json）
+  note: 'v1.27 为官方最后发布（2016-01-19）；自 v1.27 起 SOAPfuse 把部分功能打包为 SOAPfuse perl
+    模块，运行前必须把模块目录加入 PERL5LIB（官方 wiki 说明）。官方渠道（bioconda/quay
+    biocontainers/depot）2026-09 核实全无；nf-core / snakemake-wrappers 404；Homebrew 无公式。
+    文档所述 GitHub https://github.com/aquaskyline/SOAPfuse 2026-09 抓取已 404；活跃的 SOAPfuse
+    perl 模块仓库为 https://github.com/Nobel-Justin/SOAPfuse_PM（GPL-3.0）。'
+- id: soapfuse_nextflow_nfcore
+  soapfuse: 官方无模块
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/soapfuse
+    返回 404；Nextflow 场景需自定义或降级 native。
+- id: soapfuse_snakemake_wrappers
+  soapfuse: 官方无 wrapper
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/soapfuse
+    返回 404；Snakemake 场景需自定义或降级 native。
+- id: soapfuse_nextflow_local
+  soapfuse: 未启用占位（本模块未建 nextflow/ 目录）
+- id: soapfuse_snakemake_local
+  soapfuse: 未启用占位（本模块未建 snakemake/ 目录）
+implementations:
+- id: soapfuse_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.27"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    覆盖 run 子命令（perl SOAPfuse-RUN.pl -c <config> -fd <data_dir> -l <sample_list> -o <out_dir>）。
+    '
+  container_ref:
+    sourceforge: https://sourceforge.net/projects/soapfuse/（预编译 SOAPfuse-v1.27.tar.gz）
+    bioconda: 无（api.anaconda.org/package/bioconda/soapfuse 404，2026-09）
+    quay_biocontainers: 无（quay.io/api/v1/repository/biocontainers/soapfuse 未授权/不存在）
+    depot_galaxyproject: 无 sif（depot.galaxyproject.org/singularity/soapfuse:1.27 → 404）
+    install_hint: 官方渠道全无 → 自建容器（native/Dockerfile + Apptainer.def：debian:bookworm-slim
+      + apt 最小化 perl/samtools/bedtools + 官方预编译包）或 native/install.sh 本地部署（用户前缀）
+default_implementation: soapfuse_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: soapfuse 子命令：run（SOAPfuse-RUN.pl 融合检测主流程）
+  config:
+    type: file
+    required: true
+    cli_arg: -c
+    description: 配置文件（官方包内 config/config.txt，需按 TOOL_DIR/DATABASE_DIR 修改后使用）
+  data_dir:
+    type: string
+    required: true
+    cli_arg: -fd
+    description: 存放双端测序 reads 文件的目录（FASTQ/FASTA，可 gzip）
+  sample_list:
+    type: file
+    required: true
+    cli_arg: -l
+    description: 样本信息列表文件（每行一个样本；建议每个样本列表文件只含一个样本）
+  output:
+    type: string
+    required: true
+    cli_arg: -o
+    description: 输出目录（优先级高于 config 的 PD_all_out；自动创建各步骤子目录）
+  start_step:
+    type: integer
+    required: false
+    cli_arg: -fs
+    default: 1
+    description: 起始步骤（-fs，默认 1）
+  end_step:
+    type: integer
+    required: false
+    cli_arg: -es
+    default: 9
+    description: 结束步骤（-es，默认 9，9 为流程最后一步）
+  tmp_postfix:
+    type: string
+    required: false
+    cli_arg: -tp
+    description: 临时目录名后缀（-tp；不同样本列表文件不要用相同字符串）
+  threads:
+    type: integer
+    default: 8
+    description: 线程数（SOAPfuse 无命令行线程参数，线程在 config.txt 内配置；--threads 仅为接口对齐）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 SOAPfuse-RUN.pl 的额外参数（高级用法，慎用）
+outputs:
+  fusion_specific_genes:
+    type: file
+    format: tsv
+    description: 融合基因水平最终结果（final_fusion_genes/<sample>/<sample>.final.Fusion.specific.for.genes）
+  fusion_specific_transcripts:
+    type: file
+    format: tsv
+    description: 融合转录本水平最终结果（<sample>.final.Fusion.specific.for.trans）
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 全无，2026-09 核实；故走自建 Dockerfile + Apptainer.def）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 'v1.27 无官方镜像/conda 包（bioconda/quay biocontainers/depot 全无，2026-09 核实）→
+    自建 apt 最小化配方（debian:bookworm-slim + perl + samtools + bedtools + 官方 SourceForge
+    预编译包）；v1.27 的 SOAPfuse perl 模块需 PERL5LIB 指向模块目录。宿主机本地部署见
+    native/install.sh（用户前缀，免 root）。'
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    run: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: SOAPfuse-RUN.pl

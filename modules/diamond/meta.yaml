@@ -1,0 +1,134 @@
+software: diamond
+canonical: diamond
+category: annotation
+description: 'DIAMOND 是加速的蛋白序列比对工具，采用 BLAST 兼容的双重索引算法，比 BLAST 快数百倍：diamond
+  makedb 为蛋白 FASTA 建库，diamond blastp/blastx 将蛋白/核酸序列比对上蛋白库，常用于大规模蛋白序列功能注释（如 TransDecoder 同源搜索）。
+
+  '
+homepage: https://github.com/bbuchfink/diamond
+license: MIT
+software_versions:
+- id: diamond_native
+  diamond: '2.0.14'
+  build_route: official biocontainer（quay.io/biocontainers/diamond / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/diamond
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；diamond=2.0.14
+    由官方镜像/conda 提供（quay tag 2.0.14--hb97b32f_1），宿主机直跑 main.py 时用 conda/mamba 安装，或使用官方预编译二进制（linux-x64）。'
+- id: diamond_nextflow_nfcore
+  module_version: master（2026-09 抓取）
+  diamond: '2.2.1'
+  source: bioconda::diamond=2.2.1（modules/nf-core/diamond/{blastp,blastx,cluster,deepclust,linclust,makedb}/environment.yml）
+  note: nf-core 有 diamond/blastp、blastx、cluster、deepclust、linclust、makedb 六个子模块，均 pin bioconda::diamond=2.2.1；与 native 版 2.0.14 相差多个 minor。
+- id: diamond_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09 抓取 snakemake-wrappers 最新 release）
+  diamond: '2.2.6'
+  source: diamond=2.2.6（bio/diamond/{blastp,blastx,makedb}/environment.yaml）
+  note: 官方有 diamond/blastp、blastx、makedb 三个 wrapper，均 pin diamond=2.2.6。
+implementations:
+- id: diamond_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.14"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    makedb / blastp / blastx 链路，自动注入线程与临时目录。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/diamond
+    quay_biocontainers: quay.io/biocontainers/diamond
+    upstream_prebuilt: https://github.com/bbuchfink/diamond/releases/download/v2.0.14/diamond-linux64.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda diamond=2.0.14；容器可用 quay.io/biocontainers/diamond:2.0.14--hb97b32f_1
+      镜像（tag 见 README）
+    note: 官方 release 提供 linux-x64 预编译二进制包（已核实 v2.0.14 无 macOS 预编译资产）；另有源码编译路线
+default_implementation: diamond_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'diamond 子命令：makedb|blastp|blastx'
+  db:
+    type: string
+    required: false
+    cli_arg: --db
+    description: DIAMOND 数据库前缀（makedb 输出 / blastp、blastx 输入）
+  input:
+    type: file
+    required: false
+    cli_arg: --in
+    description: 蛋白 FASTA（makedb 输入）
+  query:
+    type: file
+    required: false
+    cli_arg: --query
+    description: 查询序列 FASTA（blastp 蛋白 / blastx 核酸）
+  output:
+    type: file
+    required: false
+    cli_arg: --out
+    description: 比对结果输出文件
+  outfmt:
+    type: integer
+    required: false
+    cli_arg: --outfmt
+    description: 输出格式（5=XML，6=tabular；diamond 默认 6）
+  sensitive:
+    type: boolean
+    default: false
+    cli_arg: --sensitive
+    description: 开启更灵敏（更慢）的搜索模式
+  max_target_seqs:
+    type: integer
+    required: false
+    cli_arg: --max-target-seqs
+    description: 每条 query 最大命中数
+  evalue:
+    type: float
+    required: false
+    cli_arg: --evalue
+    description: E-value 阈值
+  min_id:
+    type: float
+    required: false
+    cli_arg: --id
+    description: 最小一致性百分比
+  index_chunks:
+    type: integer
+    required: false
+    cli_arg: --index-chunks
+    description: 索引分块数
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入 --threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 diamond 的额外参数（高级用法，慎用）
+outputs:
+  database:
+    type: file
+    description: DIAMOND 数据库文件（.dmnd，makedb 产物）
+  blast_result:
+    type: file
+    description: 比对结果文件（outfmt 5 XML / 6 tabular）
+environment:
+  container_official: quay.io/biocontainers/diamond（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方同时提供 linux-x64 预编译二进制包与源码编译两条路线（已核实）；宿主机直跑 main.py 时用 conda/mamba 安装 diamond。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    makedb: 8
+    blastp: 8
+    blastx: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: diamond

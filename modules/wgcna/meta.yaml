@@ -1,0 +1,125 @@
+software: wgcna
+canonical: wgcna
+category: coexpression_network
+description: 'WGCNA（Weighted Gene Co-expression Network Analysis）是加权基因共表达网络分析 R 包：以基因表达矩阵
+  （行基因、列样品）为输入，经数据预处理（goodSamplesGenes）→ 软阈值选择（pickSoftThreshold）→ 邻接矩阵/TOM
+  （adjacency/TOMsimilarity）→ 动态剪切树模块识别（cutreeDynamic）→ 相似模块合并（mergeCloseModules）→
+  模块-性状关联（moduleTraitCor/corPvalueStudent），输出基因-模块归属与模块特征基因。
+  以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动上述函数完成分析。
+  conda 包名：bioconda r-wgcna（docs/09.md 记 bioconductor-wgcna，经核实未找到，见 software_versions）。
+  '
+homepage: https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/
+license: GPL-2.0-or-later
+software_versions:
+- id: wgcna_native
+  r-wgcna: '1.74'
+  r: R >= 4.1（conda r-base / 官方镜像自带 R 4.5）
+  build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/r-wgcna
+  note: 'bioconda 包名为 r-wgcna（最新 1.74，与 CRAN WGCNA 1.74 一致）；docs/09.md 所述包名
+    bioconductor-wgcna 经 curl 核实未找到（anaconda bioconda/conda-forge 均无，2026-09-11）。
+    quay 官方镜像 r-wgcna:1.74--r45h0df16ae_1；depot.galaxyproject.org 同 tag 可用。
+    WGCNA NeedsCompilation: yes（含 C++ 代码），conda 路线已带编译产物。'
+- id: wgcna_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/wgcna 404）
+  r-wgcna: —
+  source: —（nf-core/modules 仓库 modules/nf-core/wgcna 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/wgcna
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: wgcna_snakemake_wrappers
+  r-wgcna: 官方无 wrapper（bio/wgcna 404）
+  source: —（snakemake-wrappers 仓库 bio/wgcna 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/wgcna
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+implementations:
+- id: wgcna_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.74"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    run 子命令以 Rscript 运行 WGCNA 全流程并导出模块归属/特征基因；check 子命令做数据质量检查。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/r-wgcna
+    quay_biocontainers: quay.io/biocontainers/r-wgcna:1.74--r45h0df16ae_1
+    galaxyproject: depot.galaxyproject.org/singularity/r-wgcna:1.74--r45h0df16ae_1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda r-wgcna；容器可用
+      quay.io/biocontainers 官方镜像（见 README 环境安装）
+default_implementation: wgcna_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'wgcna 子命令：run（共表达网络全流程）| check（数据质量检查）'
+  expr:
+    type: file
+    required: true
+    description: 表达矩阵（行基因、列样品，Tab 分隔；含首行样品名与首列基因名）
+  outdir:
+    type: string
+    required: false
+    description: 输出目录（run；写 gene_module_assignment.txt / module_eigengenes.txt 等）
+  trait:
+    type: file
+    required: false
+    description: 性状/表型数据（样品×性状，可选；提供则做模块-性状关联并绘制热图）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 数据质量检查报告输出表（check，可选）
+  power:
+    type: integer
+    required: false
+    description: 软阈值功率（run；默认由 pickSoftThreshold 自动估计 powerEstimate，NA 时回落 6）
+  min_module_size:
+    type: integer
+    required: false
+    default: 30
+    cli_arg: --min-module-size
+    description: 最小模块大小（cutreeDynamic minClusterSize，默认 30）
+  merge_cut_height:
+    type: float
+    required: false
+    default: 0.25
+    cli_arg: --merge-cut-height
+    description: 相似模块合并阈值（mergeCloseModules cutHeight，默认 0.25）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射 allowWGCNAThreads；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  gene_module:
+    type: file
+    format: txt
+    description: 基因-模块归属表（gene_module_assignment.txt；gene + module 两列）
+  module_eigengenes:
+    type: file
+    format: txt
+    description: 模块特征基因矩阵（module_eigengenes.txt；样品×模块）
+  module_trait_correlation:
+    type: file
+    format: txt
+    description: 模块-性状相关性矩阵（提供 trait 时输出，另附 PDF 热图）
+environment:
+  container_official: quay.io/biocontainers/r-wgcna（tag 以 quay / depot.galaxyproject.org 为准，见
+    README「容器与 Conda 链接」）
+  note: 官方镜像已由 bioconda 维护（quay.io/biocontainers/r-wgcna），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 r-wgcna。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    run: 4
+    check: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

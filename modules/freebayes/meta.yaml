@@ -1,0 +1,174 @@
+software: freebayes
+canonical: freebayes
+category: variant_calling
+description: 'freebayes 是基于贝叶斯/单倍型的变异检测工具：从 BAM 比对结果中检测 SNP、
+  INDEL、MNP 及复杂事件，支持任意倍性样本（-p/--ploidy，适合非二倍体生物与群体样本），
+  可单样本或多样本联合检测；freebayes-parallel 按区域文件并行加速。
+  官网/GitHub https://github.com/freebayes/freebayes。
+  '
+homepage: https://github.com/freebayes/freebayes
+license: MIT
+software_versions:
+- id: freebayes_native
+  freebayes: 1.3.10
+  build_route: official biocontainer（quay.io/biocontainers/freebayes / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/freebayes
+  note: '官方渠道已维护（bioconda 最新 1.3.10；quay tag 1.3.10--h3752d28_1；depot sif 200），
+    本地不自建容器。官方 GitHub release 同时提供预编译静态二进制
+    freebayes-1.3.10-linux-amd64-static.gz（仅 linux-amd64）与源码 freebayes-1.3.10-src.tar.gz；
+    宿主机直跑 main.py 用 conda/mamba 安装 freebayes，或部署官方 linux 静态二进制。'
+- id: freebayes_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  freebayes: 1.3.10
+  source: bioconda::freebayes=1.3.10（modules/nf-core/freebayes/environment.yml）
+  note: nf-core/freebayes 为扁平单模块（无子模块目录），pin bioconda::freebayes=1.3.10。
+- id: freebayes_snakemake_wrappers
+  wrapper_tag: v9.17.1（snakemake-wrappers 最新 release，2026-09 抓取）
+  freebayes: 1.3.10
+  wrapper_utils: 0.9.0
+  source: freebayes=1.3.10 + bcftools=1.24 + vcflib=1.0.15 + htslib=1.24 + parallel=20260722 +
+    bedtools=2.31.1 + snakemake-wrapper-utils=0.9.0（bio/freebayes/environment.yaml）
+  note: 官方 bio/freebayes 为扁平 wrapper（annotate/… 无子目录），pin freebayes=1.3.10；切 tag 后核对。
+- id: freebayes_nextflow_local
+  freebayes: 未启用（官方 nf-core/freebayes 已覆盖；本地未建 nextflow/）
+- id: freebayes_snakemake_local
+  freebayes: 未启用（官方 bio/freebayes 已覆盖；本地未建 snakemake/）
+implementations:
+- id: freebayes_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.3.10"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 call（单/多样本检测）与 parallel（freebayes-parallel 区域并行）；输出 VCF，
+    可直接接 bcftools filter。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/freebayes
+    quay_biocontainers: quay.io/biocontainers/freebayes
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/freebayes%3A1.3.10--h3752d28_1
+    upstream_prebuilt: https://github.com/freebayes/freebayes/releases/download/v1.3.10/freebayes-1.3.10-linux-amd64-static.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda freebayes=1.3.10；容器可用
+      quay.io/biocontainers/freebayes:1.3.10--h3752d28_1 镜像（tag 见 README）
+default_implementation: freebayes_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'freebayes 子命令：call（单/多样本变异检测）| parallel（freebayes-parallel 区域并行）'
+  reference:
+    type: file
+    required: true
+    cli_arg: -f
+    format: [fasta]
+    description: 参考基因组 FASTA（须已建 .fai 索引）
+  bams:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [bam, cram]
+    description: 输入 BAM/CRAM（call/parallel；可多个，多样本联合检测）
+  bam_list:
+    type: file
+    required: false
+    cli_arg: --bam-list
+    description: BAM 列表文件（每行一个路径；与位置 BAM 二选一）
+  regions:
+    type: file
+    required: false
+    cli_arg: positional
+    description: parallel 的区域文件（bed；可用 fasta_generate_regions.py 生成）
+  ploidy:
+    type: integer
+    required: false
+    cli_arg: --ploidy
+    description: 样本倍性（默认 2；单倍体真菌设 1）
+  region:
+    type: string
+    required: false
+    cli_arg: -r
+    description: 仅分析指定区域（如 chr1:1000-2000）
+  targets:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 仅分析 targets BED 覆盖区域
+  min_alternate_count:
+    type: integer
+    required: false
+    cli_arg: --min-alternate-count
+    description: 支持变异的最小 reads 数
+  min_coverage:
+    type: integer
+    required: false
+    cli_arg: --min-coverage
+    description: 最小覆盖深度
+  min_base_quality:
+    type: integer
+    required: false
+    cli_arg: --min-base-quality
+    description: 最小碱基质量
+  min_mapping_quality:
+    type: integer
+    required: false
+    cli_arg: --min-mapping-quality
+    description: 最小比对质量
+  min_alternate_fraction:
+    type: float
+    required: false
+    cli_arg: --min-alternate-fraction
+    description: 支持变异的最小等位基因比例（低频变异用）
+  gvcf:
+    type: boolean
+    default: false
+    cli_arg: --gvcf
+    description: 输出 gVCF（群体分析推荐）
+  genotype_qualities:
+    type: boolean
+    default: false
+    cli_arg: --genotype-qualities
+    description: 输出基因型质量评分
+  output:
+    type: file
+    required: false
+    cli_arg: （stdout 重定向）
+    description: 输出 VCF（freebayes 写 stdout，驱动捕获后落盘）
+  threads:
+    type: integer
+    default: 4
+    description: parallel 的 CPU 数（call 为单线程，不使用）
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 freebayes 的额外参数（高级用法，慎用）
+outputs:
+  vcf:
+    type: file
+    format: vcf
+    description: 变异检测结果 VCF（call/parallel）
+environment:
+  container_official: quay.io/biocontainers/freebayes（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需 freebayes
+    （conda bioconda freebayes，或官方 linux 静态二进制）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    parallel: 8
+    call: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: freebayes
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/freebayes 为扁平单模块
+    （pin bioconda::freebayes=1.3.10），执行请 nf modules install nf-core freebayes。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/freebayes
+    为扁平 wrapper（wrapper: "v9.17.1/bio/freebayes"，由 Snakemake 运行时解析）。'

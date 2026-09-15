@@ -1,0 +1,120 @@
+software: ballgown
+canonical: ballgown
+category: differential_expression
+description: 'Ballgown 是用于转录本水平差异表达分析的 R/Bioconductor 包：直接读取 StringTie
+  组装的输出目录（*_e_data.ctab / *_t_data.ctab / *_i_data.ctab），以 ballgown() 构建对象，
+  gexpr() 过滤低表达后 stattest() 在基因与转录本两个水平做参数/非参数差异检验（getFC 输出
+  折叠变化）。以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动实现
+  analyze / check 两个分析动作。conda 包名 bioconductor-ballgown。
+  '
+homepage: https://github.com/alyssafrazee/ballgown
+license: Artistic-2.0
+software_versions:
+- id: ballgown_native
+  ballgown: '2.42.0'
+  build_route: official biocontainer（bioconda → quay.io/biocontainers → depot.galaxyproject.org；本地不自建配方）
+  source: https://anaconda.org/bioconda/bioconductor-ballgown
+  note: '2026-09-11 核实 bioconda 最新 2.42.0；quay.io/biocontainers/bioconductor-ballgown:2.42.0--r45hdfd78af_0；
+    depot.galaxyproject.org 同期镜像 2.38.0--r44hdfd78af_0（tag 与 quay 不完全同步）。'
+- id: ballgown_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ballgown 404）
+  ballgown: '—'
+  source: —（nf-core/modules 仓库 modules/nf-core/ballgown 目录不存在）
+  note: '2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ballgown 返回 404；
+    Nextflow 场景以 native/（Rscript 驱动 + 容器）为兜底。'
+- id: ballgown_snakemake_wrappers
+  ballgown: 官方无 wrapper（bio/ballgown 404）
+  source: —（snakemake-wrappers 仓库 bio/ballgown 目录不存在）
+  note: '2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ballgown 返回 404；
+    Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。'
+- id: ballgown_nextflow_local
+  ballgown: 未启用（官方缺失时按 native 容器在 main.nf 中声明 Rscript 步骤）
+- id: ballgown_snakemake_local
+  ballgown: "未启用（需要时用 shell: 调 native/main.py analyze）"
+implementations:
+- id: ballgown_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.42.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行按参数生成的 R 脚本，读取 StringTie 输出目录并调用
+    ballgown()/stattest() 做基因与转录本水平差异表达分析；check 校验包可加载。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-ballgown
+    quay_biocontainers: quay.io/biocontainers/bioconductor-ballgown:2.42.0--r45hdfd78af_0
+    galaxyproject: depot.galaxyproject.org/singularity/bioconductor-ballgown:2.38.0--r44hdfd78af_0
+    install_hint: 宿主机 mamba create -n ballgown -c conda-forge -c bioconda bioconductor-ballgown（或 native/install.sh）；
+      容器 docker run quay.io/biocontainers/bioconductor-ballgown:2.42.0--r45hdfd78af_0
+default_implementation: ballgown_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ballgown 子命令：analyze|check
+  data_dir:
+    type: file
+    required: true
+    cli_arg: positional
+    description: StringTie 输出目录（内含各样品 *_e_data.ctab / *_t_data.ctab / *_i_data.ctab）
+  coldata:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 分组表（Tab 分隔；首列样品 ID，含 condition 列，行名须与 StringTie 样品名一致）
+  output_prefix:
+    type: string
+    required: true
+    cli_arg: -o
+    description: 输出前缀（写 <prefix>.gene.txt 与 <prefix>.transcript.txt）
+  sample_pattern:
+    type: string
+    required: false
+    default: sample
+    description: 样品文件名匹配模式（默认 sample）
+  covariate:
+    type: string
+    required: false
+    default: condition
+    description: stattest 协变量列名（默认 condition）
+  min_expr:
+    type: integer
+    required: false
+    default: 1
+    description: 低表达过滤阈值（rowSums(gexpr) > 阈值，默认 1）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射 BLAS 线程环境变量；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  gene_results:
+    type: file
+    format: txt
+    description: analyze 输出的基因水平差异表达结果表（<prefix>.gene.txt）
+  transcript_results:
+    type: file
+    format: txt
+    description: analyze 输出的转录本水平差异表达结果表（<prefix>.transcript.txt）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-ballgown（官方镜像；tag 2.42.0--r45hdfd78af_0，depot 同步 2.38.0--r44hdfd78af_0，见 README「容器与 Conda 链接」）
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）已覆盖，本地不维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-ballgown，或经 native/install.sh（conda 优先，无 conda 时 BiocManager）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 8
+    check: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 Ballgown 官方子模块（2026-09-11 核实 404），
+    Nextflow/Snakemake 场景以 native Rscript 驱动为兜底。

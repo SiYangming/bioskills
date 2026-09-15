@@ -1,0 +1,186 @@
+software: annovar
+canonical: annovar
+category: variant_annotation
+description: 'ANNOVAR（ANNOtate VARiation）是变异功能注释工具（Perl 脚本集）：table_annovar.pl
+  一次性做基因/区域/过滤多数据库注释，annotate_variation.pl 分步做 gene-based / region-based
+  / filter-based 注释与注释数据库（-downdb）下载。官网 https://annovar.openbioinformatics.org/。
+  ⚠️ ANNOVAR 需在官网注册获取下载链接（annovar.latest.tar.gz），许可受限（学术/非营利免费，
+  商用需授权），且不在 bioconda / quay.io/biocontainers / depot.galaxyproject.org 分发。
+  '
+homepage: https://annovar.openbioinformatics.org/
+license: '学术/非营利免费；商用需授权（ANNOVAR 自定义许可；需官网注册获取下载链接，许可受限）'
+software_versions:
+- id: annovar_native
+  annovar: latest（annovar.latest.tar.gz；需注册获取，官方按发布期命名，无公开固定版本号）
+  perl: Perl 5（>=5.8.8）
+  build_route: 官方渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）均无 ANNOVAR →
+    自建容器兜底（native/Dockerfile + Apptainer.def，debian:bookworm-slim + perl）
+  source: https://annovar.openbioinformatics.org/en/latest/user-guide/download/（注册地址
+    https://www.openbioinformatics.org/annovar/annovar_download_form.php）
+  note: '已核实 2026-09：bioconda 无 annovar（api.anaconda.org/package/bioconda/annovar 返回 404）；
+    quay.io/biocontainers/annovar 无仓库；depot.galaxyproject.org/singularity/annovar 404；
+    nf-core/modules、snakemake-wrappers、homebrew-core、brewsci/bio 均无 annovar。故本模块提供
+    自建 apt 最小化容器配方。ANNOVAR 为 Perl 脚本集、无需编译；注册后拿到 annovar.latest.tar.gz，
+    解压即用（自建镜像需在构建上下文中放入该 tar.gz）。'
+- id: annovar_nextflow_nfcore
+  annovar: 官方无模块（modules/nf-core/annovar 404，2026-09 核实）
+  source: —
+  note: nf-core/modules 无 annovar 目录（404）；Nextflow 场景请以 native/ 为兜底。
+- id: annovar_snakemake_wrappers
+  annovar: 官方无 wrapper（bio/annovar 404，2026-09 核实）
+  source: —
+  note: snakemake-wrappers bio/ 下无 annovar（404）；Snakemake 场景以 native/ 为兜底。
+- id: annovar_nextflow_local
+  annovar: '未启用（未建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py）'
+- id: annovar_snakemake_local
+  annovar: '未启用（未建 snakemake/；需要时用 shell 调 native/main.py）'
+implementations:
+- id: annovar_native
+  path: native
+  source_type: custom
+  type: native
+  version: "latest"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 table_annovar（一次性多库注释）与 geneanno/regionanno/filter/downdb（分步注释与
+    建库）映射 ANNOVAR 的 Perl 脚本。ANNOVAR 为 Perl 脚本、单线程（table_annovar 支持 -thread）。'
+  container_ref:
+    upstream_prebuilt: https://annovar.openbioinformatics.org/en/latest/user-guide/download/（需注册）
+    self_built_dockerfile: native/Dockerfile（debian:bookworm-slim + perl；需将 annovar.latest.tar.gz 放入构建上下文）
+    self_built_apptainer: native/Apptainer.def（同上，%files 注入 tar.gz）
+    install_hint: 官方渠道无镜像/conda；请在官网注册下载 annovar.latest.tar.gz，解压到用户目录
+      （~/software/annovar）并导出 ANNOVAR_HOME，或按 native/Dockerfile / Apptainer.def 自建容器
+default_implementation: annovar_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'annovar 子命令：table_annovar | geneanno | regionanno | filter | downdb'
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入变异文件（VCF/avinput；table_annovar 与 geneanno/regionanno/filter 使用）
+  db_dir:
+    type: string
+    required: false
+    cli_arg: positional
+    description: ANNOVAR 注释数据库目录（如 humandb/）
+  buildver:
+    type: string
+    required: false
+    cli_arg: -buildver
+    description: 参考基因组版本（hg18/hg19/hg38/hs1 或自定义）
+  dbtype:
+    type: string
+    required: false
+    cli_arg: -dbtype
+    description: 注释数据库类型（如 refGene / 1000g2015aug_all / cytoBand / avsnp150）
+  protocol:
+    type: string
+    required: false
+    cli_arg: -protocol
+    description: table_annovar 的注释数据库列表（逗号分隔）
+  operation:
+    type: string
+    required: false
+    cli_arg: -operation
+    description: table_annovar 的注释类型列表（g=基因 / gx=基因含 xref / r=区域 / f=过滤，逗号分隔）
+  out:
+    type: string
+    required: false
+    cli_arg: -out
+    description: 输出文件前缀（table_annovar）
+  nastring:
+    type: string
+    required: false
+    cli_arg: -nastring
+    description: 缺失值占位符（文档示例 .）
+  maf:
+    type: float
+    required: false
+    cli_arg: -maf
+    description: filter 模式的次要等位频率阈值（文档示例 0.01）
+  webfrom:
+    type: string
+    required: false
+    cli_arg: -webfrom
+    description: downdb 的下载来源（annovar 或 UCSC；文档示例 annovar）
+  remove:
+    type: boolean
+    default: false
+    cli_arg: -remove
+    description: table_annovar 注释后删除中间文件
+  vcfinput:
+    type: boolean
+    default: false
+    cli_arg: -vcfinput
+    description: table_annovar 输入为 VCF 格式
+  otherinfo:
+    type: boolean
+    default: false
+    cli_arg: --otherinfo
+    description: table_annovar 保留 VCF 其他 INFO 信息
+  threads:
+    type: integer
+    default: 1
+    description: table_annovar 的 -thread 并发数；其余子命令单线程
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 ANNOVAR 脚本的额外参数（高级用法，慎用）
+outputs:
+  multianno_table:
+    type: file
+    format: txt
+    description: table_annovar 输出的多库注释表（<out>.<buildver>_multianno.txt）
+  multianno_vcf:
+    type: file
+    format: vcf
+    description: table_annovar（-vcfinput）输出的 INFO 填充注释 VCF
+  variant_function:
+    type: file
+    description: geneanno 输出的变异区域分类（*.variant_function）
+  exonic_variant_function:
+    type: file
+    description: geneanno 输出的外显子功能注释（*.exonic_variant_function）
+  regionanno_out:
+    type: file
+    description: regionanno 输出（*.variant_function / *.exonic_variant_function）
+  filter_out:
+    type: file
+    description: filter 输出（过滤后保留/去除的变异列表）
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 均无 ANNOVAR，2026-09 核实）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '⚠️ 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）均无 ANNOVAR
+    （2026-09 核实：bioconda 404 / quay 无仓库 / depot 404），故本地提供自建兜底配方：Dockerfile
+    与 Apptainer.def（debian:bookworm-slim + apt --no-install-recommends 安装 perl，清理四连）。
+    因 ANNOVAR 需注册获取 annovar.latest.tar.gz，容器构建需先把该 tar.gz 放入构建上下文。
+    宿主机直跑 main.py 需 ANNOVAR_HOME 指向解压后的 annovar 目录（含 .pl 脚本），或脚本在 PATH。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    table_annovar: 1
+    geneanno: 1
+    regionanno: 1
+    filter: 1
+    downdb: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: table_annovar.pl
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/modules 无 annovar（404，2026-09 核实），
+    Nextflow 场景以 native/ 兜底。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers 无 bio/annovar
+    （404，2026-09 核实），Snakemake 场景以 native/ 兜底。'

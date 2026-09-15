@@ -1,0 +1,137 @@
+software: clusterprofiler
+canonical: clusterprofiler
+category: enrichment
+description: 'clusterProfiler 是 Bioconductor 富集分析 R 包：以差异基因列表（或全基因 log2FC 排序向量）为输入，
+  完成 GO（enrichGO，BP/CC/MF/ALL）、KEGG（enrichKEGG）与 GSEA（gseGO）富集，输出可写表的富集结果
+  （Description/GeneRatio/pvalue/p.adjust/qvalue/Count 等列）。以 R 函数库形态分发（无独立命令行二进制），
+  本模块以 Rscript 驱动 enrichGO()/enrichKEGG()/gseGO() 完成分析。
+  conda 包名规范名为 bioconductor-clusterprofiler，目录名 canonical 取全小写 clusterprofiler。
+  '
+homepage: https://bioconductor.org/packages/clusterProfiler/
+license: Artistic-2.0
+software_versions:
+- id: clusterprofiler_native
+  bioconductor-clusterprofiler: '4.18.4'
+  r: R >= 4.1（conda r-base / 官方镜像自带 R 4.5）
+  build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bioconductor-clusterprofiler
+  note: 'bioconda 最新 4.18.4（quay 官方镜像 bioconductor-clusterprofiler:4.18.4--r45hdfd78af_0）；
+    depot.galaxyproject.org 最新 4.14.0--r44hdfd78af_0，两个官方镜像 tag 版本不同，按需选择。
+    Bioconductor release 当前 4.20.0（docs/09.md 未标注版本），conda 安装最高可得 4.18.4，接口一致。
+    KEGG 富集依赖联网访问 KEGG REST（enrichKEGG），离线环境请自备 KEGG 注释或改用 GO/GSEA。'
+- id: clusterprofiler_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/clusterprofiler 404）
+  bioconductor-clusterprofiler: —
+  source: —（nf-core/modules 仓库 modules/nf-core/clusterprofiler 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/clusterprofiler
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: clusterprofiler_snakemake_wrappers
+  bioconductor-clusterprofiler: 官方无 wrapper（bio/clusterprofiler 404）
+  source: —（snakemake-wrappers 仓库 bio/clusterprofiler 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/clusterprofiler
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+implementations:
+- id: clusterprofiler_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.18.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    go/kegg/gsea 三个子命令分别以 Rscript 运行 enrichGO()/enrichKEGG()/gseGO()，输出富集结果表。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-clusterprofiler
+    quay_biocontainers: quay.io/biocontainers/bioconductor-clusterprofiler:4.18.4--r45hdfd78af_0
+    galaxyproject: depot.galaxyproject.org/singularity/bioconductor-clusterprofiler:4.14.0--r44hdfd78af_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bioconductor-clusterprofiler；
+      容器可用 quay.io/biocontainers 官方镜像（见 README 环境安装）
+default_implementation: clusterprofiler_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'clusterprofiler 子命令：go（GO 富集）| kegg（KEGG 富集）| gsea（GSEA）'
+  gene_list:
+    type: file
+    required: false
+    description: 差异基因列表（每行一个基因名；go/kegg 必填）
+  gene_rank:
+    type: file
+    required: false
+    description: 基因 log2FC 排序表（含表头，首列基因名；gsea 必填）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 富集结果表输出路径（Tab 分隔；列含 Description/GeneRatio/pvalue/p.adjust/qvalue/Count）
+  orgdb:
+    type: string
+    required: false
+    default: org.Hs.eg.db
+    description: 物种注释库（默认 org.Hs.eg.db；小鼠 org.Mm.eg.db）
+  keytype:
+    type: string
+    required: false
+    default: SYMBOL
+    description: 基因 ID 类型（默认 SYMBOL；kegg 会经 bitr 转 ENTREZID，keytype=ENTREZID 时直通）
+  ont:
+    type: string
+    required: false
+    default: ALL
+    description: 'GO 本体：BP|CC|MF|ALL（go 默认 ALL；gsea 默认 BP）'
+  organism:
+    type: string
+    required: false
+    default: hsa
+    description: KEGG 物种代码（kegg；人 hsa / 小鼠 mmu / 大鼠 rno）
+  pvalue:
+    type: float
+    required: false
+    default: 0.05
+    description: p 值阈值（pvalueCutoff）
+  padjust:
+    type: string
+    required: false
+    default: BH
+    description: p 值校正方法（pAdjustMethod，默认 BH）
+  qvalue:
+    type: float
+    required: false
+    default: 0.05
+    description: q 值阈值（qvalueCutoff，默认 0.05）
+  rank_col:
+    type: string
+    required: false
+    default: log2FoldChange
+    description: GSEA 排序值列名（gsea；默认 log2FoldChange）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（映射 BiocParallel MulticoreParam；优先级 --threads > per_subcommand_threads > default_cpus）
+outputs:
+  result:
+    type: file
+    format: txt
+    description: 富集结果表（GO/KEGG/GSEA；as.data.frame(<富集对象>) 的 Tab 分隔输出）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-clusterprofiler（tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已由 bioconda 维护（quay.io/biocontainers/bioconductor-clusterprofiler），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-clusterprofiler。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    go: 4
+    kegg: 4
+    gsea: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

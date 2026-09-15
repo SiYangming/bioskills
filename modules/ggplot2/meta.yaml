@@ -1,0 +1,128 @@
+software: ggplot2
+canonical: ggplot2
+category: visualization
+description: 'ggplot2 是 CRAN 图形语法（Grammar of Graphics）绘图 R 包：差异表达分析中用于绘制火山图
+  （x=log2FC，y=-log10(padj)，按阈值分组着色 + 阈值参考线）、富集条形图/点图等。以 R 函数库形态分发
+  （无独立命令行二进制），本模块以 Rscript 驱动 ggplot2 绘制火山图并用 ggsave() 输出。
+  conda 包名规范名为 r-ggplot2（conda-forge 最新 4.0.3；bioconda 仅 2.2.1），目录名 canonical 取 ggplot2。
+  '
+homepage: https://ggplot2.tidyverse.org/
+license: MIT
+software_versions:
+- id: ggplot2_native
+  r-ggplot2: '4.0.3'
+  r: R >= 4.1（conda r-base / 官方镜像自带 R）
+  build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
+  source: https://anaconda.org/conda-forge/r-ggplot2
+  note: 'conda-forge r-ggplot2 最新 4.0.3（与 CRAN ggplot2 4.0.3 一致）；bioconda 频道仅 2.2.1，
+    对应官方镜像 quay.io/biocontainers/r-ggplot2:2.2.1--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本。
+    宿主机推荐 conda-forge 现版本；如需容器且要新 R，可在容器内自装 4.x。'
+- id: ggplot2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ggplot2 404）
+  r-ggplot2: —
+  source: —（nf-core/modules 仓库 modules/nf-core/ggplot2 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ggplot2
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: ggplot2_snakemake_wrappers
+  r-ggplot2: 官方无 wrapper（bio/ggplot2 404）
+  source: —（snakemake-wrappers 仓库 bio/ggplot2 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ggplot2
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+implementations:
+- id: ggplot2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.0.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    volcano 子命令以 Rscript 运行 ggplot2 绘制差异表达火山图并 ggsave 输出。'
+  container_ref:
+    conda_forge: https://anaconda.org/conda-forge/r-ggplot2
+    bioconda: https://anaconda.org/bioconda/r-ggplot2
+    quay_biocontainers: quay.io/biocontainers/r-ggplot2:2.2.1--r3.3.2_0
+    galaxyproject: depot.galaxyproject.org/singularity/r-ggplot2:2.2.1--r3.3.2_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda r-ggplot2；容器可用
+      quay.io/biocontainers 官方镜像（见 README 环境安装）
+default_implementation: ggplot2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ggplot2 子命令：volcano（差异表达火山图）'
+  deg_table:
+    type: file
+    required: true
+    description: 差异分析结果表（Tab 分隔，含 log2FoldChange 与 padj 列；首列为基因名）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出图片路径（按扩展名 *.pdf 或 *.png）
+  lfc_col:
+    type: string
+    required: false
+    default: log2FoldChange
+    cli_arg: --lfc-col
+    description: log2FC 列名（默认 log2FoldChange）
+  padj_col:
+    type: string
+    required: false
+    default: padj
+    cli_arg: --padj-col
+    description: 校正 p 值列名（默认 padj；DESeq2 结果为 padj）
+  lfc_cutoff:
+    type: float
+    required: false
+    default: 1.0
+    cli_arg: --lfc-cutoff
+    description: '|log2FC| 阈值（默认 1；分组着色与虚线位置）'
+  padj_cutoff:
+    type: float
+    required: false
+    default: 0.05
+    cli_arg: --padj-cutoff
+    description: padj 阈值（默认 0.05）
+  title:
+    type: string
+    required: false
+    description: 图标题（默认 Volcano Plot of Differential Gene Expression）
+  width:
+    type: float
+    required: false
+    default: 8
+    description: 输出宽度（英寸，默认 8）
+  height:
+    type: float
+    required: false
+    default: 6
+    description: 输出高度（英寸，默认 6）
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: 线程数（ggplot2 为单线程绘图，仅作接口统一并设置 BLAS 线程环境变量）
+outputs:
+  volcano_plot:
+    type: file
+    format: [pdf, png]
+    description: 火山图（log2FC vs -log10(padj)，Up/Down/Not significant 三色分组 + 阈值虚线）
+environment:
+  container_official: quay.io/biocontainers/r-ggplot2（tag 以 quay / depot.galaxyproject.org 为准，见
+    README「容器与 Conda 链接」）
+  note: 官方镜像已由 bioconda 维护（quay.io/biocontainers/r-ggplot2，tag 2.2.1--r3.3.2_0，R 较老），
+    本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 r-ggplot2（conda-forge 4.0.3）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    volcano: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

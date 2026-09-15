@@ -1,0 +1,215 @@
+software: varscan
+canonical: varscan
+category: variant_calling
+description: 'VarScan（Java）是基于 samtools mpileup 数据的变异检测工具：mpileup2snp /
+  mpileup2indel / mpileup2cns 从 mpileup 检测 SNP / INDEL / 一致性序列，somatic 做
+  肿瘤-正常配对体细胞变异检测，copynumber 做拷贝数分析，processSomatic / fpfilter 做
+  体细胞结果筛选。官网 https://dkoboldt.github.io/varscan/。
+  '
+homepage: https://dkoboldt.github.io/varscan/
+license: NPOSL-3.0
+software_versions:
+- id: varscan_native
+  varscan: 2.4.6
+  java: Java 8+（bioconda/quay 镜像自带 openjdk 依赖；官方 jar 需宿主自备 JRE）
+  build_route: official biocontainer（quay.io/biocontainers/varscan / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/varscan
+  note: '官方渠道已维护（bioconda 最新 2.4.6；quay tag 2.4.6--hdfd78af_0；depot sif 200），
+    本地不自建容器。官方 jar 直链为 VarScan.v2.4.6.jar（github dkoboldt/varscan，brew
+    brewsci/bio varscan 亦取此 jar）；文档 07 §8 示例用历史版本 VarScan.v2.3.9.jar，本模块
+    以当前 2.4.6 为准。宿主机直跑 main.py 用 conda/mamba 安装 varscan（提供 varscan wrapper），
+    或 java -jar VarScan.jar（需自备 JRE）。JVM 堆内存经 JAVA_OPTS 透传。'
+- id: varscan_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  varscan: 2.4.6
+  source: bioconda::varscan=2.4.6 + htslib=1.22.1（modules/nf-core/varscan/{somatic,fpfilter,processsomatic}/environment.yml）
+  note: nf-core/varscan 提供 somatic / fpfilter / processsomatic 三个子模块，pin bioconda::varscan=2.4.6。
+- id: varscan_snakemake_wrappers
+  wrapper_tag: v9.17.1（snakemake-wrappers 最新 release，2026-09 抓取）
+  varscan: 2.4.6
+  wrapper_utils: 0.9.0
+  source: varscan=2.4.6 + snakemake-wrapper-utils=0.9.0（bio/varscan/{mpileup2snp,mpileup2indel,somatic}/environment.yaml）
+  note: 官方 bio/varscan 提供 mpileup2snp / mpileup2indel / somatic 三个 wrapper，pin varscan=2.4.6。
+- id: varscan_nextflow_local
+  varscan: 未启用（官方 nf-core/varscan 已覆盖；本地未建 nextflow/）
+- id: varscan_snakemake_local
+  varscan: 未启用（官方 bio/varscan 已覆盖；本地未建 snakemake/）
+implementations:
+- id: varscan_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.4.6"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 mpileup2snp / mpileup2indel / mpileup2cns / somatic / copynumber / processSomatic /
+    fpfilter 映射 VarScan 子命令；JVM 堆内存经 JAVA_OPTS 注入。VarScan 单线程。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/varscan
+    quay_biocontainers: quay.io/biocontainers/varscan
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/varscan%3A2.4.6--hdfd78af_0
+    upstream_prebuilt: https://github.com/dkoboldt/varscan/raw/master/VarScan.v2.4.6.jar
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda varscan=2.4.6；容器可用
+      quay.io/biocontainers/varscan:2.4.6--hdfd78af_0 镜像（tag 见 README）
+default_implementation: varscan_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'varscan 子命令：mpileup2snp | mpileup2indel | mpileup2cns | somatic |
+      copynumber | processSomatic | fpfilter'
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: mpileup 文件（mpileup2snp/mpileup2indel/mpileup2cns）；或 somatic/copynumber
+      的 paired（含双样本）/normal mpileup；或 processSomatic 的 somatic 输出前缀
+  tumor:
+    type: file
+    required: false
+    cli_arg: --tumor
+    description: somatic/copynumber 的 tumor mpileup（normal+tumor 双文件用法；单一 paired
+      mpileup 时省略）
+  output_basename:
+    type: string
+    required: false
+    cli_arg: positional
+    description: somatic/copynumber 输出前缀（生成 .snp.vcf / .indel.vcf 等）
+  vcf_file:
+    type: file
+    required: false
+    cli_arg: --vcf-file
+    description: fpfilter 输入 VCF
+  bam_file:
+    type: file
+    required: false
+    cli_arg: --bam-file
+    description: fpfilter 输入（肿瘤）BAM
+  output_file:
+    type: file
+    required: false
+    cli_arg: --output-file
+    description: fpfilter 输出文件
+  min_coverage:
+    type: integer
+    required: false
+    cli_arg: --min-coverage
+    description: 最小覆盖深度（文档示例 8）
+  min_reads2:
+    type: integer
+    required: false
+    cli_arg: --min-reads2
+    description: 支持变异的最小 reads 数（文档示例 2）
+  min_avg_qual:
+    type: integer
+    required: false
+    cli_arg: --min-avg-qual
+    description: 最小平均碱基质量（文档示例 15）
+  min_var_freq:
+    type: float
+    required: false
+    cli_arg: --min-var-freq
+    description: 最小变异等位基因频率（文档示例 0.1）
+  p_value:
+    type: float
+    required: false
+    cli_arg: --p-value
+    description: 显著性 p 值阈值（文档示例 0.05）
+  somatic_p_value:
+    type: float
+    required: false
+    cli_arg: --somatic-p-value
+    description: 体细胞变异 p 值阈值（somatic）
+  min_tumor_freq:
+    type: float
+    required: false
+    cli_arg: --min-tumor-freq
+    description: 肿瘤最小变异频率（somatic/processSomatic）
+  max_normal_freq:
+    type: float
+    required: false
+    cli_arg: --max-normal-freq
+    description: 正常样本最大变异频率（somatic/processSomatic）
+  strand_filter:
+    type: integer
+    required: false
+    cli_arg: --strand-filter
+    description: 链偏倚过滤（1 开启 / 0 关闭）
+  output_vcf:
+    type: integer
+    required: false
+    cli_arg: --output-vcf
+    description: 是否输出 VCF 格式（1 为是，0 为否）
+  min_depth:
+    type: integer
+    required: false
+    cli_arg: --min-depth
+    description: fpfilter 最小深度
+  min_var_count:
+    type: integer
+    required: false
+    cli_arg: --min-var-count
+    description: fpfilter 最小变异 reads 数
+  output:
+    type: file
+    required: false
+    cli_arg: （stdout 重定向）
+    description: mpileup2snp/mpileup2indel/mpileup2cns 输出 VCF（VarScan 写 stdout，驱动捕获落盘）
+  threads:
+    type: integer
+    default: 1
+    description: 接口统一用；VarScan 单线程，不传给 varscan
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（经 JAVA_OPTS -Djava.io.tmpdir 与环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 varscan 的额外参数（高级用法，慎用）
+outputs:
+  snp_vcf:
+    type: file
+    format: vcf
+    description: mpileup2snp / somatic 输出的 SNP VCF
+  indel_vcf:
+    type: file
+    format: vcf
+    description: mpileup2indel / somatic 输出的 INDEL VCF
+  cns_vcf:
+    type: file
+    format: vcf
+    description: mpileup2cns 输出的一致性序列 VCF
+  copynumber_output:
+    type: file
+    description: copynumber 输出的拷贝数结果
+environment:
+  container_official: quay.io/biocontainers/varscan（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需 java +
+    varscan（conda bioconda varscan 提供 wrapper，或官方 VarScan.v2.4.6.jar + java -jar）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+  per_subcommand_threads:
+    mpileup2snp: 1
+    mpileup2indel: 1
+    mpileup2cns: 1
+    somatic: 1
+    copynumber: 1
+    processSomatic: 1
+    fpfilter: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: varscan
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/varscan 有 somatic / fpfilter /
+    processsomatic 三个子模块（pin bioconda::varscan=2.4.6），执行请 nf modules install
+    nf-core varscan somatic fpfilter processsomatic。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers bio/varscan
+    有 mpileup2snp / mpileup2indel / somatic 三个 wrapper（wrapper: "v9.17.1/bio/varscan/<sub>"，
+    由 Snakemake 运行时解析）。'

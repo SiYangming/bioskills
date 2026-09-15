@@ -1,0 +1,168 @@
+software: subread
+canonical: subread
+category: transcriptome
+description: 'Subread 是高效的 reads 比对与定量工具包，包含 featureCounts（基因/外显子水平
+  reads 计数，RNA-seq 定量首选）、subread-align（gapped 基因组比对）与 subjunc（剪接感知比对 +
+  剪接位点/融合基因检测）。featureCounts 支持多线程，速度是 HTSeq 的数倍到数十倍，是基因组比对后
+  gene-level 计数的首选。
+
+  '
+homepage: http://subread.sourceforge.net/
+license: GPL-3.0
+software_versions:
+- id: subread_native
+  subread: '2.0.1'
+  build_route: official biocontainer（quay.io/biocontainers/subread / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/subread
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 默认版本 2.0.1（与教学文档 Subread/featureCounts 章节及 SourceForge 预编译二进制
+    subread-2.0.1-Linux/MacOS-x86_64.tar.gz 对齐）。官方容器 tag：quay.io/biocontainers/subread:2.0.1--h7132678_2
+    （depot 已验证 200）；bioconda 另有更新版 2.0.3/2.0.6/2.0.8/2.1.1（2026-09 核实）。
+    宿主机直跑 main.py 时用 conda/mamba 安装 subread=2.0.1。'
+- id: subread_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  subread: '2.1.1'
+  source: bioconda::subread=2.1.1（modules/nf-core/subread/featurecounts/environment.yml）
+  note: nf-core 有 subread/featurecounts 子模块（2026-09 抓取目录 HTTP 200），pin bioconda::subread=2.1.1；
+    与 native 2.0.1 相差一个 minor，计数结果对 -s/-p 参数敏感，跨引擎迁移请核对版本。
+- id: subread_snakemake_wrappers
+  wrapper_tag: v3.13.0
+  subread: '2.1.1'
+  source: subread=2.1.1（bio/subread/featurecounts/environment.yaml，2026-09 抓取）
+  note: 官方 bio/subread wrapper 存在（目录 HTTP 200，含 featurecounts 子命令），pin subread=2.1.1。
+- id: subread_nextflow_local
+  subread: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: subread_snakemake_local
+  subread: 未启用占位（本模块未建 snakemake/ 本地规则，Snakemake 场景走官方 bio/subread wrapper）
+implementations:
+- id: subread_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标，
+    覆盖 featureCounts（定量）/ subread-align（比对）/ subjunc（剪接感知比对）三个子命令，
+    自动注入线程（-T）。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/subread
+    quay_biocontainers: quay.io/biocontainers/subread
+    depot_galaxyproject: depot.galaxyproject.org/singularity/subread:2.0.1--h7132678_2
+    sourceforge: https://sourceforge.net/projects/subread/files/subread-2.0.1/
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda subread=2.0.1；容器可用
+      quay.io/biocontainers/subread:2.0.1--h7132678_2（depot sif 同 tag）
+default_implementation: subread_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: subread 子命令：featureCounts | subread-align | subjunc
+  bam:
+    type: file
+    required: false
+    cli_arg: positional
+    format:
+    - bam
+    description: featureCounts 输入的比对 BAM（可多个，位置参数，最后一个 / 后续为输出参数）
+  gtf:
+    type: file
+    required: false
+    cli_arg: -a
+    format:
+    - gtf
+    description: featureCounts 参考注释 GTF（--annot，必填）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（featureCounts 计数表 / subread-align/subjunc 的 BAM/SAM）
+  feature_type:
+    type: string
+    required: false
+    cli_arg: -t
+    default: exon
+    description: featureCounts 计数特征类型（-t，默认 exon）
+  group_attribute:
+    type: string
+    required: false
+    cli_arg: -g
+    default: gene_id
+    description: featureCounts 分组属性（-g，默认 gene_id；转录本水平可用 transcript_id）
+  paired:
+    type: boolean
+    default: false
+    cli_arg: -p
+    description: featureCounts 按片段（fragment）计数（双端数据）
+  stranded:
+    type: integer
+    required: false
+    cli_arg: -s
+    default: 0
+    description: 'featureCounts 链特异性：0=非链特异，1=正向，2=反向'
+  min_mapq:
+    type: integer
+    required: false
+    cli_arg: -Q
+    description: featureCounts 最小比对质量（默认 0）
+  index:
+    type: string
+    required: false
+    cli_arg: -i
+    description: subread-align/subjunc 的 Subread 索引前缀（subread-buildindex 生成）
+  reads:
+    type: file
+    required: false
+    cli_arg: -r
+    description: subread-align/subjunc 的单端 reads 或双端 mate1（FASTQ/FASTA）
+  reads2:
+    type: file
+    required: false
+    cli_arg: -R
+    description: subread-align/subjunc 双端 mate2
+  read_type:
+    type: integer
+    required: false
+    cli_arg: -t
+    default: 0
+    description: subread-align 数据类型（-t：0=RNA-seq，1=gDNA）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -T
+    description: 线程数（自动注入 -T）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 subread 子命令的额外参数（高级用法，慎用）
+outputs:
+  counts_table:
+    type: file
+    format: tsv
+    description: featureCounts 计数表（首行命令、次行表头，含 Length/各样本 counts）
+  alignment:
+    type: file
+    format: bam
+    description: subread-align/subjunc 输出的比对结果（BAM/SAM）
+  junction:
+    type: file
+    description: subjunc 输出的剪接位点/融合基因结果（-o 关联产物）
+environment:
+  container_official: quay.io/biocontainers/subread（bioconda 官方镜像；tag 2.0.1--h7132678_2，depot.galaxyproject.org 互通，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 subread（featureCounts/subread-align/subjunc 同属 subread 包）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    featureCounts: 8
+    subread-align: 8
+    subjunc: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: featureCounts
