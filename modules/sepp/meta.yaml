@@ -1,0 +1,150 @@
+software: sepp
+canonical: sepp
+category: phylogenetics
+description: 'SEPP（SATé-enabled Phylogenetic Placement，4.3.10）基于 ensemble HMM 把短读/片段序列
+  放置（phylogenetic placement）到参考系统发育树上：run_sepp.py -t <tree> -a <alignment> -f <fragments>
+  -r <RAxML_info> 输出 placement.json 与 alignment.fasta（供下游谱系/物种鉴定）；同仓库另有 UPP
+  比对（run_upp.py）。BUSCO 的谱系分配（lineage assignment）即依赖本工具。官方安装为
+  python setup.py config && python setup.py install，依赖 dendropy。'
+homepage: https://github.com/smirarab/sepp
+license: GPL-3.0-or-later
+software_versions:
+- id: sepp_native
+  sepp: '4.3.10'
+  build_route: official biocontainer（quay.io/biocontainers/sepp / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/sepp
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    sepp=4.3.10 由官方镜像/conda 提供（bioconda 亦有更新版本 4.5.6，本模块默认 pin 4.3.10）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 sepp=4.3.10。'
+- id: sepp_nextflow_nfcore
+  module_version: （官方无此模块）
+  sepp: 官方无 nf-core 模块
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/sepp/meta.yml
+    返回 404（官方无 sepp 子模块）。
+- id: sepp_snakemake_wrappers
+  sepp: 官方无 wrapper
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/sepp/{environment.yaml,wrapper.py}
+    均返回 404（官方无 bio/sepp wrapper）。
+- id: sepp_nextflow_local
+  sepp: 未固定（未启用占位）
+- id: sepp_snakemake_local
+  sepp: 未固定（未启用占位）
+implementations:
+- id: sepp_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.3.10"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    承载 SEPP 系统发育放置（run）与 UPP 比对（upp）两个子命令，自动注入线程（--cpu）与临时目录（-p）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/sepp
+    quay_biocontainers: quay.io/biocontainers/sepp
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda sepp=4.3.10；容器可用
+      quay.io/biocontainers/sepp:4.3.10--py38h9ee0642_3（tag 见 README）
+default_implementation: sepp_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: sepp 子命令：run（SEPP 系统发育放置）| upp（UPP 比对）
+  tree:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 参考系统发育树（Newick；run 必填，upp 可省略以自动生成 backbone）
+  alignment:
+    type: file
+    required: false
+    cli_arg: -a
+    description: 参考比对（FASTA 对齐序列；run 必填，upp 可省略）
+  fragment:
+    type: file
+    required: false
+    cli_arg: -f
+    description: 待放置的片段序列（FASTA；run 必填）
+  raxml_info:
+    type: file
+    required: false
+    cli_arg: -r
+    description: RAxML_info 文件（含模型参数；run 使用，缺失时由 SEPP 自行估计）
+  sequence_file:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 未比对序列文件（upp 使用；无 backbone 时随机拆分 backbone/query）
+  output_prefix:
+    type: string
+    required: false
+    cli_arg: -o
+    default: output
+    description: 输出文件前缀（默认 output）
+  outdir:
+    type: string
+    required: false
+    cli_arg: -d
+    description: 输出目录（要求完整路径）
+  alignment_size:
+    type: integer
+    required: false
+    cli_arg: -A
+    default: 10
+    description: 最大比对子集大小（decomposition）
+  placement_size:
+    type: integer
+    required: false
+    cli_arg: -P
+    description: 最大放置子集大小（默认取总 taxa 数的 10%）
+  fragment_chunk_size:
+    type: integer
+    required: false
+    cli_arg: -F
+    description: 片段分块大小
+  config_file:
+    type: file
+    required: false
+    cli_arg: -c
+    description: SEPP/UPP 配置文件（命令行参数覆盖配置值）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --cpu
+    description: 线程数（自动注入 --cpu；用户显式 --threads 优先）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 run_sepp.py / run_upp.py 的额外参数（高级用法，慎用）
+outputs:
+  placement_json:
+    type: file
+    format: json
+    description: placement.json（放置结果：每个片段在参考树上的位置与似然）
+  alignment_fasta:
+    type: file
+    format: fasta
+    description: alignment.fasta（放置后的扩展比对，含查询序列）
+  output_tree:
+    type: file
+    description: 放置后的输出树相关文件（前缀由 -o 决定）
+environment:
+  container_official: quay.io/biocontainers/sepp（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers → depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 sepp=4.3.10。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    upp: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: run_sepp.py

@@ -1,0 +1,158 @@
+software: snogps
+canonical: snogps
+category: ncRNA_prediction
+description: 'snoGPS（核心程序名 snoGPS / pseudoU_test）是 Lowe 实验室（UCSC）开发的 H/ACA box
+  假尿苷化引导 snoRNA 预测程序：基于确定性筛选算法 + 概率打分模型，在基因组序列中搜索 H/ACA
+  snoRNA（Schattner et al., NAR 2004, 32:4281；NAR 2005 web server 论文）。程序由 C 源码编译，
+  依赖内置 SQUID 库；辅助 Perl 脚本（sortHits.pl / runMafHomologs.pl / makeGuideMaps.pl 等）用于
+  结果整理与跨物种保守性分析。'
+homepage: https://lowelab.ucsc.edu/snoGPS/
+license: GPL-2.0-only
+software_versions:
+- id: snogps_native
+  snogps: '0.2 beta（2004-08-01；官方现存可下载源码归档）'
+  build_route: self-build（官方渠道 bioconda/quay.io/biocontainers/depot.galaxyproject.org 均无 → 自建配方，apt 最小化 + 官方源码编译）
+  source: https://trna.ucsc.edu/software/snoGPS-0.2.tar.gz
+  note: '2026-09 核实：bioconda snogps（api.anaconda.org 返回未找到）、quay.io/biocontainers/snogps
+    401（不存在）、depot.galaxyproject.org/singularity/snogps 404 —— 官方容器/conda 渠道全无；
+    nf-core modules/snogps 与 snakemake-wrappers bio/snogps 亦 404。官方源码归档
+    https://trna.ucsc.edu/software/snoGPS-0.2.tar.gz 200（sha256
+    184abd9ca6ce24b34c65ddb24ee445c8d5ecfef1a1315d75055b80a284845027），编译 `cd src && make`
+    产出 pseudoU_test（并软链为 snoGPS）。README release 标为 0.2 beta（2004），项目此后长期停更。'
+- id: snogps_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/snogps 404）
+  snogps: —
+  source: —（nf-core/modules 仓库无 snogps 目录）
+  note: 2026-09 核实返回 404；Nextflow 场景请以 native/ 为兜底。
+- id: snogps_snakemake_wrappers
+  snogps: 官方无 wrapper（bio/snogps 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 snogps）
+  note: 2026-09 核实返回 404；Snakemake 场景请以 native/main.py 为兜底。
+- id: snogps_nextflow_local
+  snogps: '未启用（未建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: snogps_snakemake_local
+  snogps: '未启用（未建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: snogps_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    覆盖 search（H/ACA snoRNA 预测）与 sort（sortHits.pl 结果整理）两段链路。
+    snoGPS 为单进程程序，无并行参数。'
+  container_ref:
+    upstream_source: https://trna.ucsc.edu/software/snoGPS-0.2.tar.gz
+    install_hint: 官方渠道全无，走自建容器（本模块 native/Dockerfile / native/Apptainer.def，
+      apt 最小化 + 官方源码编译）或 native/install.sh 的 binary 路线（源码编译到用户前缀）
+default_implementation: snogps_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'snogps 子命令：search|sort'
+  sequence:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'search：待查序列文件（第 1 位置参数，FASTA，可为基因组）'
+  descriptor:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'search：descriptor 文件（第 2 位置参数，定义搜索测试与参数；见源码 desc/ 目录）'
+  target:
+    type: file
+    required: false
+    cli_arg: -T
+    description: 'search：target 文件（目标假尿苷位点局部序列，见源码 targs/ 目录）'
+  target_count:
+    type: integer
+    required: false
+    cli_arg: -t
+    description: 'search：从 target 文件读取的靶位点数量（多个 target 时需指定）'
+  score_cutoff:
+    type: float
+    required: false
+    cli_arg: -S
+    description: 'search：总分阈值'
+  fasta_out:
+    type: file
+    required: false
+    cli_arg: -F
+    description: 'search：命中序列 FASTA 输出文件（默认 results/pseudoU_fa/hits.fa）'
+  scoretable:
+    type: file
+    required: false
+    cli_arg: -L
+    description: 'search：自定义打分表文件（默认用内置 scoretables）'
+  watson_only:
+    type: boolean
+    default: false
+    cli_arg: -W
+    description: 'search：仅搜索 Watson 链'
+  crick_only:
+    type: boolean
+    default: false
+    cli_arg: -C
+    description: 'search：仅搜索 Crick 链'
+  quiet:
+    type: boolean
+    default: false
+    cli_arg: -q
+    description: 'search：安静模式（不输出表头信息）'
+  debug:
+    type: integer
+    required: false
+    cli_arg: -D
+    description: 'search：调试级别（0/1/2）'
+  hits:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'sort：snoGPS 原始命中文件（sortHits.pl 的输入）'
+  threads:
+    type: integer
+    default: 1
+    description: '线程数（snoGPS 单进程，无并行参数；此字段仅记录，不注入命令行）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 snoGPS / sortHits.pl 的额外参数（高级用法，慎用）
+outputs:
+  hits:
+    type: file
+    description: 'search：H/ACA snoRNA 候选命中（stdout；表头 + 命中记录）'
+  hits_fasta:
+    type: file
+    format: fasta
+    description: 'search -F：候选 snoRNA 命中序列 FASTA'
+  sorted_hits:
+    type: file
+    description: 'sort：sortHits.pl 整理后的命中结果'
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '⚠️ 官方渠道全无（bioconda/quay.io/biocontainers/depot.galaxyproject.org 均无 snoGPS，
+    2026-09 核实），故本模块提供自建兜底配方 native/Dockerfile + native/Apptainer.def（debian:bookworm-slim
+    + apt --no-install-recommends + 官方源码编译，非 deprecated 软件）。宿主机可走 native/install.sh
+    binary 路线（源码编译到 ~/software/snogps-0.2）。'
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    search: 1
+    sort: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: snoGPS

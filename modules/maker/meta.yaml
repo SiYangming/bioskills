@@ -1,0 +1,177 @@
+software: maker
+canonical: maker
+category: gene_prediction
+description: 'MAKER 是综合基因组注释流水线：整合 EST/转录本、同源蛋白、重复序列（RepeatMasker/RepeatModeler）
+  与从头预测（AUGUSTUS/SNAP/GeneMark-ES/ET）等多方证据，输出统一的基因结构注释。Perl 驱动，核心命令
+  maker（-CTL 生成配置模板）与 gff3_merge / fasta_merge（汇总结果）；支持 MPI 并行。'
+homepage: https://yandell-lab.org/software/maker/
+license: GPL-3.0-or-later
+software_versions:
+- id: maker_native
+  maker: 3.01.03
+  build_route: official biocontainer（quay.io/biocontainers/maker / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/maker
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda maker 现有 3.01.03 与 3.01.04，本模块 pin 3.01.03（与教程一致）。MAKER 为 Perl 驱动
+    （perl Build.PL && ./Build install），官方发行包需官网注册获取（旧分发主机 yandell.topaz / weatherby
+    已不可达），宿主机安装请走 conda/mamba 或官方容器。'
+- id: maker_nextflow_nfcore
+  maker: 官方无 nf-core module（modules/nf-core/maker 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/maker/meta.yml
+    返回 404。
+- id: maker_snakemake_wrappers
+  maker: 官方无 wrapper（bio/maker 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/maker/wrapper.py
+    返回 404；Snakemake 场景请走 native 或本地自定义。
+implementations:
+- id: maker_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.01.03"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 maker -CTL（生成配置）→ maker（运行，可 MPI 并行）→ gff3_merge / fasta_merge（汇总结果）。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/maker
+    quay_biocontainers: quay.io/biocontainers/maker
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda maker=3.01.03（自动带入 AUGUSTUS/SNAP/RepeatMasker
+      等依赖）；容器可用 quay.io/biocontainers/maker:3.01.03--pl5321h9ce0226_4 镜像（tag 见 README）
+default_implementation: maker_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: maker 子命令：ctl|run|merge|fasta_merge
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 基因组 FASTA（run 使用；不提供则读取 maker_opts.ctl）
+  est:
+    type: file
+    required: false
+    cli_arg: -est
+    description: EST / 转录本序列（Trinity.fasta 等）
+  protein:
+    type: file
+    required: false
+    cli_arg: -protein
+    description: 同源蛋白序列
+  model_org:
+    type: string
+    required: false
+    cli_arg: -model_org
+    description: 重复序列模型物种（如 fungi）
+  rmlib:
+    type: file
+    required: false
+    cli_arg: -rmlib
+    description: RepeatModeler 自定义重复库
+  augustus_species:
+    type: string
+    required: false
+    cli_arg: -augustus_species
+    description: AUGUSTUS 物种参数名
+  snaphmm:
+    type: file
+    required: false
+    cli_arg: -snaphmm
+    description: SNAP HMM 模型文件
+  gmhmm:
+    type: file
+    required: false
+    cli_arg: -gmhmm
+    description: GeneMark HMM 模型文件（.mod）
+  est2genome:
+    type: boolean
+    default: false
+    cli_arg: -est2genome
+    description: 直接用 EST 证据做基因预测
+  protein2genome:
+    type: boolean
+    default: false
+    cli_arg: -protein2genome
+    description: 直接用蛋白证据做基因预测
+  trna:
+    type: boolean
+    default: false
+    cli_arg: -trna
+    description: 预测 tRNA（需 tRNAscan-SE）
+  fix_nucleotides:
+    type: boolean
+    default: false
+    cli_arg: -fix_nucleotides
+    description: run 前修正序列中的非 ACGT 字符
+  base:
+    type: string
+    required: false
+    cli_arg: -base
+    description: 输出前缀（默认取输入基因组名）
+  datastore_index_log:
+    type: file
+    required: false
+    cli_arg: -d
+    description: merge/fasta_merge 的 <genome>_master_datastore_index.log
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: merge 输出文件名（gff3_merge -o；默认 genome.all.gff）
+  mpi:
+    type: boolean
+    default: false
+    cli_arg: mpiexec
+    description: run 时以 mpiexec -n <threads> 并行执行
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -n (mpiexec)
+    description: 线程数（仅 mpi 模式经 mpiexec -n 透传）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录覆盖
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层程序的额外参数（高级用法，慎用）
+outputs:
+  control_files:
+    type: file
+    format: ctl
+    description: ctl 子命令生成的 maker_opts.ctl / maker_exe.ctl / maker_bopts.ctl
+  maker_output:
+    type: file
+    description: run 产出的 <genome>.maker.output/ 目录（master_datastore_index.log 等）
+  merged_gff:
+    type: file
+    format: gff
+    description: gff3_merge 汇总的 genome.all.gff
+  merged_fasta:
+    type: file
+    format: fasta
+    description: fasta_merge 汇总的 transcript/cds/protein FASTA
+environment:
+  container_official: quay.io/biocontainers/maker（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda maker → quay.io/biocontainers/maker → depot.galaxyproject.org/singularity/maker），本地不再维护 Dockerfile/Apptainer.def；MAKER 为 Perl 驱动，依赖 AUGUSTUS / SNAP / GeneMark-ES/ET / RepeatMasker / RepeatModeler / tRNAscan-SE / exonerate / MPI，conda 安装会自动带入大部分依赖；宿主机直跑 main.py 时用 conda/mamba 安装 maker=3.01.03。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    merge: 2
+    fasta_merge: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: maker

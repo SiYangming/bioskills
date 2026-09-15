@@ -1,0 +1,150 @@
+software: exonerate
+canonical: exonerate
+category: gene_prediction
+description: 'exonerate 2.2.0（EBI Vertebrate Genomics）是通用成对比对器，支持蛋白/翻译核苷酸
+  与 DNA/基因组的多种比对模型（protein2genome / est2genome / cdna2genome / coding2genome /
+  protein2dna），常用于基于同源蛋白的基因结构预测：exonerate --model protein2genome
+  --showtargetgff yes <query> <target> 直接把比对命中输出为 GFF。同类比对中含 MAKER 内置
+  exonerate；全基因组水平比对建议用封装脚本 exonerate_parallel.pl 并行化（--cpu/--coverage_ratio/
+  --evalue）。本模块 native 为「命令构造」驱动，覆盖 align（单/批量 protein2genome）与 parallel
+  （封装脚本并行）两条路径。
+  '
+homepage: https://www.ebi.ac.uk/about/vertebrate-genomics/software/exonerate
+license: GPL-3.0
+software_versions:
+- id: exonerate_native
+  exonerate: '2.2.0'
+  build_route: '两条官方路线并列保留：官方预编译二进制 exonerate-2.2.0-x86_64.tar.gz（EBI FTP，推荐首选）
+    + 官方源码编译 exonerate-2.2.0.tar.gz（configure && make）；另有官方 biocontainer
+    quay.io/biocontainers/exonerate:2.2.0--1 / depot.galaxyproject.org 预构建 sif'
+  source: http://ftp.ebi.ac.uk/pub/software/vertebrategenomics/exonerate/exonerate-2.2.0-x86_64.tar.gz
+  note: '2026-09-11 核实：官方预编译二进制与源码归档均可下载（HTTP 200）；bioconda exonerate
+    含 2.2.0（build 0/1）与 2.4.0（最新）——本模块按教学文档固定 2.2.0，容器 tag 2.2.0--1。
+    brew 仅 brewsci/bio 有 exonerate 公式且当前为 2.4.0（与 meta 登记 2.2.0 略有差异，版本以
+    formula 为准）。'
+- id: exonerate_nextflow_nfcore
+  exonerate: 官方无模块（modules/nf-core/exonerate 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/exonerate
+    返回 404（未登记官方说明层）；Nextflow 场景以 exonerate_native 为兜底。
+- id: exonerate_snakemake_wrappers
+  exonerate: 官方无 wrapper（bio/exonerate 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/exonerate
+    返回 404（未登记官方说明层）；Snakemake 场景以 exonerate_native 为兜底。
+- id: exonerate_nextflow_local
+  exonerate: 未启用（不建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py align|parallel）
+- id: exonerate_snakemake_local
+  exonerate: 未启用（不建 snakemake/；需要时用 shell 调 native/main.py align|parallel）
+implementations:
+- id: exonerate_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.2.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    align 覆盖单条/批量 protein2genome 比对（--showtargetgff yes 直接出 GFF），parallel 包装
+    exonerate_parallel.pl 做全基因组并行比对并注入线程。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/exonerate
+    quay_biocontainers: quay.io/biocontainers/exonerate:2.2.0--1
+    galaxyproject: https://depot.galaxyproject.org/singularity/exonerate:2.2.0--1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda exonerate=2.2.0；
+      容器可用 quay.io/biocontainers/exonerate:2.2.0--1
+default_implementation: exonerate_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'exonerate 子命令：align（exonerate 单次比对，--showtargetgff yes 输出 GFF）|
+      parallel（exonerate_parallel.pl 全基因组并行比对封装）'
+  query:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 查询序列（align：蛋白 FASTA；parallel：同源蛋白 FASTA）
+  target:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 目标序列（基因组 DNA FASTA，建议 hardmask 重复序列后）
+  model:
+    type: string
+    default: protein2genome
+    cli_arg: --model
+    description: 比对模型（protein2genome / est2genome / cdna2genome / coding2genome / protein2dna / affine:local）
+  showtargetgff:
+    type: string
+    default: 'yes'
+    cli_arg: --showtargetgff
+    description: 是否输出目标 GFF（yes/no；yes 时命中以 GFF 形式写入 stdout，可重定向到输出文件）
+  bestn:
+    type: integer
+    required: false
+    cli_arg: --bestn
+    description: 仅报告最佳 n 个比对结果
+  percent:
+    type: integer
+    required: false
+    cli_arg: --percent
+    description: 最小相似性百分比（默认 50）
+  score:
+    type: integer
+    required: false
+    cli_arg: --score
+    description: 最小得分阈值
+  coverage_ratio:
+    type: number
+    required: false
+    cli_arg: --coverage_ratio
+    description: 'parallel：覆盖度阈值（教学示例 0.4）'
+  evalue:
+    type: string
+    required: false
+    cli_arg: --evalue
+    description: 'parallel：E-value 阈值（教学示例 1e-9）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: align 输出文件（exonerate 本身写 stdout，驱动捕获 stdout 落盘）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（parallel 注入 --cpu N；align 为 exonerate 单进程，不强加）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层命令的额外参数（高级用法，慎用）
+outputs:
+  alignment_gff:
+    type: file
+    format: gff
+    description: align（--showtargetgff yes）输出的 GFF 比对命中
+  parallel_gff:
+    type: file
+    format: gff
+    description: parallel（exonerate_parallel.pl）产出的全基因组比对结果/GFF
+environment:
+  container_official: quay.io/biocontainers/exonerate:2.2.0--1（bioconda 官方镜像；depot.galaxyproject.org 预构建 sif 见 README）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 或官方预编译二进制安装。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    align: 4
+    parallel: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: exonerate
+  note: align 调 exonerate（单进程，不强加线程）；parallel 调 exonerate_parallel.pl（注入
+    --cpu）。官方 nf-core / snakemake-wrappers 层均 404（2026-09-11 在线核实），未建 nextflow/、
+    snakemake/ 目录，详见 software_versions 与 README。

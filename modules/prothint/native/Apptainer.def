@@ -1,0 +1,98 @@
+# prothint native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 release tarball）
+#
+# 路线：与 Dockerfile 一致 —— ProtHint 官方渠道全无（bioconda/quay/depot 404，2026-09 核实），
+#       apt 安装 python3/perl 运行时 + ProtHint 所需 Perl 模块，curl 下载官方 release tarball
+#       （ProtHint-<ver>.tar.gz，内附 dependencies/diamond + dependencies/spaln）到 /opt/ProtHint。
+#
+# 构建：apptainer build prothint.sif Apptainer.def
+#       （默认 PROTHINT_VERSION=2.4.0，可用 --build-arg 覆盖）
+# 运行：apptainer run prothint.sif genome.fasta proteins.fasta --workdir /data/prothint_out --threads 8
+# 说明：native/main.py 驱动在宿主机运行（容器内亦已并入 /opt/skill，可用 --entrypoint 调 python3）。
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%arguments
+    PROTHINT_VERSION=2.4.0
+
+%labels
+    Maintainer bioskills
+    Software prothint
+    Version 2.4.0
+    ProthintVersion {{ PROTHINT_VERSION }}
+    PkgRoute apt(python3/perl runtime)+upstream release tarball (gatech-genemark/ProtHint)
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+
+    set -eux
+
+    # 1) apt 最小依赖：Python 3 + ProtHint 所需 Perl 模块 + 运行本体（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-yaml \
+        perl \
+        libmce-perl \
+        libyaml-perl \
+        libmath-utils-perl \
+        libthread-queue-perl \
+        libthreads-perl \
+        bash \
+        ca-certificates \
+        curl \
+        procps
+
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) 官方 release tarball 下载 + 部署 + 版本断言
+    mkdir -p /tmp/src
+    curl -fsSL -o /tmp/src/ProtHint.tar.gz \
+        "https://github.com/gatech-genemark/ProtHint/releases/download/v{{ PROTHINT_VERSION }}/ProtHint-{{ PROTHINT_VERSION }}.tar.gz"
+    mkdir -p /opt/ProtHint
+    tar -xzf /tmp/src/ProtHint.tar.gz -C /opt/ProtHint --strip-components=1
+    chmod 0755 /opt/ProtHint/bin/*.py /opt/ProtHint/bin/*.pl || true
+    test -f /opt/ProtHint/bin/prothint.py
+    python3 /opt/ProtHint/bin/prothint.py --version | grep -q "{{ PROTHINT_VERSION }}"
+    rm -rf /tmp/src
+
+    # 3) 清理四连 + 删 curl
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export PROTHINT_HOME=/opt/ProtHint
+    export PATH=/opt/ProtHint/bin:$PATH
+
+%runscript
+    exec prothint.py "$@"
+
+%test
+    # 非交互自检：确保 prothint.py 可用且版本匹配
+    set -eux
+    prothint.py --version | grep -q "2.4.0"
+    command -v prothint.py
+
+%help
+    prothint native Apptainer 镜像（bookworm-slim + 官方 release tarball）。
+    ProtHint: {{ PROTHINT_VERSION }}（位于 /opt/ProtHint/bin/prothint.py）
+    调用方式：apptainer run prothint.sif <genome.fasta> <proteins.fasta> [--workdir DIR] [--threads N]
+    挂载示例：apptainer run -B $PWD:/data -H /data prothint.sif /data/genome.fasta \
+        /data/proteins.fasta --workdir /data/prothint_out --threads 8
+    注：GeneMark-ES 未随镜像分发；如需自动跑 GeneMark-ES，请挂载其安装目录并用 --geneMarkGtf
+        提供预测结果（或自行安装 GeneMark-ES 到 dependencies/GeneMarkES）。

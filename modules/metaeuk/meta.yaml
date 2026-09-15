@@ -1,0 +1,154 @@
+software: metaeuk
+canonical: metaeuk
+category: gene_prediction
+description: 'MetaEuk 基于 MMseqs2 的高速同源搜索与动态规划外显子集恢复，从真核（宏）基因组 contig 中预测蛋白编码基因
+  （easy-predict / easy-search / taxtocontig），并支持冗余消减与分类注释；也是 BUSCO `-m genome`（真核）
+  模式使用的基因预测后端。
+
+  '
+homepage: https://github.com/soedinglab/metaeuk
+license: GPL-3.0-only
+software_versions:
+- id: metaeuk_native
+  metaeuk: '2-ddf2742'
+  build_route: 'official prebuilt binary（GitHub release assets）+ official biocontainer（quay.io/biocontainers/metaeuk /
+    depot.galaxyproject.org）'
+  source: https://github.com/soedinglab/metaeuk/releases/tag/2-ddf2742
+  note: '官方同时提供 prebuilt 二进制（metaeuk-linux-{sse41,avx2}.tar.gz / metaeuk-osx-avx2.tar.gz）与源码编译；
+    本模块按教学文档登记 2-ddf2742（bioconda 有 2.ddf2742 构建，quay tag 2.ddf2742--h2d02072_0，已核实 depot 同步）。'
+- id: metaeuk_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  metaeuk: '6.a5d39d9'
+  source: bioconda::metaeuk=6.a5d39d9（modules/nf-core/metaeuk/easypredict/environment.yml）
+  note: nf-core 仅 metaeuk/easypredict 一个子模块，pin bioconda::metaeuk=6.a5d39d9（最新大版本），与 native 登记的 2-ddf2742 差距较大。
+- id: metaeuk_snakemake_wrappers
+  metaeuk: 官方无（bio/metaeuk 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/metaeuk
+    返回 404；Snakemake 场景请走 native 或自建 snakemake/local。
+- id: metaeuk_nextflow_local
+  metaeuk: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: metaeuk_snakemake_local
+  metaeuk: 未固定（用户按 rules/ 自行声明）
+implementations:
+- id: metaeuk_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2-ddf2742"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖
+    easy_predict（端到端基因预测）/ easy_search（同源搜索）/ taxtocontig（分类注释）/ version 四个子命令。'
+  container_ref:
+    upstream_prebuilt: https://github.com/soedinglab/metaeuk/releases/tag/2-ddf2742
+    upstream_source: https://github.com/soedinglab/metaeuk
+    bioconda: https://anaconda.org/bioconda/metaeuk
+    quay_biocontainers: quay.io/biocontainers/metaeuk
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda metaeuk；容器可用 quay.io/biocontainers/metaeuk
+      镜像（tag 见 README）
+default_implementation: metaeuk_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: metaeuk 子命令：easy_predict|easy_search|taxtocontig|version
+  contigs:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 目标 contig FASTA 或已建库（easy_predict 输入）
+  targets:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 参考蛋白 FASTA / 蛋白库 / 蛋白谱库（easy_predict 输入）
+  out_prefix:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 结果前缀（easy_predict；生成 <prefix>.fas/.gff 等）
+  tmp_dir:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 临时目录（easy_predict/easy_search/taxtocontig）
+  query:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 查询序列（easy_search）
+  target:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 目标序列（easy_search）
+  out_file:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 搜索/分类结果输出路径
+  contigs_db:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 已建 contig 库（taxtocontig）
+  preds_fas:
+    type: file
+    required: false
+    cli_arg: positional
+    description: MetaEuk 预测蛋白 FASTA（taxtocontig）
+  headers_map:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 预测到内部标识的 TSV 映射（taxtocontig）
+  tax_target_db:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 带分类信息的蛋白库（taxtocontig）
+  majority:
+    type: float
+    required: false
+    cli_arg: --majority
+    description: 分类多数投票阈值（taxtocontig；如 0.5）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 metaeuk 的额外参数（高级用法，慎用）
+outputs:
+  predictions_fasta:
+    type: file
+    format: fasta
+    description: easy_predict 预测蛋白序列（<prefix>.fas / .codon.fas）
+  predictions_gff:
+    type: file
+    format: gff
+    description: easy_predict 预测基因结构（<prefix>.gff）
+  search_result:
+    type: file
+    description: easy_search / taxtocontig 输出结果
+environment:
+  container_official: quay.io/biocontainers/metaeuk（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay→depot），本地不再维护 Dockerfile/Apptainer.def；官方另提供 prebuilt 平台二进制（GitHub
+    release assets）；宿主机直跑 main.py 时用 conda/mamba 或官方二进制安装。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    easy_predict: 8
+    easy_search: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: metaeuk

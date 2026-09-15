@@ -1,0 +1,155 @@
+software: genewise
+canonical: genewise
+category: gene_prediction
+description: 'GeneWise（wise2 2.4.1，EBI Birney lab）用同源蛋白序列对基因组做基因结构预测：
+  核心程序 genewise 把一条蛋白比对到一段 DNA（genewise [options] <protein> <dna>，-gff 输出
+  GFF）。直接使用 genewise 无法做全基因组水平预测，官方随附封装脚本 homolog_genewise
+  （--cpu/--coverage_ratio/--evalue/--max_gene_length）批量比对，homolog_genewiseGFF2GFF3
+  （--genome/--min_score/--gene_prefix）转 GFF3 并按得分过滤。sys 版本依赖 glibc 新版 getline
+  冲突，源码编译需 glibc-config→pkg-config 与 getline→get_line / isnumber→isdigit 兼容修补。
+  '
+homepage: https://www.ebi.ac.uk/~birney/wise2/
+license: Public Domain
+software_versions:
+- id: genewise_native
+  genewise: '2.4.1'
+  build_route: '官方镜像为主路线：bioconda wise2=2.4.1 → quay.io/biocontainers/wise2:2.4.1--h17e8430_6
+    / depot.galaxyproject.org 预构建 sif；官方另有源码编译路线 wise2.4.1.tar.gz（make all，
+    含 glibc/getline 兼容修补）'
+  source: https://www.ebi.ac.uk/~birney/wise2/wise2.4.1.tar.gz
+  note: '2026-09-11 核实：官方 sha256/变更未在站点公布；wise2.4.1.tar.gz 站点下载异常（HTTP 200
+    但返回体异常小，疑为跳转/目录页），故 install.sh 的 binary 路线不做内嵌 sha256 校验、仅做
+    解压后结构断言；bioconda wise2 仅 2.4.1 单一版本（build 0–6），容器 tag 2.4.1--h17e8430_6。
+    brew（homebrew-core / brewsci-bio）无 genewise / wise2 公式。'
+- id: genewise_nextflow_nfcore
+  genewise: 官方无模块（modules/nf-core/genewise 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/genewise
+    返回 404（wise2 亦 404、无别名）；Nextflow 场景以 genewise_native 为兜底。
+- id: genewise_snakemake_wrappers
+  genewise: 官方无 wrapper（bio/genewise 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/genewise
+    返回 404（bio/wise2 亦 404）；Snakemake 场景以 genewise_native 为兜底。
+- id: genewise_nextflow_local
+  genewise: 未启用（不建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py genewise|homolog|gff2gff3）
+- id: genewise_snakemake_local
+  genewise: 未启用（不建 snakemake/；需要时用 shell 调 native/main.py genewise|homolog|gff2gff3）
+implementations:
+- id: genewise_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.4.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    genewise 覆盖单条蛋白→DNA 结构预测（-gff 出 GFF）；homolog 包装 homolog_genewise 做全基因组
+    批量预测并注入线程；gff2gff3 包装 homolog_genewiseGFF2GFF3 转 GFF3 并按 --min_score 过滤。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/wise2
+    quay_biocontainers: quay.io/biocontainers/wise2:2.4.1--h17e8430_6
+    galaxyproject: https://depot.galaxyproject.org/singularity/wise2:2.4.1--h17e8430_6
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda wise2=2.4.1；容器可用
+      quay.io/biocontainers/wise2:2.4.1--h17e8430_6
+default_implementation: genewise_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'genewise 子命令：genewise（单条蛋白→DNA）| homolog（homolog_genewise 全基因组
+      并行）| gff2gff3（homolog_genewiseGFF2GFF3 转 GFF3）'
+  protein:
+    type: file
+    required: true
+    cli_arg: positional
+    description: genewise：查询同源蛋白 FASTA（homolog：同源蛋白 FASTA）
+  dna:
+    type: file
+    required: true
+    cli_arg: positional
+    description: genewise：目标 DNA 序列（genewise 的 <dna>；homolog：基因组 FASTA）
+  genome:
+    type: file
+    required: false
+    cli_arg: --genome
+    description: gff2gff3：基因组 FASTA（homolog_genewiseGFF2GFF3 --genome）
+  gff:
+    type: file
+    required: false
+    cli_arg: positional
+    description: gff2gff3：待转换的 genewise GFF（homolog_genewiseGFF2GFF3 位置参数）
+  coverage_ratio:
+    type: number
+    required: false
+    cli_arg: --coverage_ratio
+    description: 'homolog：覆盖度阈值（教学示例 0.4）'
+  evalue:
+    type: string
+    required: false
+    cli_arg: --evalue
+    description: 'homolog：E-value 阈值（教学示例 1e-9）'
+  max_gene_length:
+    type: integer
+    required: false
+    cli_arg: --max_gene_length
+    description: 'homolog：最大基因长度（教学示例 2000）'
+  min_score:
+    type: number
+    required: false
+    cli_arg: --min_score
+    description: 'gff2gff3：最小得分阈值（教学示例 15）'
+  gene_prefix:
+    type: string
+    required: false
+    cli_arg: --gene_prefix
+    description: 'gff2gff3：基因 ID 前缀（教学示例 genewise）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（gff2gff3 写 stdout，驱动捕获落盘）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（homolog 注入 --cpu N；genewise / gff2gff3 单进程，不强加）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层命令的额外参数（高级用法，慎用）
+outputs:
+  genewise_gff:
+    type: file
+    format: gff
+    description: genewise（-gff）单条蛋白结构预测结果
+  homolog_gff:
+    type: file
+    format: gff
+    description: homolog 批量预测产出的合并 GFF
+  gff3:
+    type: file
+    format: gff3
+    description: gff2gff3 输出的 GFF3（含按 --min_score 过滤结果）
+environment:
+  container_official: quay.io/biocontainers/wise2:2.4.1--h17e8430_6（bioconda 官方镜像；depot.galaxyproject.org 预构建 sif 见 README）
+  note: 官方镜像已覆盖（bioconda wise2 → quay.io/biocontainers → depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba，或按官方源码编译路线安装
+    wise2.4.1（含 glibc/getline 兼容修补，见 README「环境安装」）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    genewise: 1
+    homolog: 8
+    gff2gff3: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: genewise
+  note: genewise 调 genewise（单进程）；homolog 调 homolog_genewise（注入 --cpu）；gff2gff3 调
+    homolog_genewiseGFF2GFF3。官方 nf-core / snakemake-wrappers 层均 404（2026-09-11 在线核实），
+    未建 nextflow/、snakemake/ 目录，详见 software_versions 与 README。

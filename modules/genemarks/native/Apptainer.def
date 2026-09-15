@@ -1,0 +1,108 @@
+# genemarks native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方预编译包）
+#
+# 背景：GeneMarkS / GeneMarkS-2（原核基因预测）无官方镜像/conda 包 —— bioconda（API 404）→
+#       quay.io/biocontainers（401 = 仓库不存在）→ depot.galaxyproject.org（无）2026-09 核实全无；
+#       nf-core / snakemake-wrappers / brew 亦无。官方预编译包（genemark_suite_linux_64 /
+#       gms2_linux_64.gz）**下载需先在线申请密钥/同意学术许可**
+#       （https://exon.gatech.edu/GeneMark/license_download.cgi），链接动态生成、无法硬编码。
+# 安装方式：请先自行申请并下载授权压缩包，放到 modules/genemarks/native/gms2_linux_64.gz，
+#          本定义通过 %files 带入并解压（若文件名不同，请同步修改下方 %files / %post）。
+# ⚠️ 密钥：运行时须在容器内提供 ~/.gmhmmp2_key（GeneMarkS-2）或 ~/.gm_key（旧版 GeneMarkS）。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build genemarks-1.14.sif genemarks/native/Apptainer.def
+# 运行：
+#   apptainer run -B $PWD:/data -H /data genemarks-1.14.sif gms2 \
+#       -i /data/genome.fasta --genome-type bacteria --gcode 11 --format gff -o /data/gms2.gff
+#   驱动：apptainer exec genemarks-1.14.sif python3 /opt/skill/main.py --list-commands
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software genemarks
+    Version 1.14_1.25_lic
+    org.bioskills.software genemarks
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt runtime (perl/python3) + upstream precompiled GeneMarkS-2 package (license key required)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    genemarks/native/main.py /opt/skill/main.py
+    genemarks/meta.yaml /opt/skill/genemarks/meta.yaml
+    genemarks/native/test/ /opt/skill/test/
+    # ⚠️ 请先将已授权的官方压缩包放到 modules/genemarks/native/gms2_linux_64.gz
+    genemarks/native/gms2_linux_64.gz /tmp/gms2_linux_64.gz
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖（perl 本体 + python3 驱动 + gzip）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        gzip \
+        python3 \
+        python3-yaml \
+        ca-certificates \
+        procps
+
+    # 2) 解压官方预编译包到 /opt/genemarks（授权压缩包由 %files 带入）
+    test -s /tmp/gms2_linux_64.gz
+    mkdir -p /tmp/gm && tar -xzf /tmp/gms2_linux_64.gz -C /tmp/gm
+    cp -a /tmp/gm/. /opt/genemarks/
+    find /opt/genemarks -maxdepth 2 -name 'gms2.pl' -exec chmod +x {} \;
+    find /opt/genemarks -maxdepth 2 -name 'gmsn.pl' -exec chmod +x {} \;
+    find /opt/genemarks -maxdepth 2 -name 'gmhmmp2' -exec chmod +x {} \;
+    test -n "$(find /opt/genemarks -maxdepth 2 -name 'gms2.pl' -print -quit)"
+    rm -rf /tmp/gm /tmp/gms2_linux_64.gz
+
+    # 3) 清理四连
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/genemarks:/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：gms2.pl 存在 + 驱动可自省（真实预测需密钥，不在此触发）
+    set -eux
+    test -n "$(find /opt/genemarks -maxdepth 2 -name 'gms2.pl' -print -quit)"
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/gm_commands.txt
+    grep -q '^gms2' /tmp/gm_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/gm_schema.json
+    test -s /tmp/gm_schema.json
+    rm -rf /tmp/gm_commands.txt /tmp/gm_schema.json
+
+%help
+    genemarks native Apptainer 镜像（自建：apt 最小化 + 官方预编译 GeneMarkS-2 包，需密钥）。
+    CLI 用法：apptainer run -B $PWD:/data -H /data genemarks-1.14.sif gms2 \
+        -i /data/genome.fasta --genome-type bacteria --gcode 11 --format gff -o /data/gms2.gff
+    驱动用法：apptainer exec genemarks-1.14.sif python3 /opt/skill/main.py gms -i /data/genome.fasta --format GFF --fnn --faa
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09 全无 →
+    自建镜像；官方预编译包需先申请密钥（http://exon.gatech.edu/GeneMark/license_download.cgi）；
+    运行时须提供 ~/.gmhmmp2_key（gms2）或 ~/.gm_key（旧版）。

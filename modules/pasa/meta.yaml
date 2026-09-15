@@ -1,0 +1,178 @@
+software: pasa
+canonical: pasa
+category: gene_prediction
+description: 'PASA（PASApipeline 2.5.3，Program to Assemble Spliced Alignments）用转录本序列
+  （RNA-seq 组装结果）辅助真核基因预测：Launch_PASA_pipeline.pl 把转录本比对到基因组并组装
+  转录本结构（--ALIGNERS gmap,blat --CPU N --TRANSDECODER 等），build_comprehensive_transcriptome.dbi
+  构建综合转录组数据库，pasa_asmbls_to_training_set.dbi 做 ORF 预测并生成可训练权重（gene models）
+  的 GFF3（供 AUGUSTUS 等从头预测软件做 HMM training）。运行需 MySQL/MariaDB 与 GMAP/blat/FASTA/seqclean
+  等依赖。
+  '
+homepage: https://github.com/PASApipeline/PASApipeline
+license: BSD-3-Clause
+software_versions:
+- id: pasa_native
+  pasa: '2.5.3'
+  build_route: '官方镜像为主路线：bioconda pasa=2.5.3 → quay.io/biocontainers/pasa:2.5.3--h9948957_2
+    / depot.galaxyproject.org 预构建 sif；官方另有源码编译路线 PASApipeline.v2.5.3.FULL.tar.gz
+    （make -j，教学文档主用法）'
+  source: https://github.com/PASApipeline/PASApipeline/releases/download/pasa-v2.5.3/PASApipeline.v2.5.3.FULL.tar.gz
+  note: '2026-09-11 核实：官方 release PASApipeline.v2.5.3.FULL.tar.gz HTTP 200；bioconda pasa
+    含 2.3.3/2.4.1/2.5.2/2.5.3（最新 2.5.3，linux-64 build 0–2、osx-64 build 0–1；容器 tag
+    2.5.3--h9948957_2）；brew（homebrew-core / brewsci-bio）无 pasa 公式。运行依赖 MySQL 与
+    GMAP/blat/FASTA/seqclean/TransDecoder，conda 路线会一并带入大部分依赖。'
+- id: pasa_nextflow_nfcore
+  pasa: 官方无模块（modules/nf-core/pasa 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/pasa
+    返回 404；Nextflow 场景以 pasa_native 为兜底。
+- id: pasa_snakemake_wrappers
+  pasa: 官方无 wrapper（bio/pasa 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/pasa
+    返回 404；Snakemake 场景以 pasa_native 为兜底。
+- id: pasa_nextflow_local
+  pasa: 未启用（不建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py align_assemble|build_comprehensive|asmbls_to_training）
+- id: pasa_snakemake_local
+  pasa: 未启用（不建 snakemake/；需要时用 shell 调 native/main.py align_assemble|build_comprehensive|asmbls_to_training）
+implementations:
+- id: pasa_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.5.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    align_assemble 包装 Launch_PASA_pipeline.pl（转录本→基因组比对组装，注入 --CPU）；
+    build_comprehensive 包装 build_comprehensive_transcriptome.dbi（综合转录组数据库）；
+    asmbls_to_training 包装 pasa_asmbls_to_training_set.dbi（ORF 预测 + 训练集 GFF3）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/pasa
+    quay_biocontainers: quay.io/biocontainers/pasa:2.5.3--h9948957_2
+    galaxyproject: https://depot.galaxyproject.org/singularity/pasa:2.5.3--h9948957_2
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda pasa=2.5.3；容器可用
+      quay.io/biocontainers/pasa:2.5.3--h9948957_2
+default_implementation: pasa_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'pasa 子命令：align_assemble（Launch_PASA_pipeline.pl）| build_comprehensive
+      （build_comprehensive_transcriptome.dbi）| asmbls_to_training（pasa_asmbls_to_training_set.dbi）'
+  config:
+    type: file
+    required: true
+    cli_arg: -c
+    description: 'PASA 配置文件（alignAssembly.config，由 pasa_conf/pasa.alignAssembly.Template.txt
+      复制并改 DATABASE 得到）'
+  genome:
+    type: file
+    required: true
+    cli_arg: -g
+    description: align_assemble：基因组 FASTA（-g；建议 hardmask 重复序列后）
+  transcripts:
+    type: file
+    required: true
+    cli_arg: -t
+    description: 'align_assemble / build_comprehensive：seqclean 清洗后的转录本 FASTA（-t，如
+      transcripts.fasta.clean）'
+  unclean_transcripts:
+    type: file
+    required: false
+    cli_arg: -u
+    description: 'align_assemble：原始（seqclean 前）转录本 FASTA（-u，教学示例 -u transcripts.fasta）'
+  tdn:
+    type: file
+    required: false
+    cli_arg: --TDN
+    description: 'align_assemble：转录本对应的 Trinity 序列 ID 列表（--TDN，transdecoder 训练用）'
+  aligners:
+    type: string
+    default: gmap,blat
+    cli_arg: --ALIGNERS
+    description: 'align_assemble：比对工具列表（--ALIGNERS，教学示例 gmap,blat）'
+  stringent_alignment_overlap:
+    type: number
+    required: false
+    cli_arg: --stringent_alignment_overlap
+    description: 'align_assemble：严格比对重叠阈值（--stringent_alignment_overlap，教学示例 30.0；
+      基因稠密的小基因组建议设置）'
+  max_intron_length:
+    type: integer
+    required: false
+    cli_arg: --MAX_INTRON_LENGTH
+    description: 'align_assemble：最大内含子长度（--MAX_INTRON_LENGTH，教学示例 20000）'
+  run_alignment:
+    type: boolean
+    default: true
+    cli_arg: -R
+    description: 'align_assemble：-R（教学示例固定用法，原样透传；默认启用）'
+  flag_T:
+    type: boolean
+    default: true
+    cli_arg: -T
+    description: 'align_assemble：-T（教学示例固定用法，原样透传；默认启用）'
+  transdecoder:
+    type: boolean
+    default: false
+    cli_arg: --TRANSDECODER
+    description: 'align_assemble：启用 ORF 预测（--TRANSDECODER）'
+  orient:
+    type: boolean
+    default: false
+    cli_arg: --transcribed_is_aligned_orient
+    description: 'align_assemble：链特异性测序数据加此参数（--transcribed_is_aligned_orient）'
+  transcripts_fasta:
+    type: file
+    required: true
+    cli_arg: --pasa_transcripts_fasta
+    description: 'asmbls_to_training：<DBName>.assemblies.fasta（--pasa_transcripts_fasta）'
+  transcripts_gff3:
+    type: file
+    required: true
+    cli_arg: --pasa_transcripts_gff3
+    description: 'asmbls_to_training：<DBName>.pasa_assemblies.gff3（--pasa_transcripts_gff3）'
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（align_assemble 注入 --CPU N；直接调 .dbi 脚本的子命令不强加）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层脚本的额外参数（高级用法，慎用）
+outputs:
+  pasa_assemblies:
+    type: file
+    description: align_assemble 产出的 PASA 转录本组装结果（<DBName>.pasa_assemblies.gff3 / .fasta 等）
+  comprehensive_transcriptome:
+    type: file
+    description: 'build_comprehensive 产出的综合转录组数据库（<DBName>.assemblies.fasta 等）'
+  training_gff3:
+    type: file
+    format: gff3
+    description: 'asmbls_to_training 产出的 ORF/基因模型 GFF3（<DBName>.assemblies.fasta.transdecoder.genome.gff3，
+      供 ab initio 预测做 HMM training）'
+environment:
+  container_official: quay.io/biocontainers/pasa:2.5.3--h9948957_2（bioconda 官方镜像；depot.galaxyproject.org 预构建 sif 见 README）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba（pasa=2.5.3）或官方源码编译
+    （PASApipeline.v2.5.3.FULL.tar.gz，make）。运行需 MySQL/MariaDB。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    align_assemble: 8
+    build_comprehensive: 2
+    asmbls_to_training: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Launch_PASA_pipeline.pl
+  note: align_assemble 调 Launch_PASA_pipeline.pl（注入 --CPU）；build_comprehensive 调
+    build_comprehensive_transcriptome.dbi；asmbls_to_training 调 pasa_asmbls_to_training_set.dbi。
+    官方 nf-core / snakemake-wrappers 层均 404（2026-09-11 在线核实），未建 nextflow/、snakemake/ 目录。

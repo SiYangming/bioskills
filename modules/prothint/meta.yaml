@@ -1,0 +1,139 @@
+software: prothint
+canonical: prothint
+category: gene_prediction
+description: 'ProtHint 通过将参考蛋白序列映射并剪接比对到目标基因组，预测 intron / start / stop
+  hints（蛋白证据 hints），输出 prothint.gff / evidence.gff / prothint_augustus.gff，是
+  GeneMark-EP+、BRAKER（ET 模式）与 AUGUSTUS 蛋白证据流程的上游 hints 生成器。
+
+  '
+homepage: https://github.com/gatech-genemark/ProtHint
+license: 'GeneMark custom license（学术免费；详见上游 LICENSE）'
+software_versions:
+- id: prothint_native
+  prothint: '2.4.0'
+  build_route: 'official release tarball（无 bioconda / quay.io/biocontainers / depot.galaxyproject.org，2026-09
+    核实全无 → 自建 apt 最小化容器兜底）'
+  source: https://github.com/gatech-genemark/ProtHint/releases/download/v2.4.0/ProtHint-2.4.0.tar.gz
+  note: '官方唯一分发方式为 GitHub release 源码/脚本 tarball（内附 dependencies/diamond 与 dependencies/spaln
+    预编译二进制）；无官方 prebuilt 平台二进制包、无 conda 包（api.anaconda.org/bioconda/prothint 404）。'
+- id: prothint_nextflow_nfcore
+  prothint: 官方无（modules/nf-core/prothint 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/prothint
+    返回 404；Nextflow 场景请走 native 或自建 nextflow/local。
+- id: prothint_snakemake_wrappers
+  prothint: 官方无（bio/prothint 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/prothint
+    返回 404；Snakemake 场景请走 native 或自建 snakemake/local。
+implementations:
+- id: prothint_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.4.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖
+    predict（prothint.py 主流程）/ high_confidence（print_high_confidence.py）/ augustus_hints（prothint2augustus.py）三段链路，自动注入线程。'
+  container_ref:
+    upstream_prebuilt: https://github.com/gatech-genemark/ProtHint/releases/download/v2.4.0/ProtHint-2.4.0.tar.gz
+    upstream_source: https://github.com/gatech-genemark/ProtHint
+    install_hint: 'bash native/install.sh（官方 release tarball 部署到 ~/software/ProtHint-<ver>）；官方无容器镜像，容器见 native/Dockerfile。'
+default_implementation: prothint_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: prothint 子命令：predict|high_confidence|augustus_hints
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 目标基因组 multi-FASTA（predict 使用；别名 --genome）
+  proteins:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 参考蛋白序列 multi-FASTA（predict 使用）
+  prothint_gff:
+    type: file
+    required: false
+    cli_arg: positional
+    description: prothint.gff（high_confidence/augustus_hints 输入）
+  evidence_gff:
+    type: file
+    required: false
+    cli_arg: positional
+    description: evidence.gff（augustus_hints 输入）
+  chains_gff:
+    type: file
+    required: false
+    cli_arg: positional
+    description: chains.gff（augustus_hints 输入）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输出文件（high_confidence 的 evidence.gff / augustus_hints 的 hints GFF）
+  workdir:
+    type: string
+    required: false
+    cli_arg: --workdir
+    description: 结果与临时文件目录（predict；默认当前目录）
+  gene_mark_gtf:
+    type: file
+    required: false
+    cli_arg: --geneMarkGtf
+    description: GeneMark-ES 预测 GTF（提供后跳过 GeneMark-ES 运行）
+  diamond_pairs:
+    type: file
+    required: false
+    cli_arg: --diamondPairs
+    description: DIAMOND seed gene-protein 命中文件（提供后跳过 DIAMOND 搜索）
+  fungus:
+    type: boolean
+    default: false
+    cli_arg: --fungus
+    description: 真菌模式（predict）
+  evalue:
+    type: float
+    required: false
+    cli_arg: --evalue
+    description: DIAMOND 比对 E-value 阈值（默认 0.001）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（predict 自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给上游脚本的额外参数（高级用法，慎用）
+outputs:
+  prothint_gff:
+    type: file
+    format: gff
+    description: predict 输出的全部 hints（introns/starts/stops）
+  evidence_gff:
+    type: file
+    format: gff
+    description: 高置信 hints 子集（evidence.gff / prothint_augustus.gff）
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 均未收录 prothint；2026-09 核实全无）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方仅 GitHub release tarball（无 prebuilt 平台二进制包，tarball 内含 diamond/spaln 依赖二进制），官方渠道全无 → 自建 apt 最小化容器兜底（debian:bookworm-slim，禁 miniconda）；宿主机一键安装用 native/install.sh。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: prothint.py

@@ -1,0 +1,217 @@
+software: mirdeep2
+canonical: mirdeep2
+category: ncRNA_prediction
+description: 'miRDeep2（包名 mirdeep2；含 miRDeep 与 miRDeep2 核心算法）是 miRNA 发现工具：从
+  深度测序 reads 中发现已知与新的 miRNA 基因（Friedländer et al., Nat Biotechnol 2012；miRDeep
+  原始算法 Friedländer et al., Nat Biotechnol 2008）。流程为 mapper.pl（折叠 reads + bowtie 比对到
+  基因组）→ miRDeep2.pl（核心算法识别 precursor/hairpin）→ quantifier.pl（对已知 miRBase
+  precursor 快速定量）。文档 10.md 第十九节把 miRDeep / miRDeep2 列为 miRNA 预测工具。'
+homepage: https://github.com/rajewsky-lab/mirdeep2
+license: 'Academic（见上游 LICENSE；学术免费，商用需与作者确认）'
+software_versions:
+- id: mirdeep2_native
+  mirdeep2: '2.0.1.3（bioconda 包版本；上游 git tag v0.1.3）'
+  build_route: official biocontainer（quay.io/biocontainers/mirdeep2 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/mirdeep2
+  note: '2026-09 核实：bioconda mirdeep2=2.0.1.3（noarch: generic；依赖 bowtie / viennarna /
+    randfold / perl 及 perl-pdf-api2 等）→ quay.io/biocontainers/mirdeep2:2.0.1.3--hdfd78af_2
+    → depot.galaxyproject.org/singularity/mirdeep2:2.0.1.3--hdfd78af_2（sif 直拉 200）。
+    上游源码 https://github.com/rajewsky-lab/mirdeep2（tag v0.1.3，`perl install.pl` 或手工编译）。'
+- id: mirdeep2_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  mirdeep2: '2.0.1.2'
+  source: bioconda::mirdeep2=2.0.1.2（modules/nf-core/mirdeep2/{mapper,mirdeep2}/environment.yml）
+  note: 'nf-core 有 mirdeep2/mapper 与 mirdeep2/mirdeep2 两个子模块，均 pin
+    bioconda::mirdeep2=2.0.1.2（与 bioconda 最新 2.0.1.3 相差一个 patch）。'
+- id: mirdeep2_snakemake_wrappers
+  mirdeep2: 官方无 wrapper（bio/mirdeep2 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 mirdeep2）
+  note: 2026-09 核实 github.com/snakemake/snakemake-wrappers/tree/master/bio/mirdeep2 返回
+    404；Snakemake 场景请以 native/main.py 为兜底。
+- id: mirdeep2_nextflow_local
+  mirdeep2: '未启用（未建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: mirdeep2_snakemake_local
+  mirdeep2: '未启用（未建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: mirdeep2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.1.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 mapper（折叠 + bowtie 比对）→ mirdeep（miRNA 识别）→ quantifier（已知 miRNA 定量）
+    三段链路。miRDeep2 脚本链路无并行参数，--threads 仅记录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mirdeep2
+    quay_biocontainers: quay.io/biocontainers/mirdeep2
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda mirdeep2=2.0.1.3；
+      容器可用 quay.io/biocontainers/mirdeep2:2.0.1.3--hdfd78af_2
+default_implementation: mirdeep2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'mirdeep2 子命令：mapper|mirdeep|quantifier'
+  reads:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mapper/mirdeep：深度测序 reads（FASTA/FASTQ；mirdeep 用折叠后的 reads）'
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mirdeep：参考基因组 FASTA（第 2 位置参数）'
+  arf:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mirdeep：reads 对基因组的比对 .arf 文件（第 3 位置参数）'
+  mature_ref:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mirdeep：本物种 miRBase mature 参考（第 4 位置参数）'
+  other_mature_ref:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mirdeep：近缘物种 miRBase mature 参考（第 5 位置参数；无则用 none）'
+  hairpin_ref:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'mirdeep：本物种 miRBase precursor/hairpin 参考（第 6 位置参数）'
+  input_fasta:
+    type: boolean
+    default: false
+    cli_arg: -c
+    description: 'mapper：输入为 FASTA（否则按 FASTQ 处理，见 -e）'
+  input_fastq:
+    type: boolean
+    default: false
+    cli_arg: -e
+    description: 'mapper：输入为 FASTQ'
+  remove_noncanonical:
+    type: boolean
+    default: false
+    cli_arg: -j
+    description: "mapper：剔除含非规范字符（a c g t u n 之外）的条目"
+  clip_adapter:
+    type: string
+    required: false
+    cli_arg: -k
+    description: 'mapper：3'' 接头序列（如 3'' 测序接头），用于裁剪'
+  min_length:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: 'mapper：丢弃短于该长度的 reads（教程常用 18）'
+  collapse:
+    type: boolean
+    default: false
+    cli_arg: -m
+    description: 'mapper：折叠重复 reads'
+  genome_index:
+    type: string
+    required: false
+    cli_arg: -p
+    description: 'mapper：bowtie 基因组索引前缀（由 bowtie-build 生成）'
+  collapsed_reads_out:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 'mapper：折叠后 reads 的输出文件'
+  arf_out:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 'mapper：reads 对基因组比对 .arf 的输出文件'
+  verbose:
+    type: boolean
+    default: false
+    cli_arg: -v
+    description: 'mapper：输出详细信息'
+  species:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 'mirdeep：物种名（如 C.elegans；用于已知 miRNA 匹配）'
+  resume:
+    type: boolean
+    default: false
+    cli_arg: -d
+    description: 'mirdeep：断点续跑（从已有中间结果继续）'
+  hairpin:
+    type: file
+    required: false
+    cli_arg: -p
+    description: 'quantifier：precursor/hairpin 参考 FASTA（注意：本子命令 -p 为文件）'
+  mature:
+    type: file
+    required: false
+    cli_arg: -m
+    description: 'quantifier：mature miRNA 参考 FASTA（注意：本子命令 -m 为文件）'
+  reads_quant:
+    type: file
+    required: false
+    cli_arg: -r
+    description: 'quantifier：折叠后的 reads（mapper -s 产物）'
+  species_code:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 'quantifier：3 字母物种代码（如 cel）'
+  mature_length:
+    type: string
+    required: false
+    cli_arg: -y
+    description: 'quantifier：mature 长度范围（如 16_19）'
+  threads:
+    type: integer
+    default: 4
+    description: '线程数（miRDeep2 Perl 脚本链路无并行参数；此字段仅记录，不注入命令行）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 mapper.pl / miRDeep2.pl / quantifier.pl 的额外参数（高级用法，慎用）
+outputs:
+  collapsed_reads:
+    type: file
+    format: fasta
+    description: 'mapper -s：折叠后的 reads FASTA（供 mirdeep/quantifier 使用）'
+  arf:
+    type: file
+    description: 'mapper -t：reads 对基因组比对结果（.arf）'
+  mirdeep_results:
+    type: file
+    description: 'mirdeep：miRNA 预测结果（results.html / results.csv 及中间文件，写入当前目录）'
+  quantifier_expressed:
+    type: file
+    format: csv
+    description: 'quantifier：miRNA_expressed.csv（参考 miRNA 在数据中的 read counts）'
+environment:
+  container_official: quay.io/biocontainers/mirdeep2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda mirdeep2=2.0.1.3 → quay / depot sif），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 mirdeep2（或从上游 GitHub `perl install.pl` 安装）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    mapper: 4
+    mirdeep: 4
+    quantifier: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: miRDeep2.pl

@@ -1,0 +1,115 @@
+# isolasso native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方源码 make）
+#
+# 背景：IsoLasso（LASSO 回归 RNA-seq 转录本组装 v2.6.1）无官方镜像/conda 包 —— bioconda（API 404）
+#       → quay.io/biocontainers（401 = 仓库不存在，对照 samtools 200）→ depot.galaxyproject.org（无）
+#       2026-09 核实全无；nf-core / snakemake-wrappers / brew 亦无。官方仅源码（alumni.cs.ucr.edu）。
+# ⚠️ 编译依赖：CGAL / GSL / GLPK / GMP（Debian：libcgal-dev libgsl-dev libglpk-dev libgmp-dev）；
+#     历史 CentOS 6 文档另提及 boost_thread。
+# ⚠️ 编译兼容性（未实际构建验证）：2012 年代 C++ 源码在 bookworm g++12 下可能有新告警/需小修。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build isolasso-2.6.1.sif isolasso/native/Apptainer.def
+# 运行：
+#   apptainer run -B $PWD:/data -H /data isolasso-2.6.1.sif assemble /data/alignments.bam -o /data/sample
+#   驱动：apptainer exec isolasso-2.6.1.sif python3 /opt/skill/main.py --list-commands
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software isolasso
+    Version 2.6.1
+    org.bioskills.software isolasso
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt build deps (CGAL/GSL/GLPK/GMP) + upstream source (make)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    isolasso/native/main.py /opt/skill/main.py
+    isolasso/meta.yaml /opt/skill/isolasso/meta.yaml
+    isolasso/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖（编译依赖 CGAL/GSL/GLPK/GMP + python3 驱动 + samtools 供 BAM）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libcgal-dev \
+        libgsl-dev \
+        libglpk-dev \
+        libgmp-dev \
+        samtools \
+        python3 \
+        python3-yaml \
+        ca-certificates \
+        curl \
+        procps
+
+    # 2) 官方源码下载 + make + 部署
+    curl -fSL -o /tmp/isolasso.tar.gz \
+        "http://alumni.cs.ucr.edu/~liw/isolasso-2.6.1.tar.gz"
+    mkdir -p /tmp/src && tar -xzf /tmp/isolasso.tar.gz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    cd "$SRC/src"
+    make -j"$(nproc)"
+    test -x "$SRC/bin/isolasso"
+    mkdir -p /opt/isolasso
+    cp -a "$SRC/bin/." /opt/isolasso/
+    ln -sf /opt/isolasso/runlasso.py /usr/local/bin/runlasso.py
+    ln -sf /opt/isolasso/processsam /usr/local/bin/processsam
+    ln -sf /opt/isolasso/isolasso /usr/local/bin/isolasso
+    chmod +x /opt/isolasso/runlasso.py /usr/local/bin/runlasso.py
+    rm -rf /tmp/src /tmp/isolasso.tar.gz
+
+    # 3) 清理四连（仅构建期下载工具 curl 移除）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/isolasso:/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：编译产物存在 + 驱动可自省
+    set -eux
+    test -x /opt/isolasso/isolasso
+    test -x /opt/isolasso/processsam
+    test -x /opt/isolasso/runlasso.py
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/iso_commands.txt
+    grep -q '^assemble' /tmp/iso_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/iso_schema.json
+    test -s /tmp/iso_schema.json
+    rm -rf /tmp/iso_commands.txt /tmp/iso_schema.json
+
+%help
+    isolasso native Apptainer 镜像（自建：apt 最小化 + 官方源码 make v2.6.1）。
+    CLI 用法：apptainer run -B $PWD:/data -H /data isolasso-2.6.1.sif assemble /data/alignments.bam -o /data/sample
+    驱动用法：apptainer exec isolasso-2.6.1.sif python3 /opt/skill/main.py isolasso sample.instance -o sample
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09 全无 →
+    自建镜像；编译依赖 CGAL/GSL/GLPK/GMP；BAM 输入需 samtools（镜像内已装）。

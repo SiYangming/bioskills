@@ -1,0 +1,144 @@
+software: braker
+canonical: braker
+category: gene_prediction
+description: 'BRAKER2 是集成 AUGUSTUS 与 GeneMark-ES/ET 的自动化基因预测流水线：用 RNA-seq 比对（--bam）
+  与/或同源蛋白（--prot_seq，经 ProtHint/GenomeThreader 生成 hints）训练并预测基因结构。Perl 驱动，
+  主命令 braker.pl，配套 gtf2gff3.pl 做格式转换。'
+homepage: https://github.com/Gaius-Augustus/BRAKER
+license: Artistic-1.0
+software_versions:
+- id: braker_native
+  braker: 2.1.5
+  build_route: official biocontainer（quay.io/biocontainers/braker2 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/braker2
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 包名为 braker2（BRAKER2），现有 2.1.2/2.1.4/2.1.5/2.1.6，本模块 pin 2.1.5（与教程一致）。
+    BRAKER 为 Perl 驱动，依赖 AUGUSTUS / GeneMark-ES/ET / ProtHint / GenomeThreader(gth) / samtools /
+    bamtools / ncbi-rmblast / diamond / PASA；conda 安装会自动带入。'
+- id: braker_nextflow_nfcore
+  braker: 官方 nf-core 仅有 braker3（非 BRAKER2）
+  source: https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/braker3/meta.yml
+  note: '2026-09 核实 nf-core modules 有 braker3（BRAKER3，Artistic-1.0），对应上游 BRAKER 3.x；
+    本模块 pin 的是 BRAKER2 2.1.5，二者不可直接互换（命令/依赖/参数有差异），故不作为本模块的直接实现路径。'
+- id: braker_snakemake_wrappers
+  braker: 官方无 wrapper（bio/braker2、bio/braker 均 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/braker2/wrapper.py
+    与 .../bio/braker/wrapper.py 均返回 404；Snakemake 场景请走 native 或本地自定义。
+implementations:
+- id: braker_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 braker.pl 运行（RNA-seq ± 同源蛋白）→ gtf2gff3.pl 格式转换。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/braker2
+    quay_biocontainers: quay.io/biocontainers/braker2
+    upstream_source: https://github.com/Gaius-Augustus/BRAKER/archive/refs/tags/v2.1.5.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda braker2=2.1.5（自动带入 AUGUSTUS/GeneMark
+      等依赖）；容器可用 quay.io/biocontainers/braker2:2.1.5--hdfd78af_3 镜像（tag 见 README）
+default_implementation: braker_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: braker 子命令：run|run_rnaseq|gtf2gff3
+  genome:
+    type: file
+    required: false
+    cli_arg: --genome
+    description: 基因组 FASTA（建议软屏蔽；run/run_rnaseq 必填）
+  bam:
+    type: file
+    required: false
+    cli_arg: --bam
+    description: RNA-seq 比对 BAM（run/run_rnaseq 使用）
+  prot_seq:
+    type: file
+    required: false
+    cli_arg: --prot_seq
+    description: 同源蛋白序列（run 的 ET 模式使用，配合 --etpmode）
+  species:
+    type: string
+    required: false
+    cli_arg: --species
+    description: 物种名（作为 AUGUSTUS training 名称）
+  workingdir:
+    type: string
+    required: false
+    cli_arg: --workingdir
+    description: 输出目录（默认当前目录）
+  etpmode:
+    type: boolean
+    default: false
+    cli_arg: --etpmode
+    description: ET 模式（结合同源蛋白证据，需 --prot_seq）
+  softmasking:
+    type: boolean
+    default: false
+    cli_arg: --softmasking
+    description: 输入基因组已软屏蔽重复序列
+  gtf:
+    type: file
+    required: false
+    cli_arg: positional
+    description: gtf2gff3 的输入 GTF（run 产出 braker.gtf）
+  output:
+    type: file
+    required: false
+    cli_arg: stdout
+    description: gtf2gff3 输出 GFF3 路径（stdout 重定向）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --cores
+    description: 线程数（经 --cores 透传）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录覆盖
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 braker.pl 的额外参数（高级用法，慎用）
+outputs:
+  braker_gtf:
+    type: file
+    format: gtf
+    description: braker.pl 产出的 braker.gtf
+  braker_gff3:
+    type: file
+    format: gff3
+    description: gtf2gff3.pl 转换得到的 GFF3
+  braker_protein:
+    type: file
+    format: fasta
+    description: braker.aa（预测蛋白序列）
+  braker_cds:
+    type: file
+    format: fasta
+    description: braker.codingseq（预测 CDS 序列）
+environment:
+  container_official: quay.io/biocontainers/braker2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda braker2 → quay.io/biocontainers/braker2 → depot.galaxyproject.org/singularity/braker2），本地不再维护 Dockerfile/Apptainer.def；BRAKER 为 Perl 驱动，依赖 AUGUSTUS / GeneMark-ES/ET / ProtHint / GenomeThreader(gth) / samtools / bamtools / ncbi-rmblast / diamond / PASA，并需设置 AUGUSTUS_CONFIG_PATH / GENEMARK_PATH 等环境变量；宿主机直跑 main.py 时用 conda/mamba 安装 braker2=2.1.5。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    run_rnaseq: 8
+    gtf2gff3: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: braker.pl

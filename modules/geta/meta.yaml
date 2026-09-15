@@ -1,0 +1,164 @@
+software: geta
+canonical: geta
+category: gene_prediction
+description: 'GETA（Gene prediction with Evidence-based approach，陈连福 chenlianfu）是一站式自动化
+  基因预测流程：整合 RepeatMasker 重复序列注释、AUGUSTUS/同源蛋白预测、RNA-seq 证据与结果整合。
+  主命令 geta.pl（--RM_species/--genome/-1/-2/--protein/--use_existed_augustus_species/--RM_lib
+  --cpu/--pfam_db/--gene_prefix）产出 out.gff3 及 cDNA/CDS/gene/pep FASTA；后处理
+  bestGeneModels.pl 去除可变剪接保留最优模型，gff3ToGtf.pl 转 GTF（genome.fasta + gff3 → gtf）。
+  官方以 GitHub tag tarball 分发（解压即用，非编译），无 bioconda/容器渠道，本模块提供自建
+  apt 最小化容器兜底。**注意：bestGeneModels.pl 未在官方仓库 bin/ 下命中（2026-09-11 核实 404），
+  本驱动按 PATH 解析（随 GETA/教学环境安装提供）。**
+  '
+homepage: https://github.com/chenlianfu/geta
+license: GPL-3.0
+software_versions:
+- id: geta_native
+  geta: '2.7.1'
+  build_route: '官方 tarball 解压（非编译）：github.com/chenlianfu/geta archive/refs/tags/v2.7.1.tar.gz
+    → bin/ 加入 PATH；官方渠道无 bioconda/容器 → 本模块另附自建 apt 最小化 Dockerfile + Apptainer.def'
+  source: https://github.com/chenlianfu/geta/archive/refs/tags/v2.7.1.tar.gz
+  note: '2026-09-11 核实：bioconda（api.anaconda.org/package/bioconda/geta → 404）、
+    quay.io/biocontainers、depot.galaxyproject.org、brew 均无 geta；nf-core modules 与
+    snakemake-wrappers 亦 404 → 走官方 tarball + 自建容器。教学文档 docs/10.md 第十五节另用
+    tag 2.4.5（github.com/chenlianfu/geta/archive/2.4.5.tar.gz，HTTP 200），本模块以 2.7.1 为主版本。
+    geta.pl / gff3ToGtf.pl / homolog_genewise / homolog_genewiseGFF2GFF3 均在仓库 bin/ 命中（200）；
+    bestGeneModels.pl 在 master / v2.7.1 / 2.4.5 的 bin/ 下均未命中（404），按教学文档保留子命令、
+    由 PATH 解析。'
+- id: geta_nextflow_nfcore
+  geta: 官方无模块（modules/nf-core/geta 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/geta 返回 404；
+    Nextflow 场景以 geta_native 为兜底。
+- id: geta_snakemake_wrappers
+  geta: 官方无 wrapper（bio/geta 404）
+  source: —
+  note: 2026-09-11 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/geta 返回 404；
+    Snakemake 场景以 geta_native 为兜底。
+- id: geta_nextflow_local
+  geta: 未启用（不建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py geta|best_models|gff3_to_gtf）
+- id: geta_snakemake_local
+  geta: 未启用（不建 snakemake/；需要时用 shell 调 native/main.py geta|best_models|gff3_to_gtf）
+implementations:
+- id: geta_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.7.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    geta 包装 geta.pl（一站式预测，注入 --cpu）；best_models 包装 bestGeneModels.pl（去可变剪接）；
+    gff3_to_gtf 包装 gff3ToGtf.pl（GFF3→GTF）。'
+  container_ref:
+    dockerfile: native/Dockerfile
+    apptainer_def: native/Apptainer.def
+    install_hint: 官方渠道无 geta 包/镜像 → 自建（debian:bookworm-slim + perl + 官方 tarball v2.7.1）；
+      宿主机一键安装见 native/install.sh（无 conda 包，tarball 解压部署到用户前缀）
+default_implementation: geta_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'geta 子命令：geta（geta.pl 一站式预测）| best_models（bestGeneModels.pl 去可变剪接）|
+      gff3_to_gtf（gff3ToGtf.pl GFF3→GTF）'
+  genome:
+    type: file
+    required: true
+    cli_arg: --genome
+    description: 'geta：基因组 FASTA（--genome）；gff3_to_gtf：genome.fasta（位置参数）'
+  rm_species:
+    type: string
+    required: false
+    cli_arg: --RM_species
+    description: 'geta：RepeatMasker 物种类型（--RM_species，教学示例 fungi）'
+  reads1:
+    type: file
+    required: false
+    cli_arg: '-1'
+    description: 'geta：RNA-seq 正向 reads（-1）'
+  reads2:
+    type: file
+    required: false
+    cli_arg: '-2'
+    description: 'geta：RNA-seq 反向 reads（-2）'
+  protein:
+    type: file
+    required: false
+    cli_arg: --protein
+    description: 'geta：同源蛋白序列文件（--protein）'
+  augustus_species:
+    type: string
+    required: false
+    cli_arg: --use_existed_augustus_species
+    description: 'geta：已训练好的 AUGUSTUS 物种参数（--use_existed_augustus_species，教学示例
+      malassezia_sympodialis）'
+  rm_lib:
+    type: file
+    required: false
+    cli_arg: --RM_lib
+    description: 'geta：重复序列数据库（--RM_lib，教学示例 consensi.fa）'
+  pfam_db:
+    type: file
+    required: false
+    cli_arg: --pfam_db
+    description: 'geta：Pfam 数据库路径（--pfam_db，如 Pfam-AB.hmm）'
+  gene_prefix:
+    type: string
+    required: false
+    cli_arg: --gene_prefix
+    description: 'geta：基因 ID 前缀（--gene_prefix，教学示例 MS01Gene）'
+  gff3:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 'best_models：GETA 输出的 out.gff3；gff3_to_gtf：bestGeneModels.gff3'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（best_models / gff3_to_gtf 脚本写 stdout，驱动捕获落盘）
+  threads:
+    type: integer
+    default: 8
+    description: 线程数（geta 注入 --cpu N；best_models / gff3_to_gtf 单进程，不强加）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层脚本的额外参数（高级用法，慎用）
+outputs:
+  gene_models_gff3:
+    type: file
+    format: gff3
+    description: geta 产出的 out.gff3（及 out.cDNA.fasta / out.CDS.fasta / out.gene.fasta / out.pep.fasta）
+  best_gene_models:
+    type: file
+    format: gff3
+    description: best_models 产出的 bestGeneModels.gff3（去除可变剪接后的最优基因模型）
+  gene_models_gtf:
+    type: file
+    format: gtf
+    description: gff3_to_gtf 产出的 bestGeneModels.gtf
+environment:
+  container_official: 无（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均无 geta 包/镜像；见 README）
+  note: '官方渠道无 geta（2026-09-11 核实 bioconda/quay/depot/brew 全无）→ 自建兜底：native/Dockerfile
+    + native/Apptainer.def（debian:bookworm-slim + apt --no-install-recommends perl + python3/python3-yaml
+    驱动 + 官方 tarball v2.7.1 解压部署 bin/）；宿主机安装见 native/install.sh。'
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    geta: 8
+    best_models: 1
+    gff3_to_gtf: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: geta.pl
+  note: geta 调 geta.pl（Perl 驱动，注入 --cpu，经 PATH 解析；亦可用 perl /path/geta.pl 运行）；
+    best_models 调 bestGeneModels.pl；gff3_to_gtf 调 gff3ToGtf.pl。官方 nf-core / snakemake-wrappers
+    层均 404（2026-09-11 在线核实），未建 nextflow/、snakemake/ 目录，详见 software_versions 与 README。

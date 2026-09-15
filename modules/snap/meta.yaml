@@ -1,0 +1,164 @@
+software: snap
+canonical: snap
+category: gene_prediction
+description: 'SNAP（Semi-HMM-based Nucleic Acid Parser）是基于 generalized HMM 的从头基因预测工具：
+  先用 fathom/forge/hmm-assembler.pl 从已知基因模型训练 HMM 参数（species.hmm），再用 snap 加载模型对新基因组
+  做基因结构预测（输出 ZFF，再转 GFF3）。是 MAKER/AUGUSTUS 等注释流程中的 ab initio 预测器之一。'
+homepage: https://github.com/KorfLab/SNAP
+license: MIT
+software_versions:
+- id: snap_native
+  snap: 2013_11_29
+  build_route: official biocontainer（quay.io/biocontainers/snap / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/snap
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 的 snap 包为 KorfLab 基因预测 SNAP（现有 2013_11_29 与 2017_03_01 两版），本模块 pin 2013_11_29
+    （与教程源码版本一致）；注意与 Ubuntu 的 snap 包管理器区分。宿主机直跑 main.py 时用 conda/mamba 安装。'
+- id: snap_nextflow_nfcore
+  snap: 官方无 nf-core module（modules/nf-core/snap 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/snap/meta.yml
+    返回 404；Nextflow 场景请走 native 或本地自定义。
+- id: snap_snakemake_wrappers
+  snap: 官方无 wrapper（bio/snap 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/snap/wrapper.py
+    返回 404；Snakemake 场景请走 native 或本地自定义。
+implementations:
+- id: snap_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2013_11_29"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 fathom（stats/validate/categorize/export）→ forge → hmm-assembler.pl → snap 预测的训练+预测全链路。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/snap
+    quay_biocontainers: quay.io/biocontainers/snap
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda snap=2013_11_29；容器可用 quay.io/biocontainers/snap:2013_11_29--0
+      镜像（tag 见 README）
+default_implementation: snap_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: snap 子命令：gene_stats|validate|categorize|export|forge|hmm_assembler|predict
+  ann:
+    type: file
+    required: false
+    cli_arg: positional
+    description: ZFF 格式基因注释（fathom 输入，.ann）
+  dna:
+    type: file
+    required: false
+    cli_arg: positional
+    description: FASTA 序列（fathom 输入，.dna）
+  window:
+    type: integer
+    default: 200
+    cli_arg: -categorize/-export
+    description: fathom 分类/导出窗口大小
+  plus:
+    type: boolean
+    default: true
+    cli_arg: -plus
+    description: fathom -export 时导出侧翼序列
+  export_ann:
+    type: file
+    required: false
+    cli_arg: positional
+    description: fathom -export 产出的 .ann（forge 输入）
+  export_dna:
+    type: file
+    required: false
+    cli_arg: positional
+    description: fathom -export 产出的 .dna（forge 输入）
+  name:
+    type: string
+    required: false
+    cli_arg: positional
+    description: hmm-assembler.pl 的物种/模型名
+  params:
+    type: string
+    required: false
+    cli_arg: positional
+    description: forge 产出的 HMM 参数目录（hmm-assembler.pl 输入）
+  hmm:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 训练好的 HMM 模型文件（snap predict 输入，如 species.hmm）
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 待预测基因组 FASTA（snap predict 输入）
+  output:
+    type: file
+    required: false
+    cli_arg: stdout
+    description: hmm_assembler/predict 的 stdout 重定向目标（HMM 模型 / ZFF）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（SNAP 各程序为单线程，接受该参数仅为接口一致，不向二进制透传）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录覆盖
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层程序的额外参数（高级用法，慎用）
+outputs:
+  stats_log:
+    type: file
+    format: txt
+    description: fathom -gene-stats 统计日志
+  validate_log:
+    type: file
+    format: txt
+    description: fathom -validate 校验日志
+  categorized_ann:
+    type: file
+    format: ann
+    description: fathom -categorize 产出的分类注释
+  export_ann:
+    type: file
+    format: ann
+    description: fathom -export 产出的训练注释
+  hmm_params:
+    type: file
+    description: forge 产出的 HMM 参数目录（export.ann/export.dna）
+  hmm_model:
+    type: file
+    format: hmm
+    description: hmm-assembler.pl 产出的 HMM 模型文件（species.hmm）
+  prediction_zff:
+    type: file
+    format: zff
+    description: snap 预测产出的 ZFF 文件（再转 GFF3）
+environment:
+  container_official: quay.io/biocontainers/snap（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda snap → quay.io/biocontainers/snap → depot.galaxyproject.org/singularity/snap），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 snap=2013_11_29。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    gene_stats: 4
+    validate: 4
+    categorize: 4
+    export: 4
+    forge: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: snap

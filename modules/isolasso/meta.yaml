@@ -1,0 +1,108 @@
+software: isolasso
+canonical: isolasso
+category: transcriptome
+description: 'IsoLasso（v2.6.1）是基于 LASSO（L1 正则最小二乘）的 RNA-seq 参考引导转录本组装与表达量
+  估计工具：把比对结果转为 instance 文件后用二次规划求解稀疏的转录本集合。主入口为 bin/runlasso.py
+  （processsam 把 SAM/BAM 转为 .instance -> isolasso 求解输出 .pred -> pred2gtf|sortgtf 转 GTF）。
+  官方安装为**源码编译**（src 目录 make -j 4）；编译依赖 CGAL / GSL / GLPK / GMP（历史 CentOS 6 说明亦
+  提及 boost_thread）。SpliceGrapher 可选流程用其做转录本预测。'
+homepage: http://alumni.cs.ucr.edu/~liw/isolasso.html
+license: 未明确声明（官网未标注 license；源码内部分 CGAL 派生文件含 LGPL-2.1 头）
+software_versions:
+- id: isolasso_native
+  isolasso: '2.6.1'
+  build_route: 自建容器/源码编译（官方渠道 2026-09 逐渠道核实全无）
+  source: http://alumni.cs.ucr.edu/~liw/isolasso-2.6.1.tar.gz
+  note: 'bioconda isolasso API 404、quay.io/biocontainers/isolasso 401（仓库不存在，对照 samtools 200）、
+    depot.galaxyproject.org 无、nf-core 与 snakemake-wrappers 404、brew 两源 404 → 自建兜底
+    （native/Dockerfile + Apptainer.def）或宿主机官方源码编译。编译依赖 CGAL/gsl/glpk/gmp（Debian：
+    libcgal-dev libgsl-dev libglpk-dev libgmp-dev）。'
+- id: isolasso_nextflow_nfcore
+  module_version: （官方无此模块）
+  isolasso: 官方无 nf-core 模块
+  source: —
+  note: 2026-09 核实 nf-core/modules/modules/nf-core/isolasso/meta.yml 返回 404。
+- id: isolasso_snakemake_wrappers
+  isolasso: 官方无 wrapper
+  source: —
+  note: 2026-09 核实 snakemake-wrappers/bio/isolasso/{environment.yaml,wrapper.py} 均返回 404。
+- id: isolasso_nextflow_local
+  isolasso: 未固定（未启用占位）
+- id: isolasso_snakemake_local
+  isolasso: 未固定（未启用占位）
+implementations:
+- id: isolasso_native
+  path: native
+  source_type: custom
+  type: native
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    承载端到端组装（assemble：runlasso.py）与两个原语（processsam / isolasso）。'
+  version: "2.6.1"
+  priority: high
+  container_ref:
+    homepage: http://alumni.cs.ucr.edu/~liw/isolasso.html
+    source: http://alumni.cs.ucr.edu/~liw/isolasso-2.6.1.tar.gz
+    bioconda: （无——api.anaconda.org/package/bioconda/isolasso 404，2026-09 核实）
+    quay_biocontainers: （无——quay API 401 = 仓库不存在，对照 samtools 200，2026-09 核实）
+    depot_galaxyproject: （无——depot.galaxyproject.org 无 isolasso，2026-09 核实）
+    brew: （两源均无——homebrew-core 与 brewsci/bio 均 404，2026-09 核实）
+    install_hint: 无官方 conda/镜像 → 宿主机官方源码编译（bash native/install.sh，需 CGAL/gsl/glpk/gmp）
+      或自建容器（native/Dockerfile + Apptainer.def，debian:bookworm-slim + 编译依赖 + 官方源码 make）。
+default_implementation: isolasso_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: isolasso 子命令：assemble（runlasso.py 端到端）| processsam（SAM/BAM -> instance）| isolasso（instance -> .pred）
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 主输入（assemble：SAM/BAM/instance；processsam：SAM/BAM；isolasso：.instance）
+  output_prefix:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出前缀（runlasso.py 支持 -o/--prefix；isolasso 输出 <prefix>.pred，再转 <prefix>.pred.gtf）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（仅接口兼容；IsoLasso 单线程求解，不注入命令行；make -j 仅影响编译）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 runlasso.py / processsam / isolasso 的额外参数（高级用法，慎用）
+outputs:
+  instance_file:
+    type: file
+    description: processsam 生成的 .instance 文件（IsoLasso 二次规划输入）
+  pred_file:
+    type: file
+    description: isolasso 求解输出的 .pred 文件（转录本与表达量）
+  isoforms_gtf:
+    type: file
+    format: gtf
+    description: runlasso.py 经 pred2gtf|sortgtf 转换得到的组装 GTF（<prefix>.pred.gtf）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）2026-09 全部核实无 isolasso
+    → 保留自建配方（debian:bookworm-slim + 编译依赖 libcgal-dev/libgsl-dev/libglpk-dev/libgmp-dev +
+    官方源码 make，不引入 miniconda）。**编译依赖（务必先装）**：CGAL / GSL / GLPK / GMP（源码 src/Makefile
+    链接 -lglpk -lCGAL -lgsl -lgslcblas -lm）；历史 CentOS 6 文档另提及 boost_thread。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    assemble: 1
+    processsam: 1
+    isolasso: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: runlasso.py

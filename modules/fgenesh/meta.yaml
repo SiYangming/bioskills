@@ -1,0 +1,128 @@
+software: fgenesh
+canonical: fgenesh
+category: gene_prediction
+description: 'FGENESH（Softberry 公司出品）是基于隐马尔可夫模型（HMM）的真核生物从头（ab initio）基因预测
+  程序，支持多种物种预训练参数（真菌/拟南芥/水稻/人/小鼠/果蝇/线虫），准确性在从头预测工具中较高
+  （Solovyev et al., Genome Biol 2006）。⚠️ **许可受限**：FGENESH 为商业软件，学术用户需向 Softberry
+  申请免费学术许可，非授权不可获取/使用/再分发；官网 2026-09 探测不可达（curl 000），版本号未能在线核实。'
+homepage: http://www.softberry.com/berry.phtml?topic=fgenesh&group=programs&subgroup=gfind
+license: 'Commercial / 学术免费许可（需向 Softberry 公司申请；禁止未授权获取、使用与再分发）'
+software_versions:
+- id: fgenesh_native
+  fgenesh: 'Softberry 授权版（未公开版本号；官网 2026-09 探测不可达 000，未能在线核实）'
+  build_route: self-build（官方渠道 bioconda/quay.io/biocontainers/depot.galaxyproject.org 均无 → 自建配方，仅编排用户自备的授权发行包）
+  source: http://www.softberry.com/berry.phtml?topic=fgenesh&group=programs&subgroup=gfind（Softberry 授权交付；官网不可达）
+  note: '2026-09 核实：bioconda fgenesh（api.anaconda.org 返回未找到）、quay.io/biocontainers/fgenesh
+    401（不存在）、depot.galaxyproject.org/singularity/fgenesh 404 —— 官方容器/conda 渠道全无；
+    nf-core 与 snakemake-wrappers 亦 404；brew homebrew-core / brewsci 均无。官网 softberry.com
+    2026-09 探测 HTTP 000（不可达），故无法核实版本号与 sha256。FGENESH 为**许可受限商业软件**：
+    发行包须由用户/机构向 Softberry 申请学术或商业许可后获得，禁止再分发；本模块自建配方
+    （Dockerfile / Apptainer.def）因此设计为**消费用户自备的授权发行包**，不内嵌任何上游 URL/校验和。'
+- id: fgenesh_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/fgenesh 404）
+  fgenesh: —
+  source: —（nf-core/modules 仓库无 fgenesh 目录）
+  note: 2026-09 核实返回 404；Nextflow 场景请以 native/ 为兜底。
+- id: fgenesh_snakemake_wrappers
+  fgenesh: 官方无 wrapper（bio/fgenesh 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 fgenesh）
+  note: 2026-09 核实返回 404；Snakemake 场景请以 native/main.py 为兜底。
+- id: fgenesh_nextflow_local
+  fgenesh: '未启用（未建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: fgenesh_snakemake_local
+  fgenesh: '未启用（未建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: fgenesh_native
+  path: native
+  source_type: custom
+  type: native
+  version: "Softberry-licensed"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。前提：用户已获得
+    Softberry 授权发行包并将其解压加入 PATH（见 README「环境安装」）。覆盖 predict 子命令
+    （fgenesh <genome.fa> -L <params.par> -o <prefix> -gff -cpu N）。⚠️ 许可受限，非授权不可用。'
+  container_ref:
+    install_hint: 官方渠道全无且软件许可受限 → 无公开镜像；自建容器配方见 native/Dockerfile /
+      native/Apptainer.def（消费用户自备的 Softberry 授权发行包）
+default_implementation: fgenesh_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'fgenesh 子命令：predict'
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'predict：待预测基因组序列 FASTA（位置参数）'
+  params:
+    type: file
+    required: false
+    cli_arg: -L
+    description: 'predict：物种参数文件（如 fungi.par；species 可自动解析到 <params-dir>/<species>.par）'
+  species:
+    type: string
+    required: false
+    description: 'predict：物种预设（fungi|arabidopsis|rice|human|mouse|drosophila|worm），自动解析为 -L <params-dir>/<species>.par'
+  params_dir:
+    type: string
+    required: false
+    description: 'predict：参数文件目录（配合 species；如 /opt/fgenesh/params）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 'predict：输出文件前缀（-o <output_prefix>）'
+  gff:
+    type: boolean
+    default: false
+    cli_arg: -gff
+    description: 'predict：以 GFF 格式输出'
+  exon_only:
+    type: boolean
+    default: false
+    cli_arg: -exon
+    description: 'predict：仅输出外显子'
+  gene_only:
+    type: boolean
+    default: false
+    cli_arg: -gene
+    description: 'predict：仅输出基因'
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -cpu
+    description: '线程数（注入 -cpu N；优先级：--threads > per_subcommand_threads > default_cpus）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 fgenesh 的额外参数（高级用法，慎用）
+outputs:
+  gff:
+    type: file
+    format: gff
+    description: 'predict：基因预测结果（-o 输出前缀；-gff 时 GFF 格式）'
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '⚠️ 许可受限（Softberry 商业/学术许可）+ 官方渠道全无（bioconda/quay/depot 均无，2026-09
+    核实），故本模块提供自建兜底配方 native/Dockerfile + native/Apptainer.def；配方**不下载**任何
+    Softberry 资产，改为消费用户自备的授权发行包（fgenesh.tar.gz 放入构建上下文）。官网
+    softberry.com 2026-09 探测不可达（curl 000），版本号未能核实。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    predict: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fgenesh

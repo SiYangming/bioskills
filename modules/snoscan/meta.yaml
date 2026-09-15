@@ -1,0 +1,230 @@
+software: snoscan
+canonical: snoscan
+category: ncRNA_prediction
+description: 'snoScAn（snoscan）是 Lowe 实验室（UCSC）开发的 C/D box 甲基化引导 snoRNA
+  预测程序：给定靶 rRNA 序列与待查序列，搜索同时具备 rRNA 互补区与 C/D box 基序的候选 snoRNA
+  （Lowe & Eddy, Science 1999；Schattner et al., NAR 2005）。程序族含 snoscan 主程序与
+  snoscanA/snoscanH/snoscanY 物种预设二进制，附 sort-snos（Perl）对命中做排序/去重。'
+homepage: https://lowelab.ucsc.edu/snoscan/
+license: GPL-2.0-only
+software_versions:
+- id: snoscan_native
+  snoscan: '1.0（bioconda 最新版；官方源码归档为 0.9.1，见 note）'
+  build_route: official biocontainer（quay.io/biocontainers/snoscan / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/snoscan
+  note: '2026-09 核实：bioconda snoscan=1.0（linux-64/osx-64/osx-arm64；linux-aarch64 仅 0.9.1
+    的 .conda 包）→ quay.io/biocontainers/snoscan:1.0--pl5321h031d066_5 →
+    depot.galaxyproject.org/singularity/snoscan:1.0--pl5321h031d066_5（sif 直拉 200）。
+    注意：bioconda 1.0 的 source URL 指向 lowelab.ucsc.edu/software/snoscan-1.0.tar.gz
+    （2026-09 已 404，recipe 标 skip）；官方现存可下载源码归档为
+    https://trna.ucsc.edu/software/snoscan.tar.gz（snoscan-0.9.1，sha256
+    e6ad2f10354cb0c4c44d46d5f298476dbe250a4817afcc8d1c56d252e08ae19e）。'
+- id: snoscan_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/snoscan 404）
+  snoscan: —
+  source: —（nf-core/modules 仓库无 snoscan 目录）
+  note: 2026-09 核实 github.com/nf-core/modules/tree/master/modules/nf-core/snoscan 返回
+    404；Nextflow 场景请以 native/ 为兜底（conda/容器直跑 snoscan）。
+- id: snoscan_snakemake_wrappers
+  snoscan: 官方无 wrapper（bio/snoscan 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 snoscan）
+  note: 2026-09 核实 github.com/snakemake/snakemake-wrappers/tree/master/bio/snoscan 返回
+    404；Snakemake 场景请以 native/main.py 为兜底。
+- id: snoscan_nextflow_local
+  snoscan: '未启用（未建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: snoscan_snakemake_local
+  snoscan: '未启用（未建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: snoscan_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 search（含 yeast/human/archaea 物种预设）与 sort 两段链路。
+    snoScAn 为单进程程序，无并行参数。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/snoscan
+    quay_biocontainers: quay.io/biocontainers/snoscan
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda snoscan=1.0；容器可用
+      quay.io/biocontainers/snoscan:1.0--pl5321h031d066_5
+default_implementation: snoscan_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'snoscan 子命令：search|yeast|human|archaea|sort'
+  rrna:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'search/yeast/human/archaea：靶 rRNA 序列文件（第 1 位置参数）'
+  query:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'search/yeast/human/archaea：待查序列文件（第 2 位置参数，FASTA）'
+  methylation:
+    type: file
+    required: false
+    cli_arg: -m
+    description: 'search：已知甲基化位点文件（引导 -M 距离过滤）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 'search：候选结果输出文件'
+  save_sno:
+    type: boolean
+    default: false
+    cli_arg: -s
+    description: 'search：同时保存候选 snoRNA 序列与命中信息'
+  min_pairing:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: 'search：snoRNA-rRNA 互补区最小长度（默认 9 bp）'
+  c_box_score:
+    type: float
+    required: false
+    cli_arg: -C
+    description: 'search：C box 打分阈值'
+  d_box_score:
+    type: float
+    required: false
+    cli_arg: -D
+    description: "search：D' box 打分阈值"
+  final_score:
+    type: float
+    required: false
+    cli_arg: -X
+    description: 'search：最终综合打分阈值'
+  comp_score:
+    type: float
+    required: false
+    cli_arg: -c
+    description: 'search：互补区匹配最低分'
+  max_box_dist:
+    type: integer
+    required: false
+    cli_arg: -d
+    description: 'search：C box 与 D box 最大间距'
+  min_dist:
+    type: integer
+    required: false
+    cli_arg: -p
+    description: "search：存在 D' box 时 rRNA 匹配与 D box 的最小间距（默认 10 bp）"
+  init_pos:
+    type: integer
+    required: false
+    cli_arg: -i
+    description: 'search：从序列的指定位置开始扫描'
+  max_meth_dist:
+    type: integer
+    required: false
+    cli_arg: -M
+    description: 'search：到已知甲基化位点的最大距离（默认 0）'
+  verbose:
+    type: boolean
+    default: false
+    cli_arg: -V
+    description: 'search：输出详细信息'
+  hits:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'sort：snoRNA 命中文件（sort-snos 的输入）'
+  sort_by_site:
+    type: boolean
+    default: false
+    cli_arg: -P
+    description: 'sort：按 rRNA 上互补区位置排序'
+  sort_by_hit:
+    type: boolean
+    default: false
+    cli_arg: -H
+    description: 'sort：按命中在待查序列中的位置排序'
+  remove_dups:
+    type: boolean
+    default: false
+    cli_arg: -R
+    description: 'sort：按位置排序并去除低分重复命中（起止均需匹配）'
+  mapped_only:
+    type: boolean
+    default: false
+    cli_arg: -M
+    description: 'sort：仅输出对已知甲基化位点的命中'
+  unmapped_only:
+    type: boolean
+    default: false
+    cli_arg: -U
+    description: 'sort：仅输出未定位位点的命中'
+  top:
+    type: integer
+    required: false
+    cli_arg: -T
+    description: 'sort：每个甲基化位点仅保留前 N 条命中（默认 50）'
+  min_score:
+    type: float
+    required: false
+    cli_arg: -S
+    description: 'sort：要求最低打分'
+  max_score:
+    type: float
+    required: false
+    cli_arg: -m
+    description: 'sort：排除高于该打分的命中'
+  grep_expr:
+    type: string
+    required: false
+    cli_arg: -e
+    description: 'sort：仅提取 header 行含该表达式的 snoRNA'
+  filter_only:
+    type: boolean
+    default: false
+    cli_arg: -F
+    description: 'sort：只过滤不排序，保持原顺序输出'
+  threads:
+    type: integer
+    default: 1
+    description: '线程数（snoscan 单进程，无并行参数；此字段仅记录，不注入命令行）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 snoscan / sort-snos 的额外参数（高级用法，慎用）
+outputs:
+  candidates:
+    type: file
+    description: 'search：候选 C/D box snoRNA 命中（-o 输出文件；未指定 -o 时写 stdout）'
+  sno_sequences:
+    type: file
+    description: 'search -s：候选 snoRNA 序列与命中信息'
+  sorted_hits:
+    type: file
+    description: 'sort：排序/过滤后的 snoRNA 命中结果'
+environment:
+  container_official: quay.io/biocontainers/snoscan（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda snoscan=1.0 → quay / depot sif），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 snoscan（或从 trna.ucsc.edu 源码编译 0.9.1）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    search: 1
+    yeast: 1
+    human: 1
+    archaea: 1
+    sort: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: snoscan

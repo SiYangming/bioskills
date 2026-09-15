@@ -1,0 +1,158 @@
+software: prodigal
+canonical: prodigal
+category: gene_prediction
+description: 'Prodigal（PROkaryotic DYnamic programming Gene-finding ALgorithm，v2.6.3）是原核生物
+  （细菌/古菌）基因预测工具，基于动态规划同时识别开放阅读框并给出起始密码子/翻译起始位点：单基因组模式
+  （single）自训练模型、宏基因组模式（meta）不做训练、anon 模式使用内置模型、train 模式导出训练参数。
+  BUSCO 原核基因组分析阶段即使用 Prodigal。官方同时提供预编译二进制（prodigal.linux /
+  prodigal.osx.10.9.5）与源码（Prodigal-2.6.3.tar.gz）。'
+homepage: https://github.com/hyattpd/Prodigal
+license: GPL-3.0
+software_versions:
+- id: prodigal_native
+  prodigal: '2.6.3'
+  build_route: official biocontainer（quay.io/biocontainers/prodigal / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/prodigal
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    prodigal=2.6.3 由官方镜像/conda 提供；宿主机直跑 main.py 时用 conda/mamba 安装 prodigal=2.6.3。'
+- id: prodigal_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  prodigal: '2.6.3'
+  source: bioconda::prodigal=2.6.3（modules/nf-core/prodigal/environment.yml）
+  note: '官方有 nf-core 子模块 modules/nf-core/prodigal（扁平模块，无子目录），environment.yml pin
+    bioconda::prodigal=2.6.3；本模块不建 nf-core 目录，仅登记。'
+- id: prodigal_snakemake_wrappers
+  prodigal: 官方无 wrapper
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/prodigal/{environment.yaml,wrapper.py}
+    均返回 404（官方无 bio/prodigal wrapper）。
+- id: prodigal_nextflow_local
+  prodigal: 未固定（未启用占位）
+- id: prodigal_snakemake_local
+  prodigal: 未固定（未启用占位）
+implementations:
+- id: prodigal_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.6.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    承载单基因组预测（predict）、宏基因组预测（meta）、匿名预测（anon）与训练（train）子命令。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/prodigal
+    quay_biocontainers: quay.io/biocontainers/prodigal
+    upstream_prebuilt: GitHub release assets（prodigal.linux / prodigal.osx.10.9.5，v2.6.3）
+    upstream_source: Prodigal-2.6.3.tar.gz（源码归档，make 编译）
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda prodigal=2.6.3；容器可用
+      quay.io/biocontainers/prodigal:2.6.3--h577a1d6_11（tag 见 README）
+default_implementation: prodigal_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: prodigal 子命令：predict（单基因组）| meta（宏基因组）| anon（匿名）| train（训练）
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 输入基因组序列（FASTA，核酸）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 基因坐标输出文件（默认格式 gbk，可用 -f 改 gff 等）
+  protein:
+    type: file
+    required: false
+    cli_arg: -a
+    description: 输出蛋白序列（FASTA）
+  nucleotide:
+    type: file
+    required: false
+    cli_arg: -d
+    description: 输出基因核酸序列（FASTA）
+  start_score:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 输出起始位点打分明细文件（用于训练/诊断）
+  format:
+    type: string
+    required: false
+    cli_arg: -f
+    default: gbk
+    description: 坐标输出格式：gbk|gff|sqn|sco|none（默认 gbk）
+  translation_table:
+    type: integer
+    required: false
+    cli_arg: -g
+    default: 11
+    description: 遗传密码子表（11=标准/细菌，4=古菌；默认 11）
+  closed_ends:
+    type: boolean
+    required: false
+    cli_arg: -c
+    default: false
+    description: 将序列视为完整环状/无缺口（禁止基因跨两端）
+  mask_ns:
+    type: boolean
+    required: false
+    cli_arg: -m
+    default: false
+    description: 屏蔽（不预测）含 N 的区域内基因
+  quiet:
+    type: boolean
+    required: false
+    cli_arg: -q
+    default: false
+    description: 静默模式（不打印汇总统计）
+  training_file:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 训练文件（train 模式输出；predict 模式可用其复用训练参数）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（仅接口兼容，Prodigal 为单线程工具，不接受线程参数，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 prodigal 的额外参数（高级用法，慎用）
+outputs:
+  gene_coords:
+    type: file
+    format: gbk
+    description: 基因预测坐标（默认 GenBank；-f 可选 gff/sqn/sco/none）
+  protein_faa:
+    type: file
+    format: fasta
+    description: 预测基因的蛋白序列（-a）
+  nucleotide_fna:
+    type: file
+    format: fasta
+    description: 预测基因的核酸序列（-d）
+  training_file:
+    type: file
+    description: train 模式导出的训练参数文件（-t）
+environment:
+  container_official: quay.io/biocontainers/prodigal（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers → depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 prodigal=2.6.3。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    predict: 1
+    meta: 1
+    anon: 1
+    train: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: prodigal

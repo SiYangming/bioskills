@@ -1,0 +1,154 @@
+software: genemarks
+canonical: genemarks
+category: gene_prediction
+description: 'GeneMarkS（原核生物基因预测）—— 本模块覆盖 GeneMarkS-2（gms2.pl，v1.14_1.25_lic）与
+  旧版 GeneMarkS（gmsn.pl，v4.30）：基于自训练 HMM 的细菌/古菌基因预测，支持细菌/古菌/自动判断、
+  遗传密码子 11/4/25/15，输出 lst/gff/gtf/gff3，可同时导出基因核酸序列（--fnn）与蛋白序列（--faa）。
+  官方提供预编译包（genemark_suite_linux_64 / gms2_linux_64），**需从 Georgia Tech 官网申请密钥**
+  （gms2 -> ~/.gmhmmp2_key；旧版 -> ~/.gm_key）。注意：本模块是原核版 GeneMarkS，区别于第七节
+  GeneMark-ES/ET（真核版）。'
+homepage: http://exon.gatech.edu/GeneMark/
+license: 学术/非营利免费（Georgia Tech GeneMark 学术许可，需在线申请密钥、有效期一年；商业用途需另行授权）
+software_versions:
+- id: genemarks_native
+  genemarks: GeneMarkS-2 1.14_1.25_lic（+ 旧版 GeneMarkS v4.30）
+  build_route: 自建容器/官方预编译包（官方渠道 2026-09 逐渠道核实全无；官方需密钥）
+  source: http://exon.gatech.edu/GeneMark/license_download.cgi
+  note: 'bioconda genemarks/genemark-s/genemark/genemark-es/genemark-et/gms2 均 404、quay.io/biocontainers
+    401（仓库不存在）、depot.galaxyproject.org 无、nf-core 与 snakemake-wrappers 404、brew 两源 404 →
+    自建兜底（native/Dockerfile + Apptainer.def）。官方预编译包（genemark_suite_linux_64 /
+    gms2_linux_64.gz）**下载需先在线申请密钥**，官方下载 URL 由 license_download.cgi 表单动态生成
+    （教学文档中 topaz.gatech.edu 的临时直链已失效 404），故容器/脚本以「用户提供已授权压缩包」方式安装。'
+- id: genemarks_nextflow_nfcore
+  module_version: （官方无此模块）
+  genemarks: 官方无 nf-core 模块
+  source: —
+  note: 2026-09 核实 nf-core/modules/modules/nf-core/genemarks/meta.yml 返回 404；BRAKER 相关流程请以
+    上游 BRAKER 说明为准（本模块不登记不存在路径）。
+- id: genemarks_snakemake_wrappers
+  genemarks: 官方无 wrapper
+  source: —
+  note: 2026-09 核实 snakemake-wrappers/bio/genemarks/{environment.yaml,wrapper.py} 均返回 404。
+- id: genemarks_nextflow_local
+  genemarks: 未固定（未启用占位）
+- id: genemarks_snakemake_local
+  genemarks: 未固定（未启用占位）
+implementations:
+- id: genemarks_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.14_1.25_lic"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    承载 GeneMarkS-2（gms2）与旧版 GeneMarkS（gms）两个子命令。'
+  container_ref:
+    homepage: http://exon.gatech.edu/GeneMark/
+    download: http://exon.gatech.edu/GeneMark/license_download.cgi（需申请密钥后获取动态下载链接）
+    bioconda: （无——api.anaconda.org/package/bioconda/genemarks 及 genemark-s/genemark/gms2 均 404，2026-09 核实）
+    quay_biocontainers: （无——quay API 401 = 仓库不存在，2026-09 核实）
+    depot_galaxyproject: （无——depot.galaxyproject.org 无 genemark(s)，2026-09 核实）
+    brew: （两源均无——homebrew-core 与 brewsci/bio 均 404，2026-09 核实）
+    install_hint: 无官方 conda/镜像 → 自建容器（native/Dockerfile + Apptainer.def）或宿主机安装官方预编译包；
+      二者均需先在线申请密钥。**密钥申请**：https://exon.gatech.edu/GeneMark/license_download.cgi
+      （学术非营利免费、一年有效期；商业另行授权）。
+default_implementation: genemarks_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: genemarks 子命令：gms2（GeneMarkS-2）| gms（旧版 GeneMarkS）
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入基因组 FASTA（原核，建议 > 50 kb）；gms2 由 --seq 指定，gms 为位置参数
+  genome_type:
+    type: string
+    required: false
+    cli_arg: --genome-type
+    default: auto
+    description: 基因组类型：archaea|bacteria|auto（gms2，默认 auto）
+  gcode:
+    type: integer
+    required: false
+    cli_arg: --gcode
+    description: 遗传密码子表（gms2，支持 11/4/25/15；默认 auto）
+  format:
+    type: string
+    required: false
+    cli_arg: --format
+    description: 输出坐标格式（gms2：lst|gff|gtf|gff3；gms：LST|GFF）
+  output:
+    type: file
+    required: false
+    cli_arg: --output
+    description: 输出坐标文件（gms2 默认 gms2.lst；gms 由脚本默认命名）
+  fnn:
+    type: file
+    required: false
+    cli_arg: --fnn
+    description: 输出预测基因的核酸序列（FASTA）
+  faa:
+    type: file
+    required: false
+    cli_arg: --faa
+    description: 输出预测基因的蛋白序列（FASTA）
+  ext:
+    type: file
+    required: false
+    cli_arg: --ext
+    description: 外部证据文件（GFF，GeneMarkS-2 PLUS 模式）
+  species:
+    type: string
+    required: false
+    cli_arg: --species
+    description: 模型文件中的物种名（gms2）
+  pdf:
+    type: boolean
+    required: false
+    cli_arg: --pdf
+    default: false
+    description: 输出可视化 PDF（旧版 gms）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（仅接口兼容；GeneMarkS/GeneMarkS-2 未提供统一线程参数，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 gms2.pl / gmsn.pl 的额外参数（高级用法，慎用）
+outputs:
+  gene_coords:
+    type: file
+    description: 基因预测坐标（lst/gff/gtf/gff3，依 --format）
+  protein_faa:
+    type: file
+    format: fasta
+    description: 预测基因蛋白序列（--faa）
+  nucleotide_fnn:
+    type: file
+    format: fasta
+    description: 预测基因核酸序列（--fnn）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）2026-09 全部核实无
+    genemarks → 保留自建配方（debian:bookworm-slim + perl + 官方预编译包，不引入 miniconda）。
+    **密钥申请（务必）**：官方预编译包需先在 https://exon.gatech.edu/GeneMark/license_download.cgi
+    在线同意学术许可并获取动态下载链接；GeneMarkS-2 用 ~/.gmhmmp2_key、旧版 GeneMarkS 用 ~/.gm_key。
+    自建镜像以「构建时提供已授权压缩包」（--build-arg 或 COPY）方式安装；运行时挂载密钥。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    gms2: 1
+    gms: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gms2.pl

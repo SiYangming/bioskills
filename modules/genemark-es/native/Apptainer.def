@@ -1,0 +1,92 @@
+# =============================================================================
+# genemark-es native Apptainer/Singularity 定义（自建兜底路线）
+# ---------------------------------------------------------------------------
+# 路线：与 Dockerfile 一致 —— GeneMark-ES/ET 官方渠道全无（2026-09-11 核实
+#   bioconda 404 / quay 未找到 / depot 无 genemark*），官方许可禁止再分发，
+#   故采用 debian:bookworm-slim + apt 最小化 + 用户自备官方 gmes 包（%files 注入）。
+#
+# 构建前准备：把官网同意许可后下载的 gmes_linux_64_*.tar.gz 放到本目录（默认名
+#   gmes_linux_64_4.tar.gz），必要时改 %files 行文件名。
+#
+# 构建：apptainer build genemark-es.sif Apptainer.def
+# 运行：apptainer run -B $PWD:/data -B ~/.gm_key:/opt/gmkey -H /data genemark-es.sif \
+#           es /data/genome.fasta --fungus --threads 8
+# 说明：native/main.py 驱动在宿主机运行，不随镜像分发（镜像内为 gmes 脚本入口）。
+# 密钥：运行需 ~/.gm_key（官网申请），通过 -B 挂载后由 GENEMARK_PATH 目录或 HOME 读取。
+# =============================================================================
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    gmes_linux_64_4.tar.gz /tmp/gmes.tar.gz
+
+%labels
+    Maintainer bioskills
+    Software genemark-es
+    Version 4.72_lic
+    PkgRoute apt(minimal) + user-provided official gmes tarball (license-gated; no official bioconda/quay/depot)
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+
+    set -eux
+
+    # 1) apt 最小化：perl + GeneMark 所需 CPAN 模块 + procps
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        libyaml-perl \
+        libhash-merge-perl \
+        liblogger-simple-perl \
+        libparallel-forkmanager-perl \
+        procps \
+        ca-certificates
+
+    # 2) 官方 gmes 包解压到 /opt/gmes 并软链入口脚本
+    mkdir -p /opt/gmes
+    tar -xzf /tmp/gmes.tar.gz -C /opt/gmes --strip-components=1
+    test -f /opt/gmes/gmes_petap.pl
+    ln -sf /opt/gmes/gmes_petap.pl /usr/local/bin/gmes_petap.pl
+    ln -sf /opt/gmes/hints2genemarkETintron.pl /usr/local/bin/hints2genemarkETintron.pl
+    rm -f /tmp/gmes.tar.gz
+
+    # 3) 清理四连
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export GENEMARK_PATH=/opt/gmes
+    export PATH=/opt/gmes:$PATH
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+
+%runscript
+    exec gmes_petap.pl "$@"
+
+%test
+    # 非交互自检：入口脚本存在且可执行（gmes_petap.pl 无 --version）
+    set -eux
+    command -v gmes_petap.pl
+    command -v hints2genemarkETintron.pl
+    test -f /opt/gmes/gmes_petap.pl
+
+%help
+    genemark-es native Apptainer 镜像（bookworm-slim + apt 最小化 + 用户自备官方 gmes 包）。
+    GeneMark-ES/ET（gmes_petap）：es（从头预测）/ et（结合 RNA-seq hints）/ hints2genemarkETintron.pl。
+    调用方式：apptainer run genemark-es.sif <gmes 选项>，如 --sequence genome.fasta --ES --fungus --cores 8
+    密钥：运行需 ~/.gm_key（官网申请）；建议挂载：-B ~/.gm_key:/opt/gmkey -H /data。
+    注：官方许可禁止再分发软件与密钥，构建前请自行在官网同意许可后下载 gmes 包。

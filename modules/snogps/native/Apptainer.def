@@ -1,0 +1,59 @@
+# =============================================================================
+# Apptainer.def — snogps（自建兜底配方）
+#
+# 归属   ：bioskills modules/snogps/native/Apptainer.def
+# 理由   ：官方渠道全无（bioconda/quay/depot 均无 snoGPS，2026-09 核实）→ 自建
+# 路线   ：Bootstrap docker + debian:bookworm-slim，%post 内 apt 最小化 +
+#          官方源码编译（https://trna.ucsc.edu/software/snoGPS-0.2.tar.gz，sha256 内嵌校验）
+# 运行   ：apptainer run snogps.sif <sequence.fa> <descriptor>
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+# 无外部文件（源码在 %post 内下载）
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        build-essential ca-certificates curl perl procps
+    curl -fsSL -o /tmp/snogps.tar.gz https://trna.ucsc.edu/software/snoGPS-0.2.tar.gz
+    echo "184abd9ca6ce24b34c65ddb24ee445c8d5ecfef1a1315d75055b80a284845027  /tmp/snogps.tar.gz" | sha256sum -c -
+    mkdir -p /opt/snogps
+    tar -xzf /tmp/snogps.tar.gz -C /opt/snogps --strip-components=1
+    make -C /opt/snogps/src clean >/dev/null 2>&1 || true
+    make -C /opt/snogps/src BINDIR=/usr/local/bin
+    mkdir -p /opt/snogps/share
+    for d in scripts data desc targs scoretables perlModules; do
+        if [ -d "/opt/snogps/$d" ]; then cp -R "/opt/snogps/$d" /opt/snogps/share/; fi
+    done
+    if [ -d /opt/snogps/share/scripts ]; then
+        for sc in /opt/snogps/share/scripts/*.pl; do
+            [ -f "$sc" ] && install -m 0755 "$sc" /usr/local/bin/
+        done
+    fi
+    # 清理四连
+    apt-get purge -y --auto-remove build-essential curl
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+%environment
+    export TMPDIR=/tmp
+    export MYPERLMODULEDIR=/opt/snogps/share/perlModules/
+    export PATH=/usr/local/bin:$PATH
+
+%runscript
+    exec /usr/local/bin/snoGPS "$@"
+
+%test
+    snoGPS -h 2>&1 | grep -qi usage
+    echo "snogps 0.2 (snoGPS source build) OK"
+
+%labels
+    org.bioskills.software snogps
+    org.bioskills.impl snogps_native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.snogps_version 0.2
+    org.bioskills.pkg_route apt(build-essential) + 官方源码编译(trna.ucsc.edu/snoGPS-0.2.tar.gz)

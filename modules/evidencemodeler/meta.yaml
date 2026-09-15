@@ -1,0 +1,167 @@
+software: evidencemodeler
+canonical: evidencemodeler
+category: gene_prediction
+description: 'EVidenceModeler (EVM) 将多个从头预测（AUGUSTUS/GeneMark/SNAP 等）与蛋白/转录本比对证据按权重整合为一致的共识基因结构，
+  是 MAKER/BRAKER 之外最常用的基因预测结果整合器，支持分区 + ParaFly 并行与结果重组、GFF3 转换。
+
+  '
+homepage: https://github.com/EVidenceModeler/EVidenceModeler
+license: BSD-3-Clause
+software_versions:
+- id: evidencemodeler_native
+  evidencemodeler: '1.1.1'
+  build_route: official biocontainer（quay.io/biocontainers/evidencemodeler / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/evidencemodeler
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。bioconda
+    同时登记 1.1.1（tag v1.1.1--0 / 1.1.1--hdfd78af_3）与最新 2.1.0（tag 2.1.0--h9948957_5）；本模块
+    按教学文档登记 1.1.1，conda/mamba 直装则默认取最新 2.1.0（主脚本名从 evidence_modeler.pl 变为 EVidenceModeler）。'
+- id: evidencemodeler_nextflow_nfcore
+  evidencemodeler: 官方无（modules/nf-core/evidencemodeler 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/evidencemodeler
+    返回 404；Nextflow 场景请走 native 或自建 nextflow/local。
+- id: evidencemodeler_snakemake_wrappers
+  evidencemodeler: 官方无（bio/evidencemodeler 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/evidencemodeler
+    返回 404；Snakemake 场景请走 native 或自建 snakemake/local。
+implementations:
+- id: evidencemodeler_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖
+    partition / write_commands / parallel(ParaFly) / recombine / convert_gff3 / weights / evm 全链路，自动注入并行线程。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/evidencemodeler
+    quay_biocontainers: quay.io/biocontainers/evidencemodeler
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda evidencemodeler；容器可用 quay.io/biocontainers/evidencemodeler
+      镜像（tag 见 README）
+default_implementation: evidencemodeler_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: evidencemodeler 子命令：partition|write_commands|parallel|recombine|convert_gff3|weights|evm
+  genome:
+    type: file
+    required: false
+    cli_arg: --genome
+    description: 基因组 FASTA（partition/write_commands/convert_gff3/evm 使用）
+  gene_predictions:
+    type: file
+    required: false
+    cli_arg: --gene_predictions
+    description: 从头预测结果 GFF3（AUGUSTUS/SNAP/GeneMark 等）
+  protein_alignments:
+    type: file
+    required: false
+    cli_arg: --protein_alignments
+    description: 蛋白比对证据 GFF3（GeneWise 等）
+  transcript_alignments:
+    type: file
+    required: false
+    cli_arg: --transcript_alignments
+    description: 转录本比对证据 GFF3（PASA 等）
+  repeats:
+    type: file
+    required: false
+    cli_arg: --repeats
+    description: 重复序列注释 GFF3
+  weights:
+    type: file
+    required: false
+    cli_arg: --weights
+    description: 证据权重文件（write_commands/evm 使用；可用 weights 子命令生成）
+  partitions:
+    type: file
+    required: false
+    cli_arg: --partitions
+    description: 分区列表文件（partition 输出；write_commands/recombine/convert_gff3 输入）
+  partition_listing:
+    type: file
+    required: false
+    cli_arg: --partition_listing
+    description: partition 输出的分区列表文件路径
+  commands_file:
+    type: file
+    required: false
+    cli_arg: -c
+    description: ParaFly 待执行命令列表（write_commands 输出）
+  output_file_name:
+    type: string
+    required: false
+    cli_arg: --output_file_name
+    description: EVM 分区输出基名（默认 evm.out）
+  segment_size:
+    type: integer
+    required: false
+    cli_arg: --segmentSize
+    description: 分区大小 bp（partition；默认 500000）
+  overlap_size:
+    type: integer
+    required: false
+    cli_arg: --overlapSize
+    description: 分区重叠 bp（partition；默认 10000）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（write_commands 命令列表 / weights 权重文件 / evm 预测；默认写 stdout）
+  ab_initio_progs:
+    type: string
+    required: false
+    cli_arg: -A
+    description: 从头预测程序名列表（weights；逗号分隔，如 AUGUSTUS）
+  protein_progs:
+    type: string
+    required: false
+    cli_arg: -P
+    description: 蛋白证据来源程序名列表（weights；逗号分隔，如 GeneWise）
+  transcript_progs:
+    type: string
+    required: false
+    cli_arg: -T
+    description: 转录本证据来源程序名列表（weights；逗号分隔，如 pasa）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -CPU
+    description: 并行线程数（parallel 子命令 ParaFly -CPU；自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给上游脚本的额外参数（高级用法，慎用）
+outputs:
+  partitions_list:
+    type: file
+    description: partition 输出的分区列表文件
+  evm_commands_list:
+    type: file
+    description: write_commands 输出的 ParaFly 命令列表
+  evm_gff3:
+    type: file
+    format: gff3
+    description: convert_gff3 / evm 输出的 EVM 共识基因结构 GFF3
+  weights_file:
+    type: file
+    description: weights 输出的证据权重文件
+environment:
+  container_official: quay.io/biocontainers/evidencemodeler（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay→depot），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 evidencemodeler。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    parallel: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: evidence_modeler.pl

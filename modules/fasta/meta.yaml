@@ -1,0 +1,121 @@
+software: fasta
+canonical: fasta
+category: alignment_utils
+description: 'FASTA（上游仓库/程序名为 fasta36，FASTA 序列比对工具包）是经典的蛋白/核酸序列相似性搜索与比对
+  程序集合：fasta36 做蛋白-蛋白 / 核酸-核酸搜索，ssearch36 做 Smith-Waterman 全动态规划搜索，
+  fastx36/fasty36 做翻译后核酸搜索，ggsearch36/glsearch36 做全/半全局搜索，lalign36 做局部比对。'
+homepage: https://github.com/wrpearson/fasta36
+license: Apache-2.0
+software_versions:
+- id: fasta_native
+  fasta: 36.3.8i
+  build_route: official biocontainer（quay.io/biocontainers/fasta3 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/fasta3
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
+    ⚠️ 命名核对：模块名/软件名为 fasta，上游仓库与主程序名为 fasta36；bioconda 的既有包名为 fasta3
+    （fasta36 / fasta 在 bioconda 均 404），提供 FASTA 软件包本体（36.3.8 / 36.3.8h / 36.3.8i）；
+    教程（10.md 1.3）源码用的是 fasta-36.3.8g，但 g 版在 bioconda 无对应构建、旧官网
+    faculty.virginia.edu 分发页已失效，故本模块 pin 可安装的 36.3.8i（官方最新）。'
+- id: fasta_nextflow_nfcore
+  fasta: 官方无 nf-core module（modules/nf-core/fasta、modules/nf-core/fasta36 均 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/fasta/meta.yml
+    与 .../modules/nf-core/fasta36/meta.yml 均返回 404。
+- id: fasta_snakemake_wrappers
+  fasta: 官方无 wrapper（bio/fasta、bio/fasta36、bio/fasta3 均 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/fasta/wrapper.py、
+    .../bio/fasta36/wrapper.py 与 .../bio/fasta3/wrapper.py 均返回 404；Snakemake 场景请走 native 或本地自定义。
+implementations:
+- id: fasta_native
+  path: native
+  source_type: custom
+  type: native
+  version: "36.3.8i"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 fasta36/ssearch36/fastx36/fasty36/ggsearch36/glsearch36/lalign36 等核心搜索程序。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/fasta3
+    quay_biocontainers: quay.io/biocontainers/fasta3
+    upstream_prebuilt: https://github.com/wrpearson/fasta36/releases/download/v36.3.8i_14-Nov-2020/fasta-36.3.8i-linux64.tar.gz
+    upstream_source: https://github.com/wrpearson/fasta36/archive/refs/tags/v36.3.8i_14-Nov-2020.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda fasta3=36.3.8i；容器可用
+      quay.io/biocontainers/fasta3:36.3.8i--h7b50bb2_3 镜像（tag 见 README）
+default_implementation: fasta_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: fasta 模块子命令：search|ssearch|fastx|fasty|ggsearch|glsearch|lalign
+  query:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 查询序列文件（FASTA）
+  library:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 目标库序列文件（FASTA），可由 fasta36 自动建索引
+  output:
+    type: file
+    required: false
+    cli_arg: stdout
+    description: 输出路径（程序写 stdout，重定向到该文件）
+  output_format:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: 输出格式（如 -m 8 制表、-m 10 默认比对）
+  evalue:
+    type: string
+    required: false
+    cli_arg: -E
+    description: E-value 阈值（如 1e-5）
+  score_matrix:
+    type: string
+    required: false
+    cli_arg: -s
+    description: 打分矩阵（如 BLOSUM62 / BLOSUM50）
+  top_scores:
+    type: integer
+    required: false
+    cli_arg: -b
+    description: 每条查询显示的 top 命中数
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（FASTA 各程序为单线程，接受该参数仅为接口一致，不向二进制透传）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录覆盖（FASTA 建索引时使用）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层程序的额外参数（高级用法，慎用）
+outputs:
+  alignment:
+    type: file
+    description: 搜索结果（依 -m 定格式：默认人类可读比对，-m 8 为制表格式）
+environment:
+  container_official: quay.io/biocontainers/fasta3（bioconda 官方镜像 fasta3 提供 FASTA；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda fasta3 → quay.io/biocontainers/fasta3 → depot.galaxyproject.org/singularity/fasta3），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 fasta3=36.3.8i（提供 fasta36/ssearch36/... 二进制）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    search: 4
+    ssearch: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fasta36

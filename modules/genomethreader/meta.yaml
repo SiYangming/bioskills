@@ -1,0 +1,139 @@
+software: genomethreader
+canonical: genomethreader
+category: gene_prediction
+description: 'GenomeThreader（gth）是基于相似性的基因结构预测工具：以基因组序列为模板，用
+  cDNA/EST（-cdna）和/或蛋白（-protein）序列计算剪接比对（spliced alignment），得到基因结构
+  预测；gthconsensus 合并中间结果，gthgetseq 从中间结果提取序列。BRAKER2 使用 gth 进行同源蛋白比对。
+
+  '
+homepage: http://genomethreader.org/
+license: ISC
+software_versions:
+- id: genomethreader_native
+  genomethreader: '1.7.3'
+  build_route: official prebuilt binary（genomethreader.org，Linux_x86_64-64bit）+ official biocontainer（1.7.1）
+  source: https://genomethreader.org/distributions/gth-1.7.3-Linux_x86_64-64bit.tar.gz
+  note: '官方同时提供两条路线：预编译二进制 gth-1.7.3-Linux_x86_64-64bit.tar.gz（仅 Linux x86_64，
+    sha256 cdcf7f0c642c14c9dc6b9270e3172de96696f42c25185beabc9a1f68c9c41a57）与源码（GitHub
+    genometools/genomethreader）；bioconda/quay/depot 官方镜像 pin 的是 1.7.1（tag 1.7.1--h503566f_7），
+    与官方二进制 1.7.3 相差一个 patch。宿主机直跑 main.py 时优先用 conda/mamba 安装或官方预编译二进制。'
+- id: genomethreader_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/genomethreader 404）
+  genomethreader: —
+  source: —（nf-core/modules 仓库 modules/nf-core/genomethreader 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/genomethreader
+    返回 404；Nextflow 场景请使用 genomethreader_nextflow_local（未启用）。
+- id: genomethreader_snakemake_wrappers
+  genomethreader: 官方无 wrapper（bio/genomethreader 404）
+  source: —（snakemake-wrappers 仓库 bio/genomethreader 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/genomethreader
+    返回 404；Snakemake 场景请使用 genomethreader_snakemake_local（未启用）。
+implementations:
+- id: genomethreader_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.7.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 align（gth 剪接比对）/ consensus（gthconsensus 合并）/ getseq（gthgetseq 取序列）三段链路。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/genomethreader
+    quay_biocontainers: quay.io/biocontainers/genomethreader:1.7.1--h503566f_7
+    upstream_prebuilt: https://genomethreader.org/distributions/gth-1.7.3-Linux_x86_64-64bit.tar.gz
+    install_hint: 宿主机 mamba create -n <env> -c conda-forge -c bioconda genomethreader=1.7.1；或官方预编译
+      二进制 1.7.3（Linux x86_64）解压到 ~/software/gth-1.7.3-Linux_x86_64-64bit 并写 PATH；容器用
+      quay.io/biocontainers/genomethreader:1.7.1--h503566f_7
+default_implementation: genomethreader_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: genomethreader 子命令：align|consensus|getseq
+  genomic:
+    type: file
+    required: false
+    cli_arg: -genomic
+    description: 基因组序列 FASTA（align 必填）
+  cdna:
+    type: file
+    required: false
+    cli_arg: -cdna
+    description: cDNA/EST 序列 FASTA（align；与 protein 至少提供一个）
+  protein:
+    type: file
+    required: false
+    cli_arg: -protein
+    description: 蛋白序列 FASTA（align；与 cdna 至少提供一个）
+  species:
+    type: string
+    required: false
+    cli_arg: -species
+    description: '剪接位点模型物种：human/mouse/rat/chicken/drosophila/nematode/fission_yeast/aspergillus/arabidopsis/maize/rice/medicago'
+  intermediate:
+    type: boolean
+    default: true
+    cli_arg: -intermediate
+    description: 输出中间结果（align；便于分片并行后 gthconsensus 合并）
+  gff3out:
+    type: boolean
+    default: true
+    cli_arg: -gff3out
+    description: 以 GFF3 格式输出（align/consensus）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（align/consensus；getseq 写 stdout，可由 -o 落盘）
+  get_mode:
+    type: string
+    required: false
+    cli_arg: -getgenomic|-getprotein|-getcdna
+    description: getseq 取序列类型：genomic|protein|cdna
+  inputs:
+    type: map
+    required: false
+    cli_arg: positional
+    description: consensus/getseq 的中间结果文件列表（GFF3/XML）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 gth/gthconsensus/gthgetseq 的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（gth 为单进程程序，无原生线程参数；本项仅为技能接口统一保留）
+outputs:
+  spliced_alignments:
+    type: file
+    format: [gff3, gff]
+    description: align 输出的剪接比对/基因结构预测（GFF3）
+  consensus_alignments:
+    type: file
+    format: [gff3, gff]
+    description: consensus 合并后的 consensus 剪接比对（GFF3）
+  sequences:
+    type: file
+    format: fasta
+    description: getseq 提取的 FASTA 序列（写入 stdout / -o 文件）
+environment:
+  container_official: quay.io/biocontainers/genomethreader（bioconda 官方镜像；tag 1.7.1--h503566f_7，见 README「容器与 Conda 链接」）
+  note: 官方镜像（bioconda/quay/depot，pin 1.7.1）已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方另有预编译二进制 1.7.3（Linux x86_64）；宿主机直跑 main.py 时用 conda/mamba 安装或解压官方二进制。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    align: 1
+    consensus: 1
+    getseq: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gth

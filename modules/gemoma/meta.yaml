@@ -1,0 +1,124 @@
+software: gemoma
+canonical: gemoma
+category: gene_prediction
+description: 'GeMoMa（Gene Model Mapper）是基于同源基因结构的基因预测工具：用参考物种的注释，
+  通过氨基酸序列与内含子位置保守性把基因结构映射到目标基因组，可选整合 RNA-seq 证据。官方 CLI
+  以模块方式提供：Extractor（提取参考 CDS/蛋白）、GeMoMaPipeline（完整预测流程）、GAF（注释过滤/处理）、
+  AnnotationEvidence（证据整合）、CodingQuarry（真菌专用）。需要 Java 1.8+。
+
+  '
+homepage: http://www.jstacs.de/index.php/GeMoMa
+license: GPL-3.0
+software_versions:
+- id: gemoma_native
+  gemoma: '1.9'
+  build_route: official prebuilt（jstacs.de Java zip）+ official biocontainer（quay.io/biocontainers/gemoma 1.9）
+  source: https://www.jstacs.de/downloads/GeMoMa-1.9.zip
+  note: '官方同时提供两条路线：官方 Java 包 GeMoMa-1.9.zip（jar + 运行脚本，sha256
+    45765e9eee37c21b4e84f86b15cd83a9e3f44317d78f7b121ee7fcd74ad345d8）与 bioconda/quay/depot
+    官方镜像（gemoma=1.9，tag 1.9--hdfd78af_0）。Java 工具，运行期透传 JAVA_OPTS（-Xmx）。'
+- id: gemoma_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/gemoma 404）
+  gemoma: —
+  source: —（nf-core/modules 仓库 modules/nf-core/gemoma 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/gemoma
+    返回 404；Nextflow 场景请使用 gemoma_nextflow_local（未启用）。
+- id: gemoma_snakemake_wrappers
+  gemoma: 官方无 wrapper（bio/gemoma 404）
+  source: —（snakemake-wrappers 仓库 bio/gemoma 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gemoma
+    返回 404；Snakemake 场景请使用 gemoma_snakemake_local（未启用）。
+implementations:
+- id: gemoma_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.9"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 Extractor / GeMoMaPipeline / GAF 等 CLI 模块，自动注入线程与 JAVA_OPTS。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/gemoma
+    quay_biocontainers: quay.io/biocontainers/gemoma:1.9--hdfd78af_0
+    upstream_prebuilt: https://www.jstacs.de/downloads/GeMoMa-1.9.zip
+    install_hint: 宿主机 mamba create -n <env> -c conda-forge -c bioconda gemoma=1.9（提供 GeMoMa 包装脚本）；
+      或下载官方 GeMoMa-1.9.zip 解压后设 GEMOMA_HOME；容器用 quay.io/biocontainers/gemoma:1.9--hdfd78af_0
+default_implementation: gemoma_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gemoma 模块：extractor|pipeline|gaf|annotation_evidence|coding_quarry
+  target:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 目标基因组 FASTA（pipeline 必填）
+  annotation:
+    type: file
+    required: false
+    cli_arg: -a
+    description: 参考注释 GFF（extractor/pipeline）
+  genome:
+    type: file
+    required: false
+    cli_arg: -g
+    description: 参考基因组 FASTA（extractor/pipeline）
+  proteins:
+    type: file
+    required: false
+    cli_arg: -p
+    description: 参考蛋白序列 FASTA（extractor/pipeline）
+  cds:
+    type: file
+    required: false
+    cli_arg: -c
+    description: 参考 CDS 序列 FASTA（extractor/pipeline）
+  input:
+    type: file
+    required: false
+    cli_arg: -g
+    description: gaf 的输入预测注释 GFF（-g）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出目录（pipeline）/ 输出文件（gaf）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（pipeline 自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 GeMoMa CLI 模块的额外参数（如官方 key=value 语法）
+outputs:
+  extracted_sequences:
+    type: file
+    format: fasta
+    description: Extractor 输出的参考蛋白 / CDS 序列
+  predicted_annotation:
+    type: file
+    format: [gff3, gff]
+    description: GeMoMaPipeline / GAF 输出的基因结构预测（GFF/GFF3）
+environment:
+  container_official: quay.io/biocontainers/gemoma（bioconda 官方镜像；tag 1.9--hdfd78af_0，见 README「容器与 Conda 链接」）
+  note: 官方镜像（bioconda/quay/depot）已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方另有 Java 包 GeMoMa-1.9.zip；宿主机直跑 main.py 时用 conda/mamba 安装或解压官方 zip 设 GEMOMA_HOME。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx6g'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    pipeline: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: GeMoMa

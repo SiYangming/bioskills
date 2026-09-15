@@ -1,0 +1,213 @@
+software: cufflinks
+canonical: cufflinks
+category: transcriptome
+description: 'Cufflinks v2.2.1（Tuxedo 套件，TopHat-Cufflinks 流程）是经典的转录组组装与差异表达分析工具集，
+  含 cufflinks（转录本组装）、cuffmerge（多样本合并）、cuffcompare（与参考比较）、cuffdiff（差异表达）、
+  cuffquant/cuffnorm（定量与归一化）。**已淘汰（deprecated，2026-09 登记）**：官方最后稳定版 2.2.1
+  （2014 年后停更），功能上被 StringTie（组装）+ DESeq2/edgeR（差异表达）取代；docs/08.md 第八节与
+  docs/09.md 3.1 均把它标注为【淘汰技术】。本模块只做「录入 + 命令构造」，不推荐新项目使用。'
+homepage: http://cole-trapnell-lab.github.io/cufflinks/
+license: BSL-1.0
+deprecated: true
+deprecated_note: '上游停更：cufflinks 2.2.1 为最后稳定版（官方 release 约 2014），项目归档、不再维护。
+  docs/08.md「8. Cufflinks 转录本组装（淘汰技术）」与 docs/09.md「3.1 Cuffdiff（淘汰技术）」均明确
+  建议改用 StringTie / DESeq2 / edgeR。2026-09 保留渠道：bioconda cufflinks=2.2.1（历史包，依赖 python）
+  → quay.io/biocontainers/cufflinks:2.2.1--py27_1（自动构建历史镜像）；官方预编译二进制仍在
+  cole-trapnell-lab.github.io 下载页（Linux/OSX x86_64）。软件 deprecated → 不产出自建
+  Dockerfile/Apptainer.def；官方容器亦为历史镜像，仅作复现用。'
+software_versions:
+- id: cufflinks_native
+  cufflinks: '2.2.1（最后稳定版，官方 release 约 2014）'
+  build_route: 历史遗留渠道：bioconda cufflinks=2.2.1 → quay.io/biocontainers/cufflinks:2.2.1--py27_1 /
+    depot.galaxyproject.org sif（自动构建历史镜像，仅复现用）；官方预编译二进制见官网下载页。
+    软件 deprecated → 不产出自建 Dockerfile/Apptainer.def
+  source: http://cole-trapnell-lab.github.io/cufflinks/
+  note: '2026-09 核实：bioconda cufflinks=2.2.1（license=Boost Software License）→ quay
+    2.2.1--py27_1 / depot sif 直拉 200；官方预编译二进制
+    cufflinks-2.2.1.Linux_x86_64.tar.gz（sha256 d891c58e18d9256004a337f256d71393002fe69734d28b95dda2e6d0374d7e23）
+    与 cufflinks-2.2.1.OSX_x86_64.tar.gz（sha256 98a78cdf9e38783f9809d74faadc70654977d5f6120e262ef623a04840da00c6）
+    均 200。'
+- id: cufflinks_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/cufflinks 404）
+  cufflinks: —
+  source: —（nf-core/modules 仓库无 cufflinks 目录）
+  note: 2026-09 核实返回 404；Nextflow 场景请以 native/（历史复现）为兜底。
+- id: cufflinks_snakemake_wrappers
+  cufflinks: 官方无 wrapper（bio/cufflinks 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 cufflinks）
+  note: 2026-09 核实返回 404；Snakemake 场景请以 native/main.py 为兜底。
+- id: cufflinks_nextflow_local
+  cufflinks: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: cufflinks_snakemake_local
+  cufflinks: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: cufflinks_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。本实现为
+    「命令构造」驱动：cufflinks/cuffmerge/cuffcompare/cuffdiff/cuffquant/cuffnorm 六个子命令按官方
+    man page 构造命令行。⚠️ 软件 deprecated，仅供历史复现与文档化调用，新项目请改用 StringTie /
+    DESeq2 / edgeR。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/cufflinks
+    quay_biocontainers: quay.io/biocontainers/cufflinks
+    install_hint: '历史复现：mamba create -n <env> -c conda-forge -c bioconda cufflinks=2.2.1；容器
+      quay.io/biocontainers/cufflinks:2.2.1--py27_1；或官网预编译二进制解压到 ~/software'
+default_implementation: cufflinks_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'cufflinks 子命令：cufflinks|cuffmerge|cuffcompare|cuffdiff|cuffquant|cuffnorm'
+  alignment:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'cufflinks/cuffquant：输入排序 BAM（比对结果）'
+  gtf_list:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'cuffmerge：输入 GTF 列表文件（每行一个 transcripts.gtf）'
+  gtf:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'cuffcompare：输入 GTF（与参考比较的对象）'
+  samples:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'cuffdiff/cuffnorm：样本文件（BAM 或 .cxb 列表；cuffdiff 用逗号分组的重复）'
+  output:
+    type: string
+    required: false
+    cli_arg: -o
+    description: '输出目录（cufflinks/cuffdiff/cuffquant/cuffnorm）或前缀（cuffcompare）'
+  reference_gtf:
+    type: file
+    required: false
+    cli_arg: -G
+    description: 'cufflinks：参考注释 GTF（-G；与 -g 互斥）'
+  masked_gtf:
+    type: file
+    required: false
+    cli_arg: -M
+    description: 'cufflinks：屏蔽 GTF（忽略其中转录本）'
+  ref_gtf:
+    type: file
+    required: false
+    cli_arg: -r
+    description: 'cuffcompare：参考注释 GTF（-r）'
+  gtf_annotation:
+    type: file
+    required: false
+    cli_arg: -g
+    description: 'cuffmerge -g / cuffcompare -g：参考注释 GTF（用于分类）'
+  gui_gtf:
+    type: file
+    required: false
+    cli_arg: -u
+    description: 'cuffdiff/cuffquant：校正用的参考 GTF（-u）'
+  genome_fasta:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 'cuffmerge/cuffcompare：基因组 FASTA（-s）'
+  bias_fasta:
+    type: file
+    required: false
+    cli_arg: -b
+    description: 'cufflinks/cuffdiff：用于偏差校正的基因组 FASTA（-b）'
+  labels:
+    type: string
+    required: false
+    cli_arg: -L
+    description: 'cufflinks：样本标签；cuffdiff/cuffnorm：逗号分隔的样本组名'
+  multi_read_correct:
+    type: boolean
+    default: false
+    cli_arg: -u
+    description: 'cufflinks：多读校正（multi-read correct）'
+  frag_len_mean:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: 'cufflinks：片段平均长度'
+  frag_len_stdev:
+    type: integer
+    required: false
+    cli_arg: -s
+    description: 'cufflinks：片段长度标准差'
+  library_type:
+    type: string
+    required: false
+    cli_arg: --library-type
+    description: '文库类型（如 fr-unstranded / fr-firststrand / fr-secondstrand）'
+  no_update_check:
+    type: boolean
+    default: false
+    cli_arg: --no-update-check
+    description: 'cuffdiff：跳过版本更新检查'
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -p
+    description: '线程数（自动注入 -p N）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 cufflinks 子命令的额外参数（高级用法，慎用）
+outputs:
+  transcripts_gtf:
+    type: file
+    format: gtf
+    description: 'cufflinks：组装得到的 transcripts.gtf'
+  merged_gtf:
+    type: file
+    format: gtf
+    description: 'cuffmerge：多样本合并后的 merged.gtf'
+  compare_tracking:
+    type: file
+    description: 'cuffcompare：比较结果（.tracking / .combined.gtf 等）'
+  diff_output:
+    type: file
+    description: 'cuffdiff：差异表达结果（gene_exp.diff / isoform_exp.diff 等）'
+  quant_output:
+    type: file
+    description: 'cuffquant：样本表达量（abundances.cxb 等）'
+  norm_output:
+    type: file
+    description: 'cuffnorm：归一化表达矩阵'
+environment:
+  container_official: 'quay.io/biocontainers/cufflinks（历史镜像；tag 2.2.1--py27_1，见 README「容器与 Conda 链接」）'
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。历史渠道：bioconda
+    cufflinks=2.2.1 → quay.io/biocontainers/cufflinks:2.2.1--py27_1 与 depot.galaxyproject.org sif
+    （自动构建历史镜像，仅复现用）；宿主机安装登记在 README「环境安装」：conda / Docker / Apptainer /
+    官方预编译二进制。'
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    cufflinks: 8
+    cuffmerge: 4
+    cuffcompare: 4
+    cuffdiff: 8
+    cuffquant: 8
+    cuffnorm: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: cufflinks

@@ -1,0 +1,129 @@
+software: genemark-es
+canonical: genemark-es
+category: gene_prediction
+description: 'GeneMark-ES/ET（gmes_petap，官方标题 GeneMark-ES/ET/EP）是基于隐马尔可夫模型的真核生物
+  基因预测工具：ES 为无监督自训练的从头预测（--ES，真菌模式 --fungus），ET 结合 RNA-seq hints（--ET），
+  hints2genemarkETintron.pl 把 AUGUSTUS 风格 hints GFF 转为 GeneMark-ET 内含子格式；是 BRAKER 的核心
+  预测引擎之一。运行需官网申请的许可密钥 ~/.gm_key（官方许可禁止再分发）。
+
+  '
+homepage: http://topaz.gatech.edu/GeneMark/
+license: Proprietary（Georgia Tech GeneMark 学术许可；禁止再分发，需官网申请 gm_key）
+software_versions:
+- id: genemark-es_native
+  genemark-es: '4.72_lic'
+  build_route: self-built 兜底（官方无 bioconda/quay/depot 镜像；官方 gmes_linux_64_4.tar.gz + gm_key，许可禁止再分发）
+  source: http://topaz.gatech.edu/GeneMark/license_download.cgi（GeneMark-ES/ET/EP ver 4.72_lic，LINUX 64）
+  note: '2026-09-11 核实：bioconda genemark-es/genemark-et/genemark 均 404，quay.io/biocontainers/genemark-es
+    未找到，depot.galaxyproject.org/singularity 无 genemark* → 官方渠道全无，故本模块提供自建 Dockerfile/Apptainer.def。
+    官方 4.72_lic 下载包 gmes_linux_64_4.tar.gz 需在官网同意许可后下载（禁止再分发），运行需 ~/.gm_key。
+    第三方频道 HCC/genemark-et（4.72）、thiesgehrmann/genemark_es 非官方，仅作备选。'
+- id: genemark-es_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/genemark-es 404）
+  genemark-es: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/genemark-es；nf-core 仅有 braker3 覆盖整链）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/genemark-es
+    返回 404；Nextflow 场景请使用 genemark-es_nextflow_local（未启用）。
+- id: genemark-es_snakemake_wrappers
+  genemark-es: 官方无 wrapper（bio/genemark-es 404）
+  source: —（snakemake-wrappers 仓库 bio/genemark-es 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/genemark-es
+    返回 404；Snakemake 场景请使用 genemark-es_snakemake_local（未启用）。
+implementations:
+- id: genemark-es_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.72"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 es（ES 从头预测）/ et（ET 结合 RNA-seq hints）/ convert_hints（hints 格式转换）三段链路。
+
+    '
+  container_ref:
+    bioconda: 官方无（https://anaconda.org/bioconda/genemark-es 404）
+    quay_biocontainers: 官方无（quay.io/biocontainers/genemark-es 未找到）
+    upstream_prebuilt: http://topaz.gatech.edu/GeneMark/license_download.cgi（gmes_linux_64_4.tar.gz，需同意许可）
+    self_built: native/Dockerfile + native/Apptainer.def（apt 最小化 + 官方 gmes 包，hints 依赖 Perl 模块）
+    install_hint: 宿主推荐官方 gmes_linux_64_4.tar.gz（同意许可后下载）解压到 ~/software/gmes_linux_64_4 并设
+      GENEMARK_PATH；密钥 ~/.gm_key；容器走自建 native/Dockerfile / Apptainer.def
+default_implementation: genemark-es_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: genemark-es 子命令：es|et|convert_hints
+  genome:
+    type: file
+    required: false
+    cli_arg: --sequence
+    description: 基因组序列 FASTA（es/et 必填；convert_hints 亦用）
+  introns:
+    type: file
+    required: false
+    cli_arg: --ET
+    description: GeneMark-ET 内含子 hints GFF（et 必填）
+  hints:
+    type: file
+    required: false
+    cli_arg: positional
+    description: AUGUSTUS 风格 hints GFF（convert_hints 输入）
+  fungus:
+    type: boolean
+    default: false
+    cli_arg: --fungus
+    description: 真菌模式（真菌特异内含子结构）
+  et_score:
+    type: integer
+    required: false
+    cli_arg: --et_score
+    description: ET 模式得分阈值（如 10）
+  soft_mask:
+    type: integer
+    required: false
+    cli_arg: --soft_mask
+    description: 软屏蔽重复序列开关（1=开启；官方参数）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --cores
+    description: 线程数（自动注入 --cores）
+  output:
+    type: file
+    required: false
+    description: 输出 GTF/GFF 路径（默认工作目录下 genemark.gtf；convert_hints 由 -o 落盘）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 gmes_petap.pl / hints2genemarkETintron.pl 的额外参数（高级用法，慎用）
+outputs:
+  predictions:
+    type: file
+    format: [gtf, gff]
+    description: ES/ET 预测的基因结构（genemark.gtf）
+  intron_hints:
+    type: file
+    format: gff
+    description: convert_hints 输出的 GeneMark-ET 内含子 GFF
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）经核实全无（2026-09-11：
+    bioconda 404、quay 未找到、depot 无 genemark*），故本模块自建 Dockerfile / Apptainer.def（debian:bookworm-slim + apt
+    最小化 + 官方 gmes 包 COPY 入镜像 + Perl CPAN 依赖）；官方许可禁止再分发，使用前需在官网申请 gm_key。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    es: 8
+    et: 8
+    convert_hints: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gmes_petap.pl

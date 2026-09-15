@@ -1,0 +1,151 @@
+software: viennarna
+canonical: viennarna
+category: ncRNA_prediction
+description: 'ViennaRNA（包名 viennarna）是 RNA 二级结构预测与比较的标准工具包，核心程序 RNAfold
+  计算最小自由能（MFE）结构与配分函数（Lorenz et al., Algorithms Mol Biol 2011）。常用于 ncRNA /
+  miRNA precursor 二级结构分析（结构与 ΔG 评估）。**命名说明**：docs/10.md 第十九节把 miRNA 预测
+  工具列为「miRDeep、miRNAFold」；经 curl 核实（见 README「关于 miRNAFold 的命名核实」），所引
+  freiburg URL 不可达、且无 mirnafold 官方包，而 ViennaRNA/RNAfold 有完整官方渠道且是 RNA 二级结构
+  预测标准工具，故本模块 canonical 采用 viennarna。'
+homepage: https://www.tbi.univie.ac.at/RNA/
+license: 'ViennaRNA custom license（学术免费；商用需向维也纳大学 RNA 组取得许可，见源码 COPYING）'
+software_versions:
+- id: viennarna_native
+  viennarna: '2.7.2'
+  build_route: official biocontainer（quay.io/biocontainers/viennarna / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/viennarna
+  note: '2026-09 核实：bioconda viennarna=2.7.2 → quay.io/biocontainers/viennarna:2.7.2--py311pl5321h7f785ea_0
+    → depot.galaxyproject.org/singularity/viennarna:2.7.2--py311pl5321h7f785ea_0（sif 直拉 200）。
+    官方源码 https://www.tbi.univie.ac.at/RNA/download/sourcecode/2_7_x/ViennaRNA-2.7.2.tar.gz
+    （sha256 ffb98b2dd76fcf08590cd435f60273e8e194493d5cdd96e12387a8fe2adf0b91）。'
+- id: viennarna_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  viennarna: '2.6.4'
+  source: bioconda::viennarna=2.6.4（modules/nf-core/viennarna/{rnafold,rnacofold,rnalfold}/environment.yml）
+  note: 'nf-core 有 viennarna/rnafold、viennarna/rnacofold、viennarna/rnalfold 三个子模块，均 pin
+    bioconda::viennarna=2.6.4（与 bioconda 最新 2.7.2 相差一个 minor）。'
+- id: viennarna_snakemake_wrappers
+  viennarna: 官方无 wrapper（bio/viennarna 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 viennarna）
+  note: 2026-09 核实 github.com/snakemake/snakemake-wrappers/tree/master/bio/viennarna 返回
+    404；Snakemake 场景请以 native/main.py 为兜底。
+- id: viennarna_nextflow_local
+  viennarna: '未启用（未建 nextflow/；需要时在 main.nf 以 shell: 调 native/main.py）'
+- id: viennarna_snakemake_local
+  viennarna: '未启用（未建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: viennarna_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.7.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 rnafold（MFE/配分函数）/ rnaeval（结构能量评估）/ rnaplot（二级结构绘图）三类子命令。
+    ViennaRNA 主程序为单进程（部分程序 OpenMP 可选），--threads 仅记录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/viennarna
+    quay_biocontainers: quay.io/biocontainers/viennarna
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda viennarna=2.7.2；容器可用
+      quay.io/biocontainers/viennarna:2.7.2--py311pl5321h7f785ea_0
+default_implementation: viennarna_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'viennarna 子命令：rnafold|rnaeval|rnaplot'
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: '输入文件（rnafold：RNA/转录本 FASTA；rnaeval：含结构注释的序列；rnaplot：结构文件）'
+  partition:
+    type: boolean
+    default: false
+    cli_arg: -p
+    description: 'rnafold：同时计算配分函数与碱基配对概率矩阵'
+  mea:
+    type: boolean
+    default: false
+    cli_arg: --MEA
+    description: 'rnafold：计算最大期望精度（MEA）结构'
+  no_lp:
+    type: boolean
+    default: false
+    cli_arg: --noLP
+    description: 'rnafold：禁止孤立碱基对（lonely pairs）'
+  dna:
+    type: boolean
+    default: false
+    cli_arg: -4
+    description: 'rnafold：输入按 DNA 处理（T 而非 U）'
+  constraint:
+    type: boolean
+    default: false
+    cli_arg: -C
+    description: 'rnafold：使用序列中的约束注释（如 P 强制配对）'
+  temperature:
+    type: float
+    required: false
+    cli_arg: -T
+    description: 'rnafold/rnaeval：折叠温度（摄氏度，默认 37）'
+  no_guess:
+    type: boolean
+    default: false
+    cli_arg: --noPS
+    description: 'rnafold：不输出结构 PostScript（配合 -p 时仅文本结果）'
+  plot_format:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 'rnaplot：输出图形格式（ps/eps/svg/xrna 等）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 'rnaplot：输出文件（RNAplot -o；不同子命令含义以本工具 help 为准）'
+  threads:
+    type: integer
+    default: 1
+    description: '线程数（ViennaRNA 主程序单进程，部分程序 OpenMP 可选；此字段仅记录，不注入命令行）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 RNAfold / RNAeval / RNAplot 的额外参数（高级用法，慎用）
+outputs:
+  folded_structure:
+    type: file
+    description: 'rnafold：MFE 结构（点括号记法）+ 自由能（stdout；-p 时含配分函数与概率矩阵）'
+  dot_ps:
+    type: file
+    format: ps
+    description: 'rnafold：结构 PostScript 图（_dp.ps；--noPS 可关闭）'
+  evaluated_energy:
+    type: file
+    description: 'rnaeval：给定结构的自由能评估结果'
+  structure_plot:
+    type: file
+    description: 'rnaplot -o：二级结构图形输出'
+environment:
+  container_official: quay.io/biocontainers/viennarna（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda viennarna=2.7.2 → quay / depot sif），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 viennarna（或从 TBI 官方源码编译）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    rnafold: 1
+    rnaeval: 1
+    rnaplot: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: RNAfold

@@ -1,0 +1,116 @@
+# splicegrapher native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 SourceForge 源码 setup.py install）
+#
+# 背景：SpliceGrapher 无官方镜像/conda 包 —— bioconda（API 404）→ quay.io/biocontainers（401 =
+#       仓库不存在，对照 samtools 200）→ depot.galaxyproject.org（无）2026-09 核实全无；
+#       nf-core / snakemake-wrappers / brew 亦无。官方发布站 SourceForge splicegrapher（仅源码包；
+#       python setup.py build && install）。
+# ⚠️ Python 版本：0.2.7 为 Python 2.7 时代代码，Debian bookworm 已移除 python2 → 基础镜像取
+#     debian:bullseye-slim（最后一个提供 python2.7 的稳定版）。
+# ⚠️ 依赖兼容性（未实际构建验证）：PyML/旧 pysam 在 py2.7 下安装可能需额外系统库。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build splicegrapher-0.2.7.sif splicegrapher/native/Apptainer.def
+# 运行：
+#   apptainer run -B $PWD:/data -H /data splicegrapher-0.2.7.sif predict_graphs /data/filtered.sam -v
+#   驱动：apptainer exec splicegrapher-0.2.7.sif python3 /opt/skill/main.py --list-commands
+
+Bootstrap: docker
+From: debian:bullseye-slim
+
+%labels
+    Maintainer bioskills
+    Software splicegrapher
+    Version 0.2.7
+    org.bioskills.software splicegrapher
+    impl native
+    base_image debian:bullseye-slim
+    pkg_route apt runtime + python2.7 + SourceForge source (setup.py build/install)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    splicegrapher/native/main.py /opt/skill/main.py
+    splicegrapher/meta.yaml /opt/skill/splicegrapher/meta.yaml
+    splicegrapher/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖（python2.7 本体 + python3 驱动 + PyML/pysam 构建库 + samtools/hisat2）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python2.7 \
+        python2.7-dev \
+        python3 \
+        python3-yaml \
+        build-essential \
+        zlib1g-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libcurl4-openssl-dev \
+        samtools \
+        hisat2 \
+        ca-certificates \
+        curl \
+        procps
+    ln -sf /usr/bin/python2.7 /usr/local/bin/python
+
+    # 2) 官方源码下载 + python2 setup.py build && install + 版本断言
+    curl -fSL -o /tmp/sg.tgz \
+        "https://downloads.sourceforge.net/project/splicegrapher/SpliceGrapher-0.2.7.tgz"
+    mkdir -p /tmp/src && tar -xzf /tmp/sg.tgz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    cd "$SRC"
+    curl -fSL -o /tmp/get-pip27.py "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
+    python2 /tmp/get-pip27.py
+    python2 -m pip install --no-cache-dir setuptools numpy PyML matplotlib pysam
+    python2 setup.py build
+    python2 setup.py install
+    python2 -c "import SpliceGrapher, sys; sys.exit(0 if SpliceGrapher.__version__=='0.2.7' else 1)"
+    rm -rf /tmp/src /tmp/sg.tgz /tmp/get-pip27.py
+
+    # 3) 清理四连（仅构建期下载工具 curl 移除）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：SpliceGrapher 版本断言 + 驱动可自省
+    set -eux
+    python2 -c "import SpliceGrapher, sys; sys.exit(0 if SpliceGrapher.__version__=='0.2.7' else 1)"
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/sg_commands.txt
+    grep -q '^build_classifiers' /tmp/sg_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/sg_schema.json
+    test -s /tmp/sg_schema.json
+    rm -rf /tmp/sg_commands.txt /tmp/sg_schema.json
+
+%help
+    splicegrapher native Apptainer 镜像（自建：apt 最小化 + 官方 SourceForge 源码 setup.py install v0.2.7）。
+    CLI 用法：apptainer run -B $PWD:/data -H /data splicegrapher-0.2.7.sif predict_graphs /data/filtered.sam -v
+    驱动用法：apptainer exec splicegrapher-0.2.7.sif python3 /opt/skill/main.py build_classifiers -d gt,gc -a ag
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09 全无 →
+    自建镜像；0.2.7 为 Python 2.7 时代代码（基础镜像 bullseye）；运行前设置 SG_FASTA_REF / SG_GENE_MODEL。

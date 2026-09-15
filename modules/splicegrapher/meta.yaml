@@ -1,0 +1,156 @@
+software: splicegrapher
+canonical: splicegrapher
+category: transcriptome
+description: 'SpliceGrapher（0.2.7）是可从 RNA-seq 比对（SAM/BAM）+ 基因模型（GTF/GFF3）预测剪接图
+  （splice graph）、注释可变剪接并以 SpliceGrapherXT 将剪接图转为转录本预测的 Python 工具。核心脚本：
+  build_classifiers.py（训练剪接位点 SVM 分类器，-d gt,gc -a ag）、sam_filter.py（用分类器过滤比对）、
+  predict_graphs.py（预测剪接图）、realignment_pipeline.py（重新比对）。官方安装为
+  python setup.py build && python setup.py install。依赖：PyML（分类器训练）、IsoLasso（可选转录本预测）、
+  cufflinks（表达量）、samtools（BAM）、hisat2（比对，需 --no-softclip）。'
+homepage: http://splicegrapher.sourceforge.net/
+license: 未明确声明（SourceForge 项目页 / 官网 / 源码 setup.py 均未标注 license）
+software_versions:
+- id: splicegrapher_native
+  splicegrapher: '0.2.7'
+  build_route: 自建容器/源码安装（官方渠道 2026-09 逐渠道核实全无）
+  source: https://sourceforge.net/projects/splicegrapher/files/SpliceGrapher-0.2.7.tgz
+  note: 'bioconda splicegrapher API 404、quay.io/biocontainers/splicegrapher 401（仓库不存在，对照
+    samtools 200）、depot.galaxyproject.org 无、nf-core 与 snakemake-wrappers 404、brew 两源 404 →
+    自建兜底（native/Dockerfile + Apptainer.def）或宿主机官方源码安装。注意本工具为 Python 2.7 时代代码
+    （setup.py 含 py2 print 语法），需要 python2.7 + PyML。'
+- id: splicegrapher_nextflow_nfcore
+  module_version: （官方无此模块）
+  splicegrapher: 官方无 nf-core 模块
+  source: —
+  note: 2026-09 核实 nf-core/modules/modules/nf-core/splicegrapher/meta.yml 返回 404。
+- id: splicegrapher_snakemake_wrappers
+  splicegrapher: 官方无 wrapper
+  source: —
+  note: 2026-09 核实 snakemake-wrappers/bio/splicegrapher/{environment.yaml,wrapper.py} 均返回 404。
+- id: splicegrapher_nextflow_local
+  splicegrapher: 未固定（未启用占位）
+- id: splicegrapher_snakemake_local
+  splicegrapher: 未固定（未启用占位）
+implementations:
+- id: splicegrapher_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.2.7"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    覆盖 create_classifiers -> filter_alignments -> predict_graphs -> realignment 可变剪接流水线。'
+  container_ref:
+    sourceforge: https://sourceforge.net/projects/splicegrapher/files/SpliceGrapher-0.2.7.tgz
+    homepage: http://splicegrapher.sourceforge.net/
+    bioconda: （无——api.anaconda.org/package/bioconda/splicegrapher 404，2026-09 核实）
+    quay_biocontainers: （无——quay API 401 = 仓库不存在，对照 samtools 200，2026-09 核实）
+    depot_galaxyproject: （无——depot.galaxyproject.org 无 splicegrapher，2026-09 核实）
+    brew: （两源均无——homebrew-core 与 brewsci/bio 均 404，2026-09 核实）
+    install_hint: 无官方 conda/镜像 → 宿主机官方源码安装（bash native/install.sh）或自建容器
+      （native/Dockerfile + Apptainer.def，debian:bullseye-slim + python2.7 + 官方源码 setup.py install）。
+default_implementation: splicegrapher_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: splicegrapher 子命令：build_classifiers | sam_filter | predict_graphs | realignment_pipeline
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 主输入（build_classifiers 无需；sam_filter/predict_graphs 为 SAM；realignment_pipeline 为剪接图目录）
+  classifiers:
+    type: file
+    required: false
+    cli_arg: positional
+    description: sam_filter 的分类器压缩包（classifiers.zip，由 build_classifiers 生成）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（sam_filter 的 filtered.sam / build_classifiers 的日志等）
+  donors:
+    type: string
+    required: false
+    cli_arg: -d
+    default: gt,gc
+    description: 供体剪接位点类型（build_classifiers，默认 gt,gc）
+  acceptors:
+    type: string
+    required: false
+    cli_arg: -a
+    default: ag
+    description: 受体剪接位点类型（build_classifiers，默认 ag）
+  num_examples:
+    type: integer
+    required: false
+    cli_arg: -n
+    description: 每个位点的训练样本数（build_classifiers，默认 2000）
+  logfile:
+    type: file
+    required: false
+    cli_arg: -l
+    description: 日志文件（build_classifiers）
+  fastq1:
+    type: file
+    required: false
+    cli_arg: -1
+    description: read1 FASTQ（realignment_pipeline）
+  fastq2:
+    type: file
+    required: false
+    cli_arg: -2
+    description: read2 FASTQ（realignment_pipeline）
+  verbose:
+    type: boolean
+    required: false
+    cli_arg: -v
+    default: false
+    description: 详细输出（sam_filter / predict_graphs）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（仅接口兼容；SpliceGrapher 脚本未提供统一线程参数，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应脚本的额外参数（高级用法，慎用）
+outputs:
+  classifiers_zip:
+    type: file
+    description: build_classifiers 输出的分类器压缩包（classifiers.zip）
+  filtered_sam:
+    type: file
+    format: sam
+    description: sam_filter 输出的过滤后比对（filtered.sam）
+  splice_graphs:
+    type: directory
+    description: predict_graphs 输出的剪接图（GFF/相关文件）
+  realigned:
+    type: directory
+    description: realignment_pipeline 输出的重比对结果
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）2026-09 全部核实无
+    splicegrapher → 保留自建配方（debian:bullseye-slim + python2.7 + 官方 sourceforge 源码
+    python setup.py build && install，不引入 miniconda）。因代码为 Python 2.7 时代，基础镜像选
+    bullseye（Debian 11，最后一个提供 python2.7 的稳定版；bookworm 已移除 python2）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    build_classifiers: 4
+    sam_filter: 2
+    predict_graphs: 2
+    realignment_pipeline: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: build_classifiers.py

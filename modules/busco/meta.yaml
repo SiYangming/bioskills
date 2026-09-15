@@ -1,0 +1,156 @@
+software: busco
+canonical: busco
+category: qc
+description: 'BUSCO（Benchmarking Universal Single-Copy Orthologs）基于 OrthoDB 直系同源单拷贝基因集，
+  评估基因组组装、基因集或转录组的完整性（Complete/Single/Duplicated/Fragmented/Missing），是基因预测
+  质量评估的标准指标；依赖 metaeuk / SEPP / Prodigal / diamond / blast 等比对工具与离线谱系数据库。
+
+  '
+homepage: https://busco.ezlab.org/
+license: MIT
+software_versions:
+- id: busco_native
+  busco: '4.1.2'
+  build_route: official biocontainer（quay.io/biocontainers/busco / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/busco
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。本模块
+    按教学文档登记 4.1.2（tag 4.1.2--py38h3252c3a_2）；bioconda 当前最新为 6.1.0。谱系数据库需另行下载。'
+- id: busco_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  busco: '6.1.0'
+  source: bioconda::busco=6.1.0（modules/nf-core/busco/{busco,download,generateplot,phylogenomics,plot}/environment.yml）
+  note: 'nf-core 有 busco/download/generateplot/phylogenomics/plot 五个子模块，均 pin bioconda::busco=6.1.0；
+    与 native 登记的 4.1.2 相差两个大版本，跨引擎迁移需注意。'
+- id: busco_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  busco: '6.1.0'
+  source: bioconda busco=6.1.0（bio/busco/environment.yaml）
+  note: '官方 bio/busco 为扁平 wrapper（wrapper.py，params.mode/lineage/extra）；pin busco=6.1.0，与 native 4.1.2
+    相差较大。'
+- id: busco_nextflow_local
+  busco: 未固定（用户按 main.nf 中 conda/container 自行声明）
+- id: busco_snakemake_local
+  busco: 未固定（用户按 rules/ 自行声明）
+implementations:
+- id: busco_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.1.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 覆盖
+    run（完整性评估）/ list_datasets（谱系清单）/ config（配置生成）/ plot（结果可视化）四个子命令。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/busco
+    quay_biocontainers: quay.io/biocontainers/busco
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda busco=4.1.2；容器可用 quay.io/biocontainers/busco
+      镜像（tag 见 README）
+default_implementation: busco_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: busco 子命令：run|list_datasets|config|plot
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 输入序列（基因组 / 转录组 / 蛋白 multi-FASTA）
+  mode:
+    type: string
+    default: genome
+    cli_arg: -m
+    description: 分析模式：genome|transcriptome|proteins
+  lineage:
+    type: string
+    required: false
+    cli_arg: -l
+    description: 谱系数据集名或路径（如 basidiomycota_odb10；--offline 时可为本地数据库路径）
+  out_name:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出目录名（默认 run_<input>）
+  out_path:
+    type: string
+    required: false
+    cli_arg: --out_path
+    description: 输出根目录
+  offline:
+    type: boolean
+    default: false
+    cli_arg: --offline
+    description: 离线模式（仅用本地数据库）
+  auto_lineage:
+    type: boolean
+    default: false
+    cli_arg: --auto-lineage
+    description: 自动选择最优谱系数据集
+  force:
+    type: boolean
+    default: false
+    cli_arg: -f
+    description: 覆盖已存在的输出目录
+  config_in:
+    type: file
+    required: false
+    cli_arg: positional
+    description: config 子命令输入 config.ini（默认 config/config.ini）
+  config_out:
+    type: file
+    required: false
+    cli_arg: positional
+    description: config 子命令输出 config.ini
+  plot_dir:
+    type: string
+    required: false
+    cli_arg: -wd
+    description: plot 子命令结果目录（含各结果的 short_summary*.txt）
+  plot_type:
+    type: string
+    required: false
+    cli_arg: -rt
+    description: plot 子命令类型：specific|generic
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -c
+    description: 线程数（run 自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 busco 的额外参数（高级用法，慎用）
+outputs:
+  short_summary:
+    type: file
+    format: txt
+    description: 短摘要（Complete/Fragmented/Missing 统计）
+  full_table:
+    type: file
+    format: tsv
+    description: 每个 BUSCO 基因的完整结果表
+  short_summary_json:
+    type: file
+    format: json
+    description: JSON 格式摘要
+  plot_pdf:
+    type: file
+    format: pdf
+    description: generate_plot.py 输出的图示（busco_figure.pdf/png）
+environment:
+  container_official: quay.io/biocontainers/busco（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay→depot），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 busco；谱系数据库需另行下载（见 README）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: busco

@@ -1,0 +1,148 @@
+software: augustus
+canonical: augustus
+category: gene_prediction
+description: 'AUGUSTUS 是基于隐马尔可夫模型（HMM）的真核生物从头基因预测工具：augustus 用训练好的
+  物种参数预测基因结构（可用 RNA-seq hints 辅助），并配套 gff2gbSmallDNA.pl（GFF3→GenBank 训练集）、
+  new_species.pl（建立新物种参数）、etraining（参数训练）、optimize_augustus.pl（参数优化循环训练）、
+  bam2hints（RNA-seq BAM→hints GFF）等脚本，是 BRAKER 的核心基因预测引擎。
+
+  '
+homepage: https://bioinf.uni-greifswald.de/augustus/
+license: Artistic License
+software_versions:
+- id: augustus_native
+  augustus: '3.4.0'
+  build_route: official source（bioinf.uni-greifswald.de tarball）+ official biocontainer（quay.io/biocontainers/augustus 3.4.0）
+  source: http://bioinf.uni-greifswald.de/augustus/binaries/augustus-3.4.0.tar.gz
+  note: '官方只提供源码（augustus-3.4.0.tar.gz，需 htslib 1.10 / boost_1_64_0 / bamtools 编译 bam2hints）；官方镜像
+    bioconda/quay/depot pin 3.4.0（tag 3.4.0--pl5321hf46c7bb_8，已含编译好的 bam2hints）。brew homebrew-core 公式为
+    3.5.0（与 meta 登记 3.4.0 略有差异，以 formula 为准）。Java/工具链类调用透传 JAVA_OPTS。'
+- id: augustus_nextflow_nfcore
+  module_version: 官方无独立模块（modules/nf-core/augustus 404；nf-core 有 braker3 整链模块）
+  augustus: —
+  source: —（nf-core/modules 仓库 modules/nf-core/augustus 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/augustus
+    返回 404；官方仅有 braker3 覆盖 AUGUSTUS+GeneMark 整链。Nextflow 场景请用 augustus_nextflow_local（未启用）。
+- id: augustus_snakemake_wrappers
+  augustus: 官方无 wrapper（bio/augustus 404）
+  source: —（snakemake-wrappers 仓库 bio/augustus 目录不存在）
+  note: 2026-09-11 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/augustus
+    返回 404；Snakemake 场景请使用 augustus_snakemake_local（未启用）。
+implementations:
+- id: augustus_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.4.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 predict / etraining / optimize / new_species / gff2gb / bam2hints 六段链路。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/augustus
+    quay_biocontainers: quay.io/biocontainers/augustus:3.4.0--pl5321hf46c7bb_8
+    upstream_source: http://bioinf.uni-greifswald.de/augustus/binaries/augustus-3.4.0.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda augustus=3.4.0（跨平台，含 bam2hints）；
+      源码路线需 htslib 1.10 / boost_1_64_0 / bamtools；容器用 quay.io/biocontainers/augustus:3.4.0--pl5321hf46c7bb_8
+default_implementation: augustus_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: augustus 子命令：predict|etraining|optimize|new_species|gff2gb|bam2hints
+  genome:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 基因组序列 FASTA（predict / gff2gb）
+  species:
+    type: string
+    required: false
+    cli_arg: --species
+    description: 物种参数名（predict/etraining/optimize/new_species）
+  hintsfile:
+    type: file
+    required: false
+    cli_arg: --hintsfile
+    description: RNA-seq hints GFF（predict）
+  genes_gb:
+    type: file
+    required: false
+    cli_arg: positional
+    description: GenBank 训练集（etraining / optimize）
+  annotation:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入 GFF3 注释（gff2gb）
+  flank:
+    type: integer
+    required: false
+    cli_arg: positional
+    description: gff2gb 提取基因前后 flank 长度（bp）
+  bam:
+    type: file
+    required: false
+    cli_arg: --in
+    description: RNA-seq 比对 BAM（bam2hints）
+  output:
+    type: file
+    required: false
+    cli_arg: -o / --out
+    description: 输出文件（predict 的 GFF / gff2gb 的 .gb / bam2hints 的 hints GFF）
+  rounds:
+    type: integer
+    required: false
+    cli_arg: --rounds
+    description: optimize 优化轮数
+  kfold:
+    type: integer
+    required: false
+    cli_arg: --kfold
+    description: optimize 交叉验证折数
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --cpus
+    description: 线程数（optimize 自动注入 --cpus）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 augustus 子命令/脚本的额外参数（高级用法，慎用）
+outputs:
+  predictions:
+    type: file
+    format: [gff, gff3]
+    description: predict 输出的基因结构预测（GFF，写 stdout / -o 文件）
+  trained_parameters:
+    type: file
+    description: etraining/optimize 更新的物种参数文件
+  genbank_trainset:
+    type: file
+    format: gb
+    description: gff2gb 输出的 GenBank 训练集
+  hints:
+    type: file
+    format: gff
+    description: bam2hints 输出的 RNA-seq hints GFF
+environment:
+  container_official: quay.io/biocontainers/augustus（bioconda 官方镜像；tag 3.4.0--pl5321hf46c7bb_8，见 README「容器与 Conda 链接」）
+  note: 官方镜像（bioconda/quay/depot）已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方源码为唯一上游（需 htslib/boost/bamtools 自编译）；宿主机直跑 main.py 时用 conda/mamba 安装。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx4g'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 4
+    etraining: 4
+    optimize: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: augustus

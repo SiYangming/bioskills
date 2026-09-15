@@ -1,0 +1,112 @@
+# geta native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 tarball 解包，禁 miniconda）
+#
+# 背景：GETA（chenlianfu/geta）无官方镜像 / 无 conda 包 —— 2026-09-11 核实 bioconda（404）、
+#       quay.io/biocontainers、depot.galaxyproject.org、brew、nf-core modules、snakemake-wrappers
+#       均无。官方仅以 GitHub tag tarball 分发（geta-<ver>/bin/*.pl，解压即用，非编译）。
+#       本配方：debian:bookworm-slim + apt（perl + python3 驱动）+ 官方 tarball 解包部署。
+#
+# 构建（在仓库 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build geta-2.7.1.sif geta/native/Apptainer.def
+# 运行（容器内 CLI = geta.pl）：
+#   apptainer run -B $PWD:/data -H /data geta-2.7.1.sif --help
+#   驱动 main.py：apptainer exec geta-2.7.1.sif python3 /opt/skill/main.py \
+#       gff3_to_gtf /data/genome.fasta /data/bestGeneModels.gff3 -o /data/bestGeneModels.gtf
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software geta
+    Version 2.7.1
+    geta_version 2.7.1
+    org.bioskills.software geta
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt (perl) + official GitHub tarball (bin/*.pl)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    geta/native/main.py /opt/skill/main.py
+    geta/meta.yaml /opt/skill/geta/meta.yaml
+    geta/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：运行 perl + python3/python3-yaml（供 main.py 驱动）+ 构建期 curl
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方 tarball 下载 + sha256 校验 + 解包（结构断言 bin/geta.pl）
+    curl -fSL -o /tmp/geta.tar.gz \
+        "https://github.com/chenlianfu/geta/archive/refs/tags/v2.7.1.tar.gz"
+    echo "a80d8d4497b5ca56255ea69436b011ada6807a640a6f41b6ee803effef2b8786  /tmp/geta.tar.gz" | sha256sum -c -
+    tar tzf /tmp/geta.tar.gz >/dev/null
+    mkdir -p /tmp/geta_src /opt/geta
+    tar -xzf /tmp/geta.tar.gz -C /tmp/geta_src
+    srcdir="$(find /tmp/geta_src -maxdepth 1 -mindepth 1 -type d -name 'geta-*' | head -1)"
+    test -n "$srcdir"
+    test -f "$srcdir/bin/geta.pl"
+    test -f "$srcdir/bin/gff3ToGtf.pl"
+    install -m 0755 "$srcdir/bin/"*.pl /usr/local/bin/
+    cp -R "$srcdir" /opt/geta/
+    rm -rf /tmp/geta_src /tmp/geta.tar.gz
+
+    # 3) 仅构建期下载工具移除 + 清理四连
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/local/bin/geta.pl "$@"
+
+%test
+    # 非交互自检：geta.pl 用法冒烟 + 驱动可自省（geta.pl 无标准 --version）
+    set -eux
+    test -x /usr/local/bin/geta.pl
+    test -x /usr/local/bin/gff3ToGtf.pl
+    geta.pl --help >/dev/null 2>&1 || true
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/geta_commands.txt
+    grep -q '^geta' /tmp/geta_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/geta_schema.json
+    test -s /tmp/geta_schema.json
+    rm -rf /tmp/geta_commands.txt /tmp/geta_schema.json
+
+%help
+    geta native Apptainer 镜像（自建：apt 最小化 + 官方 tarball github.com/chenlianfu/geta v2.7.1）。
+    CLI 用法：apptainer run -B $PWD:/data -H /data geta-2.7.1.sif --help
+    驱动用法：apptainer exec geta-2.7.1.sif python3 /opt/skill/main.py \
+        gff3_to_gtf /data/genome.fasta /data/bestGeneModels.gff3 -o /data/bestGeneModels.gtf
+    说明：官方渠道（bioconda/quay biocontainers/depot/brew/nf-core/snakemake-wrappers）2026-09-11 全无
+    → 自建镜像；geta.pl 为 Perl 驱动，完整预测还需 AUGUSTUS/RepeatMasker/同源比对等外部工具（镜像仅含
+    geta.pl/gff3ToGtf.pl 及 perl/python3 运行时）；bestGeneModels.pl 未在官方仓库 bin/ 命中（404），
+    由 PATH 解析。
