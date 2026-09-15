@@ -1,0 +1,169 @@
+software: table2asn
+canonical: table2asn
+category: data_submission
+description: 'table2asn 是 NCBI 现役的 GenBank 提交文件生成工具，取代已停用（Obsolete）的 tbl2asn：
+  table2asn -t <template.sbt> -indir <dir> -a <type> -V vb -M n -Z 将 FASTA 序列（+ Feature Table .tbl）
+  转换为 ASN.1 提交文件（.sqn），并输出验证报告（.val + .stats 汇总）、差异报告（.dr）与 GenBank flatfile（.gbf）。
+  官方文档原文："table2asn is the replacement of the older now-obsolete tool tbl2asn"。旧工具 tbl2asn 的官方
+  二进制已下架（NCBI FTP 该目录 README 原文 "tbl2asn is no longer available for download"，2025-09-16 更新，
+  目录内仅剩 DOCUMENTATION/），其 bioskills 模块按官方停用移除，新项目请使用本模块。
+
+  '
+homepage: https://www.ncbi.nlm.nih.gov/genbank/table2asn/
+license: Public Domain
+software_versions:
+- id: table2asn_native
+  table2asn: '1.28.1179'
+  build_route: official biocontainer（quay.io/biocontainers/table2asn / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/table2asn
+  note: '2026-09-15 实测核实：bioconda https://api.anaconda.org/package/bioconda/table2asn 返回 200，latest_version=1.28.1179
+    （versions: 1.0.883 / 1.27.792 / 1.28.943 / 1.28.1111 / 1.28.1179；license=Public Domain；linux-64 构建
+    table2asn-1.28.1179-he45da00_1.tar.bz2、osx-64 构建 table2asn-1.28.1179-hd204fab_1.tar.bz2）；
+    quay tag API 返回 200，tag 1.28.1179--he45da00_1（2024-12-14 构建，约 26.9 MB）；
+    depot.galaxyproject.org/singularity/table2asn:1.28.1179--he45da00_1 HEAD 返回 200。
+    官方 FTP（现役，2025-09-16 更新）https://ftp.ncbi.nlm.nih.gov/toolbox/ncbi_tools/converters/by_program/table2asn/
+    提供 linux64.table2asn.gz(19M) / mac.table2asn.gz(16M) / win64.table2asn.zip(13M) + README(640B)。
+    官方文档页 https://www.ncbi.nlm.nih.gov/genbank/tbl2asn2/ 301 跳转至 /genbank/table2asn/（正文自述为 tbl2asn 的替代）。'
+- id: table2asn_nextflow_nfcore
+  table2asn: 官方无模块（modules/nf-core/table2asn 404）
+  source: —
+  note: 2026-09-15 实测：https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/table2asn
+    与 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/table2asn/meta.yml 均返回
+    404（官方未收录）。Nextflow 场景请直接调用 native。
+- id: table2asn_snakemake_wrappers
+  table2asn: 官方无 wrapper（bio/table2asn 404）
+  source: —
+  note: 2026-09-15 实测：https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/table2asn
+    与 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/table2asn/wrapper.py 均返回
+    404（官方未收录）。Snakemake 场景请直接调用 native。
+- id: table2asn_brew
+  table2asn: 无 brew 公式（homebrew-core / brewsci-bio 均 404）
+  source: —
+  note: 2026-09-15 实测：https://formulae.brew.sh/api/formula/table2asn.json 返回 404；
+    https://api.github.com/repos/brewsci/homebrew-bio/contents/Formula/table2asn.rb 与
+    .../Formula/t/table2asn.rb 均返回 404。故 README 不登记 brew 块（宿主安装走 conda / 官方 FTP 预编译二进制）。
+implementations:
+- id: table2asn_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.28.1179"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 WGS / 完整基因组 / 仅验证三段提交链路（table2asn -t -indir -outdir -i -a -l -gaps-min -V -M -Z）。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/table2asn
+    quay_biocontainers: quay.io/biocontainers/table2asn
+    depot_singularity: https://depot.galaxyproject.org/singularity/table2asn:1.28.1179--he45da00_1
+    upstream_prebuilt: https://ftp.ncbi.nlm.nih.gov/toolbox/ncbi_tools/converters/by_program/table2asn/
+      （linux64.table2asn.gz / mac.table2asn.gz / win64.table2asn.zip；官方未提供源码，故无源码编译路线）
+    predecessor: tbl2asn（NCBI 已停用 Obsolete，官方二进制下架；其 bioskills 模块已按官方停用移除）
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda table2asn=1.28.1179；容器可用
+      quay.io/biocontainers/table2asn:1.28.1179--he45da00_1；无 conda 时可从官方 FTP 下载平台预编译二进制。
+default_implementation: table2asn_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: table2asn 子命令：wgs|complete|validate|run
+  template:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 提交模板文件（.sbt，前缀需与 .fsa/.tbl 同名；含完整路径时必须给出全路径）
+  indir:
+    type: string
+    required: false
+    cli_arg: -indir
+    description: 输入文件所在目录（⚠️ 官方新参数，取代 tbl2asn 的 -p；当前目录写 -indir .）
+  outdir:
+    type: string
+    required: false
+    cli_arg: -outdir
+    description: .sqn 输出目录（⚠️ 官方新参数，取代 tbl2asn 的 -r；缺省时 .sqn 落在输入目录）
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 在多 .fsa 目录中只提交指定的单个 .fsa 文件
+  assembly_type:
+    type: string
+    required: false
+    cli_arg: -a
+    description: 'FASTA 类型：a=任意格式（默认）；r1k=N≥1 时长度不定（WGS 常用）；r1u=长度未知；s=批量不相关序列'
+  validate_level:
+    type: string
+    required: false
+    cli_arg: -V
+    description: '验证选项（可组合）：v=校验并输出 .val(+.stats)；b=生成 GenBank flatfile（.gbf）；vb=两者（默认）'
+  master_level:
+    type: string
+    required: false
+    cli_arg: -M
+    description: master file 选项（默认 n，不生成 master）
+  paired_ends:
+    type: boolean
+    required: false
+    cli_arg: -l
+    description: gap 连接证据为 paired-ends 时置位（wgs 默认开启，注入 -l paired-ends）
+  gaps_min:
+    type: integer
+    required: false
+    cli_arg: -gaps-min
+    description: 最小 gap 长度阈值（WGS 常用 -gaps-min 10）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: —（table2asn 单线程，仅供上层调度器读取）
+    description: 线程数（统一接口保留；table2asn 本体单线程，不注入命令行）
+  tmpdir:
+    type: string
+    required: false
+    description: 临时目录覆盖（注入 TMPDIR 环境变量）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 table2asn 的额外参数（高级用法，慎用；如 -j/-c/-y/-o）
+outputs:
+  sqn:
+    type: file
+    format: sqn
+    description: ASN.1 提交文件（主要产物）
+  val:
+    type: file
+    format: txt
+    description: 逐记录验证报告（.val）
+  stats:
+    type: file
+    format: txt
+    description: 全部 .val 的验证汇总（.stats，含错误数量/严重级别/类型）
+  dr:
+    type: file
+    format: txt
+    description: '差异报告（.dr；table2asn 的 -Z 为无参数开关，取代 tbl2asn 的 -Z discrep → .discrep 命名）'
+  gbf:
+    type: file
+    format: gbf
+    description: GenBank 格式 flatfile（-V b / -V vb 时生成）
+environment:
+  container_official: quay.io/biocontainers/table2asn（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda table2asn=1.28.1179 → quay.io/biocontainers/table2asn:1.28.1179--he45da00_1
+    → depot.galaxyproject.org/singularity/table2asn:1.28.1179--he45da00_1，实测 2026-09-15 均可用），
+    本地不再维护 Dockerfile/Apptainer.def；官方 FTP 另提供平台预编译二进制（linux64/mac/win64，官方未提供源码，
+    故无源码编译路线）。宿主机直跑 main.py 时用 conda/mamba 安装 table2asn=1.28.1179。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: table2asn

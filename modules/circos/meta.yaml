@@ -1,0 +1,100 @@
+software: circos
+canonical: circos
+category: visualization
+description: 'Circos 是基因组环形图（circular plot）可视化工具：circos -conf <circos.conf> 依配置渲染
+  PNG/SVG 环形图，circos -modules 检查 Perl 依赖模块，gddiag 做 GD 渲染诊断。常用于展示染色体特征分布、
+  共线性、SNP 密度、GC 含量、表达量热图等环形关系图。
+
+  '
+homepage: http://circos.ca/
+license: GPL-2.0-only
+software_versions:
+- id: circos_native
+  circos: 0.69.6
+  build_route: official biocontainer（quay.io/biocontainers/circos / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/circos
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    circos=0.69.6 对应官方 circos-0.69-6.tgz（与 12.md 文档版本一致）；bioconda 另有 0.69.8/0.69.9。
+    官方 tarball 与 conda 包均不含全部 Perl 依赖，需 circos -modules 检查并按缺失项补装。'
+- id: circos_nextflow_nfcore
+  circos: 官方无 nf-core 子模块（2026-09 抓取 modules/nf-core/circos 404）
+  source: —
+  note: nf-core/modules 无 circos；Nextflow 场景请走 native 或自建 nextflow/local。
+- id: circos_snakemake_wrappers
+  circos: 官方无 wrapper（bio/circos 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/circos
+    返回 404；Snakemake 场景请走 native。
+implementations:
+- id: circos_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.69.6"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/circos
+    quay_biocontainers: quay.io/biocontainers/circos
+    depot: https://depot.galaxyproject.org/singularity/circos%3A0.69.6--pl5.22.0_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda circos=0.69.6；容器可用 quay.io/biocontainers/circos:0.69.6--pl5.22.0_0
+default_implementation: circos_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: circos 子命令：plot|modules|gddiag
+  conf:
+    type: file
+    required: false
+    cli_arg: -conf
+    description: Circos 主配置文件（plot 使用，如 circos.conf）
+  outputdir:
+    type: string
+    required: false
+    cli_arg: -outputdir
+    description: 输出目录（plot；默认当前目录）
+  noparanoid:
+    type: boolean
+    default: true
+    cli_arg: -noparanoid
+    description: 关闭 paranoid 校验（plot；文档示例使用 -noparanoid）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 circos / gddiag 的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（契约字段；Circos 单进程渲染，不实际注入二进制）
+  tmpdir:
+    type: string
+    required: false
+    description: 运行期临时目录覆盖（契约字段）
+outputs:
+  plot_image:
+    type: file
+    format: png
+    description: plot 渲染产物（circos.png / circos.svg，依 conf 中 image_output 设定）
+  module_report:
+    type: file
+    format: txt
+    description: modules 子命令的依赖模块检查输出
+environment:
+  container_official: quay.io/biocontainers/circos（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda circos=0.69.6），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py
+    时用 conda/mamba 安装 circos。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    plot: 4
+    modules: 2
+    gddiag: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: circos

@@ -1,0 +1,69 @@
+# kent native Apptainer 配方（自建兜底：bioconda/quay/depot 无 kent 整体包）
+# 底座：debian:bookworm-slim
+# 安装：apt 只装运行时 + 官方 UCSC 预编译二进制（hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/）
+# 清理：apt lists / docs / man / cache + 构建期 curl
+#
+# 构建：apptainer build kent.sif Apptainer.def
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        procps \
+        curl \
+        zlib1g \
+        libssl3 \
+        libpng16-16 \
+        libmariadb3 \
+        libgsl27 \
+        libcurl4 \
+        libbz2-1.0 \
+        libpq5
+    mkdir -p /opt/kent/bin
+    for t in faToTwoBit twoBitToFa twoBitInfo blat bedToBigBed bigWigToBedGraph; do
+        curl -fsSL -o "/opt/kent/bin/$t" "https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/$t"
+        chmod 0755 "/opt/kent/bin/$t"
+        ln -sf "/opt/kent/bin/$t" "/usr/local/bin/$t"
+    done
+    # 功能冒烟
+    printf '>chr_test\nACGTACGTACGT\n' > /tmp/smoke.fa
+    /opt/kent/bin/faToTwoBit /tmp/smoke.fa /tmp/smoke.2bit
+    test -s /tmp/smoke.2bit
+    rm -f /tmp/smoke.fa /tmp/smoke.2bit
+    # 清理四连
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* \
+           /var/lib/apt/lists/* /var/cache/debconf/* /tmp/* /var/tmp/*
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export TMPDIR=/tmp
+    export PATH=/opt/kent/bin:/usr/local/bin:/usr/bin:/bin
+
+%runscript
+    exec "$@"
+
+%test
+    set -eu
+    printf '>chr_test\nACGTACGTACGT\n' > /tmp/test.fa
+    faToTwoBit /tmp/test.fa /tmp/test.2bit
+    test -s /tmp/test.2bit
+    twoBitToFa /tmp/test.2bit /tmp/test.fa
+    grep -q 'ACGTACGTACGT' /tmp/test.fa
+    rm -f /tmp/test.fa /tmp/test.2bit
+    echo "kent (UCSC prebuilt binaries) OK"
+
+%labels
+    org.bioskills.software kent
+    org.bioskills.impl kent_native
+    org.bioskills.base_image debian:bookworm-slim
+    kent_version jksrc-v330
+    pkg_route apt-runtime+ucsc-prebuilt-binaries

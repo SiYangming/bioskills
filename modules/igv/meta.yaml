@@ -1,0 +1,113 @@
+software: igv
+canonical: igv
+category: visualization
+description: 'IGV（Integrative Genomics Viewer）是 Broad Institute 的本地交互式基因组浏览器（Java GUI）：
+  igv.sh 启动图形界面，igv.sh --genome <id|.genome> --locus <chr:start-end> <files...> 直接加载基因组与
+  BAM/VCF/GFF3/BigWig 等轨道，igv.sh --batch <script> 支持批处理脚本；需 Java 运行环境。'
+
+homepage: https://software.broadinstitute.org/software/igv/
+license: MIT
+software_versions:
+- id: igv_native
+  igv: 2.5.3
+  build_route: 官方预编译二进制（Broad 官网 IGV_Linux_2.5.3.zip）优先；官方镜像/conda 备选（quay.io/biocontainers/igv
+    / depot.galaxyproject.org，bioconda 仅收录 2.5.2）
+  source: https://data.broadinstitute.org/igv/projects/downloads/2.5/IGV_Linux_2.5.3.zip
+  note: '2026-09 核实：IGV 2.5.3 官方预编译包在 Broad 官网可下载（http 200，sha256
+    bc71fa385c87941e32fde4cc4cc786f809fc95b10e5febd3abe1ee6dadef2b55）；bioconda 的 igv
+    2.5.x 仅收录 2.5.2（quay.io/biocontainers/igv:2.5.2--0、depot igv:2.5.2--0），故 conda/容器
+    路线最高为 2.5.2，与官方预编译 2.5.3 相差一个 patch；IGV 为 Java 工具，JAVA_OPTS 透传。'
+- id: igv_nextflow_nfcore
+  igv: 官方模块为 igv/js（基于 igv.js 的静态浏览器嵌入，非桌面 IGV）
+  module_version: nf-core master（2026-09）
+  source: https://github.com/nf-core/modules/tree/master/modules/nf-core/igv/js
+  note: '2026-09 核实 modules/nf-core/igv 存在，仅含 js 子模块（modules/nf-core/igv/js）；该模块生成
+    *_genome-browser.html（igv.js 静态嵌入），不启动桌面 IGV，也无 bioconda::igv pin；桌面 IGV
+    场景请走 native。'
+- id: igv_snakemake_wrappers
+  igv: 官方无 wrapper（bio/igv 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/igv
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: igv_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.5.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    提供 launch（启动 GUI）/ batch（批处理脚本）两个子命令，为本地基因组浏览器启动器。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/igv（2.5.x 仅 2.5.2；最新 2.19.8）
+    quay_biocontainers: quay.io/biocontainers/igv（tag 2.5.2--0 / 2.19.8--hdfd78af_1）
+    upstream_prebuilt: https://data.broadinstitute.org/igv/projects/downloads/2.5/IGV_Linux_2.5.3.zip（官方预编译包，首选）
+    install_hint: 首选官方预编译 zip（2.5.3，native/install.sh --method binary）；容器/conda 走
+      quay.io/biocontainers/igv:2.5.2--0（2.5.3 未收录）
+default_implementation: igv_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: igv 子命令：launch|batch
+  genome:
+    type: string
+    required: false
+    cli_arg: --genome
+    description: 基因组 id（如 hg18）或 .genome/.fasta 路径
+  locus:
+    type: string
+    required: false
+    cli_arg: --locus
+    description: 初始定位区间（如 scaffold_1:1000-2000）
+  batch:
+    type: file
+    required: false
+    cli_arg: --batch
+    description: 批处理脚本路径（batch 子命令；脚本内可用 snapshot/goto/sort 等命令）
+  files:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 启动时加载的数据文件（BAM/VCF/GFF3/BigWig/BED，可多个；BAM 需 .bai 索引）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（Java GUI 单实例，仅供上层调度器读取）
+    description: 线程数（统一接口保留；IGV 为桌面 GUI，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 igv.sh 的额外参数（高级用法，慎用）
+outputs:
+  snapshot:
+    type: file
+    format: png
+    description: 批处理脚本 snapshot 命令导出的图片（batch 时可选产物）
+  session:
+    type: file
+    format: xml
+    description: 保存的 IGV 会话文件（.xml，GUI/批处理可选产物）
+environment:
+  container_official: quay.io/biocontainers/igv（bioconda 官方镜像；2.5.x 对应 tag 2.5.2--0，2.5.3
+    未收录，tag 以 quay / depot.galaxyproject.org 为准，见 README）
+  note: 官方预编译二进制优先（Broad IGV_Linux_2.5.3.zip）；官方镜像/conda 已覆盖（最高 2.5.2），本地不再维护
+    Dockerfile/Apptainer.def；IGV 为 Java 工具，运行需 JAVA_OPTS。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx6g'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    launch: 4
+    batch: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: igv.sh

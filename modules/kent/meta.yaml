@@ -1,0 +1,113 @@
+software: kent
+canonical: kent
+category: visualization
+description: 'UCSC kent（jksrc）是 UCSC Genome Browser 配套的命令行工具源码树，内含数百个基因组工具：
+  faToTwoBit / twoBitToFa（FASTA↔2bit 互转）、twoBitInfo、blat（快速比对）、bedToBigBed / bigWigToBedGraph
+  （Big* 格式转换）等。GBrowse2 的 Bio::DB::BigFile / Bio::DB::BigWig 依赖 kent 编译出的 jkweb.a，
+  文档明确要求使用 jksrc v330（最新版 kent 编译不出 jkweb.a）。
+
+  '
+homepage: https://hgdownload.gi.ucsc.edu/admin/
+license: "UCSC Genome Browser License (non-SPDX; academic/non-profit free, commercial requires license)"
+software_versions:
+- id: kent_native
+  kent: jksrc v330
+  build_route: 自建（bioconda→quay.io/biocontainers→depot.galaxyproject.org 均无 kent 整体包；官方仅按工具提供预编译二进制）
+  source: http://hgdownload.cse.ucsc.edu/admin/jksrc.archive/jksrc.v330.zip
+  note: 'bioconda/quay/depot 无 kent 整体包（2026-09：bioconda/kent=404、quay/biocontainers/kent=401、depot
+    无 kent），故 native 走自建 Dockerfile/Apptainer.def；官方另有按工具预编译二进制
+    （https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/<tool>）与 bioconda 的 ucsc-* 单工具包
+    （ucsc-fatotwobit / ucsc-twobittofa / ucsc-blat 等）。文档要求用 jksrc v330（比最新版更易编译出 jkweb.a）。'
+- id: kent_nextflow_nfcore
+  kent: 官方无 nf-core 子模块（2026-09 抓取 modules/nf-core/kent 404）
+  source: —
+  note: nf-core/modules 无 kent；Nextflow 场景请走 native 或自建 nextflow/local。
+- id: kent_snakemake_wrappers
+  kent: 官方无 wrapper（bio/kent 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/kent
+    返回 404；Snakemake 场景请走 native。
+implementations:
+- id: kent_native
+  path: native
+  source_type: custom
+  type: native
+  version: "jksrc v330"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。多工具源码树，
+    子命令覆盖文档用到的代表性二进制（faToTwoBit / twoBitToFa / twoBitInfo / blat / bedToBigBed）。'
+  container_ref:
+    upstream_source: http://hgdownload.cse.ucsc.edu/admin/jksrc.archive/jksrc.v330.zip
+    upstream_prebuilt: https://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/
+    bioconda_ucsc_tools: https://anaconda.org/bioconda/ucsc-fatotwobit
+    install_hint: 无 kent 整体 conda 包/镜像；宿主机可用官方预编译二进制或编译 jksrc v330，容器走本地 Dockerfile/Apptainer.def
+default_implementation: kent_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: kent 子命令（代表性工具）：faToTwoBit|twoBitToFa|twoBitInfo|blat|bedToBigBed
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 主输入文件（FASTA / 2bit / PSL / BED）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输出文件（2bit / FASTA / tab / PSL / bigBed）
+  db:
+    type: file
+    required: false
+    cli_arg: positional
+    description: blat 的数据库（2bit 或 .fa + .2bit 前缀）
+  query:
+    type: file
+    required: false
+    cli_arg: positional
+    description: blat 的查询序列（FASTA）
+  chrom_sizes:
+    type: file
+    required: false
+    cli_arg: positional
+    description: bedToBigBed 的 chrom.sizes
+  type:
+    type: string
+    required: false
+    cli_arg: positional
+    description: bedToBigBed 的 BED 类型（如 bed6）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给具体 kent 工具的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（契约字段；blat 注入 -threads=N，其余工具不注入）
+  tmpdir:
+    type: string
+    required: false
+    description: 运行期临时目录覆盖（契约字段）
+outputs:
+  result_file:
+    type: file
+    description: 主输出文件（2bit / FASTA / tab / PSL / bigBed，依子命令而定）
+environment:
+  container_official: "（无 kent 整体官方镜像：bioconda/kent=404、quay/biocontainers/kent=401、depot 无；代表性工具 faToTwoBit/twoBitToFa/blat 有官方 ucsc-* biocontainer，见 README）"
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 无官方 kent 整体镜像，故 native 提供自建 Dockerfile/Apptainer.def（debian:bookworm-slim + apt 最小化 + 官方预编译二进制）；
+    宿主机直跑 main.py 时可用官方预编译二进制（hgdownload exe）或源码编译 jksrc v330。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    blat: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: faToTwoBit
