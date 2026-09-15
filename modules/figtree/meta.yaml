@@ -1,0 +1,122 @@
+software: figtree
+canonical: figtree
+category: phylogenetics
+description: 'FigTree 是系统发育树可视化与出版级作图工具（Java/Swing）：figtree [-graphic <PDF|SVG|PNG|JPEG>]
+  [-width i] [-height i] [<tree-file>] [<graphic-file>] 读取 Newick/NEXUS/NHX 树，交互式编辑并
+  导出出版级图片，常用于 RAxML/IQ-TREE 结果与分子钟分析（PAML mcmctree / r8s / BEAST2）树的可视化。
+  是 14.md「五 → 4.6 树文件处理与可视化」及「六、分子钟分析」中的树可视化工具。
+
+  '
+homepage: http://tree.bio.ed.ac.uk/software/figtree/
+license: Apache-2.0
+software_versions:
+- id: figtree_native
+  figtree: 1.4.4
+  build_route: official biocontainer（quay.io/biocontainers/figtree / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/figtree
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 latest=1.4.4；官方容器 tag quay.io/biocontainers/figtree:1.4.4--hdfd78af_1
+    （depot.galaxyproject.org 有同名 sif，2026-09 核实 200）。官方 GitHub release 另提供预编译包
+    FigTree_v1.4.4.tgz（sha256=529b867657b29e369cf81cd361e6a76bd713d488a63b91932df2385800423aa8）与源码
+    （rambaut/figtree，ant 构建）。宿主机直跑 main.py 时用 conda/mamba 安装 figtree=1.4.4，或 brew
+    （brewsci/bio tap，当前 1.4.4，见 README）。'
+- id: figtree_nextflow_nfcore
+  figtree: 官方无模块（modules/nf-core/figtree 404）
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/figtree/meta.yml
+    返回 404；Nextflow 场景请直接调用 native。
+- id: figtree_snakemake_wrappers
+  figtree: 官方无 wrapper（bio/figtree 404）
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/figtree/wrapper.py
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: figtree_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.4.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。export
+    子命令无界面导出出版级图片（-graphic PDF/SVG/PNG/JPEG -width -height）；view 子命令打开交互式 GUI
+    （需显示环境）。覆盖 14.md「五 → 4.6 树文件处理与可视化」与「六、分子钟分析」的树可视化。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/figtree
+    quay_biocontainers: quay.io/biocontainers/figtree
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda figtree=1.4.4；容器可用
+      quay.io/biocontainers/figtree:1.4.4--hdfd78af_1（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: figtree_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: figtree 子命令：export|view
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入树文件（Newick / NEXUS / NHX）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: export 的输出图片文件（-graphic 指定格式时必填）
+  graphic:
+    type: string
+    default: PDF
+    cli_arg: -graphic
+    description: export 图形格式：PDF|SVG|PNG|JPEG
+  width:
+    type: integer
+    required: false
+    cli_arg: -width
+    description: 图形宽度（像素；PNG/JPEG 用）
+  height:
+    type: integer
+    required: false
+    cli_arg: -height
+    description: 图形高度（像素；PNG/JPEG 用）
+  url:
+    type: boolean
+    default: false
+    cli_arg: -url
+    description: 输入文件按 URL 读取（管道场景）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（FigTree 单进程 JVM；仅供上层调度器读取）
+    description: 线程数（统一接口保留；单进程不注入；堆内存经 JAVA_OPTS 透传）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 FigTree 的额外参数（高级用法，慎用）
+outputs:
+  graphic_file:
+    type: file
+    format: pdf
+    description: 导出图片（export；格式由 -graphic 决定，如 .pdf/.svg/.png/.jpeg）
+environment:
+  container_official: quay.io/biocontainers/figtree（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：brewsci/bio tap，当前 1.4.4）安装 figtree；官方另有
+    预编译包 FigTree_v1.4.4.tgz 与源码（ant 构建）。JVM 堆内存经 JAVA_OPTS 透传。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx2g -Djava.io.tmpdir={tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    export: 1
+    view: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: java
+  note: export/view 包装官方 figtree.jar（java -jar；export 注入 -Djava.awt.headless=true 无界面导出）；
+    JVM 堆内存经 JAVA_OPTS。官方层 nf-core 与 snakemake-wrappers 均无（2026-09 核实 404），见 README 与
+    software_versions。

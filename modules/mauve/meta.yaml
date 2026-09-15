@@ -1,0 +1,183 @@
+software: mauve
+canonical: mauve
+category: comparative_genomics
+description: 'Mauve 2.4.0 是多基因组比对与可视化系统：progressiveMauve 以渐进式算法构建
+  多基因组比对，识别同源区与大尺度结构变异（重排、倒位等），输出 XMFA 比对 + backbone 保守区坐标；
+  mauve（GUI）可视化比对结果。本模块以文档 14.md「十四、Mauve」采用的 2.4.0 为准
+  （附录 v2.3.1 属淘汰技术，不登记）。'
+homepage: http://darlinglab.org/mauve/mauve.html
+license: GPL-2.0
+software_versions:
+- id: mauve_native
+  mauve: '2.4.0（官方预编译 mauve_linux_2.4.0.tar.gz；bioconda 包 mauve=2.4.0.r4736 +
+    依赖 mauvealigner=1.2.0 提供 progressiveMauve/mauveAligner）'
+  subcommands: 'progressiveMauve（多基因组比对）· mauveAligner · Mauve（GUI，官方 tarball 名为 Mauve）'
+  build_route: official biocontainer（quay.io/biocontainers/mauve:2.4.0.r4736--h43d4aaa_3 → depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/mauve
+  note: '2026-09 核实：官方预编译 https://darlinglab.org/mauve/downloads/mauve_linux_2.4.0.tar.gz
+    HTTP 200（9516657 bytes，sha256 66ba3c359b6534ca8498dab079b5e582acfece036067478a289fe363a74fd27b）；
+    解压得 mauve_2.4.0/{linux-x64/progressiveMauve,linux-x64/mauveAligner,Mauve(启动脚本),Mauve.jar}；
+    quay.io/biocontainers/mauve tag 2.4.0.r4736--h43d4aaa_3；depot singularity HTTP 200；
+    bioconda mauve 依赖 mauvealigner（progressiveMauve/mauveAligner 由此提供）；homebrew-core
+    与 brewsci/bio 均无 mauve 公式（404，故 README 不写 brew 块）。'
+- id: mauve_nextflow_nfcore
+  mauve: 官方无模块（modules/nf-core/mauve 404）
+  source: —
+  note: 2026-09 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/mauve
+    与 raw …/modules/nf-core/mauve/meta.yml 均 404，无官方 nf-core 模块。
+- id: mauve_snakemake_wrappers
+  mauve: 官方无 wrapper（bio/mauve 404）
+  source: —
+  note: 2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/mauve
+    与 raw …/bio/mauve/{meta.yaml,wrapper.py} 均 404。
+- id: mauve_nextflow_local
+  mauve: 未启用（未建 nextflow/ 目录；Nextflow 场景以 native/ 兜底）
+- id: mauve_snakemake_local
+  mauve: 未启用（未建 snakemake/ 目录；需要时 shell 调 native/main.py）
+implementations:
+- id: mauve_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.4.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    align（progressiveMauve）多基因组比对 → XMFA + backbone；apply_backbone 对已有 XMFA 重评估
+    backbone；gui 可视化查看。Java 工具，JVM 堆经 JAVA_OPTS 透传。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mauve
+    quay_biocontainers: quay.io/biocontainers/mauve
+    galaxyproject: https://depot.galaxyproject.org/singularity/mauve%3A2.4.0.r4736--h43d4aaa_3
+    upstream_prebuilt: https://darlinglab.org/mauve/downloads/mauve_linux_2.4.0.tar.gz
+    upstream_source: https://github.com/koadman/mauve（官方 developer-guide「Building from source」）
+    install_hint: 官方预编译 tarball（Linux x64）解压即用；或 mamba create -n mauve -c conda-forge
+      -c bioconda mauve=2.4.0.r4736（依赖 mauvealigner 提供 progressiveMauve）；容器可用
+      quay.io/biocontainers/mauve:2.4.0.r4736--h43d4aaa_3
+default_implementation: mauve_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'mauve 子命令：align（多基因组比对）| apply_backbone（重评估 backbone）| gui（可视化）'
+  genomes:
+    type: file
+    required: false
+    cli_arg: positional
+    description: align 输入基因组（FASTA/GenBank，多个；progressiveMauve 位置参数）
+  alignment:
+    type: file
+    required: false
+    cli_arg: positional
+    description: gui/apply_backbone 输入的 XMFA 比对文件（apply_backbone 用 apply_backbone / --apply-backbone）
+  output:
+    type: file
+    required: false
+    cli_arg: --output
+    description: 输出 XMFA 比对文件（默认写 stdout）
+  backbone_output:
+    type: file
+    required: false
+    cli_arg: --backbone-output
+    description: backbone（保守区坐标）输出文件
+  output_guide_tree:
+    type: file
+    required: false
+    cli_arg: --output-guide-tree
+    description: 输出比对所用系统发育引导树（NEWICK）
+  input_guide_tree:
+    type: file
+    required: false
+    cli_arg: --input-guide-tree
+    description: 输入系统发育引导树（NEWICK）
+  seed_weight:
+    type: integer
+    required: false
+    cli_arg: --seed-weight
+    description: 初始锚点种子权重
+  weight:
+    type: integer
+    required: false
+    cli_arg: --weight
+    description: 最小 LCB（局部共线区块）权重/断点罚分
+  min_scaled_penalty:
+    type: integer
+    required: false
+    cli_arg: --min-scaled-penalty
+    description: 缩放后最小断点罚分
+  disable_backbone:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --disable-backbone
+    description: 关闭 backbone 检测
+  collinear:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --collinear
+    description: 假定输入序列共线（无重排）
+  mums:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --mums
+    description: 仅求 MUM（不做 LCB 判断）
+  seed_family:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --seed-family
+    description: 使用 spaced seed family 提升锚定灵敏度
+  homology_prob:
+    type: float
+    required: false
+    cli_arg: --hmm-p-go-homologous
+    description: 同源 HMM 转移概率（apply_backbone 用；默认 0.0001）
+  unrelated_prob:
+    type: float
+    required: false
+    cli_arg: --hmm-p-go-unrelated
+    description: 非同源 HMM 转移概率（apply_backbone 用；默认 0.000001）
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程占位（progressiveMauve/Mauve 单线程，接受但不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应二进制的额外参数（高级用法，慎用）
+outputs:
+  xmfa:
+    type: file
+    format: xmfa
+    description: progressiveMauve 输出的 XMFA（eXtended Multi-Fasta Alignment）比对结果
+  backbone:
+    type: file
+    description: backbone 保守区坐标文件（--backbone-output）
+environment:
+  container_official: quay.io/biocontainers/mauve（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda mauve → quay.io/biocontainers → depot.galaxyproject.org，2026-09
+    核实），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 用 conda/mamba（mauve=2.4.0.r4736）
+    或官方预编译 tarball。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+  per_subcommand_threads:
+    align: 1
+    apply_backbone: 1
+    gui: 1
+    default: 1
+  note: 'Java 工具（单线程）→ --threads 仅占位接受不注入；JAVA_OPTS 透传 JVM 堆设置。
+    progressiveMauve/mauveAligner 为静态 C++ 二进制（官方 tarball 内未内嵌版本字面量），
+    GUI 启动脚本 Mauve 内置 JAVA_ARGS（-Xms200M -Xmx500M），需更大堆时改脚本。
+    progressiveMauve 用 --scratch-path-1=<tmpdir> 指定临时目录。'
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: progressiveMauve

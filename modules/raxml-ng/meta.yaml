@@ -1,0 +1,142 @@
+software: raxml-ng
+canonical: raxml-ng
+category: phylogenetics
+description: 'RAxML-NG（RAxML Next Generation，amkozlov/raxml-ng，本模块登记 2.0.3）是 classic RAxML
+  的重写版最大似然系统发育建树工具：更快、更易用、更灵活，命令行统一为 raxml-ng --<mode> + --msa/--model/
+  --threads（如 --all 一次完成 ML 搜索 + bootstrap + 模型选择；--search 拓扑搜索；--evaluate 评估给定
+  拓扑；--parse 解析比对）。它是 14.md「五、RAxML - 物种树构建 → 方法二/三」推荐的下一代建树工具
+  （与 classic RAxML 见 modules/raxml）。
+
+  '
+homepage: https://cme.h-its.org/exelixis/web/software/raxml/index.html
+license: AGPL-3.0-or-later
+software_versions:
+- id: raxml-ng_native
+  raxml-ng: 2.0.3
+  build_route: official biocontainer（quay.io/biocontainers/raxml-ng / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/raxml-ng
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 现行 latest=2.0.3；native 登记 2.0.3。官方容器 tag quay.io/biocontainers/raxml-ng:2.0.3--h870a6a7_0
+    （depot.galaxyproject.org 有同名 sif）。官方 GitHub release 另提供预编译二进制（raxml-ng_v2.0.3_linux_x86_64.zip
+    sha256=d660cebe2a083de6c20d9354968803b8fd10be206f625be2393997d0abe98105；raxml-ng_v2.0.3_macos.zip
+    sha256=6dc678ba0202da10dfeb8a7e4718dec583b68339fdc912391fbe349c69a1c99e）与源码（raxml-ng_v2.0.3_source.zip）。
+    宿主机直跑 main.py 时用 conda/mamba 安装 raxml-ng=2.0.3，或 brew（homebrew-core 当前 2.0.3，见 README）。'
+- id: raxml-ng_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  raxml-ng: '1.2.2（扁平模块 raxmlng）/ 2.0.3（子模块 raxmlng/search）'
+  source: bioconda::raxml-ng=1.2.2（modules/nf-core/raxmlng/environment.yml）；bioconda::raxml-ng=2.0.3
+    （modules/nf-core/raxmlng/search/environment.yml）
+  note: 'nf-core 官方 modules/nf-core/raxmlng 存在（扁平模块 pin bioconda::raxml-ng=1.2.2，2026-09 在线核实）；
+    2026-09 新增 namespaced 子模块 modules/nf-core/raxmlng/search（pin bioconda::raxml-ng=2.0.3，走 RAxML-NG 2.0
+    MOOSE 自动模型选择 + 建树）。以官方在线目录为准。'
+- id: raxml-ng_snakemake_wrappers
+  raxml-ng: 官方无 wrapper（bio/raxml-ng 404）
+  source: —
+  note: '2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/raxml-ng（及 bio/raxmlng）
+    返回 404（登记「官方无」）。Snakemake 场景请用 raxml-ng_native 兜底。'
+implementations:
+- id: raxml-ng_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。all 子命令
+    ML 搜索 + bootstrap + 模型选择（--all）；ml/search 做 ML/拓扑搜索；evaluate 评估给定拓扑（--tree）；
+    parse 解析比对（--parse --msa/--model；产出 <prefix>.raxml.rba，位点被压缩时另出 .reduced.phy）；version 打印版本。自动按线程优先级注入 --threads。容器走官方镜像
+    （quay.io/biocontainers/raxml-ng，见 software_versions）。classic RAxML 见 modules/raxml。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/raxml-ng
+    quay_biocontainers: quay.io/biocontainers/raxml-ng
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda raxml-ng=2.0.3；容器可用
+      quay.io/biocontainers/raxml-ng:2.0.3--h870a6a7_0（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: raxml-ng_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: raxml-ng 子命令：all|ml|search|evaluate|parse|version
+  msa:
+    type: file
+    required: true
+    cli_arg: --msa
+    description: 输入多序列比对（FASTA/Phylip，常为 Gblocks/trimAl 修剪后结果）
+  model:
+    type: string
+    default: GTR+G
+    cli_arg: --model
+    description: 进化模型（GTR+G / GTR+G4 / LG+G 等；all 模式可用 MFP+MERGE 自动选择）。
+      ⚠️ RAxML-NG 的 --parse 同样要求 --model（本机实测：缺 --model 会报 "Please specify an evolutionary model"），驱动对 parse 默认注入 GTR+G。
+  tree:
+    type: file
+    required: false
+    cli_arg: --tree
+    description: evaluate 模式的输入树（Newick）
+  prefix:
+    type: string
+    required: false
+    cli_arg: --prefix
+    description: 输出文件前缀（缺省 <msa>.raxml）
+  bootstrap_reps:
+    type: integer
+    required: false
+    cli_arg: --bs-trees
+    description: bootstrap 重复次数（--bs-trees；all/--bootstrap 模式）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --threads
+    description: 线程数（驱动注入 --threads；默认 8，CPU 密集）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 raxml-ng 的额外参数（高级用法，慎用）
+outputs:
+  best_tree:
+    type: file
+    format: newick
+    description: 最佳 ML 树（<prefix>.raxml.bestTree）
+  best_model:
+    type: file
+    format: txt
+    description: 最佳模型（<prefix>.raxml.bestModel，all/MOOSE 模式）
+  result:
+    type: file
+    format: newick
+    description: 带支持度的结果树（<prefix>.raxml.support / bipartitions）
+  reduced_msa:
+    type: file
+    format: phylip
+    description: parse 模式的压缩比对产物（<prefix>.raxml.reduced.phy；仅当位点被去重/压缩时生成）
+  binary_msa:
+    type: file
+    format: rba
+    description: parse 模式的二进制比对产物（<prefix>.raxml.rba；含 <prefix>.raxml.log 日志，本机实测证实）
+environment:
+  container_official: quay.io/biocontainers/raxml-ng（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：homebrew-core 当前 2.0.3）安装 raxml-ng；官方另有预编译
+    二进制 zip（Linux/macOS）与源码 zip。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    all: 8
+    ml: 8
+    search: 8
+    evaluate: 4
+    parse: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: raxml-ng
+  note: all/ml/search/evaluate 包装官方 raxml-ng（统一 --<mode> + --msa/--model/--threads，all 可 --bs-trees）；
+    parse 为 --parse（快速）；version 为 --version。RAxML-NG 为 CPU 密集，默认 8 线程。官方层 nf-core 有
+    raxmlng（扁平，pin 1.2.2）与 raxmlng/search（pin 2.0.3），snakemake-wrappers 无，见 README 与
+    software_versions。

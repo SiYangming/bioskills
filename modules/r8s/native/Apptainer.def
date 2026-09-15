@@ -1,0 +1,91 @@
+# r8s native Apptainer/Singularity 定义（bookworm-slim + 官方源码 make 路线）
+#
+# 路线：与 Dockerfile 一致 —— r8s 1.81 无官方 conda/容器渠道（bioconda/quay/depot
+#       2026-09 核实全无），官方发布源为 SourceForge；apt 装 gfortran/gcc/make 构建依赖，
+#       下载 r8s1.81.tar.gz 补丁 makefile 后 make 重编译 r8s。
+#
+# 构建：apptainer build r8s.sif Apptainer.def
+# 运行：apptainer run r8s.sif -b -f r8s_in.txt
+# 说明：native/main.py 驱动在宿主机运行，不随镜像分发（镜像内仅 r8s 二进制）。
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software r8s
+    Version 1.81
+    R8sVersion 1.81
+    PkgRoute apt(build deps gfortran/gcc/make) + official sourceforge tarball source (make)
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+
+    set -eux
+
+    # 1) apt 构建依赖（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        gfortran \
+        gcc \
+        make \
+        libc6-dev \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # 2) 官方源码下载 + sha256 + 补丁 makefile + 编译 r8s + 版本断言
+    #    r8s -v -b 以退出码 1 结束（正常），用 || true 兜住
+    curl -fSL -o /tmp/r8s.tar.gz \
+        "https://downloads.sourceforge.net/project/r8s/r8s1.81.tar.gz"
+    echo "9e89d7851d74d74487d147b77177a717e6c659b485c9b67f516340a6ed595080  /tmp/r8s.tar.gz" | sha256sum -c -
+    mkdir -p /tmp/src
+    tar -xzf /tmp/r8s.tar.gz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d -name 'r8s*' | head -1)"
+    cd "$SRC/src"
+    sed -e 's#/usr/include/[^ ]*##g' makefile > makefile.new && mv makefile.new makefile
+    make CC=gcc FC=gfortran LPATH= CFLAGS="-O2 -w -fcommon" FFLAGS="-fallow-argument-mismatch -w" -j"$(nproc)" r8s
+    test -x ./r8s
+    install -m 0755 ./r8s /usr/local/bin/r8s
+    r8s -v -b 2>&1 | grep -qF "r8s version 1.81"
+
+    # 3) 清理四连 + 删构建期 curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export PATH=/usr/local/bin:$PATH
+
+%runscript
+    exec r8s "$@"
+
+%test
+    # 非交互自检：r8s -v -b 打印 "r8s version 1.81"（退出码 1，需兜住）
+    set -eux
+    command -v r8s
+    r8s -v -b 2>&1 | grep -qF "r8s version 1.81"
+
+%help
+    r8s native Apptainer 镜像（bookworm-slim + 官方源码 make）。
+    r8s 1.81：似然分子钟分析（penalized likelihood），位于 /usr/local/bin。
+    调用方式：apptainer run r8s.sif -b -f <NEXUS 输入>（如 -b -f r8s_in.txt）
+    挂载示例：apptainer run -B $PWD:/data -H /data r8s.sif -b -f /data/r8s_in.txt

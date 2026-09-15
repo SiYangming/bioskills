@@ -1,0 +1,125 @@
+software: trimal
+canonical: trimal
+category: phylogenetics
+description: 'trimAl（trimal.cgenomics.org / inab/trimal）是多序列比对（MSA）自动修剪工具，是 Gblocks
+  的现代替代品：支持自动化阈值选择（-automated1）、多种修剪策略（-gappyout/-strictplus/-gt 等），
+  从比对中去掉伪序列与难比对区域，输出更紧凑可靠的比对供系统发育建树使用；同一发行包还提供 readal
+  （比对格式转换）与 statal（比对统计）两个配套程序。它是 14.md「四、单拷贝同源基因提取和多序列比对 →
+  安装trimAl」登记的 MSA 修剪主流工具（本模块登记 1.4.1）。
+
+  '
+homepage: http://trimal.cgenomics.org/
+license: GPL-3.0-or-later
+software_versions:
+- id: trimal_native
+  trimal: '1.4.1'
+  build_route: official biocontainer（quay.io/biocontainers/trimal / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/trimal
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
+    bioconda 现行 latest=1.5.1，但 14.md 流程锁定 1.4.1；native 登记 1.4.1。官方容器 tag
+    quay.io/biocontainers/trimal:1.4.1--h4ac6f70_9（depot.galaxyproject.org 有同名 sif）。官方 GitHub
+    release 另提供预编译二进制（trimAl_Linux_x86-64.zip / trimAl_MacOS_x86-64.zip，含 trimal/readal/
+    statal）与源码归档（inab/trimal/archive/refs/tags/v1.4.1.tar.gz，source/ 内 make 编译）。宿主机直跑
+    main.py 时用 conda/mamba 安装 trimal=1.4.1，或 brew（homebrew-core 当前 1.5.1，见 README）。'
+- id: trimal_nextflow_nfcore
+  module_version: nf-core master（2026-09 在线核实）
+  trimal: '1.5.0'
+  source: bioconda::trimal=1.5.0（modules/nf-core/trimal/environment.yml，扁平模块）
+  note: 'nf-core 官方 modules/nf-core/trimal 存在（扁平结构：environment.yml + main.nf + meta.yml + tests/，
+    2026-09 在线核实，以官方在线目录为准）；pin bioconda::trimal=1.5.0（高于 native 登记 1.4.1）。'
+- id: trimal_snakemake_wrappers
+  trimal: 官方无 wrapper（bio/trimal 404）
+  source: —
+  note: '2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/trimal 返回 404
+    （登记「官方无」）。Snakemake 场景请用 trimal_native 兜底。'
+implementations:
+- id: trimal_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.4.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。trim
+    子命令自动修剪比对（默认 -automated1，可 -gt/-gappyout/-strictplus）；readal 做比对格式转换；
+    statal 出比对统计；version 打印用法/版本。trimAl 单线程，--threads 仅作统一接口保留（不注入）。
+    容器走官方镜像（quay.io/biocontainers/trimal，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/trimal
+    quay_biocontainers: quay.io/biocontainers/trimal
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda trimal=1.4.1；容器可用
+      quay.io/biocontainers/trimal:1.4.1--h4ac6f70_9（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: trimal_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: trimal 子命令：trim|readal|statal|version
+  input:
+    type: file
+    required: true
+    cli_arg: -in
+    description: 输入多序列比对（FASTA/Phylip/Clustal/Nexus 等，依子命令）
+  output:
+    type: file
+    required: false
+    cli_arg: -out
+    description: 输出文件（trim 修剪后比对 / readal 转换后比对 / statal 统计报告）
+  method:
+    type: string
+    default: automated1
+    description: trim 修剪策略：automated1|gappyout|strictplus|strict|noallgaps|gt（配合 --gt-threshold）
+  gt_threshold:
+    type: float
+    required: false
+    cli_arg: -gt
+    description: method=gt 时的 gap 阈值（0–1，如 0.8）
+  readal_format:
+    type: string
+    required: false
+    description: readal 输出格式：fasta|phylip|clustal|nexus|pir|...（映射 -<format>）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（trimAl 单线程，仅作统一接口保留，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 trimal/readal/statal 的额外参数（高级用法，慎用）
+outputs:
+  trimmed_alignment:
+    type: file
+    format: fasta
+    description: trim 产物：修剪后的多序列比对
+  converted_alignment:
+    type: file
+    format: fasta
+    description: readal 产物：格式转换后的比对
+  stats_report:
+    type: file
+    format: txt
+    description: statal 产物：比对统计报告
+environment:
+  container_official: quay.io/biocontainers/trimal（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：homebrew-core 当前 1.5.1）安装 trimal；官方另有预编译
+    二进制 zip（trimAl_Linux_x86-64.zip）与源码归档（可 make 编译）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    trim: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: trimal
+  note: trim 包装官方 trimAl（默认 -automated1；可 -gt/-gappyout/-strictplus），readal 做格式转换，
+    statal 出统计；三者为同一发行包的独立可执行文件（trimal/readal/statal）。trimAl 为单线程工具，
+    --threads 保留接口但不注入；version 打印用法/版本。官方层（nf-core/snakemake-wrappers）见 README
+    与 software_versions。

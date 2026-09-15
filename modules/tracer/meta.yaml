@@ -1,0 +1,92 @@
+software: tracer
+canonical: tracer
+category: phylogenetics
+description: 'Tracer v1.7 是 BEAST/MrBayes/LAMARC 等贝叶斯 MCMC 运行结果的轨迹（trace）分析工具：
+  载入 MCMC 日志/trace 文件，查看参数的后验估计（均值、HPD 置信区间）、ESS 有效样本量、Trace/Density
+  图与 Bayesian Skyline 等分析，用于判断 MCMC 是否收敛并选取合适的 burn-in。以 Java GUI 形态分发
+  （lib/tracer.jar），本模块以官方 `tracer` 启动器（java -jar tracer.jar "$@"）驱动。
+
+  '
+homepage: http://tree.bio.ed.ac.uk/software/tracer/
+license: LGPL-2.1-or-later
+software_versions:
+- id: tracer_native
+  tracer: '1.7.1'
+  build_route: official biocontainer（quay.io/biocontainers/tracer / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/tracer
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    tracer=1.7.1 与 14.md 教程一致（bioconda 另有 1.7.2；quay tag 1.7.1--1）；宿主机直跑 main.py 时用
+    conda/mamba 安装 tracer，JVM 调优通过 JAVA_OPTS 透传。'
+- id: tracer_nextflow_nfcore
+  tracer: 官方无模块（modules/nf-core/tracer 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/tracer/meta.yml
+    返回 404；Tracer 为交互式 GUI，Nextflow 场景以 native/ 为兜底。
+- id: tracer_snakemake_wrappers
+  tracer: 官方无 wrapper（bio/tracer 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/tracer/meta.yaml
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: tracer_nextflow_local
+  tracer: 未启用（Tracer 为 GUI 工具，Nextflow 场景按需在 main.nf 中声明 java 步骤）
+- id: tracer_snakemake_local
+  tracer: '未启用（需要时用 shell 调 native/main.py run）'
+implementations:
+- id: tracer_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.7.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    run 子命令启动 Tracer GUI 并载入一个或多个 MCMC 日志/trace 文件。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/tracer
+    quay_biocontainers: quay.io/biocontainers/tracer
+    upstream_prebuilt: https://github.com/beast-dev/tracer/releases/download/v1.7.1/Tracer_v1.7.1.tgz
+    upstream_source: https://github.com/beast-dev/tracer
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda tracer=1.7.1；容器可用
+      quay.io/biocontainers ／ depot.galaxyproject.org 镜像（tag 见 README）
+default_implementation: tracer_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: tracer 子命令：run（唯一核心命令）
+  logs:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 一个或多个 MCMC 日志/trace 文件（BEAST .log、MrBayes .p、LAMARC 等；Tab 分隔，首行列名）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 tracer 启动器的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（Tracer 为 GUI，不接收线程参数；仅为接口统一保留，JVM 调优用 JAVA_OPTS）
+outputs:
+  window:
+    type: string
+    description: Tracer GUI 窗口（交互式分析；无文件产物）
+environment:
+  container_official: quay.io/biocontainers/tracer（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 tracer；
+    JVM 调优通过 JAVA_OPTS 透传（官方 tracer 启动器内置 -Xmx10000m）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx10g'
+  per_subcommand_threads:
+    run: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: tracer

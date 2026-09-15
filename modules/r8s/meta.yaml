@@ -1,0 +1,94 @@
+software: r8s
+canonical: r8s
+category: phylogenetics
+description: 'r8s 1.81 是 Michael Sanderson 开发的似然分子钟分析工具：以 NEXUS 树 + 化石校准点
+  为输入，用 penalized likelihood（PL，惩罚似然）或 nonparametric rate smoothing 估计物种分歧时间，
+  支持交叉验证（crossv）选择 smoothing 参数。是 14.md「七、分子钟 → 6.2 r8s」的似然分子钟路线
+  （对应「A.3 旧版 r8s」的历史安装）。
+
+  '
+homepage: https://sourceforge.net/projects/r8s/
+license: GPL-3.0
+software_versions:
+- id: r8s_native
+  r8s: '1.81'
+  build_route: 无官方 conda/容器渠道（2026-09 核实 bioconda → quay.io/biocontainers →
+    depot.galaxyproject.org 全无）→ 本地自建容器（debian:bookworm-slim + 源码 make）
+  source: 官方源码 https://downloads.sourceforge.net/project/r8s/r8s1.81.tar.gz（2026-09 核实
+    200，sha256 9e89d785…）；brew brewsci/bio 公式同源（r8s.rb，url 指向该 tarball）
+  note: '官方无 conda 包（bioconda/bioconda-recipes recipes/r8s 返回 404，quay.io/biocontainers/r8s
+    不存在，depot 404）——14.md「conda install r8s」在当前渠道已不可用，native 以官方源码编译为准。
+    r8s 为 Fortran/C 混合程序，make 需 gfortran；旧 makefile 的系统头依赖与 gfortran 10+ 实参不匹配
+    需就地补丁（见 native/Dockerfile）。'
+- id: r8s_nextflow_nfcore
+  r8s: 官方无模块（modules/nf-core/r8s 404）
+  source: —（2026-09 抓取 nf-core/modules modules/nf-core/r8s/meta.yml 返回 404）
+  note: 本模块未建 nextflow/ 目录；Nextflow / 流程引擎场景请以 native/main.py 兜底。
+- id: r8s_snakemake_wrappers
+  r8s: 官方无 wrapper（bio/r8s 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/r8s/environment.yaml 返回 404）
+  note: 本模块未建 snakemake/ 目录；Snakemake 场景请以 native/main.py 兜底。
+- id: r8s_nextflow_local
+  r8s: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: r8s_snakemake_local
+  r8s: 未启用（未建 snakemake/ 目录；需要时以 native/main.py 兜底）
+implementations:
+- id: r8s_native
+  path: native
+  source_type: custom
+  type: native
+  version: '1.81'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    run 子命令按 r8s -b -f <NEXUS 输入> 构造命令行，交叉验证 / 分歧时间计算均由输入文件中的
+    divtime 指令驱动。'
+  container_ref:
+    bioconda: 无（2026-09 核实 https://api.anaconda.org/package/bioconda/r8s 返回 404）
+    quay_biocontainers: 无（quay.io/biocontainers/r8s 仓库不存在）
+    galaxyproject: 无（https://depot.galaxyproject.org/singularity/r8s 返回 404）
+    install_hint: 官方渠道全无 → 宿主机源码编译（bash native/install.sh --method source）或本地
+      自建容器（native/Dockerfile / native/Apptainer.def）；macOS/Linux 亦可用 brew（brewsci/bio）。
+default_implementation: r8s_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'r8s 子命令：run（r8s -b -f <input>）| version（r8s -v -b）'
+  input:
+    type: file
+    required: false
+    cli_arg: -f
+    description: run：NEXUS 输入文件（含 trees 块 + r8s 块的 divtime/fixage 指令）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 r8s 的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程提示（r8s 单线程；仅经 OMP_NUM_THREADS 透传）
+outputs:
+  result_file:
+    type: file
+    description: r8s 结果输出（stdout；含 divtime / chrono_description 树与分歧时间）
+environment:
+  container_official: 无（2026-09 核实 bioconda → quay.io/biocontainers → depot.galaxyproject.org
+    三渠道均无 r8s 包/镜像）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道全无 → native/ 保留自建配方（debian:bookworm-slim + gfortran/gcc 源码 make +
+    清理四连，linux/amd64）；宿主机直跑 main.py 时用 native/install.sh 源码编译（无 conda 包）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 4
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: r8s

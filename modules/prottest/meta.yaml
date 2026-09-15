@@ -1,0 +1,154 @@
+software: prottest
+canonical: prottest
+category: phylogenetics
+description: 'ProtTest3（ProTest）是蛋白质系统发育的替代模型选择工具：java -jar prottest-3.4.2.jar
+  -i <alignment> -all-distributions -F -AIC -BIC -tc 0.5 -threads 4 -o prottest.out，
+  对氨基酸比对评估 JTT/LG/WAG/... 等替换矩阵与 +I/+G 位点异质性组合，按 AIC/BIC/AICc/DT
+  给出最佳拟合模型，供下游 RAxML/IQ-TREE/FastTree 建树使用。是 14.md「五 → 4.5 使用 ProTest 选择最佳模型」的核心。
+  ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），官方以 Java 预编译包 + 源码分发，
+  故本模块走自建容器兜底（apt openjdk-17-jre-headless + 官方预编译 tarball）。
+
+  '
+homepage: https://github.com/ddarriba/prottest3
+license: GPL-2.0
+software_versions:
+- id: prottest_native
+  prottest: '3.4.2'
+  build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
+    + apt openjdk-17-jre-headless + 官方预编译 tarball）
+  source: https://github.com/ddarriba/prottest3/releases/download/3.4.2-release/prottest-3.4.2-20160508.tar.gz
+  note: '版本 3.4.2（tar 内 jar 名为 prottest-3.4.2.jar；14.md 旧文写的 prottest-3.4.jar 已过时，以实际发布包为准）。
+    bioconda（api.anaconda.org/package/bioconda/prottest 404）、quay.io/biocontainers/prottest（无仓库）、
+    depot.galaxyproject.org/singularity/prottest（404）、nf-core、snakemake-wrappers、homebrew-core/brewsci
+    均无（2026-09 核实），故按 AGENT.md §7 自建兜底：native/Dockerfile、Apptainer.def（debian:bookworm-slim
+    + apt openjdk-17-jre-headless，构建期拉取官方预编译 tarball，内嵌 sha256）。官方另有源码归档（ant jar 构建）。'
+- id: prottest_nextflow_nfcore
+  prottest: 官方无模块（modules/nf-core/prottest 404）
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/prottest/meta.yml
+    返回 404；Nextflow 场景请直接调用 native。
+- id: prottest_snakemake_wrappers
+  prottest: 官方无 wrapper（bio/prottest 404）
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/prottest/wrapper.py
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: prottest_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.4.2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。run 子命令做
+    序列版模型选择（-i -all-distributions -F -AIC -BIC -tc -threads -o）；hpc 子命令经官方 runProtTestHPC.sh
+    走 MPJ 并行。覆盖 14.md「五 → 4.5 使用 ProTest 选择最佳模型」。'
+  container_ref:
+    bioconda: 官方无 prottest 包（anaconda.org/bioconda/prottest 404，2026-09 核实）
+    quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）
+    depot_singularity: depot.galaxyproject.org 无 prottest（2026-09 核实 404）
+    upstream_prebuilt: https://github.com/ddarriba/prottest3/releases/download/3.4.2-release/prottest-3.4.2-20160508.tar.gz（官方预编译 Java 包，首选）
+    upstream_source: https://github.com/ddarriba/prottest3/archive/refs/tags/3.4.2-release.tar.gz（官方源码归档，ant jar 构建，并列保留）
+    install_hint: 无官方 conda/容器 → 使用本模块自建配方 native/Dockerfile、Apptainer.def（拉取官方预编译 tarball）；宿主机安装用 native/install.sh（下载官方 tarball + 设 PROTTEST_HOME），或 JAVA_OPTS 指定 JVM 堆内存
+default_implementation: prottest_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: prottest 子命令：run|hpc
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 氨基酸多序列比对文件（run/hpc 必填；PHYLIP/NEXUS/FASTA）
+  tree:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 起始树文件（Newick，可选；缺省由 ProTest 生成 NJ 树）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 结果输出文件（缺省打印到 stdout）
+  all_distributions:
+    type: boolean
+    default: true
+    cli_arg: -all-distributions
+    description: 纳入 +G 与 +I+G 速率异质性模型
+  empirical_freq:
+    type: boolean
+    default: true
+    cli_arg: -F
+    description: 纳入经验氨基酸频率估计模型
+  aic:
+    type: boolean
+    default: true
+    cli_arg: -AIC
+    description: 按 AIC 排序输出
+  bic:
+    type: boolean
+    default: true
+    cli_arg: -BIC
+    description: 按 BIC 排序输出
+  aicc:
+    type: boolean
+    default: false
+    cli_arg: -AICC
+    description: 按校正 AICc 排序输出
+  tc:
+    type: float
+    required: false
+    cli_arg: -tc
+    description: 共识树阈值（0.5~1.0，输出共识树）
+  ncat:
+    type: integer
+    required: false
+    cli_arg: -ncat
+    description: +G / +I+G 的速率分类数（默认 4）
+  processes:
+    type: integer
+    required: false
+    description: hpc 子命令的 MPI 进程数（runProtTestHPC.sh 的 NP，默认取线程数）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -threads
+    description: 线程数（run 子命令注入 -threads；JVM 堆内存经 JAVA_OPTS 透传）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 ProTest 的额外参数（高级用法，慎用）
+outputs:
+  result_table:
+    type: file
+    format: txt
+    description: 模型比较结果表（-o 指定，或 stdout；含 AIC/BIC 排序最佳模型）
+  consensus_tree:
+    type: file
+    format: newick
+    description: 共识树（-tc 指定阈值时产出）
+environment:
+  container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org 404，2026-09 核实）→ 走自建容器兜底
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay→depot）全无 → 按 AGENT.md §7 自建兜底（debian:bookworm-slim + apt
+    openjdk-17-jre-headless）；官方预编译 tarball 与源码归档两条官方路线均保留（预编译为首选，源码 ant jar 并列）；
+    JVM 堆内存经 JAVA_OPTS 透传。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx6g -Djava.io.tmpdir={tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 4
+    hpc: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: java
+  note: run/hpc 包装官方 prottest-3.4.2.jar（java -jar）；JVM 堆内存经 JAVA_OPTS；官方层 nf-core 与
+    snakemake-wrappers 均无（2026-09 核实 404），见 README 与 software_versions。

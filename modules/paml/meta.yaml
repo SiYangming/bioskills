@@ -1,0 +1,92 @@
+software: paml
+canonical: paml
+category: phylogenetics
+description: 'PAML（Phylogenetic Analysis by Maximum Likelihood）v4.9i 是 Ziheng Yang 开发的
+  分子进化分析程序套件：baseml（核苷酸序列枝长/异常基因检测）、codeml（正选择分析：YN00、branch、
+  branch-site 模型）、yn00（Nei-Gojobori dn/ds）、mcmctree（贝叶斯分子钟/分歧时间估计，经 baseml
+  近似似然）、basemlg、evolver（序列模拟）、infinitesites、chi2、pamp。是 14.md「六、PAML baseml」
+  「七、分子钟」「九、PAML codeml」三节的底座。
+
+  '
+homepage: https://github.com/abacus-gene/paml
+license: GPL-3.0
+software_versions:
+- id: paml_native
+  paml: '4.9i'
+  build_route: official biocontainer（quay.io/biocontainers/paml / depot.galaxyproject.org）
+  source: 官方源码 https://github.com/abacus-gene/paml/releases/download/pre-v4.10/paml4.9i.tgz（2026-09
+    核实 200，sha256 48f47435…）；conda/镜像 https://anaconda.org/bioconda/paml
+  note: '官方渠道 bioconda/quay/depot 仅有 paml=4.9（PAML 4.9 系列构建）与 4.10.x，无 "4.9i" 独立
+    tag；4.9i 为 4.9 系列补丁版，官方源码 paml4.9i.tgz 经 GitHub release pre-v4.10 提供。native 以
+    官方源码 4.9i 为准（make -f Makefile 产出全部程序）；conda 兜底装 paml=4.9。'
+- id: paml_nextflow_nfcore
+  paml: 官方无模块（modules/nf-core/paml 404）
+  source: —（2026-09 抓取 nf-core/modules modules/nf-core/paml/meta.yml 返回 404）
+  note: 本模块未建 nextflow/ 目录；Nextflow / 流程引擎场景请以 native/main.py 兜底。
+- id: paml_snakemake_wrappers
+  paml: 官方无 wrapper（bio/paml 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/paml/environment.yaml 返回 404）
+  note: 本模块未建 snakemake/ 目录；Snakemake 场景请以 native/main.py 兜底。
+- id: paml_nextflow_local
+  paml: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: paml_snakemake_local
+  paml: 未启用（未建 snakemake/ 目录；需要时以 native/main.py 兜底）
+implementations:
+- id: paml_native
+  path: native
+  source_type: custom
+  type: native
+  version: '4.9i'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令映射 baseml/codeml/yn00/mcmctree 等程序，按 <程序> <控制文件> 构造命令行。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/paml
+    quay_biocontainers: quay.io/biocontainers/paml
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/paml%3A4.9--hec16e2b_7
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda paml=4.9；容器可用
+      quay.io/biocontainers/paml:4.9--hec16e2b_7；官方源码 4.9i 用 native/install.sh --method source
+      编译
+default_implementation: paml_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: PAML 程序：baseml|basemlg|chi2|codeml|evolver|infinitesites|mcmctree|pamp|yn00
+  ctl:
+    type: file
+    required: false
+    cli_arg: positional
+    description: PAML 控制文件（默认 <subcommand>.ctl，如 codeml.ctl / mcmctree.ctl）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 PAML 程序的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程提示（PAML 各程序单线程；仅经 OMP_NUM_THREADS 透传，命令行不加线程参数）
+outputs:
+  result_file:
+    type: file
+    description: PAML 结果文件（依程序而定：rst / mlc / lnf / out / FigTree.tre 等，由 .ctl 的
+      outfile 指定）
+environment:
+  container_official: quay.io/biocontainers/paml（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda/quay/depot），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑
+    main.py 时用 conda/mamba 安装 paml，或用 native/install.sh 源码编译官方 4.9i。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    mcmctree: 4
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: codeml

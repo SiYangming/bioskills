@@ -1,0 +1,127 @@
+software: beast2
+canonical: beast2
+category: phylogenetics
+description: 'BEAST2 v2.5.2 是基于 MCMC 的贝叶斯系统发育与分子钟分析平台（Java）：beast 运行
+  MCMC（relaxed clock / calibrated Yule 等）、beauti（BEAUti）图形界面生成 XML、treeannotator
+  生成最大可信度（MCC）树、logcombiner/loganalyser 合并与摘要 log、densitetree 可视化树分布。
+  是 14.md「七、分子钟 → 6.3 BEAST2」的贝叶斯分子钟路线，可用 BEAGLE 库加速。
+
+  '
+homepage: https://www.beast2.org/
+license: LGPL-2.1
+software_versions:
+- id: beast2_native
+  beast2: '2.5.2'
+  java: 'Java 8/11（官方包内自带 jre 目录仅 Windows 版；bioinformat 场景建议 openjdk=8/11）'
+  build_route: official biocontainer（quay.io/biocontainers/beast2 / depot.galaxyproject.org）
+  source: 官方预编译 https://github.com/CompEvol/beast2/releases/download/v2.5.2/BEAST.v2.5.2.Linux.tgz（2026-09
+    核实 200）；conda/镜像 https://anaconda.org/bioconda/beast2
+  note: '官方渠道 bioconda/quay/depot 无 beast2=2.5.2（bioconda 有 2.4.5/2.5.0/2.6.x/2.7.7；quay/depot
+    有 2.5.0/2.7.7）；native 2.5.2 走官方预编译 Linux 包（BEAST.v2.5.2.Linux.tgz，sha256 2feb2281…），
+    conda 兜底会落到 beast2=2.5.0（或最新 2.7.7）。⚠️ BEAST 2.5.2 需 Java 8/11：Java ≥20 已移除
+    Thread.stop，运行结束会抛 UnsupportedOperationException（版本仍正常打印）。'
+- id: beast2_nextflow_nfcore
+  beast2: 官方无模块（modules/nf-core/beast2 404）
+  source: —（2026-09 抓取 nf-core/modules modules/nf-core/beast2/meta.yml 返回 404）
+  note: 本模块未建 nextflow/ 目录；Nextflow / 流程引擎场景请以 native/main.py 兜底。
+- id: beast2_snakemake_wrappers
+  beast2: 官方无 wrapper（bio/beast2 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/beast2/environment.yaml 返回 404）
+  note: 本模块未建 snakemake/ 目录；Snakemake 场景请以 native/main.py 兜底。
+- id: beast2_nextflow_local
+  beast2: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: beast2_snakemake_local
+  beast2: 未启用（未建 snakemake/ 目录；需要时以 native/main.py 兜底）
+implementations:
+- id: beast2_native
+  path: native
+  source_type: custom
+  type: native
+  version: '2.5.2'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    子命令映射 beast/treeannotator/logcombiner/loganalyser/densitetree/beauti，beast 支持 -beagle
+    加速与 -threads；JVM 堆内存经 JAVA_OPTS 注入。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/beast2
+    quay_biocontainers: quay.io/biocontainers/beast2
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/beast2%3A2.5.0--hf1b8bbb_0
+    install_hint: 官方预编译包可精确到 2.5.2（BEAST.v2.5.2.Linux.tgz，用 native/install.sh）；conda
+      可 mamba create -n beast2 -c conda-forge -c bioconda beast2=2.5.0（无 2.5.2）；容器可用
+      quay.io/biocontainers/beast2:2.5.0--hf1b8bbb_0 或 :2.7.7--he65b2d3_0
+default_implementation: beast2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'BEAST2 程序：beast|treeannotator|logcombiner|loganalyser|densitetree|beauti|version'
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 主输入（beast：input.xml；treeannotator：posterior .trees；logcombiner/loganalyser：.log/.trees）
+  inputs:
+    type: file
+    required: false
+    cli_arg: positional
+    description: logcombiner / loganalyser / densitetree 的多个输入文件（可重复）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（logcombiner 合并结果 / treeannotator 目标树，treeannotator 为位置参数）
+  burnin:
+    type: integer
+    required: false
+    cli_arg: -b/-burnin
+    description: 丢弃的预热比例（%，treeannotator/logcombiner/loganalyser）
+  beagle:
+    type: boolean
+    default: false
+    description: beast 是否启用 BEAGLE 加速（-beagle -beagle_CPU -beagle_SSE -beagle_double）
+  instances:
+    type: integer
+    required: false
+    cli_arg: -instances
+    description: beast BEAGLE 并行实例数
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -threads
+    description: beast 线程数（自动注入 -threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 BEAST2 程序的额外参数（高级用法，慎用）
+outputs:
+  log_file:
+    type: file
+    format: txt
+    description: beast 的 MCMC 采样 log（*​.log，供 Tracer 收敛性检查）
+  trees_file:
+    type: file
+    format: trees
+    description: beast 的后验树采样（*​.trees，供 treeannotator 建 MCC 树）
+  mcc_tree:
+    type: file
+    format: tre
+    description: treeannotator 输出的最大可信度树
+environment:
+  container_official: quay.io/biocontainers/beast2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda/quay/depot），本地不再维护 Dockerfile/Apptainer.def；native 2.5.2
+    走官方 GitHub 预编译包（BEAST.v2.5.2.Linux.tgz），宿主机直跑 main.py 需 Java 8/11。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    beast: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: beast

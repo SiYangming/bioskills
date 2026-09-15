@@ -1,0 +1,144 @@
+software: mcl
+canonical: mcl
+category: comparative_genomics
+description: 'MCL（Markov Cluster Algorithm）是 Stijn van Dongen 开发的图聚类算法实现，
+  用两路矩阵运算模拟随机流对加权无向图做聚类，单参数 -I（inflation）控制聚类粒度（默认
+  2.0，常用 1.4/2/4/6）；是 OrthoMCL 同源基因聚类流程（mcl mclInput --abc -I 1.5 -o mclOutput）
+  的聚类内核，也用于蛋白家族、网络模块等通用图聚类。MCL 套件另含 mcxload / mcxdump
+  等图格式转换工具。
+
+  '
+homepage: https://www.micans.org/mcl/
+license: GPL-3.0-only
+software_versions:
+- id: mcl_native
+  mcl: '14.137（上游发布 MCL 14-137；bioconda 包名版本 14.137）'
+  build_route: official biocontainer（quay.io/biocontainers/mcl / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/mcl
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    官方仅分发源码 tarball mcl-14-137.tar.gz（sha256 b5786897a8a8ca119eb355a5630806a4da72ea84243dba85b19a86f14757b497，
+    取自 bioconda-recipes mcl 14.137 配方），无官方预编译二进制；宿主机直跑 main.py 时用 conda/mamba
+    安装 mcl=14.137。'
+- id: mcl_nextflow_nfcore
+  mcl: 官方无模块（modules/nf-core/mcl 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/mcl
+    返回 404；Nextflow 场景无官方子模块，需自定义。
+- id: mcl_snakemake_wrappers
+  mcl: 官方无 wrapper（bio/mcl 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/mcl
+    返回 404；Snakemake 场景无官方 wrapper，需自定义。
+- id: mcl_nextflow_local
+  mcl: "未启用（需要时在 main.nf 中 shell: 调 native/main.py cluster）"
+- id: mcl_snakemake_local
+  mcl: "未启用（需要时在 .smk 中 shell: 调 native/main.py cluster）"
+implementations:
+- id: mcl_native
+  path: native
+  source_type: custom
+  type: native
+  version: "14.137"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 cluster（MCL 聚类）/ dump（mcxdump 图转换）/ version 三段，自动注入线程（-te）。
+    OrthoMCL 流程中的 MCL 聚类请走 cluster 子命令（--abc -I 1.5）。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mcl
+    quay_biocontainers: quay.io/biocontainers/mcl
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda mcl=14.137；容器可用 quay.io/biocontainers/mcl:14.137--pl5321h031d066_9 镜像（tag 见 README）
+default_implementation: mcl_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: mcl 子命令：cluster（mcl 聚类）| dump（mcxdump 图转换）| version
+  graph:
+    type: file
+    required: false
+    cli_arg: positional
+    description: cluster 输入图文件（ABC 标签格式或 MCL 原生矩阵格式；- 表示 stdin）
+  abc:
+    type: boolean
+    default: false
+    cli_arg: --abc
+    description: cluster 输入为 ABC 标签格式（每行 "标签A 标签B 权重"）
+  inflation:
+    type: float
+    required: false
+    cli_arg: -I
+    description: MCL inflation 参数（控制聚类粒度；MCL 自带默认 2.0，OrthoMCL 流程常用 1.5–2.0）
+  scheme:
+    type: integer
+    required: false
+    cli_arg: -scheme
+    description: 资源/剪枝方案编号（大图调优用；默认方案 6）
+  tf:
+    type: string
+    required: false
+    cli_arg: -tf
+    description: 输入矩阵变换表达式（如 gq(0.7),add(-0.7)；需引号）
+  pre_inflation:
+    type: float
+    required: false
+    cli_arg: -pi
+    description: 预膨胀（pre-inflation）参数，用于提高边权对比度
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（cluster 写聚类结果；dump 写转换结果）
+  matrix:
+    type: file
+    required: false
+    cli_arg: -imx
+    description: dump 输入矩阵文件（mcxdump -imx）
+  tab:
+    type: file
+    required: false
+    cli_arg: -tab
+    description: dump 标签文件（把矩阵索引替换为标签）
+  dump_pairs:
+    type: boolean
+    default: false
+    description: dump 逐条输出矩阵条目（--dump-pairs；默认按行输出 --dump-lines）
+  no_values:
+    type: boolean
+    default: false
+    description: dump 省略权重值（--no-values）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -te
+    description: 线程数（cluster 以 -te 注入；dump 单线程不注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 mcl/mcxdump 的额外参数（高级用法，慎用）
+outputs:
+  clusters:
+    type: file
+    format: tsv
+    description: cluster 输出的聚类结果（每行一个簇，制表符分隔标签）
+  dumped_matrix:
+    type: file
+    description: dump 输出的行/条目式文本（mcxdump 产物）
+environment:
+  container_official: quay.io/biocontainers/mcl（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers/mcl → depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 mcl。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    cluster: 8
+    dump: 1
+    version: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: mcl

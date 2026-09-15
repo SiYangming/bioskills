@@ -1,0 +1,162 @@
+software: lastz
+canonical: lastz
+category: comparative_genomics
+description: 'LASTZ 1.04.22（BLASTZ 后继，Harris 2007）是双序列/全基因组比对工具，
+  专为基因组间比对设计：以 BLAST-like 种子扩展识别同源区（含大尺度重排、倒位、插入缺失），
+  输出 lav/maf/axt/general 等格式，灵敏度高于 MUMmer、适合亲缘关系较远的基因组；单命令
+  lastz <target> <query> [--output= --format= --hspthresh= …]。本模块以文档 14.md「十三、LASTZ」
+  采用的 1.04.22 为准。'
+homepage: https://github.com/lastz/lastz
+license: MIT
+software_versions:
+- id: lastz_native
+  lastz: '1.04.22'
+  subcommands: 'lastz（单命令：lastz <target> <query> → --output/--format）'
+  build_route: official biocontainer（quay.io/biocontainers/lastz:1.04.22--h7b50bb2_2 → depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/lastz
+  note: '2026-09 核实：bioconda lastz 含 1.04.22（最新 1.04.52）；quay.io/biocontainers/lastz
+    tag 1.04.22--h7b50bb2_2；depot singularity lastz%3A1.04.22--h7b50bb2_2 HTTP 200；homebrew-core
+    lastz 1.04.52（本模块 pin 1.04.22，brew 版本略新）；官方 GitHub tag 1.04.22 仅 Source
+    code zip/tar.gz（无预编译二进制资产，2026-09 核实）。LASTZ 单线程（无 --threads/-p 选项），
+    并行按参考染色体拆分。'
+- id: lastz_nextflow_nfcore
+  lastz: 官方无模块（modules/nf-core/lastz 404）
+  source: —
+  note: 2026-09 核实 https://github.com/nf-core/modules/tree/master/modules/nf-core/lastz
+    与 raw …/modules/nf-core/lastz/meta.yml 均 404，无官方 nf-core 模块。
+- id: lastz_snakemake_wrappers
+  lastz: 官方无 wrapper（bio/lastz 404）
+  source: —
+  note: 2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/lastz
+    与 raw …/bio/lastz/{meta.yaml,wrapper.py,environment.yaml} 均 404。
+- id: lastz_nextflow_local
+  lastz: 未启用（未建 nextflow/ 目录；Nextflow 场景以 native/ 兜底）
+- id: lastz_snakemake_local
+  lastz: 未启用（未建 snakemake/ 目录；需要时 shell 调 native/main.py）
+implementations:
+- id: lastz_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.04.22"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    单命令 align 覆盖 lav/maf/general 输出与 hspthresh / gappedthresh / filter=identity|coverage
+    / chain 等参数；单线程，并行按参考染色体拆分。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/lastz
+    quay_biocontainers: quay.io/biocontainers/lastz
+    galaxyproject: https://depot.galaxyproject.org/singularity/lastz%3A1.04.22--h7b50bb2_2
+    upstream_prebuilt: （无——官方 GitHub tag 1.04.22 仅 Source code zip/tar.gz；2026-09 核实无预编译二进制资产）
+    upstream_source: https://github.com/lastz/lastz/archive/refs/tags/1.04.22.tar.gz
+    install_hint: 推荐 mamba create -n lastz -c conda-forge -c bioconda lastz=1.04.22；容器可用
+      quay.io/biocontainers/lastz:1.04.22--h7b50bb2_2；或 brew install lastz（brew 当前 1.04.52）
+default_implementation: lastz_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'lastz 子命令：align（lastz <target> <query> 比对）'
+  target:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 目标/参考序列（FASTA；可带 [unmask]/[multiple] 等序列说明符）
+  query:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 查询序列（FASTA/2bit）
+  output:
+    type: file
+    required: false
+    cli_arg: --output
+    description: 输出文件（默认写 stdout）
+  format:
+    type: string
+    required: false
+    default: maf
+    cli_arg: --format
+    description: 输出格式（lav / maf / axt / sam / general[:fields] / rdotplot / text / cigar / blastn …）
+  hspthresh:
+    type: integer
+    required: false
+    cli_arg: --hspthresh
+    description: HSP（gap-free 扩展）得分阈值，低于此值丢弃
+  gappedthresh:
+    type: integer
+    required: false
+    cli_arg: --gappedthresh
+    description: 带间隙扩展（gapped alignment）得分阈值
+  identity:
+    type: integer
+    required: false
+    cli_arg: --filter=identity
+    description: 最小一致率百分比（映射为官方 --filter=identity:<min>）
+  coverage:
+    type: integer
+    required: false
+    cli_arg: --filter=coverage
+    description: 最小覆盖度百分比（映射为官方 --filter=coverage:<min>）
+  step:
+    type: integer
+    required: false
+    cli_arg: --step
+    description: 种子步长（每 step 个碱基取一个种子；越大越快越不敏感）
+  seed:
+    type: string
+    required: false
+    cli_arg: --seed
+    description: 种子模式（如 match12 或 TTT0T00TT00T0T0TTTT）
+  chain:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --chain
+    description: 显式启用 chaining（默认已开）
+  nogapped:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --nogapped
+    description: 跳过带间隙扩展（仅 HSP，速度快）
+  notransition:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: --notransition
+    description: 降低种子灵敏度（不允许转换；约快 10 倍）
+  threads:
+    type: string
+    required: false
+    default: auto
+    description: 线程占位（LASTZ 单线程，接受但不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 lastz 的额外参数（高级用法，慎用）
+outputs:
+  alignment:
+    type: file
+    description: 比对结果文件（--output；格式由 format 决定，未指定则写 stdout）
+environment:
+  container_official: quay.io/biocontainers/lastz（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda lastz → quay.io/biocontainers → depot.galaxyproject.org，2026-09
+    核实），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 用 conda/mamba（lastz=1.04.22）
+    或 brew install lastz。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    align: 1
+    default: 1
+  note: LASTZ 单线程（无 --threads/-p 选项）→ --threads 仅占位接受不注入；并行请按参考染色体拆分
+    （见 README 实战示例，与文档 14.md 12.2.3 同法）。内存随目标序列长度增长（染色体级需 GB 级）。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: lastz

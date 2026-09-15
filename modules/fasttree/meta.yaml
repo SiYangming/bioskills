@@ -1,0 +1,148 @@
+software: fasttree
+canonical: fasttree
+category: phylogenetics
+description: 'FastTree 是超快的近似最大似然系统发育树构建工具（单一 C 源文件，gcc -O3 编译）：
+  FastTree [-nt] [-gtr] [-gamma] [-boot <n>] [-out <tree>] <alignment> 从蛋白/核酸比对推断
+  Newick 树，速度比 RAxML 快 100-1000 倍，特别适合大规模数据集（数千条序列）。是 14.md
+  「五（续）→ 4.8 FastTree - 超快的系统发育树构建」的物种树构建工具。
+
+  '
+homepage: http://www.microbesonline.org/fasttree/
+license: GPL-2.0
+software_versions:
+- id: fasttree_native
+  fasttree: '2.1.11'
+  build_route: official biocontainer（quay.io/biocontainers/fasttree / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/fasttree
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 保留 2.1.11（现行 latest=2.2.0）；官方容器 tag quay.io/biocontainers/fasttree:2.1.11--h7b50bb2_5
+    （depot.galaxyproject.org 有同名 sif，2026-09 核实 200）。官方仅提供源码 FastTree-2.1.11.c
+    （sha256=9026ae550307374be92913d3098f8d44187d30bea07902b9dcbfb123eaa2050f，2026-09 核实 200；
+    官方无预编译二进制），gcc -O3 编译 FastTree（单精度）与 FastTree_d（-DUSE_DOUBLE，双精度）两版本。
+    宿主机直跑 main.py 时用 conda/mamba 安装 fasttree=2.1.11，或 brew（brewsci/bio tap，当前 2.1.11，见 README）。'
+- id: fasttree_nextflow_nfcore
+  module_version: nf-core master（2026-05 更新，扁平模块）
+  fasttree: '2.1.10'
+  source: bioconda::fasttree=2.1.10（modules/nf-core/fasttree/environment.yml）
+  note: 'nf-core 官方 modules/nf-core/fasttree 存在（扁平模块，pin bioconda::fasttree=2.1.10，2026-09 在线核实）；
+    与 native 的 2.1.11 相差一个 patch。以官方在线目录为准。'
+- id: fasttree_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  fasttree: '2.2.0'
+  source: fasttree=2.2.0（bio/fasttree/environment.yaml，扁平 wrapper）
+  note: 'snakemake-wrappers 官方 bio/fasttree 存在（扁平 wrapper：wrapper.py + environment.yaml，2026-09 在线核实；
+    environment.yaml pin fasttree=2.2.0）。与 native 的 2.1.11 相差一个 minor；切 wrapper tag 后务必核对。'
+implementations:
+- id: fasttree_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1.11"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。protein
+    子命令建蛋白树（默认 JTT+CAT）；nucleotide 子命令建核酸树（-nt，可 -gtr）；boot 子命令计算
+    局部支持度（-boot）。覆盖 14.md「五（续）→ 4.8 FastTree」。FastTree 单线程，不注入线程参数。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/fasttree
+    quay_biocontainers: quay.io/biocontainers/fasttree
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda fasttree=2.1.11；容器可用
+      quay.io/biocontainers/fasttree:2.1.11--h7b50bb2_5（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: fasttree_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: fasttree 子命令：protein|nucleotide|boot
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入多序列比对（FASTA 或 PHYLIP interleaved）
+  output:
+    type: file
+    required: false
+    cli_arg: -out
+    description: 输出 Newick 树文件（缺省写 stdout）
+  log:
+    type: file
+    required: false
+    cli_arg: -log
+    description: 中间树/参数/模型详情日志
+  bootstrap:
+    type: integer
+    required: false
+    cli_arg: -boot
+    description: 局部支持度（SH-like）重采样次数（boot 子命令）
+  gtr:
+    type: boolean
+    default: false
+    cli_arg: -gtr
+    description: 广义时间可逆模型（仅核酸比对）
+  gamma:
+    type: boolean
+    default: false
+    cli_arg: -gamma
+    description: 用 gamma 分布建模位点异质性（更准但更慢）
+  pseudo:
+    type: boolean
+    default: false
+    cli_arg: -pseudo
+    description: 使用伪计数（推荐高缺 gap 序列）
+  fastest:
+    type: boolean
+    default: false
+    cli_arg: -fastest
+    description: 加速邻居连接阶段并降低内存（>50000 序列推荐）
+  intree:
+    type: file
+    required: false
+    cli_arg: -intree
+    description: 起始树文件（集合）
+  quiet:
+    type: boolean
+    default: true
+    cli_arg: -quiet
+    description: 抑制进度/统计输出（默认开启；--no-quiet 关闭）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（FastTree 单线程；仅供上层调度器读取）
+    description: 线程数（统一接口保留；FastTree 单线程，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 FastTree 的额外参数（高级用法，慎用）
+outputs:
+  tree:
+    type: file
+    format: newick
+    description: 系统发育树（Newick；-out 指定或 stdout）
+  log:
+    type: file
+    format: txt
+    description: 中间树/参数/模型详情日志（-log 时产出）
+environment:
+  container_official: quay.io/biocontainers/fasttree（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：brewsci/bio tap，当前 2.1.11）安装 fasttree；官方仅提供源码
+    FastTree-2.1.11.c（gcc 编译，FastTree 与 FastTree_d 两版本），无官方预编译二进制。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    protein: 1
+    nucleotide: 1
+    boot: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: FastTree
+  note: protein/nucleotide/boot 包装官方 FastTree 二进制（单线程）；nucleotide 注入 -nt，boot 注入 -boot。
+    官方层 nf-core 有扁平模块 fasttree（pin 2.1.10）与 snakemake-wrappers 扁平 wrapper bio/fasttree
+    （pin 2.2.0），见 README 与 software_versions。

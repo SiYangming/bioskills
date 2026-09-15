@@ -1,0 +1,137 @@
+software: cafe
+canonical: cafe
+category: comparative_genomics
+description: 'CAFE（Computational Analysis of gene Family Evolution）v4.2.1 基于生灭过程（birth-death
+  process）在给定系统发育树上建模基因家族的扩张与收缩：以基因家族大小表（如 OrthoMCL 导出的
+  orthomcl2cafe.tab）与带枝长的 Newick 树为输入，估计全树/分支的 λ（或 λ/μ）速率、推断祖先家族大小、
+  计算每个家族扩张/收缩的 p 值，并统计各分支上扩张/收缩/不变的家族数。附带的 caferror.py 通过迭代误差
+  模型并行估计并校正基因组组装/注释误差（推荐先跑 caferror 再跑多 λ 模型）。
+
+  '
+homepage: https://github.com/hahnlab/CAFE
+license: IU-Open-Source-License
+software_versions:
+- id: cafe_native
+  cafe: '4.2.1'
+  build_route: official biocontainer（quay.io/biocontainers/cafe / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/cafe
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    cafe=4.2.1（14.md 教程版本；bioconda 另有 5.0.0 / 5.1.0 = CAFE5，命令与报告格式不同，勿混用）。'
+- id: cafe_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  cafe: '5.1.0'
+  source: bioconda::cafe=5.1.0（modules/nf-core/cafe/environment.yml）
+  note: 'nf-core 有 cafe 模块（扁平目录 modules/nf-core/cafe，无子模块），pin bioconda::cafe=5.1.0（CAFE5）；
+    与模块 native 登记的 4.2.1 为不同大版本（CAFE5 子命令/报告格式不同），跨引擎迁移需注意。'
+- id: cafe_snakemake_wrappers
+  cafe: 官方无 wrapper（bio/cafe 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/cafe/meta.yaml
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: cafe_nextflow_local
+  cafe: 未启用（官方 nf-core cafe=5.1.0 已覆盖；本地按需在 main.nf 中声明 cafe 步骤）
+- id: cafe_snakemake_local
+  cafe: '未启用（需要时用 shell 调 native/main.py run）'
+implementations:
+- id: cafe_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    command 子命令生成 CAFE 命令脚本（shebang=cafe 路径 + load -t <threads> -p <pvalue> + tree +
+    lambda -s + report），run 执行脚本（cafe <script>），caferror 以 caferror.py 迭代误差模型并行运行。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/cafe
+    quay_biocontainers: quay.io/biocontainers/cafe
+    upstream_source: https://github.com/hahnlab/CAFE/archive/v4.2.1.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda cafe=4.2.1；容器可用
+      quay.io/biocontainers ／ depot.galaxyproject.org 镜像（tag 见 README）
+default_implementation: cafe_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: cafe 子命令：command|run|caferror
+  gene_table:
+    type: file
+    required: false
+    cli_arg: --gene-table
+    description: 基因家族大小表（如 orthomcl2cafe.tab；Desc+Family ID+各物种拷贝数；command/run/caferror 生成脚本时必填）
+  tree:
+    type: string
+    required: false
+    cli_arg: --tree
+    description: 带枝长的 Newick 树字符串（含分号），如 '((sp1:1,sp2:1):1,(sp3:1,sp4:1):1);'
+  pvalue:
+    type: float
+    default: 0.01
+    cli_arg: -p
+    description: CAFE 家族显著性 p 值阈值（load -p）
+  report:
+    type: string
+    required: false
+    cli_arg: --report
+    description: 报告前缀（report <name>，默认 out）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 生成的 CAFE 命令脚本路径（command 必填；run 可选，缺省写入 tmpdir）
+  command_file:
+    type: file
+    required: false
+    cli_arg: --command-file
+    description: 既有 CAFE 命令脚本（run/caferror 可选用；与 --gene-table/--tree 二选一）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（写入生成的脚本 load -t；自动注入）
+  tmp_dir:
+    type: file
+    required: false
+    cli_arg: -d
+    description: caferror.py 工作目录（-d；默认 caferror_X）
+  err_output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: caferror.py 误差输出文件（-o）
+  verbose:
+    type: boolean
+    default: false
+    cli_arg: -v
+    description: caferror.py 详细输出（-v 1）
+outputs:
+  command_script:
+    type: file
+    format: cafe
+    description: 生成的 CAFE 命令脚本（含 shebang 与 load/tree/lambda/report 命令）
+  cafe_report:
+    type: file
+    format: txt
+    description: CAFE 分析报告（report 前缀产物；caferror 输出目录 caferror_X/）
+environment:
+  container_official: quay.io/biocontainers/cafe（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 cafe；
+    官方同时提供源码编译路线（native/install.sh 的 source 模式）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    command: 8
+    run: 8
+    caferror: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: cafe

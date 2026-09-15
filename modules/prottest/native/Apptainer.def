@@ -1,0 +1,87 @@
+# prottest native Apptainer/Singularity 定义（bookworm-slim + 官方预编译 Java 包路线）
+#
+# 路线：与 Dockerfile 一致 —— ProtTest3 3.4.2 无官方 conda/容器渠道（bioconda/quay/depot
+#       2026-09 核实全无），apt 装 openjdk-17-jre-headless，下载官方 GitHub release 预编译
+#       tarball（sha256 内嵌）解压到 /opt/prottest-3.4.2，生成 /usr/local/bin/prottest 包装脚本。
+#
+# 构建：apptainer build prottest.sif Apptainer.def
+# 运行：apptainer run prottest.sif run aln.phy -all-distributions -F -AIC -BIC -tc 0.5 -threads 4
+# 说明：native/main.py 驱动在宿主机运行，不随镜像分发（镜像内仅 prottest jar + java）。
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software prottest
+    Version 3.4.2
+    ProttestVersion 3.4.2
+    PkgRoute apt(openjdk-17-jre-headless) + official prebuilt tarball (java -jar)
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+
+    set -eux
+
+    # 1) apt 最小依赖（curl 仅构建用，稍后删除）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        ca-certificates \
+        curl \
+        procps
+
+    # 2) 官方预编译包下载 + sha256 + 解压布署 + 包装脚本
+    curl -fSL -o /tmp/prottest.tar.gz \
+        "https://github.com/ddarriba/prottest3/releases/download/3.4.2-release/prottest-3.4.2-20160508.tar.gz"
+    echo "d5afd55972e5b9903942eab4f0273f9614848bf4b6747a7839d3c675dc9067e6  /tmp/prottest.tar.gz" | sha256sum -c -
+    mkdir -p /opt/prottest-3.4.2
+    tar -xzf /tmp/prottest.tar.gz -C /opt/prottest-3.4.2 --strip-components=1
+    test -f /opt/prottest-3.4.2/prottest-3.4.2.jar
+    printf '%s\n' \
+        '#!/usr/bin/env bash' \
+        'export PROTTEST_HOME=/opt/prottest-3.4.2' \
+        'exec java ${JAVA_OPTS:-} -jar /opt/prottest-3.4.2/prottest-3.4.2.jar "$@"' \
+        > /usr/local/bin/prottest
+    chmod 0755 /usr/local/bin/prottest
+
+    # 3) 清理四连 + 删构建期 curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export JAVA_TOOL_OPTIONS="-Xmx8g -Djava.io.tmpdir=/tmp"
+    export PROTTEST_HOME=/opt/prottest-3.4.2
+    export PATH=/usr/local/bin:$PATH
+
+%runscript
+    exec /usr/local/bin/prottest "$@"
+
+%test
+    # 非交互自检：java -jar prottest-3.4.2.jar -h 用法行含 3.4.2
+    set -eux
+    command -v prottest
+    java -jar /opt/prottest-3.4.2/prottest-3.4.2.jar -h 2>&1 | grep -q "3.4.2"
+    prottest -h 2>&1 | grep -q "3.4.2"
+
+%help
+    prottest native Apptainer 镜像（bookworm-slim + 官方预编译 Java 包）。
+    ProtTest3 3.4.2：蛋白质替代模型选择（JTT/LG/WAG… + I/G），位于 /opt/prottest-3.4.2。
+    调用方式：apptainer run prottest.sif run aln.phy -all-distributions -F -AIC -BIC -tc 0.5 -threads 4
+    挂载示例：apptainer run -B $PWD:/data -H /data prottest.sif run /data/aln.phy -o /data/prottest.out

@@ -1,0 +1,184 @@
+software: clustalw
+canonical: clustalw
+category: multiple_sequence_alignment
+description: 'ClustalW 2.1 是经典的多序列比对工具（渐进式比对算法，Larkin 2007 / Thompson
+  1994），适用于核酸与蛋白质序列比对，产出比对结果（CLUSTAL/FASTA/PHYLIP/NEXUS/PIR/GDE/GCG）
+  与引导树/系统发育树（NJ/UPGMA，可 bootstrap）；虽速度较慢，仍用于单拷贝同源基因的比对
+  （14.md §4 与 MAFFT/MUSCLE/trimAl 并列），可衔接下游系统发育分析。
+
+  '
+homepage: http://www.clustal.org/clustal2/
+license: LGPL-3.0-or-later
+software_versions:
+- id: clustalw_native
+  clustalw: '2.1'
+  build_route: official biocontainer（quay.io/biocontainers/clustalw / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/clustalw
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    官方同时提供源码 clustalw-2.1.tar.gz（sha256 e052059b87abfd8c9e695c280bfba86a65899138c82abccd5b00478a80f49486）
+    与预编译二进制 clustalw-2.1-linux-x86_64-libcppstatic.tar.gz（sha256 e8d488db819789642b44945d238a50847f2505a1a0dd43d374fa7f29f9defcac，EBI 官方镜像站）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 clustalw=2.1。'
+- id: clustalw_nextflow_nfcore
+  clustalw: 官方无模块（modules/nf-core/clustalw 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/clustalw
+    返回 404；Nextflow 场景无官方子模块（nf-core 另见 clustalo 等其他 MSA 工具）。
+- id: clustalw_snakemake_wrappers
+  clustalw: 官方无 wrapper（bio/clustalw 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/clustalw
+    返回 404；Snakemake 场景无官方 wrapper，需自定义。
+- id: clustalw_nextflow_local
+  clustalw: "未启用（需要时在 main.nf 中 shell: 调 native/main.py align）"
+- id: clustalw_snakemake_local
+  clustalw: "未启用（需要时在 .smk 中 shell: 调 native/main.py align）"
+implementations:
+- id: clustalw_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 align（多序列比对）/ tree（系统发育树）/ profile（两比对合并）/ help 四段。
+    注意 ClustalW 单线程运行，--threads 仅作接口占位（不注入 argv）。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/clustalw
+    quay_biocontainers: quay.io/biocontainers/clustalw
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda clustalw=2.1；容器可用 quay.io/biocontainers/clustalw:2.1--hc52dbad_13 镜像（tag 见 README）
+default_implementation: clustalw_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: clustalw 子命令：align（多序列比对）| tree（系统发育树）| profile（比对合并）| help
+  infile:
+    type: file
+    required: false
+    cli_arg: '-infile='
+    description: 输入序列文件（align/tree；FASTA/PIR/Clustal/MSF 等，格式自动识别）
+  outfile:
+    type: file
+    required: false
+    cli_arg: '-outfile='
+    description: 输出比对/树文件
+  output_format:
+    type: string
+    required: false
+    cli_arg: '-output='
+    description: '输出格式：CLUSTAL / FASTA / PHYLIP / NEXUS / PIR / GDE / GCG（默认 CLUSTAL）'
+  seqtype:
+    type: string
+    required: false
+    cli_arg: '-type='
+    description: 序列类型 PROTEIN 或 DNA（省略则自动识别）
+  quicktree:
+    type: boolean
+    default: false
+    cli_arg: '-quicktree'
+    description: 用快速近似算法构建引导树（加速；默认慢速精确法）
+  matrix:
+    type: string
+    required: false
+    cli_arg: '-matrix='
+    description: 蛋白权重矩阵（BLOSUM/PAM/GONNET/ID 或文件名）
+  gapopen:
+    type: float
+    required: false
+    cli_arg: '-gapopen='
+    description: 多序列比对开gap罚分
+  gapext:
+    type: float
+    required: false
+    cli_arg: '-gapext='
+    description: 多序列比对 gap 延伸罚分
+  outorder:
+    type: string
+    required: false
+    cli_arg: '-outorder='
+    description: 输出序列顺序：INPUT（按输入）或 ALIGNED（按比对）
+  quiet:
+    type: boolean
+    default: false
+    cli_arg: '-quiet'
+    description: 减少控制台输出
+  stats:
+    type: file
+    required: false
+    cli_arg: '-stats='
+    description: 把比对统计写入指定文件
+  profile1:
+    type: file
+    required: false
+    cli_arg: '-profile1='
+    description: profile：第一个比对（旧比对）
+  profile2:
+    type: file
+    required: false
+    cli_arg: '-profile2='
+    description: profile：第二个比对（新序列/比对）
+  usetree1:
+    type: file
+    required: false
+    cli_arg: '-usetree1='
+    description: profile：profile1 使用的旧引导树
+  usetree2:
+    type: file
+    required: false
+    cli_arg: '-usetree2='
+    description: profile：profile2 使用的旧引导树
+  newtree:
+    type: file
+    required: false
+    cli_arg: '-newtree='
+    description: 写出新引导树到指定文件（align/tree）
+  clustering:
+    type: string
+    required: false
+    cli_arg: '-clustering='
+    description: 聚类方法：NJ（默认）或 UPGMA
+  bootstrap:
+    type: integer
+    required: false
+    cli_arg: '-bootstrap='
+    description: 对 NJ 树做 bootstrap 重复次数（默认 1000）
+  outputtree:
+    type: string
+    required: false
+    cli_arg: '-outputtree='
+    description: '树的输出格式：nj / phylip / dist / nexus'
+  threads:
+    type: integer
+    required: false
+    default: 1
+    description: 线程数占位（ClustalW 单线程，--threads 被接受但不注入 argv）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 clustalw 的额外参数（高级用法，慎用）
+outputs:
+  alignment:
+    type: file
+    description: align/profile 输出的多序列比对文件（格式由 output_format 决定）
+  tree_file:
+    type: file
+    description: 'tree 输出的系统发育树（含 .ph / .dnd 等；-outputtree 决定格式）'
+  guide_tree:
+    type: file
+    description: '-newtree 写出的引导树'
+environment:
+  container_official: quay.io/biocontainers/clustalw（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda → quay.io/biocontainers/clustalw → depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 clustalw。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: clustalw

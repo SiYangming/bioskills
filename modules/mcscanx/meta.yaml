@@ -1,0 +1,127 @@
+software: mcscanx
+canonical: mcscanx
+category: comparative_genomics
+description: 'MCScanX 检测基因组内/基因组间的共线性（syntenic）区块：以 BLAST/DIAMOND all-vs-all
+  比对结果（<prefix>.blast，m8 格式）与基因位置文件（<prefix>.gff）为输入，运行 MCScanX <prefix>
+  识别共线性区块并逐步比对多个区块；配套 duplicate_gene_classifier 进行基因类型鉴定
+  （singleton/dispersed/proximal/tandem/WGD），downstream_analyses 下的 dual_synteny_plotter /
+  circle_plotter（Java）绘制种间点线图与种内圈图。
+
+  '
+homepage: http://chibba.pgml.uga.edu/mcscan2/
+license: BSD-3-Clause
+software_versions:
+- id: mcscanx_native
+  mcscanx: '1.0.0'
+  build_route: official biocontainer（quay.io/biocontainers/mcscanx / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/mcscanx
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    mcscanx bioconda 版本 1.0.0（含主程序 MCScanX / duplicate_gene_classifier 与 downstream_analyses）。'
+- id: mcscanx_nextflow_nfcore
+  mcscanx: 官方无模块（modules/nf-core/mcscanx 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/mcscanx/meta.yml
+    返回 404；Nextflow 场景以 native/ 为兜底。
+- id: mcscanx_snakemake_wrappers
+  mcscanx: 官方无 wrapper（bio/mcscanx 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/mcscanx/meta.yaml
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: mcscanx_nextflow_local
+  mcscanx: 未启用（按需在 main.nf 中声明 MCScanX 步骤）
+- id: mcscanx_snakemake_local
+  mcscanx: '未启用（需要时用 shell 调 native/main.py scan）'
+implementations:
+- id: mcscanx_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    scan 运行 MCScanX 共线性检测，classify 做基因类型鉴定，dual/circle 调用 Java 绘图工具。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mcscanx
+    quay_biocontainers: quay.io/biocontainers/mcscanx
+    upstream_source: https://github.com/wyp1125/MCScanX
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda mcscanx=1.0.0；容器可用
+      quay.io/biocontainers ／ depot.galaxyproject.org 镜像（tag 见 README）
+default_implementation: mcscanx_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: mcscanx 子命令：scan|classify|dual|circle
+  prefix:
+    type: file
+    required: false
+    cli_arg: positional
+    description: MCScanX 输入前缀（读取 <prefix>.blast 与 <prefix>.gff；scan/classify 使用）
+  gff:
+    type: file
+    required: false
+    cli_arg: -g
+    description: 基因位置文件（dual/circle 绘图用；chr/start/end/gene 制表符分隔）
+  collinearity:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 共线性文件（MCScanX 产出的 <prefix>.collinearity；dual/circle 绘图用）
+  control:
+    type: file
+    required: false
+    cli_arg: -c
+    description: 绘图控制文件（各染色体大小与物种染色体列表；dual/circle 用）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出图片路径（dual/circle 用，如 .png）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 MCScanX 的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（MCScanX 本体单线程；仅为接口统一保留，并行体现在上游 DIAMOND/BLAST 步骤）
+outputs:
+  collinearity_blocks:
+    type: file
+    format: txt
+    description: scan 输出的共线性区块文件（<prefix>.collinearity）
+  html_report:
+    type: file
+    format: html
+    description: scan 输出的 HTML 可视化结果（<prefix>.html）
+  gene_type_stats:
+    type: file
+    format: txt
+    description: classify 输出的基因类型统计（0 singleton / 1 dispersed / 2 proximal / 3 tandem / 4 WGD）
+  plot_image:
+    type: file
+    format: png
+    description: dual/circle 输出的共线性图片
+environment:
+  container_official: quay.io/biocontainers/mcscanx（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 mcscanx；
+    绘图组件（dual_synteny_plotter / circle_plotter）为 Java 程序，需宿主机 JDK。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx4g'
+  per_subcommand_threads:
+    scan: 4
+    classify: 4
+    dual: 2
+    circle: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: MCScanX

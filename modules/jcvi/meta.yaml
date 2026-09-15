@@ -1,0 +1,150 @@
+software: jcvi
+canonical: jcvi
+category: comparative_genomics
+description: 'jcvi（MCscan Python 版）是基因组比较与共线性分析工具包：以 LAST/BLAST 比对 + MCscan
+  算法计算共线性锚点（jcvi.compara.catalog ortholog），并绘制点阵图（jcvi.graphics.dotplot）、
+  共线性圈图（jcvi.graphics.karyotype）与微共线性图（jcvi.graphics.synteny）。以 Python 包形态
+  经 pip/conda 分发（无独立命令行二进制），本模块以 `python -m jcvi...` 驱动。
+
+  '
+homepage: https://github.com/tanghaibao/jcvi
+license: BSD-2-Clause
+software_versions:
+- id: jcvi_native
+  jcvi: '1.6.7'
+  build_route: official biocontainer（quay.io/biocontainers/jcvi / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/jcvi
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    jcvi=1.6.7（bioconda 最新；quay tag 1.6.7--py312hfcd9dac_0）；宿主机 pip/conda 安装，python -m 驱动。'
+- id: jcvi_nextflow_nfcore
+  jcvi: 官方无模块（modules/nf-core/jcvi 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/nf-core/modules/master/modules/nf-core/jcvi/meta.yml
+    返回 404；Nextflow 场景以 native/ 为兜底。
+- id: jcvi_snakemake_wrappers
+  jcvi: 官方无 wrapper（bio/jcvi 404）
+  source: —
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/jcvi/meta.yaml
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: jcvi_nextflow_local
+  jcvi: 未启用（按需在 main.nf 中声明 python -m jcvi 步骤）
+- id: jcvi_snakemake_local
+  jcvi: '未启用（需要时用 shell 调 native/main.py ortholog 等子命令）'
+implementations:
+- id: jcvi_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.6.7"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标；
+    ortholog 计算共线性锚点，dotplot/karyotype/synteny 出图。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/jcvi
+    quay_biocontainers: quay.io/biocontainers/jcvi
+    upstream_source: https://github.com/tanghaibao/jcvi
+    install_hint: 推荐 pip install jcvi==1.6.7 或 mamba create -n <env> -c conda-forge -c bioconda jcvi=1.6.7；
+      容器可用 quay.io/biocontainers ／ depot.galaxyproject.org 镜像（tag 见 README）
+default_implementation: jcvi_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: jcvi 子命令：ortholog|dotplot|karyotype|synteny
+  sp1:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 物种 1 前缀（ortholog；读取 <sp1>.cds / <sp1>.bed 等）
+  sp2:
+    type: string
+    required: false
+    cli_arg: positional
+    description: 物种 2 前缀（ortholog）
+  anchors:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 共线性锚点文件（<sp1>.<sp2>.anchors；dotplot 用）
+  seqids:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 染色体列表文件（每行一个 seqid；karyotype 用）
+  layout:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 布局配置文件（karyotype/synteny 用，指定各轨道的染色体顺序/颜色）
+  blocks:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 共线性 blocks 文件（synteny 用）
+  bed:
+    type: file
+    required: false
+    cli_arg: positional
+    description: BED 注释文件（synteny 用）
+  cscore:
+    type: float
+    required: false
+    cli_arg: --cscore
+    description: ortholog 的 C-score 阈值（默认取 jcvi 内置值 0.7；14.md 示例用 0.5）
+  no_strip_names:
+    type: boolean
+    default: false
+    cli_arg: --no_strip_names
+    description: ortholog 不简化序列名称（保留完整基因名）
+  title:
+    type: string
+    required: false
+    cli_arg: --title
+    description: dotplot 图标题
+  outfile:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出图片路径（dotplot/karyotype 用）
+  outputprefix:
+    type: string
+    required: false
+    cli_arg: --outputprefix
+    description: 输出前缀（synteny 用）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: --cpus
+    description: 线程数（ortholog 经 --cpus 注入；自动注入）
+outputs:
+  anchors_file:
+    type: file
+    format: txt
+    description: ortholog 输出的共线性锚点文件（<sp1>.<sp2>.anchors）
+  plot_image:
+    type: file
+    format: pdf
+    description: dotplot/karyotype/synteny 输出的图片（.pdf 等）
+environment:
+  container_official: quay.io/biocontainers/jcvi（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 pip/conda 安装 jcvi；
+    依赖 numpy/scipy/matplotlib/biopython（conda 包已内置）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    MPLBACKEND: 'Agg'
+  per_subcommand_threads:
+    ortholog: 8
+    dotplot: 4
+    karyotype: 4
+    synteny: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: python

@@ -1,0 +1,142 @@
+software: raxml
+canonical: raxml
+category: phylogenetics
+description: 'RAxML（Randomized Axelerated Maximum Likelihood，standard-RAxML v8.2.12）是最大似然系统发育
+  树构建的经典工具：以 GTRGAMMA（核酸/密码子）或 PROTGAMMA*（蛋白质）等模型搜索最优树，并支持快速
+  bootstrap（-f a -x/-#）评估分支支持度，输出 RAxML_bestTree / RAxML_bipartitions / RAxML_bootstrap 等
+  结果文件。它是 14.md「五、RAxML - 物种树构建」的核心工具（源码编译多套 Makefile，含 SSE3/AVX 的
+  PTHREADS 与 HYBRID 版本；HYBRID 版需 MPICH 支持 MPI 并行）。
+
+  '
+homepage: https://cme.h-its.org/exelixis/web/software/raxml/index.html
+license: GPL-3.0（bioconda raxml 包元数据 license=GPL；standard-RAxML 源码以 GNU GPL 分发）
+software_versions:
+- id: raxml_native
+  raxml: 8.2.12
+  build_route: official biocontainer（quay.io/biocontainers/raxml / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/raxml
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
+    bioconda 现行 latest=8.2.13，但 14.md 锁定 8.2.12；native 登记 8.2.12。官方容器 tag
+    quay.io/biocontainers/raxml:8.2.12--h031d066_6（depot.galaxyproject.org 有同名 sif）。官方仅以源码
+    分发（无预编译包）：源码编译需按平台/指令集选 Makefile（SSE3.PTHREADS / AVX.PTHREADS / SSE3.HYBRID /
+    AVX.HYBRID），HYBRID 版本需 MPICH（libmpich）；源码归档
+    https://github.com/stamatak/standard-RAxML/archive/v8.2.12.tar.gz。宿主机直跑 main.py 时用 conda/mamba
+    安装 raxml=8.2.12，或 brew（brewsci/bio 当前 8.2.13，见 README）。'
+- id: raxml_nextflow_nfcore
+  raxml: 官方无 nf-core 子模块（modules/nf-core/raxml 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/raxml
+    返回 404（登记「官方无」）。Nextflow 场景请用 raxml_native 兜底（下一代工具见 modules/raxml-ng）。'
+- id: raxml_snakemake_wrappers
+  raxml: 官方无 wrapper（bio/raxml 404）
+  source: —
+  note: '2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/raxml 返回 404
+    （登记「官方无」）。Snakemake 场景请用 raxml_native 兜底。'
+implementations:
+- id: raxml_native
+  path: native
+  source_type: custom
+  type: native
+  version: "8.2.12"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。ml_bootstrap
+    子命令做 ML 树搜索 + 快速 bootstrap（-f a -x -p -# -m -T）；ml_search 仅搜索最优树（-f d）；version
+    打印版本。自动按线程优先级注入 -T。RAxML 经典工具（下一代见 raxml-ng）；容器走官方镜像
+    （quay.io/biocontainers/raxml，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/raxml
+    quay_biocontainers: quay.io/biocontainers/raxml
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda raxml=8.2.12；容器可用
+      quay.io/biocontainers/raxml:8.2.12--h031d066_6（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）；亦可源码编译（见 README「官方源码编译」）
+default_implementation: raxml_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: raxml 子命令：ml_bootstrap|ml_search|version
+  msa:
+    type: file
+    required: true
+    cli_arg: -s
+    description: 输入多序列比对（Phylip/FASTA，常为 Gblocks/trimAl 修剪后结果）
+  model:
+    type: string
+    default: GTRGAMMA
+    cli_arg: -m
+    description: 进化模型（核酸/密码子 GTRGAMMA；蛋白质 PROTGAMMAILGX 等）
+  name:
+    type: string
+    default: out
+    cli_arg: -n
+    description: 输出文件前缀（RAxML_<类型>.<name>）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: -w
+    description: 输出目录（RAxML 的 -w；缺省当前目录）
+  parsimony_seed:
+    type: integer
+    default: 12345
+    cli_arg: -p
+    description: 初始树/似然搜索随机种子（-p）
+  bootstrap_seed:
+    type: integer
+    default: 12345
+    cli_arg: -x
+    description: bootstrap 随机种子（-x，仅 -f a）
+  bootstrap_reps:
+    type: integer
+    default: 100
+    cli_arg: -#
+    description: bootstrap 重复次数（-#；正式分析建议 1000）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -T
+    description: 线程数（驱动注入 -T；默认 8，CPU 密集）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 RAxML 的额外参数（高级用法，慎用）
+outputs:
+  best_tree:
+    type: file
+    format: newick
+    description: 最佳 ML 树（RAxML_bestTree.<name>）
+  bipartitions:
+    type: file
+    format: newick
+    description: 带 bootstrap 支持度的树（RAxML_bipartitions.<name>，-f a）
+  bootstrap_trees:
+    type: file
+    format: newick
+    description: 所有 bootstrap 树（RAxML_bootstrap.<name>，-f a）
+  info:
+    type: file
+    format: txt
+    description: 运行信息/似然（RAxML_info.<name>）
+environment:
+  container_official: quay.io/biocontainers/raxml（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：brewsci/bio 当前 8.2.13）安装 raxml；官方仅以源码分发
+    （多套 Makefile；HYBRID 版需 MPICH，见 README）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    ml_bootstrap: 8
+    ml_search: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: raxmlHPC-PTHREADS-SSE3
+  note: ml_bootstrap 包装 raxmlHPC-PTHREADS-SSE3（-f a -x <seed> -p <seed> -# <n> -m <model> -s <msa> -n
+    <name> -T <threads>）；ml_search 为 -f d。execution.binary 登记 SSE3 PTHREADS 版代表性入口（conda/官方
+    镜像提供 raxmlHPC / raxmlHPC-PTHREADS / raxmlHPC-SSE3 / raxmlHPC-PTHREADS-SSE3 等；HYBRID 版需 MPICH）。
+    RAxML 为 CPU 密集，默认 8 线程。官方层（nf-core/snakemake-wrappers）均无，见 README 与 software_versions。

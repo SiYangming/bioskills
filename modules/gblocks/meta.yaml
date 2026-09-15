@@ -1,0 +1,136 @@
+software: gblocks
+canonical: gblocks
+category: phylogenetics
+description: 'Gblocks（Castresana 2000，经典版本 0.91b）是系统发育分析前的多序列比对（MSA）过滤工具：
+  从比对结果（FASTA/PIR/NBRF）中自动筛选保守区块（conserved blocks），剔除高变区与难比对区域，
+  输出更可靠的比对（原生在输入名后追加 -gb），再送入 RAxML / RAxML-NG 等建树。它是 14.md
+  「四、单拷贝同源基因提取和多序列比对 → 3.5 Gblocks 保守区块提取」的核心步骤，与 trimAl 并列为
+  MSA 修剪的两条主流路线。
+
+  '
+homepage: http://molevol.cmima.csic.es/castresana/Gblocks.html
+license: 自定义（bioconda gblocks 包未登记标准 SPDX；包元数据 license 记为「The software and its accompanying
+  documentation are provided as is, without guarantee of support or maintenance.」）
+software_versions:
+- id: gblocks_native
+  gblocks: 0.91b
+  build_route: official biocontainer（quay.io/biocontainers/gblocks / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/gblocks
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
+    bioconda 现行 latest=1.0，但 14.md 与官方文档流程锁定经典版 0.91b（输出 <input>-gb）；native 登记
+    0.91b。官方容器 tag quay.io/biocontainers/gblocks:0.91b--h9ee0642_2（depot.galaxyproject.org 有
+    同名 sif，tag 0.91b--h9ee0642_2）。官方另有预编译二进制（Linux64/OSX，.tar.Z，需 ncompress 解压）；
+    宿主机直跑 main.py 时用 conda/mamba 安装 gblocks=0.91b，或 brew（brewsci/bio tap）。'
+- id: gblocks_nextflow_nfcore
+  gblocks: 官方无 nf-core 子模块（modules/nf-core/gblocks 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/gblocks
+    返回 404（登记「官方无」）。Nextflow 场景请用 gblocks_native 兜底（或参照同库既有模块自建本地实现）。'
+- id: gblocks_snakemake_wrappers
+  gblocks: 官方无 wrapper（bio/gblocks 404）
+  source: —
+  note: '2026-09 核实 https://github.com/snakemake/snakemake-wrappers/tree/master/bio/gblocks 返回 404
+    （登记「官方无」）。Snakemake 场景请用 gblocks_native 兜底。'
+implementations:
+- id: gblocks_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.91b"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。extract
+    子命令对多序列比对提取保守区块（Gblocks <aln> -t=<c|p|d>，原生输出 <aln>-gb，-o 可改名）；version
+    打印 Gblocks 用法/版本。Gblocks 单线程，--threads 仅作统一接口保留（不注入）。容器走官方镜像
+    （quay.io/biocontainers/gblocks，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/gblocks
+    quay_biocontainers: quay.io/biocontainers/gblocks
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda gblocks=0.91b；容器可用
+      quay.io/biocontainers/gblocks:0.91b--h9ee0642_2（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: gblocks_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gblocks 子命令：extract|version
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: extract 输入多序列比对（FASTA/PIR/NBRF；常为 MAFFT/trimAl 比对结果）
+  aln_type:
+    type: string
+    default: p
+    cli_arg: -t
+    description: 序列类型：c（codon/密码子）/ p（protein/蛋白质）/ d（DNA）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出保守区块比对路径（Gblocks 原生无 -o，缺省写 <input>-gb，驱动以 -o 改名搬运）
+  allow_gaps:
+    type: boolean
+    default: false
+    cli_arg: -e
+    description: 允许半位点含空位（-e=-gaps）
+  b1:
+    type: integer
+    required: false
+    description: -b1 最小保守区块长度（默认 10）
+  b2:
+    type: integer
+    required: false
+    description: -b2 侧翼位置阈值（默认 8）
+  b3:
+    type: integer
+    required: false
+    description: -b3 最大连续非保守位置数（默认 10）
+  b4:
+    type: integer
+    required: false
+    description: -b4 区块内最小空位位置数（默认 4）
+  b5:
+    type: string
+    default: h
+    description: -b5 允许的空位位置策略（n/h/a，默认 h）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（Gblocks 单线程，仅作统一接口保留，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 Gblocks 的额外参数（高级用法，慎用）
+outputs:
+  blocks_alignment:
+    type: file
+    format: fasta
+    description: extract 产物：提取保守区块后的比对（Gblocks 原生 <input>-gb；-o 可改名）
+  usage:
+    type: file
+    format: txt
+    description: version 产物：Gblocks 用法/版本输出（stdout）
+environment:
+  container_official: quay.io/biocontainers/gblocks（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew tap brewsci/bio && brew install gblocks）安装 gblocks；
+    官方另有预编译二进制（Gblocks_Linux64_0.91b.tar.Z，需 ncompress 解压）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    extract: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Gblocks
+  note: extract 包装官方 Gblocks（-t=<c|p|d>；原生输出 <input>-gb，驱动按 -o 改名）；Gblocks 为单线程
+    经典工具，--threads 保留接口但不注入；version 打印用法/版本。官方层（nf-core/snakemake-wrappers）
+    均无，见 README 与 software_versions。

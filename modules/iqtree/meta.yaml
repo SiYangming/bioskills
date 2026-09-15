@@ -1,0 +1,132 @@
+software: iqtree
+canonical: iqtree
+category: phylogenetics
+description: 'IQ-TREE 是高效的最大似然系统发育树构建工具：iqtree -s <alignment> -m <model|MFP>
+  -bb <n> -alrt <n> -nt <threads> 支持自动模型选择（ModelFinder）、超快 bootstrap（UFBoot）、
+  近似似然比检验（aLRT）与分区合并分析，比 classic RAxML 快数倍。是 14.md「五（续）→ 4.7 IQ-TREE -
+  高效的最大似然树构建」的物种树构建工具；本模块登记 v1.6.12（该版线程参数为 -nt）。
+
+  '
+homepage: http://www.iqtree.org/
+license: GPL-2.0-or-later
+software_versions:
+- id: iqtree_native
+  iqtree: '1.6.12'
+  build_route: official biocontainer（quay.io/biocontainers/iqtree / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/iqtree
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda 保留 1.6.12；官方容器 tag quay.io/biocontainers/iqtree:1.6.12--he513fc3_0
+    （depot.galaxyproject.org 有同名 sif，2026-09 核实 200）。官方 GitHub release 另提供预编译包
+    iqtree-1.6.12-Linux.tar.gz（sha256=3762f471d8853d9fd2bdf5f18af60f916c10690fa53eed8015b71a8cc674d487）与
+    iqtree-1.6.12-MacOSX.zip（sha256=7a5b21e6cada366d32b9dc32b843c6cb30d06a06a090e1e5cfbeec2e0f72c39f，
+    x86_64，Apple Silicon 需 Rosetta）及源码（Cibiv/IQ-TREE，cmake）。宿主机直跑 main.py 时用
+    conda/mamba 安装 iqtree=1.6.12，或 brew（brewsci/bio tap，当前 1.6.12，见 README）。'
+- id: iqtree_nextflow_nfcore
+  module_version: nf-core master（2026-07 起）
+  iqtree: '3.1.3'
+  source: bioconda::iqtree=3.1.3（modules/nf-core/iqtree/environment.yml，扁平模块）
+  note: 'nf-core 官方 modules/nf-core/iqtree 存在（扁平模块，pin bioconda::iqtree=3.1.3，2026-07 由 v2 升 v3，
+    2026-09 在线核实）。⚠️ 与 native 的 1.6.12 差异大：IQ-TREE 2.0+ 线程参数由 -nt 改为 -T，CLI 与模型语法有变，
+    跨实现迁移须核对。'
+- id: iqtree_snakemake_wrappers
+  iqtree: 官方无 wrapper（bio/iqtree 404）
+  source: —
+  note: 2026-09 核实 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/iqtree/wrapper.py
+    返回 404（bio/iqtree 目录不存在）；Snakemake 场景请直接调用 native。
+implementations:
+- id: iqtree_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.6.12"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。ml 子命令
+    建 ML 树（ModelFinder Plus 自动选模型 + UFBoot + aLRT）；model 子命令仅做模型选择（ModelFinder）。
+    自动注入 -nt 线程。覆盖 14.md「五（续）→ 4.7 IQ-TREE」。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/iqtree
+    quay_biocontainers: quay.io/biocontainers/iqtree
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda iqtree=1.6.12；容器可用
+      quay.io/biocontainers/iqtree:1.6.12--he513fc3_0（tag 以 quay / depot.galaxyproject.org 为准，
+      见 README「容器与 Conda 链接」）
+default_implementation: iqtree_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: iqtree 子命令：ml|model
+  input:
+    type: file
+    required: true
+    cli_arg: -s
+    description: 输入多序列比对（PHYLIP/FASTA；常为单拷贝直系同源基因串联比对）
+  model:
+    type: string
+    default: MFP
+    cli_arg: -m
+    description: 进化模型（ml 默认 MFP=ModelFinder Plus 自动选模型；model 默认 MF；亦可 LG+G4 / GTR+G 等）
+  bootstrap:
+    type: integer
+    default: 1000
+    cli_arg: -bb
+    description: 超快 bootstrap（UFBoot）重复次数（ml；0 表示关闭）
+  alrt:
+    type: integer
+    required: false
+    cli_arg: -alrt
+    description: 近似似然比检验（aLRT）重复次数（ml；如 1000）
+  tree:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 起始树文件（Newick，可选）
+  prefix:
+    type: string
+    required: false
+    cli_arg: -pre
+    description: 输出文件前缀（缺省 <alignment>；产出 <prefix>.treefile/.iqtree/.log）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -nt
+    description: 线程数（驱动注入 -nt；默认 8，CPU 密集）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 iqtree 的额外参数（高级用法，慎用）
+outputs:
+  treefile:
+    type: file
+    format: newick
+    description: 最佳树（<prefix>.treefile，Newick 格式）
+  report:
+    type: file
+    format: txt
+    description: 详细报告（<prefix>.iqtree）
+  log:
+    type: file
+    format: txt
+    description: 运行日志（<prefix>.log）
+environment:
+  container_official: quay.io/biocontainers/iqtree（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba（或 brew：brewsci/bio tap，当前 1.6.12）安装 iqtree；官方另有预编译包
+    （Linux tar / MacOSX zip）与源码（cmake）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    ml: 8
+    model: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: iqtree
+  note: ml 包装 iqtree（-s -m MFP -bb -alrt -nt；v1.6.12 线程参数为 -nt）；model 为 -m MF 仅做模型选择。
+    IQ-TREE 为 CPU 密集，默认 8 线程。官方层 nf-core 有扁平模块 iqtree（pin 3.1.3，见 software_versions），
+    snakemake-wrappers 无，见 README。
