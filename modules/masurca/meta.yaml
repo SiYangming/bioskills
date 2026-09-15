@@ -1,0 +1,116 @@
+software: masurca
+canonical: masurca
+category: genome_assembly
+description: 'MaSuRCA（Maryland Super-Read Celera Assembler）是混合基因组组装工具包，支持二代
+  Illumina 与三代 PacBio/Nanopore 数据联合组装（super-read + mega-read 算法），内含 QuORUM 纠错、
+  jellyfish k-mer 计数、MUMmer 比对、POLCA 打磨等。使用方式：先写 config.txt（DATA 段 PE=/PACBIO= …
+  + PARAMETERS 段 GRAPH_KMER_SIZE/USE_GRID/NUM_THREADS 等），运行 masurca config.txt 生成
+  assemble.sh，再执行 ./assemble.sh 完成组装。文档（04.md 第 1520-1623 行）使用 MaSuRCA 3.4.1。
+  '
+homepage: https://github.com/alekseyzimin/masurca
+license: GPL-3.0
+software_versions:
+- id: masurca_native
+  masurca: '3.4.1（文档版本；bioconda masurca=3.4.1；容器 tag 3.4.1--pl526h66be062_0）'
+  build_route: official biocontainer（quay.io/biocontainers/masurca / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/masurca（masurca=3.4.1，linux-64）
+  note: '2026-09 核实：bioconda 有 masurca=3.4.1（linux-64，build pl526h66be062_0）与更新版 4.1.4；
+    quay.io/biocontainers/masurca:3.4.1--pl526h66be062_0 与 depot 对应 sif 均存在（HTTP 200）。
+    ⚠️ 官方 README 明确警告「通过 Bioconda 安装 MaSuRCA 不受支持，可能因 Mummer 等包冲突导致安装
+    损坏」，生产环境推荐官方源码编译（需 BOOST_ROOT + ./install.sh）。'
+- id: masurca_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/masurca 404）
+  masurca: —
+  source: '—（nf-core/modules 无 masurca 目录；2026-09 抓取 api.github.com 返回 404）'
+  note: Nextflow 场景不建目录、不登记官方说明层；如需流程化请以 native/ 驱动或 shell 调用本模块
+    main.py。
+- id: masurca_snakemake_wrappers
+  masurca: 官方无 wrapper（bio/masurca 404）
+  source: '—（snakemake-wrappers 仓库 bio/ 下无 masurca；2026-09 抓取返回 404）'
+  note: Snakemake 场景以 native/（shell 调 masurca / assemble.sh）为兜底。
+implementations:
+- id: masurca_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.4.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 config（生成 assemble.sh）/ simple（简化命令行直跑）/ run（执行 assemble.sh）三段链路。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/masurca
+    quay_biocontainers: quay.io/biocontainers/masurca
+    upstream_source: https://github.com/alekseyzimin/masurca/releases/tag/v3.4.1
+    galaxyproject: https://depot.galaxyproject.org/singularity/masurca%3A3.4.1--pl526h66be062_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda masurca=3.4.1（官方警告可能
+      有 mummer 冲突）或官方源码编译（BOOST_ROOT + ./install.sh）；容器可用
+      quay.io/biocontainers/masurca:3.4.1--pl526h66be062_0
+default_implementation: masurca_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'masurca 子命令：config（生成 assemble.sh）|simple（简化直跑）|run（执行 assemble.sh）'
+  config:
+    type: file
+    required: false
+    description: 'config（位置参数）：MaSuRCA 配置文件 config.txt（DATA + PARAMETERS 两段）'
+  pe_reads:
+    type: string
+    required: false
+    cli_arg: -i
+    description: 'simple：Illumina paired-end reads，逗号分隔的 R1,R2 路径（-i R1,R2）'
+  long_reads:
+    type: file
+    required: false
+    cli_arg: -r
+    description: 'simple：长读文件（-r，PacBio/Nanopore fasta/fastq，可选）'
+  script:
+    type: file
+    required: false
+    description: 'run：待执行的组装脚本（默认 assemble.sh，由 config 子命令生成）'
+  log:
+    type: file
+    required: false
+    description: 'run：组装日志文件（默认 masurca.log，重定向 stdout+stderr）'
+  threads:
+    type: integer
+    default: 8
+    description: 线程数（simple 注入 -t；config 阶段线程由 config.txt 的 NUM_THREADS 控制）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 masurca 的额外参数（高级用法，慎用）
+outputs:
+  assemble_script:
+    type: file
+    format: sh
+    description: config 子命令生成的组装驱动脚本 assemble.sh
+  assembly_fasta:
+    type: file
+    format: fasta
+    description: 组装产物（如 flye/assembly.fasta 或 primary.genome.scf.fasta）
+  log_file:
+    type: file
+    description: run 子命令产出的组装日志（masurca.log）
+environment:
+  container_official: quay.io/biocontainers/masurca（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方容器/conda 已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用
+    conda/mamba 安装 masurca=3.4.1，或官方源码编译（BOOST_ROOT + ./install.sh）。⚠️ 官方 README
+    警告 bioconda 安装可能因 mummer 冲突损坏，生产组装推荐源码编译路线。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 65536
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    config: 1
+    simple: 8
+    run: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: masurca

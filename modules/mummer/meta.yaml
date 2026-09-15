@@ -1,0 +1,234 @@
+software: mummer
+canonical: mummer
+category: comparative_genomics
+description: 'MUMmer v4（Maximal Unique Matches，mummer4/mummer）是快速全基因组比对工具集：
+  nucmer 基于精确匹配种子做基因组对基因组比对（para_nucmer 为其并行版），delta-filter 过滤
+  比对结果，show-coords 输出比对坐标/相似度/覆盖率，mummerplot 用 gnuplot 画点阵图，另有
+  nucmer 内置的 dnadiff 流程。广泛用于共线性分析、组装质量评估（与参考比对）与 SNP/indel
+  定位。本模块以文档 04.md / 14.md 采用的最新版 v4.0.0beta2 为准。'
+homepage: https://github.com/mummer4/mummer
+license: Artistic-2.0
+software_versions:
+- id: mummer_native
+  mummer: '4.0.0beta2（官方 GitHub release v4.0.0beta2；bioconda 包名为 mummer4，非 mummer）'
+  subcommands: nucmer · para_nucmer · delta-filter · show-coords · mummerplot
+  build_route: official biocontainer（bioconda mummer4 → quay.io/biocontainers/mummer4:4.0.0beta2--pl526he1b5a44_5
+    → depot.galaxyproject.org），不在本地自建容器
+  source: https://anaconda.org/bioconda/mummer4
+  note: '⚠️ bioconda 的 mummer 包是旧版 MUMmer3.23（latest 3.23）；MUMmer4 请用 mummer4 包。
+    2026-09 核实：bioconda mummer4 最新 4.0.1（含 4.0.0beta2 构建）；quay.io/biocontainers/mummer4
+    tag 含 4.0.0beta2--pl526he1b5a44_5；depot singularity mummer4:4.0.0beta2--pl526he1b5a44_5 HTTP 200。
+    官方 release v4.0.0beta2 仅源码 tar.gz（无预编译二进制资产），v4.0.0/v4.0.1 额外提供
+    mummer-alpine.sif。'
+- id: mummer_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  mummer: '3.23'
+  source: bioconda::mummer=3.23（modules/nf-core/mummer/environment.yml）
+  note: nf-core 官方 mummer 模块（单模块，无子目录）pin 的是 **MUMmer3** `mummer=3.23`，与 native
+    的 MUMmer4（mummer4=4.0.0beta2）差一个大版本；跨引擎迁移时注意命令参数差异。
+- id: mummer_snakemake_wrappers
+  mummer: 官方无 wrapper（bio/mummer 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/mummer
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: mummer_nextflow_local
+  mummer: 未启用（不建 nextflow/；需要时以 shell 调 native/main.py）
+- id: mummer_snakemake_local
+  mummer: 未启用（不建 snakemake/；需要时以 shell 调 native/main.py）
+implementations:
+- id: mummer_native
+  path: native
+  source_type: custom
+  type: native
+  version: "4.0.0beta2"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 nucmer / para_nucmer / delta-filter / show-coords / mummerplot 五步链路，自动注入线程。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/mummer4
+    quay_biocontainers: quay.io/biocontainers/mummer4
+    galaxyproject: https://depot.galaxyproject.org/singularity/mummer4%3A4.0.0beta2--pl526he1b5a44_5
+    upstream_prebuilt: （无——官方 release v4.0.0beta2 仅源码 mummer-4.0.0beta2.tar.gz；v4.0.0/v4.0.1
+      另有 mummer-alpine.sif 容器资产）
+    upstream_source: https://github.com/mummer4/mummer/releases/download/v4.0.0beta2/mummer-4.0.0beta2.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda mummer4=4.0.0beta2；容器可用
+      quay.io/biocontainers/mummer4:4.0.0beta2--pl526he1b5a44_5；或 brew install mummer（brew 当前 4.0.1）
+default_implementation: mummer_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: mummer 子命令：nucmer（比对）| para_nucmer（并行比对）| delta_filter（过滤 delta）|
+      show_coords（展示坐标）| mummerplot（点阵图）
+  reference:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 参考序列 FASTA（nucmer / para_nucmer 第一个位置参数）
+  query:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 查询序列 FASTA（nucmer / para_nucmer 第二个位置参数）
+  prefix:
+    type: string
+    required: false
+    cli_arg: -p
+    description: 输出前缀（nucmer 默认 out → out.delta；mummerplot -p out）
+  delta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入 delta 文件（delta_filter / show_coords / mummerplot）
+  output:
+    type: file
+    required: false
+    description: 输出文件；对写 stdout 的子命令（para_nucmer / delta_filter / show_coords）由驱动重定向写入
+  min_cluster:
+    type: integer
+    required: false
+    cli_arg: -c
+    description: 'nucmer：最小匹配簇长度（-c，文档示例 -c 200）'
+  max_gap:
+    type: integer
+    required: false
+    cli_arg: -g
+    description: 'nucmer：最大 gap 长度（-g，文档示例 -g 200）'
+  min_similarity:
+    type: float
+    required: false
+    cli_arg: -i
+    description: 'delta-filter：最小相似度（-i，文档示例 95）'
+  filter_ref:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -r
+    description: 'delta-filter：保留参考序列最佳匹配（-r；文档示例 -r -q 同时给出）'
+  filter_query:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -q
+    description: 'delta-filter：保留查询序列最佳匹配（-q）'
+  show_coverage:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -c
+    description: 'show-coords：显示覆盖率（-c）'
+  show_diffs:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -d
+    description: 'show-coords：显示差异数（-d）'
+  show_length:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -l
+    description: 'show-coords：显示比对长度（-l）'
+  min_identity:
+    type: integer
+    required: false
+    cli_arg: -I
+    description: 'show-coords：最小相似度（-I，文档示例 95）'
+  min_align_len:
+    type: integer
+    required: false
+    cli_arg: -L
+    description: 'show-coords：最小比对长度（-L，文档示例 10000）'
+  sort_ref:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -r
+    description: 'show-coords：按参考序列排序（-r）'
+  plot_filter:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -f
+    description: 'mummerplot：使用过滤后的 delta（-f）'
+  plot_label:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -l
+    description: 'mummerplot：显示标签（-l）'
+  plot_size:
+    type: string
+    required: false
+    cli_arg: -s
+    description: 'mummerplot：图尺寸（-s，文档示例 large）'
+  plot_terminal:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 'mummerplot：输出终端类型（-t，文档示例 png）'
+  plot_scaffold:
+    type: string
+    required: false
+    cli_arg: -r
+    description: 'mummerplot：仅可视化指定 scaffold（-r scaffold_0）'
+  plot_symmetric:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -S
+    description: 'mummerplot：生成对称点阵图（-S）'
+  cpu:
+    type: integer
+    required: false
+    cli_arg: --CPU
+    description: 'para_nucmer：并行核数（--CPU；默认取线程优先级结果）'
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（nucmer 注入 --threads，para_nucmer 注入 --CPU）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应 MUMmer 二进制的额外参数（高级用法，慎用）
+outputs:
+  delta:
+    type: file
+    format: delta
+    description: nucmer/para_nucmer 输出 <prefix>.delta 比对结果
+  filtered_delta:
+    type: file
+    format: delta
+    description: delta-filter 输出过滤后的 delta（默认写 stdout，--output 落盘）
+  coords:
+    type: file
+    format: txt
+    description: show-coords 输出比对坐标表（默认写 stdout，--output 落盘）
+  plot:
+    type: file
+    format: png
+    description: mummerplot 输出 <prefix>.png 点阵图 + <prefix>.gp gnuplot 脚本
+environment:
+  container_official: quay.io/biocontainers/mummer4（MUMmer v4 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda mummer4 → quay → depot，2026-09 核实），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 mummer4=4.0.0beta2
+    或 brew install mummer（4.0.1）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    nucmer: 8
+    para_nucmer: 8
+    default: 4
+  note: MUMmer 比对对内存较敏感（大基因组 nucmer 需数十 GB）→ default_mem_mb 取 16384；
+    nucmer --threads / para_nucmer --CPU 注入线程。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: nucmer

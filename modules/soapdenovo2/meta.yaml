@@ -1,0 +1,147 @@
+software: soapdenovo2
+canonical: soapdenovo2
+category: genome_assembly
+description: 'SOAPdenovo2 是基于 De Bruijn 图的短读（Illumina）基因组组装器，支持 paired-end
+  与 mate-pair 文库，输出 contig 与 scaffold（*.contig / *.scafSeq）。核心可执行程序为
+  SOAPdenovo-63mer / SOAPdenovo-127mer（按 k-mer 上限选择）与 SOAPdenovo-fusion；组装由
+  config.txt（[LIB] 文库段：avg_ins / reverse_seq / asm_flags / q1,q2 / pair_num_cutoff /
+  map_len）驱动，一条命令 SOAPdenovo-63mer all -s config.txt -o prefix -K 51 -p N -R 完成
+  pregraph→contig→map→scaff 全流程，或分步 pregraph/contig/map/scaff。文档（04.md 第 769-854 行）
+  给出的源码版本为 GitHub release r241。
+  '
+homepage: https://github.com/aquaskyline/SOAPdenovo2
+license: GPL-3.0
+software_versions:
+- id: soapdenovo2_native
+  soapdenovo2: '2.40（bioconda/容器版本，源码基线 r240）；文档源码版本 r241（仓库 VERSION 文件
+    为 2.04-r241，GitHub release r241，2017-01-03）'
+  build_route: official biocontainer（quay.io/biocontainers/soapdenovo2 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/soapdenovo2（soapdenovo2=2.40，linux-64 + osx-64）
+  note: '2026-09 核实：文档「SOAPdenovo2 暂无官方 conda 包」的说法不成立——bioconda 有 soapdenovo2=2.40
+    （源码 r240）；quay.io/biocontainers/soapdenovo2:2.40--0 / 2.40--1 与 depot 对应 sif 均存在（HTTP
+    200）。若需精确复现文档的 r241，请走官方源码编译（r241 tarball，VERSION=2.04-r241），bioconda
+    2.40 与容器 tag 均为 r240 基线。'
+- id: soapdenovo2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/soapdenovo2 404）
+  soapdenovo2: —
+  source: '—（nf-core/modules 无 soapdenovo2 目录；2026-09 抓取 api.github.com 返回 404）'
+  note: Nextflow 场景不建目录、不登记官方说明层；如需流程化请以 native/ 驱动或 shell 调用本模块
+    main.py。
+- id: soapdenovo2_snakemake_wrappers
+  soapdenovo2: 官方无 wrapper（bio/soapdenovo2 404）
+  source: '—（snakemake-wrappers 仓库 bio/ 下无 soapdenovo2；2026-09 抓取返回 404）'
+  note: Snakemake 场景以 native/（shell 调 SOAPdenovo-63mer/127mer）为兜底。
+implementations:
+- id: soapdenovo2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.40"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 all / pregraph / contig / map / scaff 五段链路，自动按 --mer 选择 SOAPdenovo-63mer/127mer
+    并注入线程与临时目录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/soapdenovo2
+    quay_biocontainers: quay.io/biocontainers/soapdenovo2
+    galaxyproject: https://depot.galaxyproject.org/singularity/soapdenovo2%3A2.40--1
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda soapdenovo2=2.40；容器可用
+      quay.io/biocontainers/soapdenovo2:2.40--1
+default_implementation: soapdenovo2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'soapdenovo2 子命令：all|pregraph|contig|map|scaff'
+  config:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 'config.txt 配置文件（all/pregraph/map 必填；含 max_rd_len 全局段与多个 [LIB] 文库段）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出图/结果前缀（all/pregraph 必填，如 out_K51/E_coli）
+  graph_prefix:
+    type: string
+    required: false
+    cli_arg: -g
+    description: 上一步产出的图前缀（contig/map/scaff 必填，与 -o 同值）
+  kmer:
+    type: integer
+    required: false
+    default: 51
+    cli_arg: -K
+    description: k-mer 长度（必须为奇数；SOAPdenovo-63mer 上限 63，127mer 上限 127）
+  mer:
+    type: integer
+    required: false
+    default: 63
+    description: 选择程序 SOAPdenovo-63mer（63）或 SOAPdenovo-127mer（127）；非命令行参数，用于解析二进制
+  resolve_repeats:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -R
+    description: 用 reads 解决重复（all/pregraph/contig 可用）
+  fill_gaps:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -F
+    description: scaffold 阶段填补 gap（scaff 常用）
+  kmer_freq_cutoff:
+    type: integer
+    required: false
+    cli_arg: -d
+    description: 频率不高于该值的 k-mer 将被删除（all）
+  edge_cov_cutoff:
+    type: integer
+    required: false
+    cli_arg: -D
+    description: 覆盖度不高于该值的边将被删除（all，默认 1）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -p
+    description: 线程数（all/pregraph 注入 -p）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 SOAPdenovo 的额外参数（高级用法，慎用）
+outputs:
+  graph_prefix_files:
+    type: file
+    description: pregraph/contig/map 阶段产出的图与中间文件（<prefix>.kmerFreq / .edge / .preArc 等）
+  contig_fasta:
+    type: file
+    format: fasta
+    description: 组装产出的 contig 序列（<prefix>.contig）
+  scaffold_fasta:
+    type: file
+    format: fasta
+    description: 最终 scaffold 序列（<prefix>.scafSeq）
+environment:
+  container_official: quay.io/biocontainers/soapdenovo2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 soapdenovo2=2.40（或源码编译
+    r241）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    all: 8
+    pregraph: 8
+    contig: 4
+    map: 4
+    scaff: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: SOAPdenovo-63mer

@@ -1,0 +1,150 @@
+software: sspace
+canonical: sspace
+category: genome_assembly
+description: 'SSPACE STANDARD v3.0（Scaffolding Pre-Assemblies After Contig Extension，
+  BaseClear / Marten Boetzer & Walter Pirovano，2011）是基于 SSAKE 的基因组 scaffold
+  连接工具：用一个或多个 mate-pair / paired-end 文库（或已有 SAM→TAB 配对信息）把
+  contigs 延伸并连接成更长的 scaffolds（Boetzer M et al. Bioinformatics 2011;27(4):578-9）。
+  CLI 形如 SSPACE_Standard_v3.0.pl -l library.txt -s genome.fasta -x 0 -T 4 -b OUT。
+  **渠道核实（2026-09）**：bioconda `sspace` 404（仅 `sspace_basic`=2.1.1，为另一工具
+  SSPACE-Basic，非本标准版）；quay.io/biocontainers/sspace 与 depot.galaxyproject.org
+  均无；官方 BaseClear 下载 URL 已 404 → 判为「无官方维护渠道」，本模块提供自建
+  Dockerfile/Apptainer.def（debian + libperl4-corelibs-perl + 官方发行 tar）。
+  '
+homepage: https://www.baseclear.com/services/bioinformatics/basetools/sspace-standard
+license: GPL-2.0-or-later
+software_versions:
+- id: sspace_native
+  sspace: '3.0（SSPACE_Standard_v3.0.pl；内部版本串 [SSPACE_Standard_v3.0_linux]；
+    2011-08 BaseClear 发布）'
+  build_route: '无官方镜像/conda（bioconda sspace 404；quay.io/biocontainers/sspace 无；
+    depot.galaxyproject.org 无）→ 自建 debian:bookworm-slim + libperl4-corelibs-perl
+    配方（native/Dockerfile + native/Apptainer.def），软件本体取自官方发行 tar（含
+    Perl 主/子脚本 + 捆绑 bowtie 0.12.5 与 bwa）'
+  source: '官方发行包 SSPACE-STANDARD-v.-3.0-linux-x86_64.tar.gz（BaseClear 原下载
+    URL https://www.baseclear.com/wp-content/uploads/SSPACE-STANDARD-v.-3.0-linux-x86_64.tar.gz
+    2026-09 探测 404）；社区归档 github.com/yexianingyue/SSPACE-STANDARD-3.0
+    （main 分支同名 tar，3782262 B，sha256 4a506410… 核实 200）'
+  note: 'SSPACE 主脚本 require "getopts.pl"（Perl 4 时代库，现代 Perl 已移除），
+    需额外装 Debian 包 libperl4-corelibs-perl 方能运行；捆绑的 bowtie/bwa 为
+    linux-x86_64 ELF（GNU/Linux 2.6.9+），非 Linux 平台建议走容器。bioconda 的
+    sspace_basic=2.1.1 是 SSPACE-Basic（依赖 bowtie v1），与本 STANDARD v3.0 非同一
+    工具，勿混用。'
+- id: sspace_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/sspace 404）
+  sspace: —
+  source: —（nf-core/modules 无 sspace 目录，2026-09 核实 404）
+  note: Nextflow 场景无官方子模块；需要时以 native 驱动兜底（shell 调 main.py scaffold）。
+- id: sspace_snakemake_wrappers
+  sspace: 官方无 wrapper（bio/sspace 404）
+  source: —
+  note: 2026-09 抓取 snakemake-wrappers 返回 404；Snakemake 场景以 native 驱动兜底。
+- id: sspace_nextflow_local
+  sspace: '未启用（未建 nextflow/；需要时以 shell: 调 native/main.py scaffold）'
+- id: sspace_snakemake_local
+  sspace: '未启用（未建 snakemake/；需要时以 shell: 调 native/main.py scaffold）'
+implementations:
+- id: sspace_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 scaffold（主流程）与 sam2tab（SAM→TAB 配对信息转换）两段链路，自动注入线程（-T）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/sspace（404 不存在，2026-09 核实）
+    upstream_community_mirror: https://github.com/yexianingyue/SSPACE-STANDARD-3.0（官方发行 tar 的社区归档）
+    install_hint: 无官方镜像/conda → 用本模块自建镜像（native/Dockerfile / native/Apptainer.def）
+      或 native/install.sh（binary 路线，仅 linux-x64）部署到用户前缀。
+default_implementation: sspace_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: sspace 子命令：scaffold（SSPACE_Standard_v3.0.pl 主流程）| sam2tab（sam_bam2tab.pl 把 SAM 转 TAB 配对信息）
+  library:
+    type: file
+    required: true
+    cli_arg: -l
+    description: 'scaffold：文库文件（每行：LibName Aligner R1 R2 insert error orientation；
+      末列为 FR/RF/FF/RR；Aligner 可为 bowtie/bwa/bwasw/TAB）'
+  genome:
+    type: file
+    required: true
+    cli_arg: -s
+    description: scaffold：输入 contigs FASTA（待延伸/scaffold）
+  base_name:
+    type: string
+    required: false
+    cli_arg: -b
+    description: scaffold：输出前缀（默认 standard_output）
+  extend:
+    type: integer
+    required: false
+    default: 0
+    cli_arg: -x
+    description: scaffold：是否用配对 reads 延伸 contigs（1=延伸，0=不延伸，默认 0）
+  min_links:
+    type: integer
+    required: false
+    cli_arg: -k
+    description: scaffold：计算 scaffold 所需最小 read-pair 连接数（默认 5）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -T
+    description: 线程数（自动注入 -T）
+  input:
+    type: file
+    required: false
+    description: 'sam2tab：输入 SAM/BAM（需先按 read name 排序：samtools view -uS in.sam | samtools sort -n - in.sorted）'
+  postfix1:
+    type: string
+    required: false
+    default: /1
+    description: sam2tab：R1 read 名后缀（默认 /1）
+  postfix2:
+    type: string
+    required: false
+    default: /2
+    description: sam2tab：R2 read 名后缀（默认 /2）
+  output:
+    type: file
+    required: false
+    description: sam2tab：输出 TAB 配对信息文件（供 library 文件末列 aligner=TAB 使用）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 SSPACE_Standard_v3.0.pl 的额外参数（高级用法，慎用）
+outputs:
+  scaffolds:
+    type: file
+    format: fasta
+    description: scaffold 产物 <base_name>.final.scaffolds.fasta（scaffold 序列）与
+      <base_name>.summary（连接统计）/ .evidence（contig 归属）等
+  tab_pairs:
+    type: file
+    description: sam2tab 产物 TAB 配对信息（ctg1 start1 end1 ctg2 start2 end2）
+environment:
+  container_official: '无（2026-09 核实：bioconda sspace 404、quay.io/biocontainers/sspace 无、depot.galaxyproject.org 无）'
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '无官方维护镜像/conda → 走自建兜底配方（native/Dockerfile + native/Apptainer.def，
+    debian:bookworm-slim + apt --no-install-recommends + 清理四连）；关键依赖
+    libperl4-corelibs-perl（提供 SSPACE require 的 getopts.pl）。软件本体来自官方发行
+    tar（社区归档镜像），容器内不解压 miniconda。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    scaffold: 8
+    sam2tab: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: SSPACE_Standard_v3.0.pl

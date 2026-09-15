@@ -1,0 +1,178 @@
+software: quickmerge
+canonical: quickmerge
+category: assembly
+description: 'quickmerge（Chakraborty M. et al., Nucleic Acids Res 2016, doi:10.1093/nar/gkw654）
+  是一个简单快速的 metassembler：基于长分子序列（PacBio/ONT 组装）对多个基因组组装结果做
+  合并，以提高 contig 连续性/填补 gap。核心流程依赖 MUMmer 的 nucmer（比对）与 delta-filter
+  （过滤）产生 delta；quickmerge 读入过滤后的 delta 与参考/查询组装，按同源性截止（-hco）、
+  覆盖度阈值（-c）、最小序列长度（-l）、最小重叠长度（-ml）合并，输出 merged_out.fasta。'
+homepage: https://github.com/mahulchak/quickmerge
+license: GPL-3.0
+software_versions:
+- id: quickmerge_native
+  quickmerge: '0.3（bioconda / quay 官方 pin 0.3；对应官方 GitHub tag v0.3）'
+  subcommands: nucmer · para_nucmer · delta_filter · quickmerge
+  build_route: official biocontainer（bioconda → quay.io/biocontainers/quickmerge:0.3--pl5321h503566f_6
+    → depot.galaxyproject.org），不在本地自建容器
+  source: https://anaconda.org/bioconda/quickmerge
+  dependency: 'MUMmer（nucmer / delta-filter）：官方 conda 包 0.3 自动包含 mummer 依赖；源码编译
+    需自行安装 MUMmer（见 modules/mummer）'
+  note: '2026-09 核实：bioconda quickmerge 最新 0.3；quay tag 0.3--pl5321h503566f_6；
+    depot https://depot.galaxyproject.org/singularity/quickmerge:0.3--pl5321h503566f_6 HTTP 200；
+    brewsci/bio 有 quickmerge 公式（v0.3，depends_on brewsci/bio/mummer）；homebrew-core 无。
+    官方 release 仅源码 tar.gz（无预编译二进制资产）。'
+- id: quickmerge_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/quickmerge 404）
+  quickmerge: —
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/quickmerge
+    返回 404；Nextflow 场景不建目录，需以 native/ 为兜底。
+- id: quickmerge_snakemake_wrappers
+  quickmerge: 官方无 wrapper（bio/quickmerge 404）
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/quickmerge
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: quickmerge_nextflow_local
+  quickmerge: 未启用（不建 nextflow/；需要时以 shell 调 native/main.py）
+- id: quickmerge_snakemake_local
+  quickmerge: 未启用（不建 snakemake/；需要时以 shell 调 native/main.py）
+implementations:
+- id: quickmerge_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 nucmer / para_nucmer / delta-filter / quickmerge 四步链路，自动注入线程。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/quickmerge
+    quay_biocontainers: quay.io/biocontainers/quickmerge
+    galaxyproject: https://depot.galaxyproject.org/singularity/quickmerge%3A0.3--pl5321h503566f_6
+    upstream_source: https://github.com/mahulchak/quickmerge/archive/refs/tags/v0.3.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda quickmerge=0.3（自动含 MUMmer
+      依赖）；容器可用 quay.io/biocontainers/quickmerge:0.3--pl5321h503566f_6；brew tap brewsci/bio
+      后 brew install quickmerge。
+default_implementation: quickmerge_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: quickmerge 子命令：nucmer（比对）| para_nucmer（并行比对）| delta_filter（过滤 delta）|
+      quickmerge（合并组装）
+  reference:
+    type: file
+    required: false
+    cli_arg: positional / -r
+    description: 参考组装 FASTA（nucmer/para_nucmer 第一个位置参数；quickmerge 为 -r）
+  query:
+    type: file
+    required: false
+    cli_arg: positional / -q
+    description: 查询组装 FASTA（nucmer/para_nucmer 第二个位置参数；quickmerge 为 -q）
+  prefix:
+    type: string
+    required: false
+    default: out
+    cli_arg: -p
+    description: 输出前缀（nucmer -p out → out.delta；quickmerge -p out → merged_out.fasta）
+  delta:
+    type: file
+    required: false
+    cli_arg: -d
+    description: 'quickmerge/delta_filter：输入 delta 文件'
+  min_cluster:
+    type: integer
+    required: false
+    cli_arg: -c
+    description: 'nucmer：最小匹配簇长度（-c，文档示例 -l 100 走 --nucmer 串）'
+  min_similarity:
+    type: float
+    required: false
+    cli_arg: -i
+    description: 'delta_filter：最小相似度（-i，文档示例 95）'
+  filter_ref:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -r
+    description: 'delta_filter：保留参考序列最佳匹配（文档示例 -r -q）'
+  filter_query:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -q
+    description: 'delta_filter：保留查询序列最佳匹配'
+  hco:
+    type: float
+    required: false
+    default: 5.0
+    cli_arg: -hco
+    description: 'quickmerge：同源性截止值（-hco，文档示例 5.0）'
+  coverage:
+    type: float
+    required: false
+    default: 1.5
+    cli_arg: -c
+    description: 'quickmerge：覆盖度阈值（-c，文档示例 1.5）'
+  min_length:
+    type: integer
+    required: false
+    default: 100000
+    cli_arg: -l
+    description: 'quickmerge：最小序列长度（-l，文档示例 100000）'
+  min_overlap:
+    type: integer
+    required: false
+    default: 5000
+    cli_arg: -ml
+    description: 'quickmerge：最小重叠长度（-ml，文档示例 5000）'
+  cpu:
+    type: integer
+    required: false
+    cli_arg: --CPU
+    description: 'para_nucmer：并行核数（--CPU；默认取线程优先级结果）'
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（nucmer 注入 --threads，para_nucmer 注入 --CPU）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应二进制的额外参数（高级用法，慎用）
+outputs:
+  delta:
+    type: file
+    format: delta
+    description: nucmer/para_nucmer 输出 out.delta 比对结果
+  filtered_delta:
+    type: file
+    format: delta
+    description: delta_filter 输出过滤后的 delta（默认写 stdout，--output 落盘）
+  merged_assembly:
+    type: file
+    format: fasta
+    description: quickmerge 输出 <prefix>_out.fasta（合并后的组装；另有 <prefix>_summary.txt 等）
+environment:
+  container_official: quay.io/biocontainers/quickmerge（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay→depot 2026-09 核实），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 quickmerge=0.3（官方 conda 包自动含 MUMmer 依赖）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    nucmer: 8
+    para_nucmer: 8
+    default: 4
+  note: quickmerge 面向大基因组组装合并，delta 处理内存敏感 → default_mem_mb 取 16384；
+    比对阶段 nucmer --threads / para_nucmer --CPU 注入线程。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: quickmerge

@@ -1,0 +1,161 @@
+software: sopra
+canonical: sopra
+category: genome_assembly
+description: 'SOPRA（Statistical Optimization of Paired Read Assembly，v1.4.6）是
+  基于 paired-end / mate-pair 数据把 contigs 连接成 scaffolds 的组装后处理工具：
+  由一组 Perl 脚本组成（s_prep_contigAseq_v1.4.6.pl 准备 contigs+mates、
+  s_parse_sam_v1.4.6.pl 解析 bowtie2 SAM、s_read_parsed_sam_v1.4.6.pl 统计方向/距离、
+  s_scaf_v1.4.6.pl 输出 scaffold），依赖 bowtie2 做单端比对。**已淘汰（deprecated，
+  文档标注【淘汰技术】，2026-09 登记）**：v1.4.6（2011-08）为最后发布，功能被
+  SSPACE / SOAPdenovo 内置 scaffolding / BESST / LINKS 等取代。本模块只做「录入」：
+  native 为「说明型 + 命令构造」驱动，不推荐新项目使用。
+  '
+homepage: http://www.physics.rutgers.edu/~anirvans/SOPRA/
+license: '未在线复核：Rutgers 官方页面 2026-09-11 探测 HTTP 200，但页面未列出明确许可；
+  bioconda 无 sopra 包、GitHub 文档链接 404 → 未能在线复核官方许可声明'
+deprecated: true
+deprecated_note: '上游长期停更：SOPRA v1.4.6（2011-08 发布）为最后版本（SOPRA 论文
+  Dayarian et al. 2010, BMC Bioinformatics）。文档所给 GitHub
+  https://github.com/schneebergerlab/SOPRA 2026-09-11 探测 404（不存在）；真实官网
+  （Rutgers）http://www.physics.rutgers.edu/~anirvans/SOPRA/ 探测 HTTP 200，官方下载
+  http://www.physics.rutgers.edu/~anirvans/SOPRA/SOPRA_v1.4.6.zip 实测 HTTP 200
+  （625035 字节）；SourceForge 镜像 https://sourceforge.net/projects/sopra/ 亦 200。
+  bioconda sopra 404、nf-core / snakemake-wrappers 404、brew 404 → 无官方容器/conda
+  渠道。功能上被 SSPACE / SOAPdenovo 内置 scaffolding / BESST / LINKS 等替代。'
+software_versions:
+- id: sopra_native
+  sopra: '1.4.6（SOPRA v1.4.6；官方归档 http://www.physics.rutgers.edu/~anirvans/SOPRA/
+    SOPRA_v1.4.6.zip 2026-09-11 实测 HTTP 200，625035 字节）'
+  subcommands: 'prep（s_prep_contigAseq_v1.4.6.pl -contig -mate -a）· parse_sam
+    （s_parse_sam_v1.4.6.pl -sam -a）· read_parsed_sam（s_read_parsed_sam_v1.4.6.pl
+    -parsed -d -a）· scaf（s_scaf_v1.4.6.pl -o -a）'
+  bioconda: '未找到（api.anaconda.org/package/bioconda/sopra 2026-09-11 返回 404）'
+  build_route: '历史遗留渠道：官方 Rutgers 归档 SOPRA_v1.4.6.zip（解压后
+    source_codes_v1.4.6/SOPRA_with_prebuilt_contigs/*.pl on PATH）与 SourceForge 镜像；
+    依赖 bowtie2（单端比对）。无官方容器/conda（bioconda 404）→ 软件 deprecated →
+    不产出自建 Dockerfile/Apptainer.def'
+  source: http://www.physics.rutgers.edu/~anirvans/SOPRA/
+  note: '按文档要求：解压后 chmod 755 *.pl 并用 perl -p -i -e ''s/\s*$/\n/'' 规范化行尾；
+    bowtie2 升级到使用 TBB 的版本时需额外安装 TBB（threadingbuildingblocks）。'
+- id: sopra_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/sopra 404）
+  sopra: —
+  source: —（nf-core/modules 仓库无 sopra 目录）
+  note: 2026-09-11 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/ 为兜底。
+- id: sopra_snakemake_wrappers
+  sopra: 官方无 wrapper（bio/sopra 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 sopra）
+  note: '2026-09-11 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 SOPRA 的 4 个 .pl 脚本）为兜底。'
+- id: sopra_nextflow_local
+  sopra: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py prep/parse_sam/read_parsed_sam/scaf）'
+- id: sopra_snakemake_local
+  sopra: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: sopra_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.4.6"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：prep / parse_sam / read_parsed_sam / scaf 四个
+    子命令按官方 .pl 脚本用法构造命令行，不实际运行（软件 deprecated、无官方容器/conda），
+    主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: 无（https://anaconda.org/bioconda/sopra 404）
+    source_archive: http://www.physics.rutgers.edu/~anirvans/SOPRA/SOPRA_v1.4.6.zip
+    sourceforge: https://sourceforge.net/projects/sopra/
+    install_hint: 下载官方 Rutgers SOPRA_v1.4.6.zip，解压后把
+      source_codes_v1.4.6/SOPRA_with_prebuilt_contigs/*.pl chmod 755 并加入 PATH；
+      依赖 bowtie2 做单端比对（见 README「环境安装」）
+default_implementation: sopra_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'sopra 子命令：prep（准备 contig+mate 序列）| parse_sam（解析
+      bowtie2 SAM）| read_parsed_sam（统计方向/距离）| scaf（scaffold 输出）'
+  contig:
+    type: file
+    required: false
+    description: 'prep：-contig 输入的 contigs FASTA'
+  mate_frag:
+    type: file
+    required: false
+    description: 'prep：-mate 配对末端片段库（frag）FASTA（配合 --mate-jump）'
+  mate_jump:
+    type: file
+    required: false
+    description: 'prep：-mate 跳步库（jump）FASTA'
+  out_dir:
+    type: file
+    required: false
+    description: 'prep/parse_sam/read_parsed_sam/scaf：-a 分析目录（产物所在目录）'
+  sam:
+    type: file
+    required: false
+    description: 'parse_sam：-sam 输入 SAM 文件（bowtie2 单端比对结果，可多个）'
+  parsed:
+    type: file
+    required: false
+    description: 'read_parsed_sam：-parsed 输入 <sam>_parsed 文件（可多个，与 --distance 一一对应）'
+  distance:
+    type: integer
+    required: false
+    description: 'read_parsed_sam：-d 对应文库的插入片段距离（如 frag=177、jump=3014）'
+  orient:
+    type: string
+    required: false
+    description: 'scaf：-o 方向/距离信息前缀（如 orientdistinfo_c5）'
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: '线程数：SOPRA 的 .pl 脚本本身单线程，该值仅用于 bowtie2 比对步骤（未在本驱动透传）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入，SOPRA 脚本无自身 tmp 选项）
+outputs:
+  sopra_contigs:
+    type: file
+    format: fasta
+    description: prep 输出的 contigs_sopra.fasta 等（-a 目录内）
+  parsed_files:
+    type: file
+    description: parse_sam 输出的 <sam>_parsed 文件（-a 目录内）
+  orientdistinfo:
+    type: file
+    description: read_parsed_sam 输出的方向/距离信息（-o 前缀）
+  scaffolds:
+    type: file
+    format: fasta
+    description: scaf 输出的连接后 scaffolds
+environment:
+  container_official: '无（bioconda sopra 2026-09-11 返回 404；无 quay.io/biocontainers /
+    depot.galaxyproject.org 镜像）'
+  note: '⚠️ deprecated 且无官方镜像/conda：不产出自建容器配方（不提供
+    Dockerfile/Apptainer.def）。历史渠道为官方 Rutgers 归档 SOPRA_v1.4.6.zip 与
+    SourceForge 镜像（纯 Perl 脚本 + 依赖 bowtie2）；宿主机安装登记在 README「环境安装」。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    prep: 1
+    parse_sam: 1
+    read_parsed_sam: 1
+    scaf: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: s_prep_contigAseq_v1.4.6.pl
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 sopra 官方子模块（2026-09-11 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

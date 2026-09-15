@@ -1,0 +1,169 @@
+software: idba
+canonical: idba
+category: genome_assembly
+description: 'IDBA (Iterative De Bruijn Graph Assembler) 是基于迭代 de Bruijn 图的二代测序
+  组装工具集（Peng Y. et al., Bioinformatics 2012）：idba_ud 面向 paired-end / single-end
+  短读，对低深度区域组装、按 contig 深度渐进降错，尤适单细胞与宏基因组数据；配套 fq2fa 将
+  FASTQ 转/合并为 FASTA。组装同款还有 idba / idba_hybrid / idba_tran（本模块以 idba_ud 为主）。
+
+  '
+homepage: https://github.com/loneknightpy/idba
+license: GPL-2.0-or-later
+software_versions:
+- id: idba_native
+  idba: "1.1.3"
+  build_route: official biocontainer（quay.io/biocontainers/idba / depot.galaxyproject.org）+ conda（bioconda）
+  source: https://github.com/loneknightpy/idba（release 1.1.3）；bioconda https://anaconda.org/bioconda/idba
+  note: 'bioconda idba 最新 1.1.3（含 1.1.1）；quay/depot 镜像 tag 例 1.1.3--h9948957_5。
+    ⚠️ conda 版默认 kMaxShortSequence=128（src/sequence/short_sequence.h），处理更长 reads
+    需源码编译并改该常量（文档示例改为 160）；本模块 native/main.py 只做命令构造，不代改源码。'
+- id: idba_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/idba 404）
+  idba: —（2026-09 抓取 nf-core/modules 返回 404）
+- id: idba_snakemake_wrappers
+  idba: 官方无 wrapper（bio/idba 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/idba 返回 404）
+- id: idba_nextflow_local
+  idba: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: idba_snakemake_local
+  idba: 未启用（未建 snakemake/ 目录；需要时用 shell 调 native/main.py）
+implementations:
+- id: idba_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1.3"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的短读迭代
+    组装（idba_ud）与 FASTQ→FASTA 转换/合并（fq2fa），自动注入线程（--num_threads）。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/idba
+    quay_biocontainers: quay.io/biocontainers/idba
+    galaxyproject: https://depot.galaxyproject.org/singularity/idba%3A1.1.3--h9948957_5
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda idba=1.1.3；容器用
+      quay.io/biocontainers/idba；另可 brew tap brewsci/bio && brew install idba
+default_implementation: idba_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'idba 子命令：idba_ud（迭代 de Bruijn 图短读组装）| fq2fa（FASTQ → FASTA，
+      支持过滤/合并双端）'
+  reads:
+    type: file
+    required: false
+    cli_arg: -r
+    description: idba_ud：输入序列文件（FASTA；双端须在同一文件、两行相邻）
+  output_dir:
+    type: file
+    required: false
+    cli_arg: -o
+    description: idba_ud：输出目录（默认 out）
+  mink:
+    type: integer
+    default: 20
+    cli_arg: --mink
+    description: idba_ud：最小 k-mer 长度（默认 20）
+  maxk:
+    type: integer
+    default: 100
+    cli_arg: --maxk
+    description: idba_ud：最大 k-mer 长度（默认 100）
+  step:
+    type: integer
+    default: 20
+    cli_arg: --step
+    description: idba_ud：每次迭代 k-mer 增量（默认 20）
+  min_contig:
+    type: integer
+    required: false
+    cli_arg: --min_contig
+    description: idba_ud：contig 最小长度
+  min_pairs:
+    type: integer
+    required: false
+    cli_arg: --min_pairs
+    description: idba_ud：最少配对 read 数
+  seed_kmer:
+    type: integer
+    required: false
+    cli_arg: --seed_kmer
+    description: idba_ud：比对种子 k-mer 长度
+  no_local:
+    type: boolean
+    default: false
+    cli_arg: --no_local
+    description: idba_ud：关闭 local assembly
+  no_correct:
+    type: boolean
+    default: false
+    cli_arg: --no_correct
+    description: idba_ud：关闭纠错
+  pre_correction:
+    type: boolean
+    default: false
+    cli_arg: --pre_correction
+    description: idba_ud：组装前先纠错
+  inputs:
+    type: string
+    required: false
+    cli_arg: positional
+    description: fq2fa：输入 FASTQ 文件（单端 1 个 / 双端 2 个）
+  output:
+    type: file
+    required: false
+    cli_arg: positional
+    description: fq2fa：输出 FASTA 文件
+  merge:
+    type: boolean
+    default: false
+    cli_arg: --merge
+    description: fq2fa：把双端 FASTQ 合并为单个 FASTA（pair 两行相邻）
+  filter:
+    type: boolean
+    default: false
+    cli_arg: --filter
+    description: fq2fa：过滤低质量 reads
+  paired:
+    type: boolean
+    default: false
+    cli_arg: --paired
+    description: fq2fa：按 paired 模式转换单个交错 FASTQ
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --num_threads
+    description: 线程数（仅 idba_ud 注入 --num_threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传的额外参数（高级用法，慎用）
+outputs:
+  assembly_dir:
+    type: file
+    description: idba_ud 输出目录（contig.fa / scaffold.fa / contig-*.fa 等）
+  fasta:
+    type: file
+    format: fasta
+    description: fq2fa 输出的 FASTA 文件
+environment:
+  container_official: quay.io/biocontainers/idba（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda idba → quay.io/biocontainers/idba → depot.galaxyproject.org），
+    本地不维护 Dockerfile/Apptainer.def；另可 brew tap brewsci/bio 安装（brewsci 公式）。
+    宿主机直跑 main.py 时用 conda/mamba 安装 idba。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    idba_ud: 8
+    fq2fa: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: idba_ud

@@ -1,0 +1,183 @@
+software: discovar
+canonical: discovar
+category: genome_assembly
+description: 'DISCOVAR / DISCOVAR de novo（Broad Institute，版本 52488）是面向 Illumina
+  短读的基因组组装与变异检测工具族：DISCOVAR 用参考基因组做区域组装与 variant calling
+  （Discovar / PrepareDiscovarGenome），DISCOVAR de novo 无参考从头组装大小基因组
+  （DiscovarDeNovo），NhoodInfo 可视化组装邻域信息。**已淘汰（deprecated，文档标注
+  【淘汰技术】，2026-09 登记）**：Broad Institute 已停止维护（52488 为末版），官网页面
+  功能性损坏、旧 FTP 下载不可用，功能被现代组装/变异工具取代。本模块只做「录入」：
+  native 为「说明型 + 命令构造」驱动，不推荐新项目使用。
+  '
+homepage: https://software.broadinstitute.org/software/discovar/blog/
+license: 'MIT（bioconda discovar=52488 与 discovardenovo=52488 包元数据 license=MIT）；
+  Broad 官方页面 2026-09-11 探测 HTTP 200 但内容为 WordPress PHP 报错（不可读）'
+deprecated: true
+deprecated_note: '上游长期停更：DISCOVAR / DISCOVAR de novo 52488 为末版（约 2014-2015，
+  Weisenfeld et al. 2014）。官网 https://software.broadinstitute.org/software/discovar/blog/
+  2026-09-11 探测 HTTP 200 但页面内容为 WordPress PHP 报错（内容不可用）；
+  /software/discovar/download 404；旧 Broad FTP
+  ftp://ftp.broadinstitute.org/pub/crd/Discovar{,DeNovo}/latest_all.tar.gz 均 550（不可取）。
+  功能上被 GATK（变异）/ SPAdes / wtdbg2 / Canu 等现代工具替代。2026-09 保留渠道：
+  bioconda discovar=52488 与 discovardenovo=52488（均 MIT，linux-64）→ quay.io/biocontainers
+  与 depot.galaxyproject.org sif（自动构建历史镜像）。'
+software_versions:
+- id: discovar_native
+  discovar: '52488（DISCOVAR 与 DISCOVAR de novo 同版本号 52488；官方 Broad 下载页
+    2026-09-11 探测 404、旧 FTP 550，官方二进制来源已失效）'
+  subcommands: 'discovardenovo（DiscovarDeNovo READS= OUT_DIR= NUM_THREADS=）·
+    discovar（Discovar READS= OUT_HEAD= REGIONS= TMP=）· prepare（PrepareDiscovarGenome
+    REF=）· nhoodinfo（NhoodInfo OUT= DIR_IN= SEEDS=）'
+  bioconda: 'discovar=52488（linux-64，MIT）与 discovardenovo=52488（linux-64，MIT）；
+    2026-09-11 api.anaconda.org 核实存在'
+  build_route: '历史遗留渠道：bioconda discovar=52488 / discovardenovo=52488 →
+    quay.io/biocontainers/{discovar,discovardenovo}:52488--0 与 depot.galaxyproject.org
+    sif（自动构建，复现用）；官方源码 ./configure && make && make install（依赖
+    samtools 1.2、jemalloc）。软件 deprecated → 不产出自建 Dockerfile/Apptainer.def'
+  source: https://anaconda.org/bioconda/discovar
+  note: '依赖 samtools 1.2 与 jemalloc 3.6.0；NhoodInfo 产物经 dot/convert 转图。
+    官方二进制渠道已失效，仅 bioconda/历史镜像可用。'
+- id: discovar_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/discovar 404）
+  discovar: —
+  source: —（nf-core/modules 仓库无 discovar 目录）
+  note: 2026-09-11 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/ 为兜底。
+- id: discovar_snakemake_wrappers
+  discovar: 官方无 wrapper（bio/discovar 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 discovar）
+  note: '2026-09-11 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 DiscovarDeNovo/Discovar）为兜底。'
+- id: discovar_nextflow_local
+  discovar: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py discovardenovo/discovar）'
+- id: discovar_snakemake_local
+  discovar: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: discovar_native
+  path: native
+  source_type: custom
+  type: native
+  version: "52488"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：discovardenovo / discovar / prepare / nhoodinfo
+    四个子命令按官方 KEY=VALUE 用法构造命令行，不实际运行（软件 deprecated、官方
+    下载失效、无新用场景），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/discovar（discovar=52488，linux-64，MIT）
+    quay: quay.io/biocontainers/discovar:52488--0（bioconda 自动构建历史镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/discovar%3A52488--0
+    install_hint: 宿主机 conda 路线 mamba create -n discovar-native -c conda-forge -c bioconda
+      discovar=52488（或 discovardenovo=52488）；历史源码 ./configure && make install
+      见 README「环境安装」
+default_implementation: discovar_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'discovar 子命令：discovardenovo（de novo 组装）| discovar（有参考
+      区域组装/variant calling）| prepare（PrepareDiscovarGenome）| nhoodinfo
+      （NhoodInfo 组装邻域信息）'
+  reads:
+    type: file
+    required: false
+    description: 'discovardenovo/discovar：READS=<input.bam> 输入 BAM 文件'
+  out_dir:
+    type: file
+    required: false
+    description: 'discovardenovo：OUT_DIR= 输出目录'
+  refhead:
+    type: file
+    required: false
+    description: 'discovardenovo：REFHEAD= 参考基因组名（有参考组装时提供，需
+      <ref>.names 等文件）'
+  out_head:
+    type: file
+    required: false
+    description: 'discovar：OUT_HEAD= 输出前缀（如 discovar-assembly/genome）'
+  regions:
+    type: string
+    required: false
+    description: 'discovar：REGIONS= 指定组装区域（格式 染色体:起始-终止，如
+      10:30892106-30933760）'
+  reference:
+    type: file
+    required: false
+    description: 'discovar：REFERENCE= 参考基因组 FASTA（variant calling 时提供）'
+  ref:
+    type: file
+    required: false
+    description: 'prepare：REF= 参考基因组 FASTA（PrepareDiscovarGenome，生成
+      <ref>.m100，非常耗时）'
+  out:
+    type: string
+    required: false
+    description: 'nhoodinfo：OUT= 输出前缀（生成 <out>.dot）'
+  dir_in:
+    type: file
+    required: false
+    description: 'nhoodinfo：DIR_IN= 输入目录（如 <assembly>/a.final/）'
+  seeds:
+    type: string
+    required: false
+    description: 'nhoodinfo：SEEDS= 种子区域（如 10:30.5M）'
+  count:
+    type: boolean
+    required: false
+    default: true
+    description: 'nhoodinfo：COUNT= 是否显示计数（True/False）'
+  show_inv:
+    type: boolean
+    required: false
+    default: true
+    description: 'nhoodinfo：SHOW_INV= 是否显示倒位（True/False）'
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: '线程数：discovardenovo 透传 NUM_THREADS=（默认 4）'
+  tmpdir:
+    type: string
+    required: false
+    description: '临时目录：discovar 透传 TMP=（默认取 self.tmpdir）'
+outputs:
+  assembly_final:
+    type: file
+    description: discovardenovo 组装的最终结果目录（a.final/ 等）
+  assembly_region:
+    type: file
+    description: discovar 有参考区域组装 / variant calling 输出（<out_head>）
+  genome_m100:
+    type: file
+    description: 'PrepareDiscovarGenome 生成的 <ref>.m100（非常耗时）'
+  nhood_dot:
+    type: file
+    format: dot
+    description: 'NhoodInfo 输出的 <out>.dot（可 dot -Tsvg 转图）'
+environment:
+  container_official: quay.io/biocontainers/discovar:52488--0（bioconda 自动构建历史镜像；
+    另有 discovardenovo:52488--0；tag 以 quay / depot.galaxyproject.org 为准，见 README）
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    历史渠道：bioconda discovar=52488 / discovardenovo=52488（linux-64，MIT）→
+    quay.io/biocontainers/{discovar,discovardenovo}:52488--0 与 depot.galaxyproject.org
+    sif（自动构建历史镜像，仅复现用）；宿主机安装登记在 README「环境安装」。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    discovardenovo: 8
+    discovar: 4
+    prepare: 1
+    nhoodinfo: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: DiscovarDeNovo
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 discovar 官方子模块（2026-09-11 核实 404），且软件 deprecated → 不登记官方
+    说明层，历史复现一律以 native 驱动为兜底。

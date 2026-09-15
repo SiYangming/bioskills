@@ -1,0 +1,110 @@
+# gapfiller native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 Perl GapFiller.pl v1.11，禁 miniconda）
+#
+# 背景：本文档目标为 Perl GapFiller.pl v1.11（三代修改版）；官方渠道 bioconda/quay.io/biocontainers/
+#       depot.galaxyproject.org 的同名 gapfiller 实为 **C++ v2.1.2 系列**（`GapFiller --seed1 …`），
+#       与本模块 Perl GapFiller.pl（`-l … -s … -T N`）不是同一工具 → Perl v1.11 无官方镜像 → 自建。
+#       依赖：perl 核心模块 + bowtie/bwa（脚本按 $Bin/bowtie、$Bin/bwa 查找比对器）。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build gapfiller-1.11.sif gapfiller/native/Apptainer.def
+# 运行（容器内 CLI = GapFiller.pl）：
+#   apptainer run -B $PWD:/data -H /data gapfiller-1.11.sif -l library.txt -s genome.fa -T 4
+#   驱动 main.py：apptainer exec gapfiller-1.11.sif python3 /opt/skill/main.py fill \
+#       -l /data/library.txt -s /data/genome.fa --threads 4
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software gapfiller
+    Version 1.11
+    org.bioskills.software gapfiller
+    impl native
+    base_image debian:bookworm-slim
+    gapfiller_version 1.11
+    pkg_route apt (perl/bowtie/bwa) + upstream Perl GapFiller.pl (lufuhao/gapfiller)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    gapfiller/native/main.py /opt/skill/main.py
+    gapfiller/meta.yaml /opt/skill/gapfiller/meta.yaml
+    gapfiller/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：运行本体（perl/bowtie/bwa）+ 驱动（python3/python3-yaml）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        bowtie \
+        bwa \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方 Perl 脚本 + $Bin 相对比对器布局 + 版本/syntax 断言
+    mkdir -p /opt/gapfiller/bowtie /opt/gapfiller/bwa
+    curl -fsSL -o /opt/gapfiller/GapFiller.pl \
+        "https://raw.githubusercontent.com/lufuhao/gapfiller/master/GapFiller.pl"
+    chmod 0755 /opt/gapfiller/GapFiller.pl
+    ln -sf /usr/bin/bowtie /opt/gapfiller/bowtie/bowtie
+    ln -sf /usr/bin/bowtie-build /opt/gapfiller/bowtie/bowtie-build
+    ln -sf /usr/bin/bwa /opt/gapfiller/bwa/bwa
+    grep -qE 'version *= *"v1\.11"' /opt/gapfiller/GapFiller.pl
+    perl -e 'use Storable; use File::Path; use File::Copy; use FindBin; use threads; use Text::Wrap; use Getopt::Std; use threads::shared;'
+    perl -c /opt/gapfiller/GapFiller.pl >/dev/null
+
+    # 3) 清理四连（构建期 curl 移除）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/gapfiller:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /opt/gapfiller/GapFiller.pl "$@"
+
+%test
+    # 非交互自检：版本断言（脚本内 v1.11）+ syntax + 依赖模块 + 驱动可自省
+    set -eux
+    grep -qE 'version *= *"v1\.11"' /opt/gapfiller/GapFiller.pl
+    perl -c /opt/gapfiller/GapFiller.pl >/dev/null
+    test -x /usr/bin/bowtie && test -x /usr/bin/bwa
+    test -e /opt/gapfiller/bowtie/bowtie && test -e /opt/gapfiller/bwa/bwa
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/gf_commands.txt
+    grep -q '^fill' /tmp/gf_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/gf_schema.json
+    test -s /tmp/gf_schema.json
+    rm -f /tmp/gf_commands.txt /tmp/gf_schema.json
+
+%help
+    gapfiller native Apptainer 镜像（自建：apt 最小化 + 官方 Perl GapFiller.pl v1.11）。
+    CLI 用法：apptainer run gapfiller-1.11.sif -l library.txt -s genome.fa -T 4
+    驱动用法：apptainer exec gapfiller-1.11.sif python3 /opt/skill/main.py fill \
+        -l /data/library.txt -s /data/genome.fa --threads 4
+    说明：官方 bioconda/quay/depot 的同名 gapfiller 为 C++ v2.1.2 系列（CLI 不同）；本镜像承载
+    文档所述 Perl GapFiller.pl（-l/-s/-T）。$Bin=/opt/gapfiller，bowtie/bwa 软链接已就位。

@@ -1,0 +1,235 @@
+software: abyss
+canonical: abyss
+category: genome_assembly
+description: 'ABySS（Assembly By Short Sequences，1.9.0）是基于 de Bruijn Graph 的
+  并行化基因组组装器：abyss-pe 按 k-mer 组装 paired-end/mate-pair 数据，配套
+  abyss-map / abyss-fixmate / DistanceEst / abyss-scaffold / PathConsensus /
+  MergeContigs / PathOverlap 可做独立 scaffolding。版本差异（事实说明）：教学文档
+  （docs/04.md）以 ABySS 1.9.0 为教学版本并标注【淘汰技术】，本模块据此登记 1.9.0；
+  但 ABySS 上游仍在维护（GitHub https://github.com/bcgsc/abyss 2026-09 探测
+  HTTP 200，bioconda 最新 2.3.10，nf-core 有 abyss/abysspe），故不标记废弃；实际
+  项目多由 SOAPdenovo / SPAdes / Canu 等承担（见 README「版本差异」）。本模块为
+  8 个子命令提供可执行 native 驱动。
+  '
+homepage: https://github.com/bcgsc/abyss
+license: 'GPL-3.0-only（bioconda abyss 包元数据 license=GPL-3.0-only；homebrew-core
+  abyss 公式 license=GPL-3.0-only AND LGPL-2.1-or-later AND MIT AND BSD-3-Clause）'
+software_versions:
+- id: abyss_native
+  abyss: '1.9.0（文档教学版本；bioconda abyss=1.9.0，linux-64；上游最新为 2.3.10）'
+  subcommands: 'assemble（abyss-pe k=51 name= lib= pe1=... mp1=... [np=]）· map
+    （abyss-map）· fixmate（abyss-fixmate）· distance-est（DistanceEst）· scaffold
+    （abyss-scaffold）· path-consensus（PathConsensus）· merge-contigs（MergeContigs）·
+    path-overlap（PathOverlap）'
+  bioconda: 'abyss=1.9.0（linux-64；GPL-3.0-only）；同频道另有 2.0.x–2.3.10；
+    2026-09-11 api.anaconda.org 核实'
+  build_route: '官方镜像优先：bioconda abyss=1.9.0 → quay.io/biocontainers/abyss:1.9.0--0
+    / depot.galaxyproject.org sif（200）；官方渠道已覆盖 bioconda → quay.io/biocontainers
+    → depot.galaxyproject.org，故本地不再维护 Dockerfile/Apptainer.def。另有 homebrew-core
+    abyss 公式与官方源码编译（./configure --with-mpi=... && make && make install，
+    依赖 sparsehash、openmpi）'
+  source: https://anaconda.org/bioconda/abyss
+  note: '历史源码编译依赖 google-sparsehash 与 openmpi（mpd/np= 并行）；现代 conda 包
+    开箱即用。版本差异：模块登记文档教学版 1.9.0，nf-core 当前 pin 2.3.10（上游最新
+    2.3.10）。'
+- id: abyss_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  abyss: '2.3.10'
+  source: bioconda::abyss=2.3.10（modules/nf-core/abyss/abysspe/environment.yml）
+  note: '官方有 abyss/abysspe 一个子模块（submodules=["abysspe"]，2026-09-11 核实
+    main.nf 容器 abyss:2.3.10--hf316886_1）；本模块不建目录，仅在 README/software_versions 登记。'
+- id: abyss_snakemake_wrappers
+  abyss: 官方无 wrapper（bio/abyss 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 abyss）
+  note: '2026-09-11 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 abyss-pe）为兜底。'
+- id: abyss_nextflow_local
+  abyss: '未启用（本模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py assemble）'
+- id: abyss_snakemake_local
+  abyss: '未启用（本模块不建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: abyss_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.9.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 assemble（abyss-pe 组装）与 map/fixmate/distance-est/scaffold/path-consensus/
+    merge-contigs/path-overlap（独立 scaffolding 链路）共 8 个子命令；驱动经
+    base.run_command 真实执行，二进制惰性解析（shutil.which），未安装时明确报错。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/abyss（abyss=1.9.0，linux-64）
+    quay: quay.io/biocontainers/abyss:1.9.0--0
+    galaxyproject: https://depot.galaxyproject.org/singularity/abyss%3A1.9.0--0
+    brew: brew install abyss（homebrew-core）
+    install_hint: 宿主机 conda 路线 mamba create -n abyss-native -c conda-forge -c bioconda
+      abyss=1.9.0（或 brew install abyss；一键安装见 native/install.sh）；源码编译依赖
+      sparsehash/openmpi 见 README「环境安装」
+default_implementation: abyss_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'abyss 子命令：assemble | map | fixmate | distance-est | scaffold |
+      path-consensus | merge-contigs | path-overlap'
+  kmer:
+    type: integer
+    required: false
+    description: 'k-mer 长度（assemble k=、map/scaffold/DistanceEst -k/-l；文档示例 51）'
+  length:
+    type: integer
+    required: false
+    description: 'DistanceEst -l 读段长度（文档示例 51）'
+  name:
+    type: string
+    required: false
+    description: 'assemble：name= 输出前缀/库名（如 E_coli）'
+  lib:
+    type: string
+    required: false
+    description: 'assemble：lib= 库定义（如 pe1 mp=mp1）'
+  np:
+    type: integer
+    required: false
+    description: 'assemble：np= MPI 进程数（并行组装，需 mpd）'
+  extra_args:
+    type: string
+    required: false
+    description: 'assemble：透传额外 key=value（如 pe1="fragment.1.fastq fragment.2.fastq"
+      mp1="jumping.1.fastq jumping.2.fastq"）'
+  reads1:
+    type: file
+    required: false
+    description: 'map：读段 1（或 SE reads）'
+  reads2:
+    type: file
+    required: false
+    description: 'map：读段 2（PE，可省略）'
+  ref:
+    type: file
+    required: false
+    description: 'map：参考/contigs FASTA（位置参数，置于读段之后）'
+  hist:
+    type: file
+    required: false
+    description: 'fixmate：-h 输出/输入的 mate histogram；distance-est：位置参数 .hist'
+  dot:
+    type: boolean
+    required: false
+    default: false
+    description: 'distance-est/path-overlap：--dot 输出 dot 图'
+  out:
+    type: file
+    required: false
+    description: 'distance-est/-o、merge-contigs/-o：输出文件'
+  graph:
+    type: file
+    required: false
+    description: 'scaffold/-g、path-consensus/-g：图文件（如 E_coli-6.path.dot）'
+  size:
+    type: integer
+    required: false
+    description: 'distance-est/-s、scaffold/-s：距离阈值（文档示例 200）'
+  num:
+    type: integer
+    required: false
+    description: 'distance-est/-n、scaffold/-n：命中数阈值（文档示例 3）'
+  assembly:
+    type: file
+    required: false
+    description: 'scaffold：contigs 位置参数（如 E_coli-6.fa）'
+  dist:
+    type: file
+    required: false
+    description: 'scaffold：dist.dot 位置参数（如 mp1-6.dist.dot）'
+  scaffolds:
+    type: file
+    required: false
+    description: 'path-consensus/-s：输出 scaffolds（如 E_coli-7.fa）'
+  percent:
+    type: float
+    required: false
+    description: 'path-consensus/-p：置信度百分比（文档示例 0.9）'
+  output_path:
+    type: file
+    required: false
+    description: 'path-consensus/-o：输出 path（如 E_coli-7.path）'
+  contigs:
+    type: file
+    required: false
+    description: 'path-consensus/merge-contigs：contigs 文件（merge-contigs 用 "-" 表示 stdin）'
+  adj:
+    type: file
+    required: false
+    description: 'path-consensus/-g、merge-contigs/path-overlap：adj 文件（.adj）'
+  path_file:
+    type: file
+    required: false
+    description: 'merge-contigs/path-overlap：path 文件（.path）'
+  overlap:
+    type: boolean
+    required: false
+    default: false
+    description: 'path-overlap：--overlap 输出重叠'
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: '线程数：assemble 透传 j=；map/distance-est 透传 -j'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（经 TMPDIR 注入进程环境；ABySS 无自身 tmp 选项）
+outputs:
+  contigs_fasta:
+    type: file
+    format: fasta
+    description: 'abyss-pe 组装输出（<name>-contigs.fa / <name>-scaffolds.fa 等）'
+  scaffolds_fasta:
+    type: file
+    format: fasta
+    description: 'scaffolding 链路输出的 scaffolds（PathConsensus/MergeContigs）'
+  hist_file:
+    type: file
+    description: 'abyss-fixmate 输出的 mate histogram'
+  dist_dot:
+    type: file
+    format: dot
+    description: 'DistanceEst --dot 输出的距离估计 dot'
+  path_dot:
+    type: file
+    format: dot
+    description: 'abyss-scaffold/PathOverlap 输出的 path dot'
+environment:
+  container_official: quay.io/biocontainers/abyss:1.9.0--0（bioconda 自动构建；上游最新
+    2.3.10 对应 quay.io/biocontainers/abyss:2.3.10--hf316886_1，见 README）
+  note: '官方镜像已覆盖（bioconda abyss=1.9.0 → quay.io/biocontainers/abyss:1.9.0--0 →
+    depot.galaxyproject.org sif），故本地不再维护 Dockerfile/Apptainer.def。另有
+    homebrew-core abyss 公式、nf-core abyss/abysspe（pin 2.3.10）；宿主机安装
+    （conda / brew / 官方源码编译）登记在 README「环境安装」，一键安装见 native/install.sh。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    map: 4
+    distance-est: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: abyss-pe
+  note: '可执行驱动：assemble 调 abyss-pe（k=/j=/np=/name=/lib= key=value 形式），
+    map/fixmate 调 abyss-map/abyss-fixmate，distance-est/scaffold/path-consensus/
+    merge-contigs/path-overlap 调 DistanceEst/abyss-scaffold/PathConsensus/
+    MergeContigs/PathOverlap；二进制惰性解析（shutil.which），--threads 按现有语义
+    透传 j=/-j，--tmpdir 经 TMPDIR 注入。'
+  nextflow_note: '本模块未建 nextflow/ 与 snakemake/ 目录；nf-core 有官方子模块
+    modules/nf-core/abyss/abysspe（pin bioconda::abyss=2.3.10，2026-09-11 核实），
+    snakemake-wrappers 无 bio/abyss（404）；已登记在 README 与 software_versions，
+    不建目录。'

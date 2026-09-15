@@ -1,0 +1,128 @@
+software: canu
+canonical: canu
+category: genome_assembly
+description: 'Canu 是基于 Overlap-Layout-Consensus（Celera Assembler fork）的长读基因组组装器，
+  面向 PacBio 与 Oxford Nanopore 数据，覆盖 correct→trim→assemble 全流程，输出
+  *.contigs.fasta / *.unassembled.fasta 等。典型调用：
+  canu -p out -d out genomeSize=8m useGrid=false maxThreads=N -pacbio-raw reads.fasta
+  （亦可 -nanopore-raw / -pacbio-corrected / -nanopore-corrected / -pacbio-hifi，并可用
+  -correct / -trim 只跑单阶段）。文档（04.md 第 1178-1261 行）使用 Canu 2.0。
+  '
+homepage: https://github.com/marbl/canu
+license: GPL-2.0-or-later
+software_versions:
+- id: canu_native
+  canu: '2.0（文档版本；官方 release v2.0 提供 Linux/Darwin amd64 预编译 tar.xz；bioconda
+    canu=2.0；容器 tag 2.0--he1b5a44_0）'
+  build_route: 'official release 预编译二进制 + official biocontainer（quay.io/biocontainers/canu
+    / depot.galaxyproject.org）'
+  source: 'https://github.com/marbl/canu/releases/tag/v2.0（canu-2.0.Linux-amd64.tar.xz /
+    canu-2.0.Darwin-amd64.tar.xz）；https://anaconda.org/bioconda/canu'
+  note: '2026-09 核实：bioconda 当前最新为 canu=2.3（linux-64/osx-64/linux-aarch64/osx-arm64），
+    且官方 release v2.3 **不再提供预编译资产**（assets 为空，需源码 make）；v2.0 仍有 Linux/Darwin
+    amd64 预编译包。quay.io/biocontainers/canu:2.3--h636b4d1_3 与 2.0--he1b5a44_0 均存在，depot
+    对应 sif 返回 200。本模块按文档 pin 2.0（预编译二进制 + conda 均可用）；如需最新特性可用 2.3。'
+- id: canu_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  canu: '2.3'
+  source: bioconda::canu=2.3=h3fb4750_1 + minimap2=2.28 + samtools=1.21（modules/nf-core/canu/environment.yml）
+  note: 'nf-core 有扁平模块 modules/nf-core/canu（单模块，无子目录），pin canu=2.3，与本模块 native
+    的 2.0 相差一个 minor。官方实现不建目录，执行请用 nf-core modules install nf-core canu。'
+- id: canu_snakemake_wrappers
+  canu: 官方无 wrapper（bio/canu 404）
+  source: '—（snakemake-wrappers 仓库 bio/ 下无 canu；2026-09 抓取 api.github.com 返回 404）'
+  note: Snakemake 场景以 native/（shell 调 canu）为兜底。
+implementations:
+- id: canu_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 assemble / correct / trim，自动注入 maxThreads 与 useGrid=false，按数据类型选择
+    -pacbio-raw/-nanopore-raw 等。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/canu
+    quay_biocontainers: quay.io/biocontainers/canu
+    upstream_prebuilt: https://github.com/marbl/canu/releases/tag/v2.0
+    galaxyproject: https://depot.galaxyproject.org/singularity/canu%3A2.0--he1b5a44_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda canu=2.0；容器可用
+      quay.io/biocontainers/canu:2.0--he1b5a44_0；或取官方 release canu-2.0.Linux-amd64.tar.xz
+default_implementation: canu_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'canu 子命令：assemble（全流程）|correct（仅纠错）|trim（仅修剪）'
+  reads:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入长读序列（FASTA/FASTQ，随数据类型参数给出，如 -pacbio-raw reads.fasta）
+  genome_size:
+    type: string
+    required: true
+    description: '估计基因组大小（genomeSize=<n>[g|m|k]，如 58000 / 8m）'
+  prefix:
+    type: string
+    required: true
+    cli_arg: -p
+    description: 输出文件前缀（注意：canu 的 -p 为前缀，不是线程数）
+  directory:
+    type: string
+    required: false
+    cli_arg: -d
+    description: 输出目录（默认 <prefix>）
+  data_type:
+    type: string
+    required: false
+    default: pacbio-raw
+    description: '数据类型：pacbio-raw|pacbio-corrected|nanopore-raw|nanopore-corrected|pacbio-hifi'
+  use_grid:
+    type: boolean
+    required: false
+    default: false
+    description: 是否使用集群（默认 false → useGrid=false，单机运行）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（useGrid=false 时以 maxThreads=N 注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 canu 的额外参数（高级用法，慎用）
+outputs:
+  contigs_fasta:
+    type: file
+    format: fasta
+    description: 组装 contig（<prefix>.contigs.fasta）
+  unassembled_fasta:
+    type: file
+    format: fasta
+    description: 未纳入主组装的 reads/低覆盖 contig（<prefix>.unassembled.fasta）
+  report:
+    type: text
+    format: txt
+    description: canu 组装日志与报告（<prefix>.report 及 <prefix>.contigs.layout*）
+environment:
+  container_official: quay.io/biocontainers/canu（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 canu=2.0，或取官方 release
+    预编译包。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 65536
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    correct: 8
+    trim: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: canu

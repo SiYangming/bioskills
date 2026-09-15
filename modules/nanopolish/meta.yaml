@@ -1,0 +1,160 @@
+software: nanopolish
+canonical: nanopolish
+category: genome_assembly
+description: 'nanopolish 是 Oxford Nanopore 数据的信号级分析工具：index 建立 fast5/reads 索引，
+  variants 基于信号做一致性序列修正（--consensus），vcf2fasta 将 VCF 转为修正后 FASTA，
+  methylation 检测甲基化修饰，eventalign 将事件比对到参考，phase-reads 做单倍型分型。
+  高质量修正需要原始 fast5 信号数据（仅有 fastq 时可用 medaka 替代）。
+
+  '
+homepage: https://github.com/jts/nanopolish
+license: MIT
+software_versions:
+- id: nanopolish_native
+  nanopolish: '0.14.0'
+  build_route: official biocontainer（quay.io/biocontainers/nanopolish / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/nanopolish
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不自建容器；
+    bioconda 历史版本含 0.4.0–0.14.0（latest 0.14.0，2026-09 核实）；quay/depot tag
+    0.14.0--h5ca1c30_6 核实可用。源码编译需 htslib/eigen/hdf5（官方 git clone --recursive + make）。'
+- id: nanopolish_nextflow_nfcore
+  nanopolish: 官方无 module（modules/nf-core/nanopolish 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/nanopolish
+    返回 404；流程场景降级 native。
+- id: nanopolish_snakemake_wrappers
+  nanopolish: 官方无 wrapper（bio/nanopolish 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/nanopolish
+    返回 404；Snakemake 场景请容器化后直调或走 native 子命令。
+- id: nanopolish_nextflow_local
+  nanopolish: 未固定（官方无 module；本地 nextflow 未建目录）
+- id: nanopolish_snakemake_local
+  nanopolish: 未固定（官方无 wrapper；本地 snakemake 未建目录）
+implementations:
+- id: nanopolish_native
+  path: native
+  source_type: custom
+  type: native
+  version: '0.14.0'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标：
+    index/variants/vcf2fasta/methylation/eventalign/phase-reads 六段链路，自动注入线程。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/nanopolish
+    quay_biocontainers: quay.io/biocontainers/nanopolish
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/nanopolish%3A0.14.0--h5ca1c30_6
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda nanopolish=0.14.0；容器可用
+      quay.io/biocontainers/nanopolish:0.14.0--h5ca1c30_6 镜像（tag 见 README）
+default_implementation: nanopolish_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: nanopolish 子命令：index|variants|vcf2fasta|methylation|eventalign|phase-reads
+  reads:
+    type: file
+    required: false
+    cli_arg: -r
+    format: [fastq, fasta]
+    description: Nanopore reads（index 为位置参数；variants/methylation/eventalign 用 -r）
+  fast5_dir:
+    type: file
+    required: false
+    cli_arg: -d
+    description: index 子命令的 fast5 目录（-d，可重复）
+  bam:
+    type: file
+    required: false
+    cli_arg: -b
+    format: [bam]
+    description: 比对 BAM（已排序+索引；variants/methylation/eventalign/phase-reads）
+  genome:
+    type: file
+    required: false
+    cli_arg: -g
+    format: [fasta]
+    description: 参考基因组 FASTA（variants/vcf2fasta/methylation/eventalign）
+  vcf:
+    type: file
+    required: false
+    cli_arg: positional
+    format: [vcf]
+    description: vcf2fasta/phase-reads 输入的 VCF
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（variants 的 VCF / methylation 结果等）
+  window:
+    type: string
+    required: false
+    cli_arg: -w
+    description: 处理区域（如 "tig00000001:1-100000"）
+  consensus:
+    type: boolean
+    default: false
+    cli_arg: --consensus
+    description: variants 生成一致性序列（--consensus）
+  methylation_aware:
+    type: string
+    required: false
+    cli_arg: --methylation-aware
+    description: 甲基化感知类型（如 dcm,dam）
+  scale_events:
+    type: boolean
+    default: false
+    cli_arg: --scale-events
+    description: eventalign 事件缩放（--scale-events）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 nanopolish 的额外参数（高级用法，慎用）
+outputs:
+  index_output:
+    type: file
+    description: index 生成的 .index/.fai 等索引文件
+  variants_vcf:
+    type: file
+    format: vcf
+    description: variants 输出的变异 / 一致性 VCF
+  polished_fasta:
+    type: file
+    format: fasta
+    description: vcf2fasta 输出的修正后 FASTA
+  methylation_out:
+    type: file
+    description: methylation 输出的甲基化频率文件
+  eventalign_out:
+    type: file
+    description: eventalign 输出的事件对齐结果
+environment:
+  container_official: quay.io/biocontainers/nanopolish（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 nanopolish（或自行源码编译，需 htslib/eigen/hdf5）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    index: 4
+    variants: 8
+    vcf2fasta: 2
+    methylation: 8
+    eventalign: 8
+    phase-reads: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: nanopolish

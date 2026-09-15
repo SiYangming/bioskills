@@ -1,0 +1,141 @@
+software: edena
+canonical: edena
+category: genome_assembly
+description: 'Edena（Edena V3.131028）是基于 String Graph（字符串图）算法的基因组组装工具，
+  面向中等读长数据（一代/二代混用场景）：edena -nThreads N 从 reads 建重叠图并组装出 contigs，
+  -DRpairs 处理 paired-end 数据，-e/-overlapCutoff 可导出重叠信息并按阈值重跑。**已淘汰
+  （deprecated，文档标注【淘汰技术】，2026-09 登记）**：V3.131028 为最后版本，官网
+  （genomic.ch）页面功能性损坏，功能已被 SPAdes / Velvet / Canu 等现代组装器取代。本模块
+  只做「录入」：native 为「说明型 + 命令构造」驱动，不推荐新项目使用。
+  '
+homepage: http://www.genomic.ch/edena.php
+license: '未在线复核：官网 2026-09-11 探测 HTTP 200 但页面为 PHP Fatal error（内容不可读），
+  bioconda edena 包元数据未声明 license；历史惯例为学术免费、商用需授权（未证实）'
+deprecated: true
+deprecated_note: '上游长期停更：Edena V3.131028 为最后发布（版本号内置日期 13-10-28，约
+  2013-10；论文 Hernandez et al. 2008 后无更新）。官网 http://www.genomic.ch/edena.php
+  2026-09-11 探测 HTTP 200 但页面内容为 PHP Fatal error（站点功能性损坏）；官方直链
+  http://www.genomic.ch/edena/EdenaV3.131028.tar.gz 实测 HTTP 200（497784 字节，
+  application/x-gzip，仍可下载）。功能上被 SPAdes / Velvet / Canu 等现代组装器替代。
+  2026-09 保留渠道：bioconda edena=3.131028（linux-64 + osx-64）→ quay.io/biocontainers/
+  edena:3.131028--h9948957_8 与 depot.galaxyproject.org sif（自动构建历史镜像）。'
+software_versions:
+- id: edena_native
+  edena: '3.131028（EdenaV3.131028；官方归档 http://www.genomic.ch/edena/EdenaV3.131028.tar.gz
+    2026-09-11 实测 HTTP 200，497784 字节）'
+  subcommands: 'assemble（edena -nThreads N -DRpairs r1 r2）· overlap（edena -e out.ovl
+    -overlapCutoff N -p out_N）'
+  bioconda: 'edena=3.131028（linux-64 + osx-64；2026-09-11 api.anaconda.org 核实存在，
+    包元数据未声明 license）'
+  build_route: '历史遗留渠道：bioconda edena=3.131028 → quay.io/biocontainers/
+    edena:3.131028--h9948957_8 / depot.galaxyproject.org sif（自动构建，复现用）；
+    官方源码归档 EdenaV3.131028.tar.gz（make; cp src/edena bin/）。软件 deprecated →
+    不产出自建 Dockerfile/Apptainer.def'
+  source: http://www.genomic.ch/edena.php
+  note: '2013 时代源码对现代编译器/glibc 的兼容性未核实；优先用 bioconda 历史包复现。'
+- id: edena_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/edena 404）
+  edena: —
+  source: —（nf-core/modules 仓库无 edena 目录）
+  note: 2026-09-11 抓取 api.github.com 返回 404；Nextflow 场景不登记官方说明层，
+    需复现历史流程时以 native/ 为兜底。
+- id: edena_snakemake_wrappers
+  edena: 官方无 wrapper（bio/edena 404）
+  source: —（snakemake-wrappers 仓库 bio/ 下无 edena）
+  note: '2026-09-11 抓取 api.github.com 返回 404；Snakemake 场景以 native/
+    （shell: 调 edena）为兜底。'
+- id: edena_nextflow_local
+  edena: '未启用（deprecated 模块不建 nextflow/；需要时在 main.nf 以 shell: 调
+    native/main.py assemble/overlap）'
+- id: edena_snakemake_local
+  edena: '未启用（deprecated 模块不建 snakemake/；需要时用 shell: 调 native/main.py）'
+implementations:
+- id: edena_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.131028"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。
+    本实现为「说明型 + 命令构造」：assemble（reads → contigs）与 overlap（重叠阈值
+    重跑）两个子命令按官方用法构造命令行，不实际运行（软件 deprecated、官网损坏、
+    无新用场景），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/edena（edena=3.131028，linux-64/osx-64 历史包）
+    quay: quay.io/biocontainers/edena:3.131028--h9948957_8（bioconda 自动构建历史镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/edena%3A3.131028--h9948957_8
+    install_hint: 宿主机 conda 路线 mamba create -n edena-native -c conda-forge -c bioconda
+      edena=3.131028（二进制 edena 在 PATH）；或下官方源码归档 make 编译（见 README「环境安装」）
+default_implementation: edena_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'edena 子命令：assemble（reads → contigs，-nThreads/-DRpairs）|
+      overlap（-e/-overlapCutoff/-p 重叠阈值重跑）'
+  reads1:
+    type: file
+    required: false
+    description: 'assemble：读段文件（SE 或 PE read1，FASTQ）；PE 时配合 --reads2'
+  reads2:
+    type: file
+    required: false
+    description: 'assemble：PE read2（提供则构造 -DRpairs <r1> <r2>）'
+  drpairs:
+    type: boolean
+    required: false
+    default: true
+    description: 'assemble：是否以 -DRpairs 处理 paired-end 数据（无 reads2 时忽略）'
+  prefix:
+    type: string
+    required: false
+    description: 'assemble/overlap：-p 输出前缀（产物 <prefix>_contigs.fasta）'
+  overlap_out:
+    type: file
+    required: false
+    description: 'overlap：-e 重叠信息输出文件（如 out.ovl）'
+  overlap_cutoff:
+    type: integer
+    required: false
+    description: 'overlap：-overlapCutoff 重叠阈值（文档示例 50–90，步长 10）'
+  threads:
+    type: integer
+    required: false
+    default: 4
+    description: '线程数：-nThreads（默认 4）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（仅进程环境注入，Edena 无自身 tmp 选项）
+outputs:
+  contigs_fasta:
+    type: file
+    format: fasta
+    description: assemble 输出的 contigs 序列（<prefix>_contigs.fasta）
+  overlap_file:
+    type: file
+    description: overlap 输出的重叠信息文件（-e out.ovl）
+environment:
+  container_official: quay.io/biocontainers/edena:3.131028--h9948957_8（bioconda 自动构建
+    历史镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README）
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    历史渠道：bioconda edena=3.131028（linux-64/osx-64）→ quay.io/biocontainers/
+    edena:3.131028--h9948957_8 与 depot.galaxyproject.org sif（自动构建历史镜像，
+    仅复现用）；宿主机安装登记在 README「环境安装」。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    overlap: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: edena
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers
+    均无 edena 官方子模块（2026-09-11 核实 404），且软件 deprecated → 不登记官方说明层，
+    历史复现一律以 native 驱动为兜底。

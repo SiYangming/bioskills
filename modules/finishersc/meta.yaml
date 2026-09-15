@@ -1,0 +1,129 @@
+software: finishersc
+canonical: finishersc
+category: genome_assembly
+description: 'FinisherSC（Finishing Tool v2.1）是用 PacBio 长读数据对 de novo 组装做迭代升级的工具：
+  以 repeat-aware 方式填补 contig 间 gap 并修正组装错误，逐步产出 noEmbed.fasta / improved.fasta /
+  improved2.fasta / improved3.fasta（关键输出为 improved3.fasta）。脚本为 Python 2，依赖 MUMmer
+  （nucmer/show-coords 等）做比对。
+
+  '
+homepage: https://kakitone.github.io/finishingTool/
+license: MIT
+software_versions:
+- id: finishersc_native
+  finishersc: '2.1'
+  python: Python 2.7（finisherSC.py 为 Python 2 语法；不支持 Python 3）
+  mummer: 需外部提供 MUMmer（nucmer/show-coords 等）路径
+  build_route: 官方无 biocontainer/conda；官方源码（GitHub codeload zip）自建
+  source: https://github.com/kakitone/finishingTool
+  note: '教学文档 zip 名 kakitone-finishingTool-v2.1-2-ga1f2608.zip（即 v2.1）；官方渠道
+    bioconda（404）/quay.io/biocontainers（401=无仓库）/depot.galaxyproject.org（404）均未收录
+    finishersc（2026-09 核实）→ native 提供自建 Dockerfile/Apptainer.def。运行时另需 MUMmer。'
+- id: finishersc_nextflow_nfcore
+  finishersc: 官方无 module（modules/nf-core/finishersc 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/finishersc
+    返回 404；流程场景降级 native。
+- id: finishersc_snakemake_wrappers
+  finishersc: 官方无 wrapper（bio/finishersc 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/finishersc
+    返回 404。
+- id: finishersc_nextflow_local
+  finishersc: 未固定（官方无 module；本地 nextflow 未建目录）
+- id: finishersc_snakemake_local
+  finishersc: 未固定（官方无 wrapper；本地 snakemake 未建目录）
+implementations:
+- id: finishersc_native
+  path: native
+  source_type: custom
+  type: native
+  version: '2.1'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标：
+    以 PacBio 长读对 draft 组装逐轮补 gap/纠错（finisherSC.py -par N -l True -o <map> ./ <mummer>）。
+
+    '
+  container_ref:
+    upstream_source: https://github.com/kakitone/finishingTool
+    install_hint: 官方无 biocontainer/conda → 走 native 自建配方（Dockerfile/Apptainer.def）或
+      native/install.sh（源码部署 + 依赖 MUMmer）
+default_implementation: finishersc_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: finishersc 子命令：finish（FinisherSC 主流程）
+  folder:
+    type: file
+    required: true
+    cli_arg: positional
+    description: destinedFolder（须含 contigs.fasta 与 raw_reads.fasta）
+  mummer:
+    type: file
+    required: true
+    cli_arg: positional
+    description: MUMmer 可执行文件目录（含 nucmer / show-coords 等）
+  large:
+    type: boolean
+    default: false
+    cli_arg: -l
+    description: 大 contig 集模式（对应 -l True，将 contig 文件拆分比对）
+  fast:
+    type: boolean
+    default: false
+    cli_arg: -f
+    description: 快速模式（对应 -f True，速度更快、质量略有折中）
+  pickup:
+    type: string
+    required: false
+    cli_arg: -p
+    description: 断点续跑起点（noEmbed.fasta|improved.fasta|improved2.fasta）
+  mapcontigs:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 将新 contig 映射回旧 contig（形如 contigs.fasta_improved3.fasta，结果见 mappingResults.txt）
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -par
+    description: 并行线程数（自动注入 -par）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 finisherSC.py 的额外参数（高级用法，慎用）
+outputs:
+  improved3_fasta:
+    type: file
+    format: fasta
+    description: 关键输出（<folder>/improved3.fasta）
+  intermediate_fasta:
+    type: file
+    format: fasta
+    description: 中间产物（noEmbed.fasta / improved.fasta / improved2.fasta）
+  mapping_results:
+    type: file
+    format: txt
+    description: -o mapcontigs 时输出的 mappingResults.txt
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 均未收录 finishersc，
+    2026-09 核实）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）2026-09 核实全无（bioconda 404、
+    quay 401=无仓库、depot 404）→ native/ 提供自建配方（debian:bullseye-slim + apt python2.7/mummer +
+    官方 GitHub codeload 源码；bullseye 因经 Python 2 运行）。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    finish: 8
+    default: 8
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: finisherSC.py

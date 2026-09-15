@@ -1,0 +1,190 @@
+software: platanus-allee
+canonical: platanus-allee
+category: assembly
+description: 'Platanus-allee（Kajitani R. et al., Nat Commun 2019, doi:10.1038/s41467-019-09575-2；
+  旧称 Platanus2）是基于 de Bruijn Graph 的二倍体基因组单倍型组装器：从零构建每条单倍型序列
+  并配对同源染色体（assemble 短读组装 → phase 结合长读/连锁读做单倍型 phasing → consensus
+  构建镶嵌式拟单倍体基因组）。相比经典 Platanus（组装 consensus 再拆分），Platanus-allee 对
+  高杂合/高分化区表现更好。二进制为 platanus_allee，三子命令 assemble / phase / consensus。'
+homepage: https://github.com/rkajitani/Platanus-allee
+license: GPL-3.0
+software_versions:
+- id: platanus_allee_native
+  platanus_allee: '2.4.0（GitHub 源码 tag v2.4.0；源码 common.cpp 内 VERSION="2.4.0"）'
+  subcommands: assemble · phase · consensus
+  build_route: 自建容器（Dockerfile / Apptainer.def，debian:bookworm-slim + build-essential + 官方
+    v2.4.0 源码 make）；官方渠道 2026-09 逐渠道核实全无 → 自建
+  source: https://github.com/rkajitani/Platanus-allee/archive/refs/tags/v2.4.0.tar.gz
+  official_prebuilt: '官方站点预编译二进制（Linux x86_64）：v2.2.2 http://platanus.bio.titech.ac.jp/?ddownload=431、
+    v2.0.2 http://platanus.bio.titech.ac.jp/?ddownload=347（2026-09 由官方站点 HTML 核实链接存在；
+    直链在本机网络不可达，文件名以官方分发为准，未逐一核对 sha256）'
+  note: '官方同时提供「预编译二进制包」与「源码编译」两条路线（均保留，README 预编译优先）；
+    官方无 conda 包/容器（bioconda platanus / platanus-allee 404、quay 401=仓库不存在、depot
+    404）→ 自建 Dockerfile/Apptainer.def。依赖：GCC>=4.4（OpenMP）；长读 phasing/consensus
+    需 minimap2；10X linked-reads 需 Long Ranger 预处理为 barcoded.fastq。'
+- id: platanus_allee_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/platanus-allee 404）
+  platanus_allee: —
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/platanus-allee
+    返回 404；Nextflow 场景不建目录，需以 native/ 为兜底。
+- id: platanus_allee_snakemake_wrappers
+  platanus_allee: 官方无 wrapper（bio/platanus 404）
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/platanus
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: platanus_allee_nextflow_local
+  platanus_allee: 未启用（不建 nextflow/；需要时以 shell 调 native/main.py）
+- id: platanus_allee_snakemake_local
+  platanus_allee: 未启用（不建 snakemake/；需要时以 shell 调 native/main.py）
+implementations:
+- id: platanus_allee_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.4.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 assemble / phase / consensus 三段链路，自动注入 -t 线程与 -tmp 临时目录。'
+  container_ref:
+    upstream_prebuilt: http://platanus.bio.titech.ac.jp/platanus2（官方站点预编译二进制 v2.2.2 / v2.0.2）
+    upstream_source: https://github.com/rkajitani/Platanus-allee（源码 tag v2.4.0，make 编译）
+    bioconda: （无——api.anaconda.org/package/bioconda/platanus-allee 404，2026-09 核实）
+    quay_biocontainers: （无——quay.io/api/v1/repository/biocontainers/platanus-allee 401=仓库不存在，
+      对照 dbg2olc 200，2026-09 核实）
+    galaxyproject: （无——https://depot.galaxyproject.org/singularity/platanus-allee HTTP 404，2026-09 核实）
+    install_hint: 无官方 conda 包/镜像；宿主机走官方源码编译（native/install.sh source 路线，
+      make → ~/software/platanus-allee-2.4.0）或官方站点预编译二进制；容器走本地自建配方
+      （native/Dockerfile + Apptainer.def，debian:bookworm-slim + build-essential + 官方源码 make）。
+default_implementation: platanus_allee_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: platanus-allee 子命令：assemble（短读 contig 组装）| phase（单倍型 phasing）|
+      consensus（拟单倍体 consensus 构建）
+  reads:
+    type: file
+    required: false
+    description: 'assemble：Illumina 双端 read 文件（-f，可多个；fasta/fastq，支持 <(zcat) 进程替换）'
+  output:
+    type: string
+    required: false
+    default: out
+    cli_arg: -o
+    description: 输出文件/目录前缀（默认 out，长度 <= 200）
+  out_prefix:
+    type: string
+    required: false
+    default: out
+    cli_arg: -o
+    description: phase/consensus 输出前缀别名（-o，不得包含 "/"）
+  contigs:
+    type: file
+    required: false
+    cli_arg: -c
+    description: 'phase/consensus：contig/scaffold 文件（FASTA，可多个；phase 用 out_contig.fa out_junctionKmer.fa，
+      consensus 用 out_primaryBubble.fa out_nonBubbleHomoCandidate.fa）'
+  ip1:
+    type: file
+    required: false
+    cli_arg: -IP1
+    description: 'phase/consensus：inward-pair 文库（separate forward/reverse，-IP1 FWD REV）'
+  long_reads:
+    type: file
+    required: false
+    cli_arg: -p
+    description: 'phase/consensus：长读文件（PacBio/Oxford-Nanopore，可多个；需 minimap2）'
+  linked_reads:
+    type: file
+    required: false
+    cli_arg: -x
+    description: 'phase/consensus：10X linked-reads（interleaved barcoded fastq，可多个）'
+  mapper:
+    type: file
+    required: false
+    cli_arg: -mapper
+    description: minimap2 可执行文件路径（-p 长读时生效，默认 minimap2）
+  minimap2_sensitive:
+    type: boolean
+    required: false
+    default: false
+    cli_arg: -minimap2_sensitive
+    description: minimap2 敏感模式（仅 -p 长读时生效）
+  k:
+    type: integer
+    required: false
+    default: 32
+    cli_arg: -k
+    description: 'assemble：初始 k-mer 长度（默认 32）'
+  mem_gb:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: 'assemble：构建 k-mer 分布的内存上限（GB，>=1，默认 16）'
+  iterations:
+    type: integer
+    required: false
+    cli_arg: -i
+    description: 'phase：迭代次数（默认 2）'
+  min_links:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: 'phase/consensus：scaffold 最小连接数（默认 3）'
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入 -t；官方上限 100）
+  tmpdir:
+    type: string
+    required: false
+    cli_arg: -tmp
+    description: 临时目录（自动注入 -tmp；默认 .）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 platanus_allee 子命令的额外参数（高级用法，慎用）
+outputs:
+  contig:
+    type: file
+    format: fasta
+    description: assemble 输出 <PREFIX>_contig.fa / <PREFIX>_junctionKmer.fa / <PREFIX>_kmerFrq.tsv
+  phase_blocks:
+    type: file
+    format: fasta
+    description: phase 输出 <PREFIX>_allPhaseBlock.fa（单倍型块）及 primaryBubble/secondaryBubble/
+      nonBubbleHomoCandidate/nonBubbleHetero 等中间文件
+  consensus_scaffold:
+    type: file
+    format: fasta
+    description: consensus 输出 <PREFIX>_consensusScaffold.fa + <PREFIX>_consensusScaffoldComponent.bed
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 2026-09 逐渠道核实
+    均无 platanus-allee 包/镜像；官方仅站点预编译二进制 + GitHub 源码）→ 使用本地自建 native/Dockerfile
+    + native/Apptainer.def
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）2026-09 逐渠道核实
+    全无 platanus-allee 包/镜像 → 保留自建配方（debian:bookworm-slim + build-essential + 官方
+    v2.4.0 源码 make，不引入 miniconda）。官方另有预编译二进制路线（官方站点 v2.2.2/v2.0.2），
+    与源码编译并列登记于 README「环境安装」。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    assemble: 8
+    phase: 8
+    consensus: 8
+    default: 4
+  note: platanus-allee 为 de Bruijn 图组装器，内存敏感（assemble -m 默认上限 16 GB，官方建议按机器
+    调整）→ default_mem_mb 取 32768；线程由 -t 注入（官方上限 100）。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: platanus_allee

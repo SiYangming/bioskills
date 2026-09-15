@@ -1,0 +1,109 @@
+software: falcon
+canonical: falcon
+category: genome_assembly
+description: 'FALCON（FALcon Assembly Line）是 Pacific Biosciences 开发的基于
+  overlap-layout-consensus（OLC）的 PacBio 三代长读 de novo 组装工具链（含 FALCON-Unzip
+  分型组装）。主流程由 **fc_run.py** 以 fofn（输入文件列表）+ fc_run.cfg（INI 配置）
+  驱动，产出 2-asm-falcon/p_ctg.fasta；Unzip 走 fc_unzip.py。**包名核实（2026-09）**：
+  bioconda 无 `falcon` 包（404），FALCON 实际由 **pb-falcon**（当前维护，2.2.4）提供，
+  另有官方 meta-package **pb-assembly**（0.0.8，2020 后停更；文档方法即用此包）；两者
+  均有 quay.io/biocontainers / depot.galaxyproject.org 官方镜像。本模块目录名取 falcon，
+  conda 包登记 pb-falcon（并注明 pb-assembly 为文档所述历史 meta-package）。
+  '
+homepage: https://github.com/PacificBiosciences/FALCON
+license: BSD-3-Clause-Clear
+software_versions:
+- id: falcon_native
+  falcon: 2.2.4（bioconda pb-falcon=2.2.4，当前维护；主程序 fc_run.py）
+  conda_pkg: 'pb-falcon=2.2.4（FALCON/Unzip 工具链本体）；文档所述 pb-assembly 为官方
+    meta-package（0.0.8，2019–2020 后停更，依赖 pb-falcon>=2.2.2 等一整套三代工具）'
+  build_route: official biocontainer（quay.io/biocontainers/pb-falcon / depot.galaxyproject.org；本地不再自建容器）
+  source: https://anaconda.org/bioconda/pb-falcon
+  note: '2026-09 核实：bioconda `falcon` 404（同名 `falcon` 属 auto/falcon 的 Web 框架，
+    非本工具）；quay tag 2.2.4--py311h384fd50_7，depot pb-falcon:2.2.4--py311h0152c62_6
+    返回 200；depot pb-assembly:0.0.8--hdfd78af_1 亦 200。Unix/Windows 仅 Linux
+    （bioconda recipe skip osx）；Python 2.7（旧版）→ 2.2.4 已支持 py3.9–3.12。'
+- id: falcon_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/falcon、pb-falcon、pb-assembly 均 404）
+  falcon: —
+  source: —（nf-core/modules 无 FALCON 子模块，2026-09 核实 404）
+  note: Nextflow 场景无官方子模块；PacBio 组装现代流程建议用 nf-core 的 hifiasm / flye
+    等模块，或本模块 native 驱动兜底。
+- id: falcon_snakemake_wrappers
+  falcon: 官方无 wrapper（bio/falcon、bio/pb-falcon、bio/pb-assembly 均 404）
+  source: —
+  note: 2026-09 抓取 snakemake-wrappers 返回 404；Snakemake 场景以 native 驱动兜底。
+- id: falcon_nextflow_local
+  falcon: '未启用（未建 nextflow/；需要时以 shell: 调 native/main.py run）'
+- id: falcon_snakemake_local
+  falcon: '未启用（未建 snakemake/；需要时以 shell: 调 native/main.py run）'
+implementations:
+- id: falcon_native
+  path: native
+  source_type: custom
+  type: native
+  priority: high
+  version: "2.2.4"
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 run（fc_run.py 主组装）与 unzip（fc_unzip.py 分型组装）两段链路。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/pb-falcon
+    bioconda_meta: https://anaconda.org/bioconda/pb-assembly
+    quay_biocontainers: quay.io/biocontainers/pb-falcon
+    galaxyproject: https://depot.galaxyproject.org/singularity/pb-falcon%3A2.2.4--py311h0152c62_6
+    upstream_release: https://github.com/PacificBiosciences/pb-falcon/releases/download/v2.2.4/pb-falcon.tar.gz
+    install_hint: 推荐 mamba create -n pb-assembly -c conda-forge -c bioconda pb-assembly
+      （文档方法，整套三代组装工具链）或 pb-falcon（仅 FALCON）；容器可用
+      quay.io/biocontainers/pb-falcon:2.2.4--py311h384fd50_7
+default_implementation: falcon_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: falcon 子命令：run（fc_run.py 主组装）| unzip（fc_unzip.py 分型组装）
+  config:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 'FALCON INI 配置文件（fc_run.cfg：input_fofn / input_type / genome_size /
+      length_cutoff / pa_daligner_option / [job.defaults] 等）'
+  threads:
+    type: integer
+    default: 4
+    description: '线程数（FALCON 不接 --threads 旗标；经 env NPROC 注入，对应 fc_run.cfg
+      [job.defaults] NPROC；用户 --threads > per_subcommand_threads > default_cpus）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（经 env TMPDIR 注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 fc_run.py / fc_unzip.py 的额外参数（高级用法，慎用）
+outputs:
+  primary_contigs:
+    type: file
+    format: fasta
+    description: run 主产物 2-asm-falcon/p_ctg.fasta（primary contigs）；Unzip 另出
+      a_ctg / hap 分型序列
+  assembly_dir:
+    type: directory
+    description: FALCON 工作目录（2-asm-falcon/、0-rawreads/、1-preads_ovl/ 等中间产物）
+environment:
+  container_official: quay.io/biocontainers/pb-falcon（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda pb-falcon / pb-assembly → quay.io/biocontainers / depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 pb-falcon 或 pb-assembly。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    NPROC: '{cpus}'
+  per_subcommand_threads:
+    run: 8
+    unzip: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fc_run.py

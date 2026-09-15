@@ -1,0 +1,109 @@
+# platanus-allee native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 v2.4.0 源码 make）
+#
+# 背景：Platanus-allee 无官方镜像/conda 包 —— 2026-09 逐渠道核实 bioconda（platanus / platanus-allee
+#       404）→ quay.io/biocontainers（401 = 仓库不存在）→ depot.galaxyproject.org（404）全无；
+#       nf-core / snakemake-wrappers / brew 亦无。官方站点另提供预编译二进制（v2.2.2 / v2.0.2），
+#       本配方走官方源码 tag v2.4.0（common.cpp VERSION="2.4.0"，main.cpp 启动打印版本）。
+# 底座：debian:bookworm-slim + build-essential + 官方源码 make。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build platanus-allee-2.4.0.sif platanus-allee/native/Apptainer.def
+# 运行（容器内 %runscript = native/main.py 驱动）：
+#   apptainer run -B $PWD:/data -H /data platanus-allee-2.4.0.sif \
+#       assemble -t 8 -f /data/illumina.1.fastq /data/illumina.2.fastq
+#   apptainer exec platanus-allee-2.4.0.sif platanus_allee -v   # 直接调二进制
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software platanus-allee
+    Version 2.4.0
+    org.bioskills.software platanus-allee
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt build deps + GitHub source (make)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    platanus-allee/native/main.py /opt/skill/main.py
+    platanus-allee/meta.yaml /opt/skill/platanus-allee/meta.yaml
+    platanus-allee/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：构建（build-essential）+ 运行（python3/python3-yaml 供 main.py 驱动）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        g++ \
+        make \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方源码归档下载 + make + 部署 /usr/local/bin/platanus_allee（版本断言）
+    curl -fSL -o /tmp/platanus-allee.tar.gz \
+        "https://github.com/rkajitani/Platanus-allee/archive/refs/tags/v2.4.0.tar.gz"
+    mkdir -p /tmp/src && tar -xzf /tmp/platanus-allee.tar.gz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    cd "$SRC"
+    make -j"$(nproc)"
+    test -x ./platanus_allee
+    ./platanus_allee -v 2>&1 | grep -q '2.4.0'
+    install -m 0755 ./platanus_allee /usr/local/bin/platanus_allee
+    rm -rf /tmp/src /tmp/platanus-allee.tar.gz
+
+    # 3) 仅构建期下载工具移除 + 清理四连
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/usr/local/bin:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：版本断言 + 驱动可自省
+    set -eux
+    /usr/local/bin/platanus_allee -v 2>&1 | grep -q '2.4.0'
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/pa_commands.txt
+    grep -q '^assemble' /tmp/pa_commands.txt
+    grep -q '^phase' /tmp/pa_commands.txt
+    grep -q '^consensus' /tmp/pa_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/pa_schema.json
+    test -s /tmp/pa_schema.json
+    rm -f /tmp/pa_commands.txt /tmp/pa_schema.json
+
+%help
+    platanus-allee native Apptainer 镜像（自建：apt 最小化 + 官方 GitHub 源码 make v2.4.0）。
+    驱动用法：apptainer run -B $PWD:/data -H /data platanus-allee-2.4.0.sif \
+        assemble -t 8 -f /data/illumina.1.fastq /data/illumina.2.fastq
+    二进制直调：apptainer exec platanus-allee-2.4.0.sif platanus_allee -v
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09
+    全无 → 自建镜像；三子命令 assemble/phase/consensus 逐个子命令定义线程 -t 与临时目录 -tmp。

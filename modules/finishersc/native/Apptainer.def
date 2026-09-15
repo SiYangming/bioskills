@@ -1,0 +1,114 @@
+# finishersc native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方源码，禁 miniconda）
+#
+# 背景：FinisherSC（Finishing Tool v2.1）官方渠道全无（bioconda 404 / quay 401 / depot 404，2026-09）→
+#       自建。finisherSC.py 为 Python 2 语法 → 底座取 debian:bullseye-slim（提供 python2.7 + mummer）。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build finishersc-2.1.sif finishersc/native/Apptainer.def
+# 运行（容器内 CLI = finisherSC.py）：
+#   apptainer run -B $PWD:/data -H /data finishersc-2.1.sif -par 8 -l True \
+#       -o contigs.fasta_improved3.fasta /data /usr/bin
+#   驱动 main.py：apptainer exec finishersc-2.1.sif python3 /opt/skill/main.py finish \
+#       /data /usr/bin --large --threads 8
+
+Bootstrap: docker
+From: debian:bullseye-slim
+
+%labels
+    Maintainer bioskills
+    Software finishersc
+    Version 2.1
+    org.bioskills.software finishersc
+    impl native
+    base_image debian:bullseye-slim
+    finishersc_version 2.1
+    pkg_route apt (python2.7/mummer) + upstream source (kakitone/finishingTool)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    finishersc/native/main.py /opt/skill/main.py
+    finishersc/meta.yaml /opt/skill/finishersc/meta.yaml
+    finishersc/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：Python 2.7 + MUMmer + Python 3 驱动
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python2.7 \
+        python2.7-minimal \
+        mummer \
+        ca-certificates \
+        curl \
+        unzip \
+        python3 \
+        python3-yaml \
+        procps
+    ln -sf /usr/bin/python2.7 /usr/local/bin/python
+
+    # 2) 官方源码下载 + 部署 + 结构化断言（finisherSC.py 无 --version）
+    mkdir -p /tmp/src
+    curl -fsSL -o /tmp/src.zip \
+        "https://codeload.github.com/kakitone/finishingTool/legacy.zip/master"
+    unzip -q /tmp/src.zip -d /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d | head -1)"
+    test -f "$SRC/finisherSC.py"
+    mkdir -p /opt/finisherSC
+    cp -R "$SRC"/. /opt/finisherSC/
+    chmod 0755 /opt/finisherSC/finisherSC.py
+    python2.7 -c "import argparse, time"
+    command -v nucmer >/dev/null
+    rm -rf /tmp/src /tmp/src.zip
+
+    # 3) 清理四连（构建期 curl/unzip 移除）
+    apt-get purge -y curl unzip
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export FINISHERSC_HOME=/opt/finisherSC
+    export FINISHERSC_PYTHON=python2.7
+    export PATH=/opt/finisherSC:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python2.7 /opt/finisherSC/finisherSC.py "$@"
+
+%test
+    # 非交互自检：Python 2.7 版本断言 + MUMmer + 源码就位 + 驱动可自省
+    set -eux
+    python2.7 --version 2>&1 | grep -qE 'Python 2\.7'
+    test -f /opt/finisherSC/finisherSC.py
+    command -v nucmer >/dev/null
+    command -v show-coords >/dev/null
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/fsc_commands.txt
+    grep -q '^finish' /tmp/fsc_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/fsc_schema.json
+    test -s /tmp/fsc_schema.json
+    rm -f /tmp/fsc_commands.txt /tmp/fsc_schema.json
+
+%help
+    finishersc native Apptainer 镜像（自建：apt 最小化 + 官方源码 v2.1）。
+    CLI 用法：apptainer run finishersc-2.1.sif -par 8 -l True -o contigs.fasta_improved3.fasta /data /usr/bin
+    驱动用法：apptainer exec finishersc-2.1.sif python3 /opt/skill/main.py finish /data /usr/bin --large --threads 8
+    说明：finisherSC.py 为 Python 2 语法（容器内 python2.7）；MUMmer 在 /usr/bin（作第 2 位置参数传 /usr/bin）；
+    上游无 --version，版本断言以 Python 2.7 + 源码就位（登记版本 2.1）为准。

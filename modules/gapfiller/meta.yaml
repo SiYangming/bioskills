@@ -1,0 +1,151 @@
+software: gapfiller
+canonical: gapfiller
+category: genome_assembly
+description: 'GapFiller（Marten Boetzer & Walter Pirovano，BaseClear）是使用测序文库对 scaffold
+  水平基因组补洞（gap closing）的工具：Perl 单文件脚本 GapFiller.pl 读取文库表（-l，含双端/大片段
+  文件名、插入片段长度、误差与方向），以 -s 指定 scaffold FASTA，借助 bowtie/bwa 比对后局部延伸填补
+  gap。教学文档使用三代修改版（lufuhao fork，v1.11）；官方 bioconda/quay/depot 的同名 gapfiller 为
+  C++ v2.1.2 系列（CLI 不同）。
+
+  '
+homepage: https://github.com/lufuhao/gapfiller
+license: BaseClear（学术/非营利免费，商用需授权）；bioconda gapfiller 记为 GPLv3（C++ v2 系列）
+software_versions:
+- id: gapfiller_native
+  gapfiller: '1.11'
+  build_route: 官方无 biocontainer/conda（本文档目标 Perl GapFiller.pl v1.11）；自建配方（debian bookworm + perl + bowtie + bwa）
+  source: https://github.com/lufuhao/gapfiller（GapFiller.pl 单文件 Perl 脚本；v1.11）
+  note: '教学文档 method 1 为预编译 tar GapFiller_v1-11_linux-x86_64.tar.gz（三代修改版，捆绑 bowtie/bwa
+    子目录；直链未核实——SourceForge gapfiller 项目文件区仅列 v1.0/v1.1/v1.1.1/v2.0/v2.1.1/v2.1.2，
+    无 v1-11）。官方渠道同名 gapfiller 为 C++ v2.1.2（bioconda recipe 源码 gapfiller-2.1.2.tar.gz、
+    test 命令 GapFiller --help），与 Perl GapFiller.pl CLI（-l/-s/-T）不同——本模块 native 对齐文档的
+    Perl v1.11，故 native 走自建配方。'
+- id: gapfiller_nextflow_nfcore
+  gapfiller: 官方无 module（modules/nf-core/gapfiller 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/gapfiller
+    返回 404；流程场景降级 native。
+- id: gapfiller_snakemake_wrappers
+  gapfiller: 官方无 wrapper（bio/gapfiller 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/gapfiller
+    返回 404。
+- id: gapfiller_nextflow_local
+  gapfiller: 未固定（官方无 module；本地 nextflow 未建目录）
+- id: gapfiller_snakemake_local
+  gapfiller: 未固定（官方无 wrapper；本地 snakemake 未建目录）
+implementations:
+- id: gapfiller_native
+  path: native
+  source_type: custom
+  type: native
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标：
+    以文库表对 scaffold 做补洞（GapFiller.pl -l library.txt -s genome.fa -T N），自动注入线程。
+
+    '
+  version: '1.11'
+  priority: high
+  container_ref:
+    upstream_source: https://github.com/lufuhao/gapfiller
+    install_hint: Perl v1.11 无官方镜像/conda → 走 native 自建配方（Dockerfile/Apptainer.def）或
+      native/install.sh（源码部署 GapFiller.pl + 依赖 bowtie/bwa）
+default_implementation: gapfiller_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gapfiller 子命令：fill（GapFiller.pl 补洞主流程）
+  library:
+    type: file
+    required: true
+    cli_arg: -l
+    description: 文库表文件（每行：文库名 比对工具 双端reads1 reads2 插入长度 误差 方向）
+  scaffold:
+    type: file
+    required: true
+    cli_arg: -s
+    format: [fasta]
+    description: 待补洞的 scaffold FASTA
+  base_name:
+    type: string
+    required: false
+    cli_arg: -b
+    description: 输出目录/文件名前缀（默认 standard_output）
+  min_overlap:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: 与 gap 边缘最小重叠碱基数（默认 29）
+  min_reads_per_base:
+    type: integer
+    required: false
+    cli_arg: -o
+    description: 调用一个碱基所需最小 reads 数（默认 2）
+  min_base_ratio:
+    type: number
+    required: false
+    cli_arg: -r
+    description: 单碱基延伸 reads 百分比阈值（默认 0.7）
+  max_diff:
+    type: integer
+    required: false
+    cli_arg: -d
+    description: gapsize 与已填补碱基数的最大差异（默认 50）
+  min_tig_overlap:
+    type: integer
+    required: false
+    cli_arg: -n
+    description: 合并相邻序列所需最小 contig 重叠（默认 10）
+  trim:
+    type: integer
+    required: false
+    cli_arg: -t
+    description: 序列首尾裁剪的 reads 数（默认 10）
+  iterations:
+    type: integer
+    required: false
+    cli_arg: -i
+    description: 补洞迭代次数（默认 10）
+  bowtie_gaps:
+    type: integer
+    required: false
+    cli_arg: -g
+    description: bowtie 比对允许的最大 gap 数（对应 bowtie -v，默认 1）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -T
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 GapFiller.pl 的额外参数（高级用法，慎用）
+outputs:
+  filled_fasta:
+    type: file
+    format: fasta
+    description: 补洞后的 scaffold FASTA（<base_name>/<base_name>.gapped.fasta）
+  summary:
+    type: file
+    format: txt
+    description: 运行摘要（<base_name>/<base_name>.summaryfile.final.txt）
+environment:
+  container_official: 无（本文档目标 Perl GapFiller.pl v1.11 无官方镜像；官方 bioconda/quay/depot 的同名
+    gapfiller 为 C++ v2.1.2 系列，CLI 不同）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: Perl v1.11 官方渠道（bioconda/quay/depot）无对应包/镜像（同名 gapfiller 为 C++ v2.1.2）→ native/
+    提供自建配方（debian:bookworm-slim + apt perl/bowtie/bwa + 官方 lufuhao/gapfiller 的 GapFiller.pl）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    fill: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: GapFiller.pl

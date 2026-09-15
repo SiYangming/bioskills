@@ -1,0 +1,138 @@
+software: newbler
+canonical: newbler
+category: genome_assembly
+description: 'Newbler（gsAssembler）是 Roche / 454 Life Sciences 为 454 焦磷酸测序
+  数据开发的 de novo 组装器（Overlap-Layout-Consensus 算法），随 GS De Novo Assembler
+  软件（DataAnalysis_2.9_All）分发。主程序 runAssembly（454 组装）、runMapping（454
+  读段回贴参考）、runProject 等；典型命令 runAssembly -o ./ -force -tr reads.sff。
+  **已淘汰（deprecated，2026-09 登记）**：454 测序技术停产、Roche 关闭 454 业务，
+  Newbler 停止更新；官网 454.com 已变为跳转占位页（software-request.asp 不再提供
+  下载）。本模块按 deprecated 处理：仅做历史复现说明与命令构造，不产出自建容器配方，
+  不推荐新项目使用。
+  '
+homepage: http://454.com/contact-us/software-request.asp
+license: 'proprietary（Roche / 454 Life Sciences 商业软件，需向 Roche 申请许可；2026-09
+  官网已停服，许可条款无法在线复核，未使用 SPDX）'
+deprecated: true
+deprecated_note: '上游终止：454 测序平台停产（Roche 2013 宣布、2016 全面退出），
+  GS De Novo Assembler / Newbler 最后版本 2.9（DataAnalysis_2.9_All_20130530_1559.tgz）；
+  官网 454.com 2026-09 探测为 JS 跳转占位页（software-request.asp 不再提供软件下载），
+  官方分发点失效。功能上被短读组装器 SPAdes / MaSuRa / ABySS / SOAPdenovo2 等替代。
+  2026-09 核实：bioconda newbler 404、quay.io/biocontainers/newbler 无、depot.galaxyproject.org
+  无、nf-core/snakemake-wrappers/brew 两源均无 → 无任何官方渠道。本模块只做「录入」：
+  native 为「说明 + argv 构造」驱动，供复现 2010 年代 454 组装分析。'
+software_versions:
+- id: newbler_native
+  newbler: '2.9（GS De Novo Assembler / Newbler；安装包 DataAnalysis_2.9_All_20130530_1559.tgz，
+    官网 454.com 2026-09 已停服不可下载）'
+  subcommands: 'assemble（runAssembly，454 读取 SFF → contigs/isotigs）· map（runMapping，
+    454 读取回贴参考序列）'
+  build_route: '无官方渠道（bioconda newbler 404；quay.io/biocontainers/newbler 无；
+    depot.galaxyproject.org 无）；软件 deprecated → 不产出自建 Dockerfile/Apptainer.def'
+  source: 'http://454.com/contact-us/software-request.asp（2026-09 为跳转占位页，非下载页）；
+    历史安装包 DataAnalysis_2.9_All_20130530_1559.tgz（64 位 Linux 自解压，./setup.sh 安装）'
+  note: 'Newbler 依赖 32 位运行库：官方 setup.sh 要求 zlib/libXi/libXtst/libXaw（含 i686
+    32 位变体）；现代 64-only 发行版需 multilib。SFF 输入由 454 平台产出，已随该平台淘汰。
+    历史安装前缀常见 /opt/biosoft/454（root 全局限定）——本模块一律改写为用户前缀。'
+- id: newbler_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/newbler 404）
+  newbler: —
+  source: —（nf-core/modules 无 newbler 目录，2026-09 核实 404）
+  note: deprecated 且平台淘汰，无 Nextflow 官方子模块；历史复现请用替代组装器
+    （SPAdes / MaSuRa / SOAPdenovo2 等）。
+- id: newbler_snakemake_wrappers
+  newbler: 官方无 wrapper（bio/newbler 404）
+  source: —
+  note: 2026-09 抓取 snakemake-wrappers 返回 404；deprecated 软件无官方 wrapper。
+- id: newbler_nextflow_local
+  newbler: '未启用（deprecated，不建议新建本地 nextflow 集成；需要时以 shell 调
+    native/main.py 的命令构造作历史参考）'
+- id: newbler_snakemake_local
+  newbler: 未启用（deprecated，不建议新建本地 snakemake 集成）
+implementations:
+- id: newbler_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.9"
+  priority: high
+  when_to_use: '仅历史参考 / 复现 2010 年代 454 组装分析时使用（Agent 在 Function Calling /
+    CLI 场景应避免路由到本模块，改用 SPAdes / SOAPdenovo2 等替代工具）。本实现为
+    「说明 + argv 构造」：assemble / map 子命令分别构造 runAssembly / runMapping
+    的历史命令行并打印，不实际执行（软件 deprecated、官网停服）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/newbler（404 不存在，2026-09 核实）
+    install_hint: 已淘汰且官方分发点停服 → 无自动安装路线；历史复现需先取得
+      DataAnalysis_2.9_All_20130530_1559.tgz 再 ./setup.sh（需 32 位运行库），
+      见 README「环境安装」。
+default_implementation: newbler_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: newbler 子命令：assemble（runAssembly 454 组装）| map（runMapping 454 回贴参考）|
+      说明型驱动，历史命令构造
+  reads:
+    type: file
+    required: false
+    cli_arg: -tr
+    description: 'assemble/map：输入 454 reads（SFF 格式，如 454Reads.sff；-tr 表示用
+      trimmed reads）'
+  output_dir:
+    type: string
+    required: false
+    cli_arg: -o
+    description: '输出目录（runAssembly/runMapping -o；默认 ./）'
+  reference:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 'map：参考序列 FASTA（runMapping 的位置参数）'
+  force:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -force
+    description: 强制输出到已存在的目录（-force）
+  trimmed:
+    type: boolean
+    required: false
+    default: true
+    cli_arg: -tr
+    description: 使用 trimmed reads（-tr；关闭则不传）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 runAssembly / runMapping 的额外参数（高级用法，慎用）
+outputs:
+  assembly:
+    type: file
+    description: assemble 产物（<output_dir>/454Assembly/…：454AllContigs.fna /
+      454NewblerMetrics.txt / 454Isotigs 等，随项目而定）
+  mapping:
+    type: file
+    description: map 产物（<output_dir>/454Mapping/…：454MappingMetrics.txt / .ace 等）
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。
+    2026-09 核实无任何官方渠道（bioconda newbler 404；quay / depot 无；nf-core /
+    snakemake-wrappers / brew 两源均无）。官方分发点 454.com 已停服，历史安装需
+    自备 DataAnalysis_2.9_All 安装包并 ./setup.sh（依赖 32 位 zlib/libXi/libXtst/libXaw）。
+    native 驱动本身仅需 python3 + pyyaml（native/environment.yml 不适用 → 本模块
+    不提供 environment.yml，见 README 说明）。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    map: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: runAssembly
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；deprecated 软件无
+    nf-core / snakemake-wrappers 官方子模块（2026-09 核实 404），历史复现一律以
+    native 驱动（命令构造）为兜底。

@@ -1,0 +1,172 @@
+software: jellyfish
+canonical: jellyfish
+category: genome_assembly
+description: 'Jellyfish 是快速、内存高效的 k-mer 计数工具（Marçais & Kingsford, Bioinformatics
+  2011）：用多线程 hash 表统计 DNA reads 中所有 k-mer 出现次数，支持 canonical k-mer（-C，
+  正/负链合并计数）、Bloom filter 高频 k-mer 计数、merge/dump/histo/stats/query 等子命令，
+  是基因组 survey（基因组大小/杂合度估计，如 GenomeScope）的 k-mer 计数底座。
+
+  '
+homepage: https://github.com/gmarcais/Jellyfish
+license: BSD-3-Clause OR GPL-3.0（v2.3.0 起官方双许可 BSD3/GPL3）
+software_versions:
+- id: jellyfish_native
+  jellyfish: "2.3.0"
+  build_route: 官方预编译静态二进制（Linux）+ 官方源码编译 + 官方 biocontainer（quay.io/biocontainers/kmer-jellyfish）
+  source: https://github.com/gmarcais/Jellyfish（release v2.3.0：源码 jellyfish-2.3.0.tar.gz
+    + 官方 Linux 静态二进制 jellyfish-linux）；bioconda 包名为 kmer-jellyfish（https://anaconda.org/bioconda/kmer-jellyfish）
+  note: '官方 release v2.3.0 明确「In addition to the source code, we provide a Linux static
+    binary」（jellyfish-linux，2026-09 核实 200）。bioconda 现行包名 kmer-jellyfish（最新
+    2.3.1，含 2.3.0；旧的 jellyfish 包仅到 2.2.10）；quay/depot 镜像 tag 以 2.3.1 为最新
+    （见 README「容器与 Conda 链接」）。'
+- id: jellyfish_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  jellyfish: "2.3.1"
+  source: bioconda::kmer-jellyfish=2.3.1（modules/nf-core/jellyfish/count/environment.yml）
+  note: nf-core 仅 jellyfish/count 一个子模块（2026-09 核实），pin kmer-jellyfish=2.3.1。
+- id: jellyfish_snakemake_wrappers
+  wrapper_tag: v9.17.1
+  jellyfish: "2.3.1"
+  source: kmer-jellyfish =2.3.1（bio/jellyfish/count/environment.yaml）
+  note: 官方 snakemake-wrappers 仅 bio/jellyfish/count 一个 wrapper（v9.17.1 存在，2026-09 核实）。
+- id: jellyfish_nextflow_local
+  jellyfish: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: jellyfish_snakemake_local
+  jellyfish: 未启用（未建 snakemake/ 目录；官方 wrapper 已覆盖 count）
+implementations:
+- id: jellyfish_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.3.0"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的 k-mer
+    计数与直方图生成（count/histo/dump/stats/query/merge），自动注入线程（-t）。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/kmer-jellyfish
+    quay_biocontainers: quay.io/biocontainers/kmer-jellyfish
+    galaxyproject: https://depot.galaxyproject.org/singularity/kmer-jellyfish%3A2.3.1--py312pl5321hf731ba3_6
+    install_hint: 官方首选预编译静态二进制（release jellyfish-linux）；或用 mamba create -n
+      <env> -c conda-forge -c bioconda kmer-jellyfish=2.3.0；容器用 quay.io/biocontainers/kmer-jellyfish。
+default_implementation: jellyfish_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'jellyfish 子命令：count|histo|stats|query|dump|merge'
+  reads:
+    type: string
+    required: false
+    cli_arg: positional
+    description: count：输入序列文件（FASTA/FASTQ，可多个，支持 *.fastq）
+  kmer_size:
+    type: integer
+    default: 21
+    cli_arg: -m
+    description: count：k-mer 长度（-m）
+  hash_size:
+    type: string
+    default: 100M
+    cli_arg: -s
+    description: count：初始 hash 表大小（估计的不同 k-mer 数，如 100000000 / 100M）
+  canonical:
+    type: boolean
+    default: true
+    cli_arg: -C
+    description: count：计数互补 k-mer（正/负链合并；reads 建议 true）
+  counts_threshold:
+    type: integer
+    required: false
+    cli_arg: -c
+    description: count：计数位宽（每条 k-mer 用几位存储，默认 2）
+  counts:
+    type: file
+    required: false
+    cli_arg: positional
+    description: histo/stats/query/dump 输入的 .jf 计数文件
+  merge_inputs:
+    type: string
+    required: false
+    cli_arg: positional
+    description: merge：待合并的 .jf 计数文件（多个）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件/前缀（count 为 .jf；histo/dump/stats/query 为 stdout 重定向路径）
+  kmer:
+    type: string
+    required: false
+    cli_arg: positional
+    description: query：待查询的 k-mer 序列（如 ATGCATGCATGCATGCATGCA）
+  histogram_low:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: histo：直方图最小计数（默认 1）
+  histogram_high:
+    type: integer
+    required: false
+    cli_arg: -h
+    description: histo：直方图最大计数（jellyfish 默认 10000）
+  histogram_increment:
+    type: integer
+    required: false
+    cli_arg: -i
+    description: histo：直方图计数步长
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（count/histo 注入 -t）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 jellyfish 子命令的额外参数（高级用法，慎用）
+outputs:
+  kmer_counts:
+    type: file
+    format: jf
+    description: count 输出的 k-mer 计数文件（.jf）
+  histogram:
+    type: file
+    format: txt
+    description: histo 输出的 k-mer 频率直方图（两列：count / number of k-mers）
+  dumped_kmers:
+    type: file
+    format: fasta
+    description: dump 导出的所有 k-mer 及其计数
+  stats_report:
+    type: file
+    format: txt
+    description: stats 输出的 k-mer 统计信息
+  merged_counts:
+    type: file
+    format: jf
+    description: merge 合并后的 .jf 计数文件
+environment:
+  container_official: quay.io/biocontainers/kmer-jellyfish（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda kmer-jellyfish → quay.io/biocontainers/kmer-jellyfish →
+    depot.galaxyproject.org），本地不维护 Dockerfile/Apptainer.def；另有官方预编译静态二进制
+    （release jellyfish-linux）与源码编译两条官方路线。宿主机直跑 main.py 时用官方二进制或
+    conda/mamba 安装 kmer-jellyfish。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    count: 8
+    histo: 8
+    query: 2
+    dump: 4
+    stats: 2
+    merge: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: jellyfish

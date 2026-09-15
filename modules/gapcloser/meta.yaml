@@ -1,0 +1,115 @@
+software: gapcloser
+canonical: gapcloser
+category: genome_assembly
+description: 'GapCloser 是 SOAPdenovo2 套件中的基因组补洞（gap closing）工具：用配对的
+  测序 reads（fragment / jumping）回贴 scaffold，闭合组装序列中的 N gap（Li R et al.
+  GigaScience 2014, SOAPdenovo2）。CLI 形如 GapCloser -a genome.fa -b config.txt
+  -o gapcloser.fa -l 120 -t 4（-a 输入 scaffold，-b SOAPdenovo 式文库配置，-o 输出，
+  -l 最大读长，-p overlap，-t 线程）。**注意**：文档称「暂无 conda 包」，但 2026-09
+  核实 bioconda 实际提供官方包 **soapdenovo2-gapcloser=1.12**（包名非 gapcloser），
+  并有 quay.io/biocontainers / depot.galaxyproject.org 官方镜像。
+  '
+homepage: https://sourceforge.net/projects/soapdenovo2/files/GapCloser
+license: GPL-3.0-or-later
+software_versions:
+- id: gapcloser_native
+  gapcloser: 1.12（GapCloser v1.12-r6；SOAPdenovo2 套件补洞工具）
+  build_route: official biocontainer（quay.io/biocontainers/soapdenovo2-gapcloser
+    / depot.galaxyproject.org；本地不再自建容器）
+  source: https://anaconda.org/bioconda/soapdenovo2-gapcloser
+  note: '2026-09 核实：bioconda 包名为 soapdenovo2-gapcloser（非 gapcloser，后者 404），
+    版本 1.12，license GPL-3.0-or-later（bioconda recipe about.license）；quay tag
+    1.12--h077b44d_3，depot 同名 sif 200。官方预编译 tgz（SourceForge
+    GapCloser-bin-v1.12-r6.tgz，114553 B，sha256 8ca1a7e5…）仍可下载，作为无 conda 兜底。'
+- id: gapcloser_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/soapdenovo2-gapcloser 404）
+  gapcloser: —
+  source: —（nf-core/modules 无 gapcloser / soapdenovo2-gapcloser 目录，2026-09 核实 404）
+  note: Nextflow 场景无官方子模块；需要时以 native 驱动兜底（shell 调 main.py fill）。
+- id: gapcloser_snakemake_wrappers
+  gapcloser: 官方无 wrapper（bio/gapcloser、bio/soapdenovo2-gapcloser 均 404）
+  source: —
+  note: 2026-09 抓取 snakemake-wrappers 返回 404；Snakemake 场景以 native 驱动兜底。
+- id: gapcloser_nextflow_local
+  gapcloser: '未启用（未建 nextflow/；需要时以 shell: 调 native/main.py fill）'
+- id: gapcloser_snakemake_local
+  gapcloser: '未启用（未建 snakemake/；需要时以 shell: 调 native/main.py fill）'
+implementations:
+- id: gapcloser_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.12"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 GapCloser 补洞单链路，自动注入线程（-t）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/soapdenovo2-gapcloser
+    quay_biocontainers: quay.io/biocontainers/soapdenovo2-gapcloser:1.12--h077b44d_3
+    galaxyproject: https://depot.galaxyproject.org/singularity/soapdenovo2-gapcloser%3A1.12--h077b44d_3
+    upstream_prebuilt: https://sourceforge.net/projects/soapdenovo2/files/GapCloser/bin/r6/GapCloser-bin-v1.12-r6.tgz
+    install_hint: 推荐 mamba create -n gapcloser -c conda-forge -c bioconda soapdenovo2-gapcloser=1.12；
+      容器可用 quay.io/biocontainers/soapdenovo2-gapcloser:1.12--h077b44d_3
+default_implementation: gapcloser_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: gapcloser 子命令：fill（GapCloser 补洞）
+  scaffold:
+    type: file
+    required: true
+    cli_arg: -a
+    description: 输入 scaffold 基因组 FASTA（含 N gap，待补洞）
+  config:
+    type: file
+    required: true
+    cli_arg: -b
+    description: SOAPdenovo 式文库配置文件（max_rd_len=…；[LIB] 段 avg_ins / q1 / q2 等）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出补洞后 FASTA（默认 gapcloser.fa）
+  max_read_len:
+    type: integer
+    required: false
+    default: 120
+    cli_arg: -l
+    description: 最大读长（GapCloser 二进制 help 记 -l "max read len"；文档示例取 120）
+  overlap:
+    type: integer
+    required: false
+    default: 25
+    cli_arg: -p
+    description: overlap 参数（help 记 -p "overlap para"，允许 13–31，默认 25）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（自动注入 -t）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 GapCloser 的额外参数（高级用法，慎用）
+outputs:
+  filled_fasta:
+    type: file
+    format: fasta
+    description: 补洞后基因组 FASTA（gap 被 reads 闭合，未闭合处保留 N）
+environment:
+  container_official: quay.io/biocontainers/soapdenovo2-gapcloser（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda soapdenovo2-gapcloser → quay.io/biocontainers / depot.galaxyproject.org），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 soapdenovo2-gapcloser，或解压官方预编译 tgz。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    fill: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: GapCloser

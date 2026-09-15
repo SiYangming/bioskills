@@ -1,0 +1,124 @@
+software: genomescope2
+canonical: genomescope2
+category: genome_assembly
+description: 'GenomeScope 2.0 是基于 k-mer 频率的基因组评估工具（Ranallo-Benavidez, Jaron
+  & Schatz 2020）：用多倍体感知的混合模型从 k-mer 计数直方图（如 Jellyfish/KMC 产出）估计
+  基因组大小、杂合度与重复序列比例，支持 diploid~hexaploid，秒级完成并输出报告与多张图，是
+  组装前基因组 survey 的标准工具（GenomeScope 2.0 官方 R 包版本 v1.0.0，脚本 genomescope.R）。
+
+  '
+homepage: https://github.com/tbenavi1/genomescope2.0
+license: Apache-2.0
+software_versions:
+- id: genomescope2_native
+  genomescope2: "1.0.0"
+  build_route: official biocontainer（quay.io/biocontainers/genomescope2 / depot.galaxyproject.org）+ 官方 R 包源码（R CMD INSTALL）
+  source: https://github.com/tbenavi1/genomescope2.0（archive v1.0.0）；bioconda https://anaconda.org/bioconda/genomescope2
+  note: '官方 R 包.tag v1.0.0（文档目标）经 R CMD INSTALL 安装（依赖 r-argparse / r-minpack.lm）；
+    bioconda 现行版本为 2.1.0（https://api.anaconda.org/package/bioconda/genomescope2 最新
+    2.1.0，含 2.0/2.0.1）；conda 安装自动含 jellyfish 依赖。容器/sif tag 以 2.1.0 为最新。'
+- id: genomescope2_nextflow_nfcore
+  module_version: nf-core master（2026-09）
+  genomescope2: "2.1.0"
+  source: bioconda::genomescope2=2.1.0（modules/nf-core/genomescope2/environment.yml）
+  note: nf-core genomescope2 为扁平模块（无子目录，2026-09 核实），pin genomescope2=2.1.0。
+- id: genomescope2_snakemake_wrappers
+  genomescope2: 官方无 wrapper（bio/genomescope2 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/genomescope2 返回 404）
+- id: genomescope2_nextflow_local
+  genomescope2: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: genomescope2_snakemake_local
+  genomescope2: 未启用（未建 snakemake/ 目录；需要时用 shell 调 native/main.py）
+implementations:
+- id: genomescope2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.0"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的 k-mer
+    基因组评估（输入 k-mer 直方图 → 基因组大小/杂合度/重复估计），通常紧接 jellyfish histo。
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/genomescope2
+    quay_biocontainers: quay.io/biocontainers/genomescope2
+    galaxyproject: https://depot.galaxyproject.org/singularity/genomescope2%3A2.1.0--py313r44hdfd78af_0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda genomescope2=1.0.0（或
+      2.1.0）；容器用 quay.io/biocontainers/genomescope2。
+default_implementation: genomescope2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'genomescope2 子命令：run（k-mer 直方图 → 基因组特征估计）'
+  histogram:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 输入 k-mer 计数直方图（jellyfish histo / KMC 产出，两列 count/species）
+  output_dir:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 输出目录（报告与图）
+  kmer_size:
+    type: integer
+    required: true
+    cli_arg: -k
+    description: k-mer 长度（与建直方图时一致）
+  ploidy:
+    type: integer
+    default: 2
+    cli_arg: -p
+    description: 倍性（1=单倍体 / 2=二倍体，默认 2；支持至 6）
+  lambda:
+    type: float
+    required: false
+    cli_arg: -l
+    description: 平均 k-mer 覆盖度的初始猜测（可选）
+  name_prefix:
+    type: string
+    required: false
+    cli_arg: -n
+    description: 输出文件前缀（可选）
+  max_kmercov:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: 过滤高频率 k-mer 的覆盖度上限（可选）
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（GenomeScope 为单线程 R 脚本，接受但不注入；保留契约）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 genomescope.R 的额外参数（高级用法，慎用）
+outputs:
+  report:
+    type: file
+    format: txt
+    description: 估计报告（含 genome_size / heterozygosity / model fit 等）
+  plots:
+    type: file
+    format: png
+    description: 输出目录下的 k-mer 拟合图等（linear/log/transformed 曲线）
+environment:
+  container_official: quay.io/biocontainers/genomescope2（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda genomescope2 → quay.io/biocontainers/genomescope2 →
+    depot.galaxyproject.org），本地不维护 Dockerfile/Apptainer.def；另有官方 R 包源码路线
+    （R CMD INSTALL）。宿主机直跑 main.py 时用 conda/mamba 安装 genomescope2。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: genomescope.R

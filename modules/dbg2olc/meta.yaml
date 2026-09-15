@@ -1,0 +1,201 @@
+software: dbg2olc
+canonical: dbg2olc
+category: assembly
+description: 'DBG2OLC（Ye C. et al., Sci Rep 2016, doi:10.1038/srep31900）是三代长读
+  （PacBio/ONT）+ 二代短读的混合基因组组装器：先用 SparseAssembler 从 Illumina 短读
+  构建 de Bruijn 图得到 contigs，再用 DBG2OLC 把长读 layout 到 contigs 上生成 backbone，
+  最后用 Sparc + blasr 做 consensus 得到最终组装。上游 GitHub
+  （github.com/yechengxi/DBG2OLC）未发布正式版本号/tag，仅源码 + 仓库内预编译二进制
+  （compiled/）；bioconda / quay.io 官方 pin 为日期式 20200723。'
+homepage: https://github.com/yechengxi/DBG2OLC
+license: GPL-3.0
+software_versions:
+- id: dbg2olc_native
+  dbg2olc: '20200723（bioconda / quay 官方 pin，日期式；上游 GitHub 无 tag/版本号）'
+  subcommands: sparseassembler · dbg2olc · sparc
+  build_route: official biocontainer（bioconda → quay.io/biocontainers/dbg2olc:20200723--h077b44d_4
+    → depot.galaxyproject.org），不在本地自建容器
+  source: https://anaconda.org/bioconda/dbg2olc
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org）2026-09
+    核实：bioconda dbg2olc 最新 20200723；quay tag 20200723--h077b44d_4；depot
+    https://depot.galaxyproject.org/singularity/dbg2olc:20200723--h077b44d_4 HTTP 200。
+    上游无 --version，版本以官方 pin 20200723 记；宿主机直跑 main.py 时用 conda/mamba
+    安装 dbg2olc（含 SparseAssembler / DBG2OLC / Sparc）。'
+- id: dbg2olc_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/dbg2olc 404）
+  dbg2olc: —
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/dbg2olc
+    返回 404；Nextflow 场景不建目录，需以 native/ 为兜底。
+- id: dbg2olc_snakemake_wrappers
+  dbg2olc: 官方无 wrapper（bio/dbg2olc 404）
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dbg2olc
+    返回 404；Snakemake 场景以 native/ 为兜底。
+- id: dbg2olc_nextflow_local
+  dbg2olc: 未启用（不建 nextflow/；需要时以 shell 调 native/main.py）
+- id: dbg2olc_snakemake_local
+  dbg2olc: 未启用（不建 snakemake/；需要时以 shell 调 native/main.py）
+implementations:
+- id: dbg2olc_native
+  path: native
+  source_type: custom
+  type: native
+  version: "20200723"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 sparseassembler / dbg2olc / sparc 三段链路（sparc 自动注入线程），并支持官方
+    仓库内预编译二进制或源码编译两条官方路线。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/dbg2olc
+    quay_biocontainers: quay.io/biocontainers/dbg2olc
+    galaxyproject: https://depot.galaxyproject.org/singularity/dbg2olc%3A20200723--h077b44d_4
+    upstream_prebuilt: https://github.com/yechengxi/DBG2OLC/tree/master/compiled（仓库内预编译
+      二进制：DBG2OLC / SparseAssembler / Sparc / SelectLongestReads / AssemblyStatistics）
+    upstream_source: https://github.com/yechengxi/DBG2OLC（源码 g++ -O3 编译，无 release 归档）
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda dbg2olc=20200723；
+      容器可用 quay.io/biocontainers/dbg2olc:20200723--h077b44d_4；无 conda 时可 git clone
+      官方仓库取 compiled/ 预编译二进制或源码编译（native/install.sh 两条路线）。
+default_implementation: dbg2olc_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: dbg2olc 子命令：sparseassembler（SparseAssembler 短读 DBG 组装）| dbg2olc（长读
+      layout）| sparc（split_and_run_sparc.sh + blasr consensus）
+  reads:
+    type: file
+    required: true
+    cli_arg: positional / 由 f 前缀注入
+    description: 输入序列文件。sparseassembler 为短读 FASTQ/FASTA（多文件）；dbg2olc 为长读
+      FASTA（subreads.fasta，多文件）。驱动自动为每个文件前置 f
+  k:
+    type: integer
+    required: false
+    default: 31
+    description: k-mer 长度（sparseassembler 默认 31，推荐 31-61 奇数；dbg2olc 默认 17）
+  g:
+    type: integer
+    required: false
+    default: 15
+    description: 'SparseAssembler 的 g 参数（默认 15）'
+  nodecov:
+    type: integer
+    required: false
+    default: 1
+    cli_arg: NodeCovTh
+    description: SparseAssembler 节点覆盖度阈值（推荐 1-4）
+  edgecov:
+    type: integer
+    required: false
+    default: 0
+    cli_arg: EdgeCovTh
+    description: SparseAssembler 边覆盖度阈值（推荐 0-3）
+  gs:
+    type: integer
+    required: false
+    default: 1000000
+    cli_arg: GS
+    description: SparseAssembler 基因组大小估计（GenomeSize）
+  ld:
+    type: integer
+    required: false
+    default: 0
+    cli_arg: LD
+    description: 'SparseAssembler/DBG2OLC 的 LD 开关（0=初始运行，1=加载已有结果继续调参）'
+  contigs:
+    type: file
+    required: false
+    cli_arg: Contigs
+    description: 'dbg2olc：SparseAssembler 产出的 Contigs.txt（contig 序列）'
+  adaptive_th:
+    type: float
+    required: false
+    default: 0.001
+    cli_arg: AdaptiveTh
+    description: DBG2OLC 自适应阈值（推荐 0.001-0.02）
+  kmer_cov_th:
+    type: integer
+    required: false
+    default: 2
+    cli_arg: KmerCovTh
+    description: DBG2OLC k-mer 覆盖度阈值（推荐 2-5）
+  min_overlap:
+    type: integer
+    required: false
+    default: 20
+    cli_arg: MinOverlap
+    description: DBG2OLC 最小重叠长度（推荐 20-50）
+  remove_chimera:
+    type: integer
+    required: false
+    default: 1
+    cli_arg: RemoveChimera
+    description: DBG2OLC 是否去除嵌合（0/1，默认 1）
+  backbone:
+    type: file
+    required: false
+    description: 'sparc：DBG2OLC 产出的 backbone_raw.fasta'
+  info:
+    type: file
+    required: false
+    description: 'sparc：DBG2OLC 产出的 DBG2OLC_Consensus_info.txt'
+  ctg_pb:
+    type: file
+    required: false
+    description: 'sparc：contigs + 长读合并文件（cat Contigs.txt subreads.fasta > ctg_pb.fasta）'
+  outdir:
+    type: string
+    required: false
+    default: .
+    description: 'sparc：consensus 输出目录（split_and_run_sparc.sh 第 4 参数）'
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（sparc 注入为 split_and_run_sparc.sh 的核数参数；SparseAssembler/DBG2OLC
+      本身无线程旗标，多参数扫描由 ParaFly 外部并行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应二进制的额外参数（高级用法，慎用）
+outputs:
+  contigs:
+    type: file
+    format: fasta
+    description: sparseassembler 输出 Contigs.txt（de Bruijn 图 contig 序列）
+  backbone_raw:
+    type: file
+    format: fasta
+    description: dbg2olc 输出 backbone_raw.fasta（长读 layout 后的骨架）
+  consensus_info:
+    type: file
+    format: txt
+    description: dbg2olc 输出 DBG2OLC_Consensus_info.txt（consensus 步骤所需信息）
+  final_assembly:
+    type: file
+    format: fasta
+    description: sparc 输出 final_assembly.fasta（consensus 后的最终组装序列）
+environment:
+  container_official: quay.io/biocontainers/dbg2olc（bioconda 官方镜像；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay→depot 2026-09 核实），本地不再维护 Dockerfile/Apptainer.def；
+    宿主机直跑 main.py 时用 conda/mamba 安装 dbg2olc，或用官方仓库内预编译二进制（compiled/）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    sparseassembler: 8
+    dbg2olc: 8
+    sparc: 8
+    default: 4
+  note: DBG2OLC 为长读 layout 类工具，内存占用高（human 级基因组可达数百 GB）→ default_mem_mb
+    取 16384；SparseAssembler/DBG2OLC 无内置线程旗标，多参数扫描用 ParaFly 外部并行，
+    仅 sparc 的 split_and_run_sparc.sh 接受核数参数。
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: DBG2OLC

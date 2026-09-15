@@ -1,0 +1,170 @@
+software: wtdbg2
+canonical: wtdbg2
+category: genome_assembly
+description: 'wtdbg2（Wtdbg2）是基于模糊德布鲁因图（fuzzy Bruijn graph）的长读基因组组装器，
+  速度快、内存效率高，专为 PacBio / Nanopore 长读设计。流程为两步：wtdbg2 建图（-i reads
+  -o dbg -t N -p 21 -S 4 -s 0.05 -g 8m -L 2000 -l 1000）产出 dbg.ctg.lay.gz，wtpoa-cns
+  取一致性序列（-i dbg.ctg.lay.gz -fo dbg.raw.fa），随后可用 minimap2+samtools 比对回贴、
+  wtpoa-cns 打磨（-d draft -i aligned -fo polished）。文档（04.md 第 1449-1513 行）使用 2.5。
+  '
+homepage: https://github.com/ruanjue/wtdbg2
+license: GPL-3.0
+software_versions:
+- id: wtdbg2_native
+  wtdbg2: '2.5（文档版本；官方 release wtdbg-2.5_x64_linux.tgz；bioconda 包名 wtdbg=2.5；
+    容器 tag wtdbg:2.5--h577a1d6_6）'
+  subcommands: 'wtdbg2（建图）· wtpoa-cns（一致性/打磨）；预编译包另含 wtdbg-cns / kbm2 / pgzf / wtdbg2.pl'
+  build_route: 'official release 预编译二进制 + official biocontainer（quay.io/biocontainers/wtdbg
+    / depot.galaxyproject.org）'
+  source: 'https://github.com/ruanjue/wtdbg2/releases/tag/v2.5（wtdbg-2.5_x64_linux.tgz）；
+    https://anaconda.org/bioconda/wtdbg'
+  note: '2026-09 核实：文档「wtdbg2 暂无官方 conda 包」不准确——bioconda 有该软件包，但**包名为
+    `wtdbg`（2.5）**，`wtdbg2` 查询返回 404（历史上曾以 wtdbg2=2.0 发布，quay 仍留 wtdbg2:2.0--h470a237_0）。
+    quay.io/biocontainers/wtdbg:2.5--h577a1d6_6 与 depot 对应 sif 均存在（HTTP 200）。打磨阶段依赖
+    minimap2 + samtools（两者独立安装，见各自模块）。'
+- id: wtdbg2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/wtdbg2 404）
+  wtdbg2: —
+  source: '—（nf-core/modules 无 wtdbg2 目录；2026-09 抓取 api.github.com 返回 404）'
+  note: Nextflow 场景不建目录、不登记官方说明层；如需流程化请以 native/ 驱动或 shell 调用本模块
+    main.py。
+- id: wtdbg2_snakemake_wrappers
+  wtdbg2: 官方无 wrapper（bio/wtdbg2 404）
+  source: '—（snakemake-wrappers 仓库 bio/ 下无 wtdbg2；2026-09 抓取返回 404）'
+  note: Snakemake 场景以 native/（shell 调 wtdbg2/wtpoa-cns）为兜底。
+implementations:
+- id: wtdbg2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 assemble（建图）/ cns（一致性）/ polish（打磨）三段链路，按子命令解析 wtdbg2 或 wtpoa-cns
+    并注入线程与临时目录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/wtdbg
+    quay_biocontainers: quay.io/biocontainers/wtdbg
+    upstream_prebuilt: https://github.com/ruanjue/wtdbg2/releases/tag/v2.5
+    galaxyproject: https://depot.galaxyproject.org/singularity/wtdbg%3A2.5--h577a1d6_6
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda wtdbg=2.5（注意包名）；容器可用
+      quay.io/biocontainers/wtdbg:2.5--h577a1d6_6；或取官方 release wtdbg-2.5_x64_linux.tgz
+default_implementation: wtdbg2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'wtdbg2 子命令：assemble（建图）|cns（一致性）|polish（打磨）'
+  reads:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 'assemble：输入长读序列（FASTA/FASTQ）'
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 'assemble：输出前缀（生成 <prefix>.ctg.lay.gz 等）'
+  layout:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 'cns：wtdbg2 产出的 <prefix>.ctg.lay.gz'
+  draft:
+    type: file
+    required: false
+    cli_arg: -d
+    description: 'polish：待打磨的草图序列（FASTA）'
+  alignment:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 'polish：比对结果（BAM/SAM，或 - 表示从 stdin 管道读入）'
+  fasta_out:
+    type: file
+    required: false
+    cli_arg: -fo
+    description: 'cns/polish：输出一致性/打磨序列（FASTA）'
+  kmer:
+    type: integer
+    required: false
+    default: 21
+    cli_arg: -p
+    description: 'assemble：k-mer 长度（默认 21）'
+  sampling:
+    type: integer
+    required: false
+    cli_arg: -S
+    description: 'assemble：采样率（文档示例 -S 4）'
+  error_rate:
+    type: float
+    required: false
+    cli_arg: -s
+    description: 'assemble：错误率（文档示例 -s 0.05）'
+  genome_size:
+    type: string
+    required: false
+    cli_arg: -g
+    description: 'assemble：估计基因组大小（如 8m）'
+  min_read_len:
+    type: integer
+    required: false
+    cli_arg: -L
+    description: 'assemble：最小 read 长度（文档示例 -L 2000）'
+  min_overlap_len:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: 'assemble：最小重叠长度（文档示例 -l 1000）'
+  min_len:
+    type: integer
+    required: false
+    cli_arg: -j
+    description: 'cns：最小匹配/重叠长度阈值（文档示例 wtpoa-cns -j 1000）'
+  preset:
+    type: string
+    required: false
+    cli_arg: -x
+    description: 'polish：比对预设（如 sam-sr 短读打磨；长读自身打磨可不设）'
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -t
+    description: 线程数（各子命令均注入 -t）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 wtdbg2/wtpoa-cns 的额外参数（高级用法，慎用）
+outputs:
+  layout_gz:
+    type: file
+    description: assemble 产出的图/布局文件（<prefix>.ctg.lay.gz，cns 的输入）
+  consensus_fasta:
+    type: file
+    format: fasta
+    description: cns 产出的一致性序列（如 dbg.raw.fa）
+  polished_fasta:
+    type: file
+    format: fasta
+    description: polish 产出的打磨后序列（如 dbg.cns.fa / dbg.srp.fa）
+environment:
+  container_official: quay.io/biocontainers/wtdbg（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org
+    为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 wtdbg=2.5（注意包名），或取
+    官方 release 预编译包。打磨阶段另需 minimap2 + samtools。
+optimization:
+  default_cpus: 8
+  default_mem_mb: 32768
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    assemble: 8
+    cns: 8
+    polish: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: wtdbg2

@@ -1,0 +1,165 @@
+software: pilon
+canonical: pilon
+category: genome_assembly
+description: 'Pilon 是使用 Illumina（短读）数据对基因组组装做碱基水平修正（polishing）与变异
+  检测的 Java 工具：--genome 指定待修正组装 + --frags/--jumps/--unpaired/--bam 指定比对产物，
+  --fix all 修正碱基错误、插入缺失与小片段变异，--changes 输出变化清单，亦可 --variant 做变异检测。
+  官方发布物为单个 pilon-<ver>.jar（java -jar 运行）；bioconda/brew 另提供 pilon launcher 封装。
+
+  '
+homepage: https://github.com/broadinstitute/pilon/
+license: GPLv2
+software_versions:
+- id: pilon_native
+  pilon: '1.23'
+  java: 'Java（conda / brew 包自带 openjdk；官方 jar 路线需宿主自装 JDK，最低版本本仓库未核实）'
+  build_route: official biocontainer（quay.io/biocontainers/pilon / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/pilon
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不自建容器；
+    bioconda pilon 历史版本含 1.16–1.24（latest 1.24）；quay/depot 的 1.23--0 tag 2026-09 核实可用；
+    教学文档使用 1.23，故 native pin 1.23；升级到 1.24 只需改 pin。'
+- id: pilon_nextflow_nfcore
+  module_version: master（2026-09）
+  pilon: '1.24'
+  source: bioconda::pilon=1.24（modules/nf-core/pilon/environment.yml）
+  note: nf-core 有单子模块 pilon（main.nf / meta.yml / environment.yml / tests），pin bioconda::pilon=1.24。
+- id: pilon_snakemake_wrappers
+  pilon: 官方无 wrapper（bio/pilon 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/pilon
+    返回 404；Snakemake 场景请走容器直调或 native 子命令。
+- id: pilon_nextflow_local
+  pilon: 未固定（官方 nf-core/pilon 已覆盖；本地 nextflow 未建目录）
+- id: pilon_snakemake_local
+  pilon: 未固定（官方无 wrapper；本地 snakemake 未建目录）
+implementations:
+- id: pilon_native
+  path: native
+  source_type: custom
+  type: native
+  version: '1.23'
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标：
+    对组装做碱基水平修正（--fix all --changes）或变异检测；JVM 堆内存经 JAVA_OPTS 注入。
+
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/pilon
+    quay_biocontainers: quay.io/biocontainers/pilon
+    galaxyproject_depot: https://depot.galaxyproject.org/singularity/pilon%3A1.23--0
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda pilon=1.23；容器可用
+      quay.io/biocontainers/pilon:1.23--0 镜像（tag 见 README）
+default_implementation: pilon_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: pilon 子命令：correct（组装修正 / 变异检测，单条命令工具）
+  genome:
+    type: file
+    required: true
+    cli_arg: --genome
+    format: [fasta]
+    description: 待修正的参考组装 FASTA
+  frags:
+    type: file
+    required: false
+    cli_arg: --frags
+    format: [bam]
+    description: 双端（paired-end）比对 BAM（已排序+索引）
+  jumps:
+    type: file
+    required: false
+    cli_arg: --jumps
+    format: [bam]
+    description: 大片段（mate-pair）比对 BAM
+  unpaired:
+    type: file
+    required: false
+    cli_arg: --unpaired
+    format: [bam]
+    description: 未配对 reads 比对 BAM
+  bam:
+    type: file
+    required: false
+    cli_arg: --bam
+    format: [bam]
+    description: 通用比对 BAM（不区分读对类型）
+  tracks:
+    type: file
+    required: false
+    cli_arg: --tracks
+    description: 轨迹文件（tracks.txt，pilon 输入格式）
+  fix:
+    type: string
+    required: false
+    cli_arg: --fix
+    default: all
+    description: 修正类型列表（all|snps|indels|local|bases|gaps，可组合）
+  changes:
+    type: boolean
+    default: true
+    cli_arg: --changes
+    description: 输出变化清单（<output>.changes）
+  output:
+    type: string
+    required: false
+    cli_arg: --output
+    description: 输出文件前缀（产物 <output>.fasta / <output>.changes）
+  outdir:
+    type: string
+    required: false
+    cli_arg: --outdir
+    description: 输出目录
+  variant:
+    type: boolean
+    default: false
+    cli_arg: --variant
+    description: 变异检测模式（而非组装修正）
+  vcf:
+    type: boolean
+    default: false
+    cli_arg: --vcf
+    description: 变异输出为 VCF（配合 --variant）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --threads
+    description: 线程数（自动注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 pilon 的额外参数（高级用法，慎用）
+outputs:
+  corrected_fasta:
+    type: file
+    format: fasta
+    description: 修正后的组装 FASTA（<output>.fasta）
+  changes_file:
+    type: file
+    format: txt
+    description: 变化清单（<output>.changes，--changes 时生成）
+  vcf_out:
+    type: file
+    format: vcf
+    description: 变异检测 VCF（--variant --vcf 时生成）
+environment:
+  container_official: quay.io/biocontainers/pilon（bioconda 官方镜像，含 OpenJDK 底座；tag 以 quay /
+    depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 需先装 java +
+    pilon（conda / brew pilon / 官方 pilon-1.23.jar 任选，见 README「环境安装」）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  env_vars:
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    correct: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: java
+  note: JVM 类工具——磁盘/内存主要瓶颈为 JVM 堆（JAVA_OPTS -Xmx），--threads 透传 pilon --threads；
+    launcher 解析优先级：PILON_JAR 环境变量 → conda/官方 jar 常见位置 → PATH 中 pilon 封装。

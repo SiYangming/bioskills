@@ -1,0 +1,175 @@
+software: gce
+canonical: gce
+category: genome_assembly
+description: 'GCE (Genome Characteristics Estimation) 是 BGI（华大基因）开发的基于
+  k-mer 频率的基因组特征评估工具（Liu B. et al., arXiv:1308.2012）：kmer_freq_hash 统计
+  reads 的 k-mer 频数（*.freq.gz / *.freq.stat），gce 用贝叶斯模型从频率谱估计基因组大小、
+  重复序列比例与杂合度，用于组装前的基因组 survey。软件为历史遗留（BGI 官方源 2026-09 已停服），
+  新项目建议用 GenomeScope 2.0 + Jellyfish。
+
+  '
+homepage: https://github.com/fanagislab/GCE
+license: 未核实（BGI 官方 FTP 与官方 GitHub 后继仓库 fanagislab/GCE 均未随包提供 LICENSE；
+  历史惯例为学术研究免费使用，商用请自行联系原作者）
+software_versions:
+- id: gce_native
+  gce: "1.0.0"
+  build_route: 无官方 conda/容器渠道（2026-09 核实 bioconda → quay.io/biocontainers →
+    depot.galaxyproject.org 全无）→ 本地自建容器（debian:bookworm-slim + 源码 make）
+  source: 官方 FTP ftp://ftp.genomics.org.cn/pub/gce/gce-1.0.0.tar.gz（2026-09 HTTP/HTTPS
+    探测不可达，curl 返回 000）；镜像①（首选，版本化 release）https://github.com/SiYangming/GCE/releases/download/gce-1.0.0/gce-1.0.0.tar.gz
+    （2026-09 核实 200，sha256 0eb4f2d3… 与内嵌值一致）；镜像②（fallback）社区镜像
+    https://github.com/nottwy/genome-character-estimator（gce-1.0.0.tar.gz，2026-09 核实
+    200）；官方 GitHub 后继仓库 https://github.com/fanagislab/GCE（含 gce-1.0.2 / gce-alternative）
+  note: tarball 内主程序 gce 带源码（gce.cpp + Makefile，make 重编译；gce -h 打印 Version
+    1.0.0）；kmerfreq 子程序（kmer_freq_hash / kmer_freq_array）为 2012 年预编译 x86_64
+    二进制、无源码，现代 glibc 兼容性未核实。
+- id: gce_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/gce 404）
+  gce: —（2026-09 抓取 nf-core/modules 返回 404）
+- id: gce_snakemake_wrappers
+  gce: 官方无 wrapper（bio/gce 404）
+  source: —（2026-09 抓取 snakemake-wrappers bio/gce 返回 404）
+- id: gce_nextflow_local
+  gce: 未启用（未建 nextflow/ 目录；需要时以 native/main.py 兜底）
+- id: gce_snakemake_local
+  gce: 未启用（未建 snakemake/ 目录；需要时用 shell 调 native/main.py）
+implementations:
+- id: gce_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.0"
+  priority: high
+  when_to_use: 非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的 k-mer
+    基因组 survey（kmer_freq_hash 计数 + gce 估计）；软件已停更，新项目优先 GenomeScope 2.0。
+  container_ref:
+    bioconda: 无（2026-09 核实 https://api.anaconda.org/package/bioconda/gce 返回 404）
+    quay_biocontainers: 无（quay.io/biocontainers/gce 仓库不存在）
+    galaxyproject: 无（https://depot.galaxyproject.org/singularity/gce:1.0.0--0 返回 404）
+    install_hint: 官方渠道全无 → 宿主机源码编译（bash native/install.sh）或本地自建容器
+      （native/Dockerfile / native/Apptainer.def）；宿主机无 conda 包可装。
+default_implementation: gce_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'gce 子命令：kmer_freq_hash（reads 列表 → k-mer 频数统计）| gce（频率谱 →
+      基因组大小/重复/杂合度估计）'
+  reads_list:
+    type: file
+    required: false
+    cli_arg: -l
+    description: kmer_freq_hash：reads 文件路径列表（每行一个 FASTQ/FASTA 绝对路径）
+  kmer_size:
+    type: integer
+    default: 17
+    cli_arg: -k
+    description: kmer_freq_hash：k-mer 长度（9~27，默认 17）
+  output_prefix:
+    type: string
+    required: false
+    cli_arg: -p
+    description: kmer_freq_hash：输出前缀（生成 <prefix>.freq.gz / <prefix>.freq.stat）
+  init_hash:
+    type: integer
+    required: false
+    cli_arg: -i
+    description: kmer_freq_hash：每线程初始 hash 表大小（默认 1048576；文档示例 80000000）
+  dump_kmers:
+    type: boolean
+    default: false
+    description: kmer_freq_hash：是否导出每个 k-mer 序列（-o 1 导出；默认 false → -o 0，省时）
+  freq_stat:
+    type: file
+    required: false
+    cli_arg: -f
+    description: gce：k-mer 深度频率文件（<prefix>.freq.stat，两列 depth/frequency）
+  uniq_coverage:
+    type: integer
+    required: false
+    cli_arg: -c
+    description: gce：unique k-mer 期望深度（无清晰主峰或高杂合时建议设置；文档示例 -c 21）
+  genome_size:
+    type: integer
+    required: false
+    cli_arg: -g
+    description: gce：总 k-mer 数（reads 统计值；-g 与 -f 同时给出估计更准）
+  est_mode:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: gce：估计模型 0=离散（默认）/ 1=连续（真实数据推荐 1）
+  max_depth:
+    type: integer
+    required: false
+    cli_arg: -D
+    description: gce：连续模型峰间距（precision of expect value；文档示例 -D 8）
+  bias:
+    type: integer
+    required: false
+    cli_arg: -b
+    description: gce：是否存在测序偏好 1=有 / 0=无（文档示例 -b 1）
+  hybrid:
+    type: boolean
+    default: false
+    cli_arg: -H
+    description: gce：杂合模式（杂合基因组加 -H 1）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -t
+    description: 线程数（仅 kmer_freq_hash 注入 -t；gce 本身单线程）
+  output:
+    type: file
+    required: false
+    cli_arg: stdout
+    description: gce：估计结果表输出路径（gce 的 stdout，默认直接打印）
+  log:
+    type: file
+    required: false
+    cli_arg: stderr
+    description: gce：运行日志输出路径（gce 的 stderr，含 Final estimation table）
+  extra_args:
+    type: string
+    required: false
+    description: 透传的额外参数（高级用法，慎用）
+outputs:
+  freq_stat:
+    type: file
+    format: txt
+    description: kmer_freq_hash 输出的 k-mer 深度频率统计（<prefix>.freq.stat，两列 depth/count）
+  freq_dump:
+    type: file
+    format: gz
+    description: kmer_freq_hash 输出的 k-mer 频数文件（<prefix>.freq.gz，dump_kmers=true 时）
+  estimate_table:
+    type: file
+    format: txt
+    description: gce 输出的估计表（stdout；#ai table 等）
+  estimate_log:
+    type: file
+    format: txt
+    description: gce 输出运行日志（stderr；含 Final estimation table 的 genome_size / a[1] / b[1]）
+environment:
+  container_official: 无（2026-09 核实 bioconda → quay.io/biocontainers → depot.galaxyproject.org
+    三渠道均无 gce 包/镜像）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道全无 → native/ 保留自建配方（debian:bookworm-slim + apt --no-install-recommends
+    + 源码 make + 清理四连，linux/amd64）；宿主机直跑 main.py 时用 native/install.sh 源码编译（无 conda 包）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    kmer_freq_hash: 8
+    gce: 2
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: gce
