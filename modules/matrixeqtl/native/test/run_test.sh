@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# r_matrixeqtl native 最小回归测试
+# matrixeqtl native 最小回归测试
 #
 # 前置条件：
 #   - python3 + pyyaml（base.py 依赖）
 #   - R + MatrixEQTL【可选】：若 Rscript 可用且已安装 MatrixEQTL 包，
 #     会真实运行 analyze 并断言输出文件；否则退化为 argv 构造验证。
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1   # 不生成 __pycache__（仓库规范）
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NATIVE="$(dirname "$HERE")"
@@ -24,9 +25,9 @@ echo "==> [3/5] argv 构造验证：analyze 生成 params.tsv 且键完整"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")
-from main import RMatrixEQTLSkill, build_parser
+from main import MatrixEQTLSkill, build_parser
 
-skill = RMatrixEQTLSkill()
+skill = MatrixEQTLSkill()
 skill._resolve_binary = lambda: "/opt/r/bin/Rscript"
 skill.tmpdir = "$WORK"
 cmd = skill.build_command(
@@ -60,9 +61,9 @@ echo "==> [3b/5] argv 构造验证：--output-prefix 与别名参数（--trans-p
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")
-from main import RMatrixEQTLSkill, build_parser
+from main import MatrixEQTLSkill, build_parser
 
-skill = RMatrixEQTLSkill()
+skill = MatrixEQTLSkill()
 skill._resolve_binary = lambda: "Rscript"
 skill.tmpdir = "$WORK"
 cmd = skill.build_command(
@@ -90,7 +91,7 @@ print("  OK: parser 别名（--trans-p/--cis-p/--snps-loc/--gene-loc/--pvalue-hi
 
 # threads=auto / 缺省 → 不写 threads 键（R 驱动自动检测）；整数 → 显式 pin
 def build_one(**extra):
-    skill2 = RMatrixEQTLSkill()
+    skill2 = MatrixEQTLSkill()
     skill2._resolve_binary = lambda: "Rscript"
     skill2.tmpdir = "$WORK"
     return skill2.build_command(
@@ -121,8 +122,8 @@ echo "==> [4/5] non-cis 模式 argv（无 snpspos/genepos 亦可）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")
-from main import RMatrixEQTLSkill
-skill = RMatrixEQTLSkill()
+from main import MatrixEQTLSkill
+skill = MatrixEQTLSkill()
 skill._resolve_binary = lambda: "Rscript"
 skill.tmpdir = "$WORK"
 cmd = skill.build_command("analyze", snps="$WORK/snps.txt", gene="$WORK/ge.txt",

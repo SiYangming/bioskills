@@ -1,16 +1,17 @@
-software: r_matrixeqtl
-canonical: r_matrixeqtl
+software: matrixeqtl
+canonical: matrixeqtl
 category: expression_qtl
 description: 'Matrix eQTL 是用于超大规模 eQTL（expression quantitative trait loci）关联分析的
   R 包：以基因型（SNP）与基因表达矩阵为输入，基于大矩阵运算一次完成基因×SNP 的线性 / ANOVA 回归
   关联检验，支持协变量校正、cis/trans 分区（分别设定 p 值阈值与 FDR）、异方差/相关误差模型等。
   以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动 Matrix_eQTL_main() 完成分析。
-  conda / 容器包名规范名为 r-matrixeqtl（目录名沿用仓库历史下划线形态 r_matrixeqtl）。
+  conda / 容器包名规范名为 r-matrixeqtl（R 包类工具的 conda 前缀 r-，非模块名）；本模块软件名/目录名
+  为 matrixeqtl。
   '
 homepage: https://cran.r-project.org/package=MatrixEQTL
 license: LGPL-3
 software_versions:
-- id: r_matrixeqtl_native
+- id: matrixeqtl_native
   r-matrixeqtl: '2.3'
   r: R >= 4.2（自建 rocker/r-ver 镜像；官方老镜像为 R 3.3/3.4）
   build_route: 官方镜像过旧（quay.io/biocontainers/r-matrixeqtl 仅 2.1.1/R3.3.1）→ 保留自建 rocker
@@ -19,23 +20,23 @@ software_versions:
   note: '官方 biocontainer（quay.io/biocontainers/r-matrixeqtl:2.1.1--r3.3.1_0）与 galaxyproject
     （2.1.1--r3.4.1_0）仅老版 R；新 R（4.2+）请用 native/ 自建镜像或 CRAN 直装。CRAN 于 2026-09
     发布 2.4，R install.packages() 将装到 2.4；本模块默认登记 2.3（自建镜像验证版），两者接口一致。'
-- id: r_matrixeqtl_nextflow_nfcore
+- id: matrixeqtl_nextflow_nfcore
   module_version: 官方无模块（modules/nf-core/r-matrixeqtl 404）
   r-matrixeqtl: —
   source: —（nf-core/modules 仓库 modules/nf-core/r-matrixeqtl 目录不存在）
   note: 2026-09-07 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/r-matrixeqtl
     返回 404；Nextflow 场景以 native/（Rscript 驱动 + 容器）为兜底。
-- id: r_matrixeqtl_snakemake_wrappers
+- id: matrixeqtl_snakemake_wrappers
   r-matrixeqtl: 官方无 wrapper（bio/r-matrixeqtl 404）
   source: —（snakemake-wrappers 仓库 bio/r-matrixeqtl 目录不存在）
   note: 2026-09-07 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/r-matrixeqtl
     返回 404；Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。
-- id: r_matrixeqtl_nextflow_local
+- id: matrixeqtl_nextflow_local
   r-matrixeqtl: "未启用（官方缺失时按 native 容器在 main.nf 中声明 Rscript 步骤）"
-- id: r_matrixeqtl_snakemake_local
+- id: matrixeqtl_snakemake_local
   r-matrixeqtl: "未启用（需要时用 shell: 调 native/main.py analyze 或 run_matrixeqtl.R）"
 implementations:
-- id: r_matrixeqtl_native
+- id: matrixeqtl_native
   path: native
   source_type: custom
   type: native
@@ -52,12 +53,12 @@ implementations:
     bioinfortools: quay.io/bioinfortools/r_matrixeqtl:2.3（rocker/r-ver:4.5.2 + OpenBLAS + MatrixEQTL 2.3，与 self_built 同源、已发布）
     install_hint: 宿主机直接 R install.packages('MatrixEQTL')（见 README/native/install.sh）；
       容器 docker pull 自建镜像或官方旧镜像（README 环境安装 §2/§3）
-default_implementation: r_matrixeqtl_native
+default_implementation: matrixeqtl_native
 inputs:
   subcommand:
     type: string
     required: true
-    description: r_matrixeqtl 子命令：analyze（唯一核心命令）
+    description: matrixeqtl 子命令：analyze（唯一核心命令）
   snps:
     type: file
     required: true

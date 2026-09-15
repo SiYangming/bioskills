@@ -1,12 +1,12 @@
-# r_matrixeqtl 自建容器（native/Apptainer.def）
+# matrixeqtl 自建容器（native/Apptainer.def）
 #
 # 与 native/Dockerfile 同构（rocker/r-ver:4.5.2 + MatrixEQTL），
 # %test 用 Rscript 断言 MatrixEQTL 包可加载。运行产物归属由宿主 -B 挂载决定。
 #
 # 构建：
-#   apptainer build r-matrixeqtl.sif Apptainer.def
+#   apptainer build matrixeqtl.sif Apptainer.def
 # 运行（等价能力由 native/main.py analyze 子命令提供）：
-#   apptainer run -B $PWD:/data -H /data r-matrixeqtl.sif \
+#   apptainer run -B $PWD:/data -H /data matrixeqtl.sif \
 #       Rscript /opt/skill/run_matrixeqtl.R /data/params.tsv
 
 Bootstrap: docker
@@ -31,8 +31,8 @@ From: rocker/r-ver:4.5.2
 
 %labels
     Author bioskills
-    org.bioskills.software r_matrixeqtl
+    org.bioskills.software matrixeqtl
     impl native
     base_image rocker/r-ver:4.5.2
-    r_matrixeqtl_version 2.3
+    matrixeqtl_version 2.3
     pkg_route rocker R 底座 + CRAN 直装（官方 biocontainer 仅 2.1.1/R3.3，故自建）

@@ -1,4 +1,4 @@
-# r_matrixeqtl 自建容器（native/Dockerfile）
+# matrixeqtl 自建容器（native/Dockerfile）
 #
 # 路线：官方 quay.io/biocontainers/r-matrixeqtl 仅 2.1.1/R3.3（版本过旧），
 #       本配方以 rocker/r-ver:4.5.2 + CRAN MatrixEQTL 作为「新版替代」（自建兜底）。
@@ -6,10 +6,10 @@
 #       NeedsCompilation: no（纯 R），无需编译链。容器运行务必加 -u $(id -u):$(id -g)。
 #
 # 构建：
-#   docker build -t r-matrixeqtl:2.3 .
+#   docker build -t matrixeqtl:2.3 .
 # 运行（等价能力由 native/main.py analyze 子命令提供，见 README「实战示例」）：
 #   docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
-#       r-matrixeqtl:2.3 Rscript run_matrixeqtl.R <params.tsv>
+#       matrixeqtl:2.3 Rscript run_matrixeqtl.R <params.tsv>
 
 FROM rocker/r-ver:4.5.2
 

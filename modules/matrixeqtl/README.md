@@ -1,14 +1,14 @@
-# r_matrixeqtl 软件模块
+# matrixeqtl 软件模块
 
 > 汇总说明：Matrix eQTL 是 R 包（无独立命令行二进制），本模块以 Rscript 驱动
 > `Matrix_eQTL_main()` 完成 eQTL 关联分析；安装方式见「环境安装」，容器与 conda 链接见文末。
-> conda / 容器规范包名为 **r-matrixeqtl**（连字符），目录名沿用仓库历史形态 **r_matrixeqtl**。
+> conda / 容器规范包名为 **r-matrixeqtl**（R 包类工具的 conda 前缀 `r-`，非模块名）；模块名/目录名为 **matrixeqtl**。
 
 ***
 
 ## native 实现
 
-# r_matrixeqtl / native — Rscript 驱动的 eQTL 关联分析
+# matrixeqtl / native — Rscript 驱动的 eQTL 关联分析
 
 Matrix eQTL 的本地自包含实现（`source_type: custom`、`type: native`）。软件本体为 CRAN R 包
 （LGPL-3，v2.3；纯 R 实现，NeedsCompilation: no），无 CLI，因此 `native/main.py` 以
@@ -137,8 +137,8 @@ Rscript -e 'cat(as.character(packageVersion("MatrixEQTL")))'   # 断言
 conda 备选（仅提供 R 运行时，包仍从 CRAN 装）：
 
 ```bash
-mamba create -n r-matrixeqtl -c conda-forge r-base
-mamba run -n r-matrixeqtl Rscript -e 'install.packages("MatrixEQTL", repos="https://cloud.r-project.org")'
+mamba create -n matrixeqtl -c conda-forge r-base
+mamba run -n matrixeqtl Rscript -e 'install.packages("MatrixEQTL", repos="https://cloud.r-project.org")'
 ```
 
 > Homebrew 无 MatrixEQTL 公式（`formulae.brew.sh/api/formula/r-matrixeqtl.json` 404；
@@ -148,10 +148,10 @@ mamba run -n r-matrixeqtl Rscript -e 'install.packages("MatrixEQTL", repos="http
 
 ```bash
 # 推荐：自建新版镜像（R 4.5.2 + MatrixEQTL，含内置驱动 run_matrixeqtl.R）
-docker build -t r-matrixeqtl:2.3 modules/r_matrixeqtl/native/
+docker build -t matrixeqtl:2.3 modules/matrixeqtl/native/
 # 注意：必须 -u $(id -u):$(id -g) 挂载宿主用户，否则产物归 root
 docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \
-    r-matrixeqtl:2.3 Rscript /opt/skill/run_matrixeqtl.R /data/params.tsv
+    matrixeqtl:2.3 Rscript /opt/skill/run_matrixeqtl.R /data/params.tsv
 
 # 官方老镜像（版本 2.1.1，R 3.3；仅兼容老 R 环境时使用）
 docker pull quay.io/biocontainers/r-matrixeqtl:2.1.1--r3.3.1_0
@@ -161,11 +161,11 @@ docker pull quay.io/biocontainers/r-matrixeqtl:2.1.1--r3.3.1_0
 
 ```bash
 # 官方老镜像：galaxyproject 已预构建 sif，直接拉取
-apptainer pull r-matrixeqtl.sif docker://depot.galaxyproject.org/singularity/r-matrixeqtl:2.1.1--r3.4.1_0
+apptainer pull matrixeqtl.sif docker://depot.galaxyproject.org/singularity/r-matrixeqtl:2.1.1--r3.4.1_0
 
 # 新版替代：本地从 native/Apptainer.def 构建
-apptainer build r-matrixeqtl-2.3.sif modules/r_matrixeqtl/native/Apptainer.def
-apptainer run -B $PWD:/data -H /data r-matrixeqtl-2.3.sif Rscript /opt/skill/run_matrixeqtl.R /data/params.tsv
+apptainer build matrixeqtl-2.3.sif modules/matrixeqtl/native/Apptainer.def
+apptainer run -B $PWD:/data -H /data matrixeqtl-2.3.sif Rscript /opt/skill/run_matrixeqtl.R /data/params.tsv
 ```
 
 ### 4. 源码归档安装（CRAN，无 R 网络亦可）

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生成 r_matrixeqtl（Matrix eQTL）native 测试用合成数据。
+"""生成 matrixeqtl（Matrix eQTL）native 测试用合成数据。
 
 产出（<outdir> 下，均为 Tab 分隔的 MatrixEQTL 输入格式，含首行样本名与首列 id）：
   snps.txt       12 样本 × 10 SNP（0/1/2 基因型；snp_01 与 gene_01 表达强相关）

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""r_matrixeqtl native 标准入口驱动（Matrix eQTL R 包，经 Rscript 调用）。
+"""matrixeqtl native 标准入口驱动（Matrix eQTL R 包，经 Rscript 调用）。
 
 Matrix eQTL 以 R 函数库形态分发，无独立命令行二进制，本驱动用 Rscript 运行
 同目录 run_matrixeqtl.R（参数经临时 params.tsv 传递，规避 R 侧引号转义）。
@@ -46,8 +46,8 @@ SUBCOMMANDS = {
 }
 
 
-class RMatrixEQTLSkill(base.SkillBase):
-    software = "r_matrixeqtl"
+class MatrixEQTLSkill(base.SkillBase):
+    software = "matrixeqtl"
     binary = "Rscript"
 
     def _driver(self) -> Path:
@@ -70,7 +70,7 @@ class RMatrixEQTLSkill(base.SkillBase):
             raise RuntimeError("analyze 需要输出：-o/--output <f> 或 --output-prefix <p>（--help 查看）")
 
         # 参数文件（键<TAB>值）
-        tmpdir = self.make_tmpdir("r_matrixeqtl_")
+        tmpdir = self.make_tmpdir("matrixeqtl_")
         params = Path(tmpdir) / "params.tsv"
         pairs = [
             ("snps", os.path.abspath(str(snps))),
@@ -114,7 +114,7 @@ class RMatrixEQTLSkill(base.SkillBase):
 # --------------------------------------------------------------------------- #
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="r-matrixeqtl-skill",
+        prog="matrixeqtl-skill",
         description="Matrix eQTL native 技能驱动（Rscript 调用 Matrix_eQTL_main）",
     )
     p.add_argument("--schema", action="store_true", help="输出 JSON Schema 后退出")
@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{k:12s} {v}")
         return 0
     if "--schema" in args:
-        skill = RMatrixEQTLSkill()
+        skill = MatrixEQTLSkill()
         print(json.dumps(skill.schema(), indent=2, ensure_ascii=False))
         return 0
 
@@ -182,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
         build_parser().print_help(sys.stderr)
         return 2
 
-    skill = RMatrixEQTLSkill()
+    skill = MatrixEQTLSkill()
     if getattr(ns, "tmpdir", None):
         skill.tmpdir = ns.tmpdir
 
