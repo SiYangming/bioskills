@@ -8,11 +8,13 @@
 
 # blast / native — 建库与比对搜索驱动
 
-BLAST+（**NCBI BLAST+**，alias **ncbi-blast+**；即 Debian 包名 `ncbi-blast+`、bioconda 包名 `blast`、nf-core 目录名 `blast`）是**序列相似性搜索的行业标准套件**：以 **`makeblastdb`** 为核苷酸/蛋白序列建立 BLAST 库，用 **`blastn`**（核苷酸 query vs 核苷酸库）、**`blastp`**（蛋白 query vs 蛋白库）等程序做局部比对搜索，默认输出表格 `-outfmt 6`。生物信息教学课件中，它是**基础序列比对/建库**的首选工具；同时它也是 **RNAmmer**（此外还需 HMMER 2.x，见 [`modules/hmmer`](../hmmer/README.md) 的「HMMER 2.x 遗留版（native2 实现）」章节）、**antiSMASH** 等工具的运行依赖——这些工具需要本工具，安装方式统一见本模块「环境安装」节（不在其它模块重复维护安装配方）。
+BLAST+（**NCBI BLAST+**，alias **ncbi-blast+**；即 Debian 包名 `ncbi-blast+`、bioconda 包名 `blast`、nf-core 目录名 `blast`）是**序列相似性搜索的行业标准套件**：以 **`makeblastdb`** 为核苷酸/蛋白序列建立 BLAST 库，用 **`blastn`**（核苷酸 query vs 核苷酸库）、**`blastp`**（蛋白 query vs 蛋白库）等程序做局部比对搜索，默认输出表格 `-outfmt 6`。生物信息教学课件中，它是**基础序列比对/建库**的首选工具；同时它也是 **RNAmmer**（此外还需 HMMER 2.x，见 [`modules/hmmer`](../hmmer/README.md) 的「HMMER 2.x 遗留版」章节）、**antiSMASH** 等工具的运行依赖——这些工具需要本工具，安装方式统一见本模块「环境安装」节（不在其它模块重复维护安装配方）。
 
 本实现为自包含驱动（`source_type: custom`、`type: native`），二进制由**官方容器/conda**（quay.io/biocontainers/blast / bioconda blast）提供；三个子命令分别包装官方三个入口：
 
 ## 能力
+
+**NCBI-BLAST+ 简介**：NCBI BLAST+ 是 NCBI 开发的序列比对工具套件，支持核酸和蛋白质序列的同源性搜索，包括 blastn、blastp、blastx、tblastn、tblastx 等程序，是生物信息学中最常用的序列比对工具之一。
 
 | 子命令            | 包装命令                                                                                       | 作用                                                     | 线程                        |
 | -------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ------------------------- |
@@ -259,6 +261,8 @@ dependencies:
 ```
 
 ## 容器与 Conda 链接
+
+* **NCBI-BLAST+ 官网**：https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 * **Bioconda 页面**：<https://anaconda.org/bioconda/blast>
 

@@ -4,7 +4,7 @@
 > Perl 编写（主命令 `rnammer`，配套 `xml2gff` 等），对细菌/古菌/真核基因组预测
 > **5S/5.8S、16S/18S、23S/28S rRNA** 基因，输出 rRNA 序列 FASTA（`-f`）、HMMER 搜索报告（`-h`）、
 > XML（`-xml`）与 GFF2（`-gff`）；域由 `-S` 指定（`bac`/`arc`/`euk`），`-multi` 双链并行预测全部
-> rRNA 类型。运行须搭配 **HMMER 2.x**（教学用 hmmer-2.2g；安装见 [`modules/hmmer`](../hmmer/README.md) 的「HMMER 2.x 遗留版（native2 实现）」章节）与 Perl 模块 **XML::Simple**。
+> rRNA 类型。运行须搭配 **HMMER 2.x**（教学用 hmmer-2.2g；安装见 [`modules/hmmer`](../hmmer/README.md) 的「HMMER 2.x 遗留版」章节）与 Perl 模块 **XML::Simple**。
 > 本模块仅 native 一路（`source_type: custom`）；官方 nf-core / snakemake-wrappers 均无（仅说明层，
 > 见文末），安装方式见「环境安装（官方渠道无镜像：宿主机安装）」。
 >
@@ -115,9 +115,9 @@ rnammer -S bac -multi -m ssu -f rRNA.ssu.fasta -gff rRNA.ssu.gff2 ../genome.ecol
 
 | 依赖         | 作用                                          | 安装文档                                  |
 | ---------- | ------------------------------------------- | ------------------------------------- |
-| HMMER 2.x  | rRNA HMM 搜索（RNAmmer 必须用 2.x，`$HMMSEARCH_BINARY` 指向它） | [modules/hmmer](../hmmer/README.md)（2.x 遗留版章节，`native2/` 实现） |
+| HMMER 2.x  | rRNA HMM 搜索（RNAmmer 必须用 2.x，`$HMMSEARCH_BINARY` 指向它） | [modules/hmmer](../hmmer/README.md)（2.x 遗留版章节，同一 `native/` 实现的 2.x 子命令） |
 
-> HMMER 的 2.x 与 3.x 属**同一软件**，已合并为一个模块 `modules/hmmer`：3.x 为默认实现（`native/`，见「HMMER 3.x 现行版」章节），2.x 为遗留版实现（`native2/`，见「HMMER 2.x 遗留版（native2 实现）」章节）。
+> HMMER 的 2.x 与 3.x 属**同一软件**，已合并为一个模块 `modules/hmmer`：3.x 与 2.x 均由**同一个 native 实现**（`native/`）提供，以子命令区分——3.x 子命令 `hmmbuild`/`hmmpress`/`hmmsearch`（见「HMMER 3.x 现行版」章节），2.x 子命令 `hmmbuild2`/`hmmsearch2`（见「HMMER 2.x 遗留版」章节）。
 >
 > Perl 模块 XML::Simple / XML::Parser 属语言级依赖（非独立软件模块），安装见下「环境安装」①。
 
@@ -129,7 +129,7 @@ nf-core / snakemake-wrappers 子模块亦无）。RNAmmer 1.2 源码为 **CBS DT
 （需 edu 邮箱申请下载链接），采用**宿主机安装路线**：宿主 conda/perl 提供 HMMER2 + Perl + XML::Simple
 运行依赖，RNAmmer 源码由用户注册下载后本地配置。一键安装：`bash native/install.sh`。
 HMMER 2.x 与 3.x 属**同一软件**，已合并为本仓库的 [`modules/hmmer`](../hmmer/README.md)
-（3.x = `native/` 默认实现；2.x = `native2/` 遗留版实现，RNAmmer 用后者）。
+（3.x = 子命令 `hmmbuild`/`hmmpress`/`hmmsearch`；2.x = 同一实现内的遗留版本线，子命令 `hmmbuild2`/`hmmsearch2`，RNAmmer 用后者）。
 
 ### 1. Conda / 宿主依赖（HMMER2 + Perl + XML::Simple）
 
@@ -152,9 +152,9 @@ perl -MXML::Simple -e1 && echo OK
 > `hmmsearch2`，与 HMMER3 的无后缀 `hmmsearch` 区分）——**RNAmmer 对 HMMER
 > 版本敏感**，如需严格对齐教学环境请用 ② 源码编译 hmmer-2.2g。
 
-### 2. HMMER 2.x 安装（源码编译；推荐直接用 `modules/hmmer` 的 native2 实现）
+### 2. HMMER 2.x 安装（源码编译；推荐直接用 `modules/hmmer` 的 2.x 子命令）
 
-> 首选：直接用本仓库 [`modules/hmmer`](../hmmer/README.md) 的 2.x 遗留版实现 `native2/`（conda `bioconda::hmmer2`=2.3.2 或官方容器 `quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12`，安装后二进制带 `2` 后缀如 `hmmsearch2`）。仅当需与教学环境严格对齐（hmmer-2.2g，源码自编译无后缀）时，按本节编译：
+> 首选：直接用本仓库 [`modules/hmmer`](../hmmer/README.md) 的 2.x 遗留版本线（同一 `native/` 实现，子命令 `hmmbuild2`/`hmmsearch2`；conda `bioconda::hmmer2`=2.3.2 或官方容器 `quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12`，安装后二进制带 `2` 后缀如 `hmmsearch2`）。仅当需与教学环境严格对齐（hmmer-2.2g，源码自编译无后缀）时，按本节编译：
 
 ```bash
 mkdir -p ~/software && cd ~/software
@@ -198,7 +198,7 @@ rnammer -S bac -multi -f rRNA.fasta -h rRNA.hmmreport -xml rRNA.xml -gff rRNA.gf
 RNAmmer **无官方预编译二进制**，官方仅提供**注册制源码包**（官网填 edu 邮箱申请下载链接）：
 <https://services.healthtech.dtu.dk/services/RNAmmer-1.2/>。**替代来源**：自建归档镜像仓库
 <https://github.com/SiYangming/rnammer-1.2>（**已归档/只读**；私有仓库，访问需仓库授权）。
-HMMER2 安装见本仓库 [`modules/hmmer`](../hmmer/README.md) 的 2.x 遗留版实现（`native2/`）；
+HMMER2 安装见本仓库 [`modules/hmmer`](../hmmer/README.md) 的 2.x 遗留版本线（同一 `native/` 实现）；
 亦可 bioconda `hmmer2`（<https://anaconda.org/bioconda/hmmer2>）或官方源码 hmmer-2.2g
 （<http://eddylab.org/software/hmmer/hmmer-2.2g.tar.gz>）。
 
@@ -210,7 +210,7 @@ HMMER2 安装见本仓库 [`modules/hmmer`](../hmmer/README.md) 的 2.x 遗留�
 * **Docker / quay.io/biocontainers**：无 rnammer 镜像（2026-09 核实）
 * **上游官网（注册制源码）**：<https://services.healthtech.dtu.dk/services/RNAmmer-1.2/>
 * **源码替代来源（归档镜像）**：<https://github.com/SiYangming/rnammer-1.2>（**已归档/只读**；私有仓库需授权访问）
-* **HMMER2（可选依赖）**：本仓库模块 [`modules/hmmer`](../hmmer/README.md)（2.x 遗留版实现 `native2/`，见「HMMER 2.x 遗留版（native2 实现）」章节）；conda <https://anaconda.org/bioconda/hmmer2>；源码 <http://eddylab.org/software/hmmer/hmmer-2.2g.tar.gz>
+* **HMMER2（可选依赖）**：本仓库模块 [`modules/hmmer`](../hmmer/README.md)（2.x 子命令 `hmmbuild2`/`hmmsearch2`，见「HMMER 2.x 遗留版」章节）；conda <https://anaconda.org/bioconda/hmmer2>；源码 <http://eddylab.org/software/hmmer/hmmer-2.2g.tar.gz>
 * **nf-core modules**：无 `modules/nf-core/rnammer`（2026-09 核实 404）
 * **snakemake-wrappers**：无 `bio/rnammer`（2026-09 核实 404）
 * 安装方式（本地）：`bash native/install.sh`（auto/conda/manual 双路线；manual 需 `--rnammer-tarball`）

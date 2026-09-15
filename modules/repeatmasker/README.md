@@ -102,7 +102,7 @@ RepeatMasker 运行需外部搜索/串联重复引擎（以及 `configure` 会�
 
 > 重复库（RepBase / Dfam）属**数据资产非软件模块**：RepBase RepeatMasker Edition 官方 GIRInst 直链**现已无需账号**（实测 HTTP 200，约 53.5 MiB；<https://www.girinst.org/server/RepBase/protected/repeatmaskerlibraries/RepBaseRepeatMaskerEdition-20181026.tar.gz>），**备用镜像同样无需账号**：SourceForge old-software-collection（<https://sourceforge.net/projects/old-software-collection/postdownload>）；Dfam 见 <https://dfam.org/>；RepeatMasker ≥ 4.2 走 FamDB（`famdb.py` 查询）。安装步骤见下「环境安装」§5。
 >
-> HMMER 的 3.x 与 2.x 属**同一软件**，现已合并为一个模块 `modules/hmmer`（3.x = `native/` 默认实现；2.x = `native2/` 遗留版实现，供 RNAmmer/旧版 antiSMASH 等使用）。
+> HMMER 的 3.x 与 2.x 属**同一软件**，现已合并为一个模块 `modules/hmmer`（单一 `native/` 实现覆盖两条版本线：3.x 子命令 `hmmbuild`/`hmmpress`/`hmmsearch`；2.x 子命令 `hmmbuild2`/`hmmsearch2`，供 RNAmmer/旧版 antiSMASH 等使用）。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 

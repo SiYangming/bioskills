@@ -114,18 +114,18 @@ antiSMASH 依赖的外部工具由 `antismash` conda 包自动装入；如需单
 | ----------- | -------------------------------------------------- | ------------------------------------------- |
 | BLAST+      | 序列比对（ClusterBlast 等）                               | [modules/blast](../blast/README.md)         |
 | HMMER 3.x   | 蛋白谱比对                                             | [modules/hmmer](../hmmer/README.md)（3.x 现行版章节，`native/` 实现） |
-| HMMER 2.x   | 旧版谱比对依赖（bioconda 包名 hmmer2）                          | [modules/hmmer](../hmmer/README.md)（2.x 遗留版章节，`native2/` 实现） |
+| HMMER 2.x   | 旧版谱比对依赖（bioconda 包名 hmmer2）                          | [modules/hmmer](../hmmer/README.md)（2.x 遗留版章节，同一 `native/` 实现的 2.x 子命令） |
 | Glimmer3    | 原核基因预测（旧版/可选）                                      | [modules/glimmer](../glimmer/README.md)     |
 | GlimmerHMM  | 真核基因预测（`--genefinding-tool glimmerhmm`）             | [modules/glimmerhmm](../glimmerhmm/README.md) |
 | MUSCLE      | 多序列比对（旧版依赖，v5 起不再需要）                               | [modules/muscle](../muscle/README.md)       |
 
-> HMMER 的 2.x 与 3.x 属**同一软件**，已合并为一个模块 `modules/hmmer`（3.x = `native/` 默认实现；2.x = `native2/` 遗留版实现，二进制带 `2` 后缀且许可为 GPL-2.0-or-later）。
+> HMMER 的 2.x 与 3.x 属**同一软件**，已合并为一个模块 `modules/hmmer`（单一 `native/` 实现覆盖两条版本线：3.x 子命令 `hmmbuild`/`hmmpress`/`hmmsearch`；2.x 子命令 `hmmbuild2`/`hmmsearch2`，底层二进制带 `2` 后缀且许可为 GPL-2.0-or-later）。
 
 > 现代 antiSMASH（7/8）另依赖 diamond / fasttree / prodigal 等，均由 conda 包自动装入；运行数据库（Pfam/ClusterBlast/MiBIG 等）见「实战示例 §1」的 `download-antismash-databases`。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 
-官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。⚠️ **antismash 依赖多、数据库大**（conda 依赖 hmmer2/hmmer/diamond/fasttree/prodigal/blast 等；运行需另下数 GB 数据库）——请建**独立 conda 环境**，勿混入 base 环境。其中 HMMER 的 2.x / 3.x 属**同一软件**，已合并为本仓库的 [`modules/hmmer`](../hmmer/README.md)（3.x = `native/` 默认实现；2.x = `native2/` 遗留版实现）。
+官方已维护（bioconda → quay.io/biocontainers → depot.galaxyproject.org），直接拉取官方镜像运行工具二进制；main.py 驱动在宿主机跑。⚠️ **antismash 依赖多、数据库大**（conda 依赖 hmmer2/hmmer/diamond/fasttree/prodigal/blast 等；运行需另下数 GB 数据库）——请建**独立 conda 环境**，勿混入 base 环境。其中 HMMER 的 2.x / 3.x 属**同一软件**，已合并为本仓库的 [`modules/hmmer`](../hmmer/README.md)（单一 `native/` 实现覆盖两条版本线：3.x 子命令 `hmmbuild`/`hmmpress`/`hmmsearch`；2.x 子命令 `hmmbuild2`/`hmmsearch2`）。
 
 ### 1. Conda / brew（包管理器安装）
 
@@ -182,7 +182,7 @@ apptainer run -B $PWD:/data -H /data antismash.sif \
 
 ### 4. 二进制包安装（无官方预编译单文件资产）
 
-antiSMASH 官方 GitHub release **只发源码 tag 归档**（无预编译单文件 assets），且运行依赖众多（hmmer2/hmmer/diamond/fasttree/prodigal/blast + MEME/`--cassis` 可选 + 数 GB 数据库）——**教学/常规使用请走上方 Conda、Docker 或 Apptainer**；其中 HMMER 2.x / 3.x 见 [`modules/hmmer`](../hmmer/README.md)（`native2/` / `native/`）。确需源码路线时拉对应 tag 源码按官方文档手动安装：
+antiSMASH 官方 GitHub release **只发源码 tag 归档**（无预编译单文件 assets），且运行依赖众多（hmmer2/hmmer/diamond/fasttree/prodigal/blast + MEME/`--cassis` 可选 + 数 GB 数据库）——**教学/常规使用请走上方 Conda、Docker 或 Apptainer**；其中 HMMER 2.x / 3.x 见 [`modules/hmmer`](../hmmer/README.md)（同一 `native/` 实现的 2.x / 3.x 子命令）。确需源码路线时拉对应 tag 源码按官方文档手动安装：
 
 ```bash
 wget https://github.com/antismash/antismash/archive/refs/tags/8-0-4.tar.gz -P ~/software/
@@ -262,7 +262,8 @@ nf-core 官方 `modules/nf-core/antismash/` **存在**（2026-09 在线核实，
 # antismash native Conda 环境配方（HPC 无 root / 非容器兜底）
 # 离线兜底：可另存为 antismash-native.yml 后 mamba env create -f antismash-native.yml；
 # 在线推荐上方 mamba create 直装命令。antismash=8.0.4 会把运行依赖（hmmer2/hmmer/diamond/
-# fasttree/prodigal/blast 等）随包装入（HMMER 2.x/3.x 见 modules/hmmer：native2/ 与 native/）；
+# fasttree/prodigal/blast 等）随包装入（HMMER 2.x/3.x 见 modules/hmmer：同一 native/ 实现的
+# 2.x 子命令 hmmbuild2/hmmsearch2 与 3.x 子命令 hmmbuild/hmmpress/hmmsearch）；
 # ⚠️ 还需另跑 download-antismash-databases 下载数 GB 数据库。
 name: antismash
 channels:
