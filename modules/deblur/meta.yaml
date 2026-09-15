@@ -1,0 +1,187 @@
+software: deblur
+canonical: deblur
+category: microbiome
+description: 'Deblur 是扩增子测序的贪婪去卷积去噪工具：基于已知读长错误分布的子空间方法区分真实
+  序列与测序错误，输出单核苷酸分辨率的 ASVs（扩增子序列变异体），并可直接产出 BIOM 特征表。
+  支持内置 16S 参考数据库（默认 Greengenes 13_8 OTUs 88% identity，亦可用 85_otus/88_otus）
+  预过滤；仅支持单端测序数据、去噪核心不支持多线程。QIIME 2 内置 qiime deblur denoise-16S。
+  '
+homepage: https://github.com/biocore/deblur
+license: BSD-3-Clause
+software_versions:
+- id: deblur_native
+  deblur: '1.1.1'
+  build_route: official biocontainer（quay.io/biocontainers/deblur / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/deblur
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    宿主机直跑 main.py 时用 conda/mamba 安装 deblur（或 pip install deblur）。'
+- id: deblur_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/deblur 404）
+  deblur: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/deblur）
+  note: 2026-09 抓取 https://github.com/nf-core/modules/tree/master/modules/nf-core/deblur
+    返回 404；Nextflow 场景以 native/（deblur CLI + 容器）为兜底。
+- id: deblur_snakemake_wrappers
+  deblur: 官方无 wrapper（bio/deblur 404）
+  source: —（snakemake-wrappers 仓库无 bio/deblur）
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/deblur/environment.yaml
+    返回 404；Snakemake 场景以 native/（deblur CLI + 容器）为兜底。
+- id: deblur_nextflow_local
+  deblur: 未启用（官方缺失时按 native 容器在 main.nf 中声明 deblur 步骤）
+- id: deblur_snakemake_local
+  deblur: 未启用（需要时用 shell 调 native/main.py）
+implementations:
+- id: deblur_native
+  path: native
+  source_type: custom
+  type: native
+  priority: high
+  version: "1.1.1"
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 workflow（完整流水线）/ dereplicate / trim / build-biom-table 子命令，自动注入并行作业数
+    （-O）与临时目录。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/deblur
+    quay_biocontainers: quay.io/biocontainers/deblur
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda deblur=1.1.1；容器可用
+      quay.io/biocontainers/deblur 镜像
+default_implementation: deblur_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: deblur 子命令：workflow|dereplicate|trim|build-biom-table
+  seqs_fp:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入序列文件或目录（workflow 用 --seqs-fp；dereplicate/trim 为位置参数；build-biom-table 为去嵌合 fasta 目录）
+  output_dir:
+    type: file
+    required: false
+    cli_arg: --output-dir
+    description: workflow 输出目录（含 BIOM 表）
+  output_fp:
+    type: file
+    required: false
+    cli_arg: positional
+    description: dereplicate/trim/build-biom-table 的输出文件或目录
+  trim_length:
+    type: integer
+    required: false
+    cli_arg: --trim-length
+    description: 序列截短长度（workflow/trim 必填；-1 表示跳过截短）
+  left_trim_length:
+    type: integer
+    required: false
+    cli_arg: --left-trim-length
+    description: 从 5' 端截短的碱基数（0 表示不截短）
+  reference_fp:
+    type: file
+    required: false
+    cli_arg: --reference-fp
+    description: 正向参考数据库 FASTA（默认 Greengenes 13_8 88% OTUs；如 85_otus/88_otus），可重复
+  reference_db_fp:
+    type: file
+    required: false
+    cli_arg: --reference-db-fp
+    description: 已索引的正向参考数据库目录（可选，避免重复索引），顺序对应 reference_fp
+  neg_ref_fp:
+    type: file
+    required: false
+    cli_arg: --neg-ref-fp
+    description: 负向（伪影）参考数据库 FASTA（默认 PhiX + 接头），可重复
+  neg_ref_db_fp:
+    type: file
+    required: false
+    cli_arg: --neg-ref-db-fp
+    description: 已索引的负向参考数据库目录（可选）
+  min_reads:
+    type: integer
+    required: false
+    cli_arg: --min-reads
+    description: 研究范围最小读数（默认 10），低于该值的序列剔除
+  min_size:
+    type: integer
+    required: false
+    cli_arg: --min-size
+    description: 每样本最小出现次数（默认 2）
+  mean_error:
+    type: float
+    required: false
+    cli_arg: --mean-error
+    description: 平均每碱基错误率（默认 0.005，即典型 Illumina 错误率）
+  indel_prob:
+    type: float
+    required: false
+    cli_arg: --indel-prob
+    description: 插入/缺失概率（默认 0.01）
+  indel_max:
+    type: integer
+    required: false
+    cli_arg: --indel-max
+    description: 最大允许 indel 数（默认 3）
+  threads:
+    type: integer
+    default: 4
+    description: 并行作业数（workflow 映射到 -O/--jobs-to-start；dereplicate/trim/build-biom-table 无并行参数，接受但忽略）
+  threads_per_sample:
+    type: integer
+    required: false
+    cli_arg: --threads-per-sample
+    description: workflow 每样本线程数（-a；0 表示用全部核）
+  overwrite:
+    type: boolean
+    default: false
+    cli_arg: --overwrite
+    description: workflow 输出目录已存在时覆盖
+  keep_tmp_files:
+    type: boolean
+    default: false
+    cli_arg: --keep-tmp-files
+    description: 保留临时文件（调试用）
+  log_file:
+    type: file
+    required: false
+    cli_arg: --log-file
+    description: 日志文件路径（默认 deblur.log）
+  file_type:
+    type: string
+    required: false
+    cli_arg: --file_type
+    description: build-biom-table 收集的文件名后缀（默认 .fasta.trim.derep.no_artifacts.msa.deblur.no_chimeras）
+outputs:
+  output_dir:
+    type: file
+    format: directory
+    description: workflow 输出目录，含 all.biom / reference-hit.biom / reference-non-hit.biom
+  biom_table:
+    type: file
+    format: biom
+    description: BIOM 特征表（all.biom）
+  dereplicated_fasta:
+    type: file
+    format: fasta
+    description: dereplicate 输出的去重后 fasta
+  trimmed_fasta:
+    type: file
+    format: fasta
+    description: trim 输出的截短后 fasta
+environment:
+  container_official: quay.io/biocontainers/deblur（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 deblur，或 pip install deblur。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    workflow: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: deblur

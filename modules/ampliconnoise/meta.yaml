@@ -1,0 +1,108 @@
+software: ampliconnoise
+canonical: ampliconnoise
+category: microbiome
+description: 'AmpliconNoise（V1.27）是 454 焦磷酸测序时代的扩增子去噪 / 嵌合体检测程序集（Quince C, Lanzen
+  A, Davenport RJ, Turnbaugh PJ. Removing noise from pyrosequenced amplicons. BMC Bioinformatics
+  2011;12:38）：基于 MPI 的序列聚类去噪（PyroNoise/PyroNoiseM/SeqNoise）、距离计算（PyroDist/SeqDist/NDist）、
+  聚类（FCluster/SplitClusterEven/SplitClusterClust）、去冗余（FastaUnique）与嵌合体检测（Perseus/PerseusD）。
+  历史上由 QIIME 1 通过 qiime-deploy 一并部署（15.md「1.4 通过 qiime-deploy 部署 QIIME」）。**历史工具（454 时代）**：
+  依赖 MPI、需源码 make && make install；原 Google Code 站已死（code.google.com/p/ampliconnoise 2026-09 探测 000），
+  仅 Google Code 归档仍可下载发布包；功能上已被 DADA2 / Deblur（ASV 去噪，见 qiime2 模块）取代。
+
+  '
+homepage: https://code.google.com/p/ampliconnoise/
+license: '未核实（原始发布包内未见 LICENSE/COPYING 文件；同类社区镜像 fhcrc/ampliconnoise 标 GPL-3.0，2026-09
+  未能逐字复核原始许可）'
+software_versions:
+- id: ampliconnoise_native
+  ampliconnoise: '1.27（AmpliconNoiseV1.27；Quince et al. BMC Bioinformatics 2011;12:38）'
+  programs: 'PyroNoise · PyroNoiseM · PyroDist · SeqNoise · SeqDist · NDist · FCluster · FastaUnique
+    · SplitClusterEven · SplitClusterClust · Perseus · PerseusD'
+  build_route: '官方渠道全无（bioconda ampliconnoise 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    无）→ 自建 Dockerfile/Apptainer.def 兜底：debian:bookworm-slim + apt（build-essential + mpich）+ 官方
+    Google Code 归档源码 make && make install（依赖 MPI）'
+  source: https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ampliconnoise/AmpliconNoiseV1.27.tar.gz
+  note: '原 Google Code 站 code.google.com/p/ampliconnoise 2026-09 探测不可达（curl 000）；Google Code
+    归档发布包 AmpliconNoiseV1.27.tar.gz 可达（2026-09 核实 HTTP 200，content-length 1379908）。依赖 mpicc
+    （apt: mpich / openmpi）。'
+- id: ampliconnoise_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ampliconnoise 404）
+  ampliconnoise: —
+  source: —
+  note: 2026-09 抓取 api.github.com 返回 404；历史复现以 native 驱动为兜底。
+- id: ampliconnoise_snakemake_wrappers
+  ampliconnoise: 官方无 wrapper（bio/ampliconnoise 404）
+  source: —
+  note: 2026-09 抓取 api.github.com 返回 404；历史复现以 native 驱动为兜底。
+- id: ampliconnoise_nextflow_local
+  ampliconnoise: 未启用（无本地 nextflow/ 实现；需要时以 shell 调 native/main.py）
+- id: ampliconnoise_snakemake_local
+  ampliconnoise: 未启用（无本地 snakemake/ 实现；需要时以 shell 调 native/main.py）
+implementations:
+- id: ampliconnoise_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.27"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。本实现为「说明型 + 命令构造」：
+    按 AmpliconNoise V1.27 各程序用法构造命令行（默认以 mpirun -np N 启动 MPI 程序）并打印，不实际执行，
+    主要供历史 454 去噪流程复现与文档化调用。'
+  container_ref:
+    dockerfile: native/Dockerfile（自建：bookworm-slim + apt build-essential/mpich + 官方归档源码 make）
+    apptainer_def: native/Apptainer.def（同路线，本地 build）
+    source_archive: https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ampliconnoise/AmpliconNoiseV1.27.tar.gz
+    install_hint: 官方渠道全无；宿主机按 README「环境安装」从 Google Code 归档源码 make && make install（需
+      mpicc）；或本地构建 native/Dockerfile/Apptainer.def
+default_implementation: ampliconnoise_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ampliconnoise 子命令（程序名）：PyroNoise|PyroNoiseM|PyroDist|SeqNoise|SeqDist|NDist|FCluster|FastaUnique|SplitClusterEven|SplitClusterClust|Perseus|PerseusD'
+  args:
+    type: string
+    required: false
+    description: '程序参数（原样透传，如 -s <sff> -d <data_dir>；用法见各程序无参运行提示与发布包 Doc.pdf）'
+  threads:
+    type: integer
+    default: 4
+    description: 'MPI 进程数（mpirun -np N；AmpliconNoise 各程序均为 MPI 程序，默认以 mpirun 启动）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（AmpliconNoise 无全局 --tmpdir 选项，仅进程 TMPDIR 环境变量）
+outputs:
+  denoised:
+    type: file
+    description: 去噪后的序列 / flowgram 结果（PyroNoise/PyroNoiseM/SeqNoise 等）
+  distance_matrix:
+    type: file
+    description: 序列/核苷酸距离矩阵（PyroDist/SeqDist/NDist）
+  clusters:
+    type: file
+    description: 聚类结果（FCluster/SplitClusterEven/SplitClusterClust）
+  chimeras:
+    type: file
+    description: 嵌合体检测结果（Perseus/PerseusD）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '官方渠道全无（bioconda → quay.io/biocontainers → depot.galaxyproject.org 均无 ampliconnoise，2026-09
+    核实）→ 自建 Dockerfile/Apptainer.def 兜底：debian:bookworm-slim + apt --no-install-recommends（build-essential
+    + mpich）从官方 Google Code 归档源码 make && make install（依赖 MPI）。不使用 miniconda。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    PyroNoise: 8
+    PyroNoiseM: 8
+    SeqNoise: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: PyroNoise

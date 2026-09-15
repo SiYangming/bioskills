@@ -1,0 +1,142 @@
+software: microbiomeutil
+canonical: microbiomeutil
+category: chimera_detection
+description: 'MicrobiomeUtilities（microbiomeutil）是 Broad Institute 的 16S rRNA 工具套件，含
+  ChimeraSlayer（基于 BLAST 的嵌合体检测）、NAST-iEr（把未比对序列转为 NAST 比对格式）与
+  WigeoN（Pintail 类 16S 异常/嵌合检测）。ChimeraSlayer 是 QIIME 1.x 默认的嵌合体检测方法之一。
+
+  '
+homepage: https://microbiomeutil.sourceforge.net/
+license: BSD-3-Clause
+software_versions:
+- id: microbiomeutil_native
+  microbiomeutil: r20110519
+  build_route: 自建兜底（apt 最小化 + SourceForge 官方源码 make；官方渠道全无）
+  source: https://sourceforge.net/projects/microbiomeutil/files/microbiomeutil-r20110519.tgz
+  note: '官方渠道核实（2026-09）：bioconda（microbiomeutil / chimeraslayer）404、quay.io/biocontainers
+    401（仓库不存在）、depot.galaxyproject.org 404、nf-core / snakemake-wrappers / homebrew 均无
+    → 无官方镜像/conda 包，走自建 Dockerfile/Apptainer.def（debian:bookworm-slim + apt
+    --no-install-recommends + 清理四连 + %test）。官方仅 SourceForge 源码包（133,623,556 bytes；
+    仅公布 md5=11eaac4b0468c05297ba88ec27bd4b56，无 sha256）。NAST-iEr 为 C 程序（gcc 编译），
+    ChimeraSlayer/WigeoN 为 Perl 脚本；运行期依赖 megablast（ncbi-blast+）与 cdbtools（cdbfasta/cdbyank）。'
+- id: microbiomeutil_nextflow_nfcore
+  microbiomeutil: 官方无 nf-core 子模块（404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/microbiomeutil
+    返回 404。
+- id: microbiomeutil_snakemake_wrappers
+  microbiomeutil: 官方无 wrapper（bio/microbiomeutil 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/microbiomeutil
+    返回 404；Snakemake 场景请用 native。
+implementations:
+- id: microbiomeutil_native
+  path: native
+  source_type: custom
+  type: native
+  version: "r20110519"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标，覆盖
+    chimeraslayer（嵌合体检测）/ nastier（NAST 比对）/ wigeon（Pintail 类异常检测）。'
+default_implementation: microbiomeutil_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'microbiomeutil 子命令：chimeraslayer|nastier|wigeon'
+  query_nast:
+    type: file
+    required: false
+    cli_arg: --query_NAST
+    description: NAST 比对格式的查询 FASTA（chimeraslayer / wigeon）
+  query_fasta:
+    type: file
+    required: false
+    cli_arg: --query_FASTA
+    description: 待 NAST 比对的查询 FASTA（nastier）
+  db_nast:
+    type: file
+    required: false
+    cli_arg: --db_NAST
+    description: 参考库 NAST 比对格式 FASTA（默认随包 RESOURCES/rRNA16S.gold.NAST_ALIGNED.fasta）
+  db_fasta:
+    type: file
+    required: false
+    cli_arg: --db_FASTA
+    description: 参考库 FASTA（megablast 已格式化；默认随包 RESOURCES/rRNA16S.gold.fasta）
+  exec_dir:
+    type: string
+    required: false
+    cli_arg: --exec_dir
+    description: 运行前 chdir 到此目录（chimeraslayer / wigeon；Perl FindBin 定位依赖）
+  num_db_seqs:
+    type: integer
+    required: false
+    cli_arg: -n
+    description: chimeraslayer 参与比较的 top N 参考序列（默认 15）
+  min_div_ratio:
+    type: float
+    required: false
+    cli_arg: -R
+    description: chimeraslayer 最小 divergence ratio（默认 1.007）
+  min_pct_id:
+    type: float
+    required: false
+    cli_arg: -P
+    description: chimeraslayer 匹配序列最小百分比一致性（默认 90）
+  min_bs:
+    type: float
+    required: false
+    cli_arg: --minBS
+    description: chimeraslayer 判定嵌合体的最小 bootstrap 支持（默认 90）
+  num_top_hits:
+    type: integer
+    required: false
+    cli_arg: --num_top_hits
+    description: nastier/wigeon 使用的 top hits 数（nastier 默认 10；wigeon 默认 1）
+  evalue:
+    type: string
+    required: false
+    cli_arg: --Evalue
+    description: nastier top hits 的 E-value 阈值（默认 1e-50）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应 Perl 脚本的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 1
+    description: '线程契约字段：microbiomeutil 各程序均为单线程，不接受线程参数。'
+outputs:
+  cps_cpc:
+    type: file
+    format: txt
+    description: chimeraslayer 输出（<query_NAST>.CPS.CPC 嵌合体判定）
+  nast_alignment:
+    type: file
+    format: fasta
+    description: nastier 输出的 NAST 比对（stdout）
+  wigeon_report:
+    type: file
+    format: txt
+    description: wigeon 输出的异常/嵌合判定（stdout）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）全无 → 自建配方
+    （debian:bookworm-slim + apt --no-install-recommends + 官方 SourceForge 源码 make + 清理四连 +
+    Apptainer %test）；宿主安装走 native/install.sh（源码 make 到用户前缀）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    chimeraslayer: 1
+    nastier: 1
+    wigeon: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: ChimeraSlayer.pl

@@ -1,0 +1,143 @@
+software: rdp-classifier
+canonical: rdp-classifier
+category: taxonomy
+description: 'RDP Classifier（Ribosomal Database Project Classifier）是基于朴素贝叶斯算法的
+  16S rRNA 基因序列分类工具，由密歇根州立大学开发：把代表序列（rep_set.fna）快速注释到界/门/纲/
+  目/科/属各分类水平，并给出每个水平的置信度（bootstrap confidence）。QIIME 1.x 以
+  assign_taxonomy.py -m rdp 调用、QIIME 2 以 feature-classifier classify-sklearn 复刻其
+  朴素贝叶斯思路，本模块以独立 Java 版（rdp_classifier 包装脚本 + classifier.jar）驱动。
+  '
+homepage: https://sourceforge.net/projects/rdp-classifier/
+license: GPL-2.0-only
+software_versions:
+- id: rdp_classifier_native
+  rdp_classifier: '2.14'
+  build_route: official biocontainer（quay.io/biocontainers/rdp_classifier / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/rdp_classifier
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    bioconda rdp_classifier=2.14（noarch: generic，run 依赖 openjdk>=11）；conda 包装脚本
+    rdp_classifier 会从命令行提取 -Xmx/-D/-XX 作为 JVM 参数后调用 classifier.jar。宿主机直跑
+    main.py 时用 conda/mamba 安装 rdp_classifier=2.14。'
+- id: rdp_classifier_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/rdp_classifier 404）
+  rdp_classifier: —
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/rdp_classifier
+    返回 404；Nextflow 场景以 native/（rdp_classifier 包装脚本）为兜底。'
+- id: rdp_classifier_snakemake_wrappers
+  rdp_classifier: 官方无 wrapper（bio/rdp_classifier 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/rdp_classifier
+    返回 404；Snakemake 场景以 native/ 为兜底。'
+implementations:
+- id: rdp_classifier_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.14"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    classify 子命令把 16S rRNA 代表序列 FASTA 注释到各分类水平，自动透传 JAVA_OPTS（-Xmx 等 JVM
+    参数）并注入 TMPDIR；容器走官方镜像（quay.io/biocontainers/rdp_classifier，见 software_versions）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/rdp_classifier
+    quay_biocontainers: quay.io/biocontainers/rdp_classifier
+    galaxyproject: https://depot.galaxyproject.org/singularity/rdp_classifier%3A2.14--hdfd78af_0
+    upstream_source: https://sourceforge.net/projects/rdp-classifier/files/rdp-classifier/rdp_classifier_2.14.zip
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda rdp_classifier=2.14；容器可用
+      quay.io/biocontainers/rdp_classifier:2.14--hdfd78af_0 镜像（tag 以 quay / depot.galaxyproject.org
+      为准，见 README「容器与 Conda 链接」）
+default_implementation: rdp_classifier_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: rdp-classifier 子命令：classify（唯一核心命令）
+  query:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 待分类的查询序列 FASTA（如 rep_set.fna；16S rRNA 代表序列）
+  train_propfile:
+    type: file
+    required: false
+    cli_arg: -t
+    description: 训练集属性文件（rRNAClassifier.properties）；不填则用 classifier.jar 内置默认 16S 训练集
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: Tab 分隔的分类结果输出文件（每序列一行，含各水平 assignment + confidence）
+  format:
+    type: string
+    required: false
+    default: fixrank
+    cli_arg: -f
+    description: '输出格式：[allrank|fixrank|biom|filterbyconf|db]，默认 fixrank'
+  conf:
+    type: float
+    required: false
+    default: 0.8
+    cli_arg: -c
+    description: 分配到某一水平的置信度阈值（bootstrap confidence cutoff，范围 [0,1]，默认 0.8）
+  gene:
+    type: string
+    required: false
+    cli_arg: -g
+    description: 指定基因（16srrna / fungalitsl 等）；不使用自定义 -t 训练文件时可用
+  min_words:
+    type: integer
+    required: false
+    cli_arg: -w
+    description: 每次 bootstrap 试验的最小词（word）数（默认约序列词数的 1/8）
+  rank:
+    type: string
+    required: false
+    cli_arg: -r
+    description: 只输出到指定分类水平（如 genus）
+  taxon:
+    type: string
+    required: false
+    cli_arg: -n
+    description: 仅统计属于指定 taxon 的序列分配
+  bootstrap_outfile:
+    type: file
+    required: false
+    cli_arg: -b
+    description: 各主要分类水平的 bootstrap 匹配计数输出文件（可选）
+  shortseq_outfile:
+    type: file
+    required: false
+    cli_arg: -s
+    description: 过短、无法分类的序列名输出文件（可选）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数占位（RDP Classifier 为单线程 Java，无 -p/--threads 参数；仅为统一 CLI 接口保留）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 classifier.jar 的额外参数（高级用法，慎用）
+outputs:
+  classification_txt:
+    type: file
+    format: txt
+    description: 分类注释结果表（序列 ID + 各水平 taxon 与置信度），供后续 taxa 汇总 / 差异分析使用
+environment:
+  container_official: quay.io/biocontainers/rdp_classifier（bioconda 官方镜像；tag 2.14--hdfd78af_0，tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 rdp_classifier（Java 工具，JAVA_OPTS 透传 -Xmx 等 JVM 参数）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: -Xmx6g
+  per_subcommand_threads:
+    classify: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: rdp_classifier

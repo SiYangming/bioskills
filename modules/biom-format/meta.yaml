@@ -1,0 +1,151 @@
+software: biom-format
+canonical: biom-format
+category: microbiome
+description: 'BIOM（Biological Observation Matrix）是微生物组/组学特征表的标准化二进制矩阵格式，
+  biom-format 提供其读写与转换工具集（CLI 命令 biom）：convert 在 BIOM（HDF5）/TSV/JSON
+  之间互转（含 taxonomy 等观测元数据），summarize-table 输出特征表统计摘要（样本数、观测数、
+  总计数、密度等）。是 QIIME 1.x/2.x 特征表（OTU/ASV 表）导出与统计的通用底座。
+  '
+homepage: https://biom-format.org
+license: BSD-3-Clause
+software_versions:
+- id: biom_format_native
+  biom-format: '2.1.17'
+  build_route: official biocontainer（quay.io/biocontainers/biom-format / depot.galaxyproject.org）
+  source: https://anaconda.org/conda-forge/biom-format（conda-forge 频道；bioconda 仅到 2.1.7）
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org）：quay/depot 提供
+    2.1.17 tag；conda 安装取自 conda-forge（bioconda 频道 biom-format 仅发布到 2.1.7），本地不再自建容器。'
+- id: biom_format_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/biom-format 404）
+  biom-format: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/biom-format）
+  note: 2026-09 抓取 https://github.com/nf-core/modules/tree/master/modules/nf-core/biom-format
+    返回 404；Nextflow 场景以 native/（biom CLI + 容器）为兜底。
+- id: biom_format_snakemake_wrappers
+  biom-format: 官方无 wrapper（bio/biom-format 404；bio/biom 亦 404）
+  source: —（snakemake-wrappers 仓库无 bio/biom-format、bio/biom）
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/biom-format/environment.yaml
+    返回 404；Snakemake 场景以 native/（biom CLI + 容器）为兜底。
+- id: biom_format_nextflow_local
+  biom-format: 未启用（官方缺失时按 native 容器在 main.nf 中声明 biom 步骤）
+- id: biom_format_snakemake_local
+  biom-format: 未启用（需要时用 shell 调 native/main.py）
+implementations:
+- id: biom_format_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1.17"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 convert（BIOM/TSV/JSON 互转）/ summarize-table（特征表统计摘要）子命令。'
+  container_ref:
+    conda_forge: https://anaconda.org/conda-forge/biom-format
+    quay_biocontainers: quay.io/biocontainers/biom-format
+    install_hint: 推荐 mamba create -n <env> -c conda-forge biom-format=2.1.17；容器可用
+      quay.io/biocontainers/biom-format:2.1.17 镜像
+default_implementation: biom_format_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: biom-format 子命令：convert|summarize-table
+  input:
+    type: file
+    required: true
+    cli_arg: -i
+    description: 输入特征表文件（convert 支持 BIOM/JSON/经典 TSV；summarize-table 为 BIOM 表）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（convert 必填；summarize-table 缺省写 stdout）
+  to_tsv:
+    type: boolean
+    default: false
+    cli_arg: --to-tsv
+    description: convert 输出为制表符分隔 TSV
+  to_json:
+    type: boolean
+    default: false
+    cli_arg: --to-json
+    description: convert 输出为 JSON
+  to_hdf5:
+    type: boolean
+    default: false
+    cli_arg: --to-hdf5
+    description: convert 输出为 HDF5（BIOM 二进制）
+  table_type:
+    type: string
+    required: false
+    cli_arg: --table-type
+    description: 表类型（如 "OTU table" / "Pathway table" / "Function table" / "Ortholog table" / "Gene table" / "Metabolite table"）
+  header_key:
+    type: string
+    required: false
+    cli_arg: --header-key
+    description: 观测元数据键（如 taxonomy）；转 TSV 时作为额外列
+  sample_metadata_fp:
+    type: file
+    required: false
+    cli_arg: -m
+    description: 样本元数据文件（convert 读写元数据用）
+  observation_metadata_fp:
+    type: file
+    required: false
+    cli_arg: --observation-metadata-fp
+    description: 观测元数据文件（convert）
+  collapsed_samples:
+    type: boolean
+    default: false
+    cli_arg: --collapsed-samples
+    description: 折叠样本元数据为单列
+  collapsed_observations:
+    type: boolean
+    default: false
+    cli_arg: --collapsed-observations
+    description: 折叠观测元数据为单列
+  process_obs_metadata:
+    type: string
+    required: false
+    cli_arg: --process-obs-metadata
+    description: 观测元数据处理方式（如 taxonomy）
+  qualitative:
+    type: boolean
+    default: false
+    cli_arg: --qualitative
+    description: summarize-table 以定性（存在/缺失）统计
+  observations:
+    type: boolean
+    default: false
+    cli_arg: --observations
+    description: summarize-table 增加逐观测统计
+  threads:
+    type: integer
+    default: 1
+    description: 线程数（biom convert/summarize-table 均为单线程，接受 --threads 但不注入）
+outputs:
+  converted_table:
+    type: file
+    description: convert 输出的特征表（TSV/JSON/HDF5）
+  summary:
+    type: file
+    format: txt
+    description: summarize-table 输出的统计摘要（样本数/观测数/总计数/密度等）
+environment:
+  container_official: quay.io/biocontainers/biom-format（bioconda 自动构建官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda
+    安装（conda-forge 频道 biom-format=2.1.17），或 pip install biom-format。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: biom

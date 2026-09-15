@@ -1,0 +1,52 @@
+# ancom 自建容器（native/Apptainer.def）
+#
+# 与 native/Dockerfile 同构（debian:bookworm-slim + apt 最小化装 R 依赖 + ANCOM 源码归档），
+# %test 用 Rscript source programs/ancom.R 断言 ANCOM 函数存在。运行产物归属由宿主 -B 挂载决定。
+#
+# 构建：
+#   apptainer build ancom.sif Apptainer.def
+# 运行（等价能力由 native/main.py analyze 子命令提供）：
+#   apptainer run -B $PWD:/data -H /data ancom.sif \
+#       Rscript /opt/skill/run_ancom.R /data/params.tsv
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    run_ancom.R /opt/skill/run_ancom.R
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        r-base-core r-cran-nlme r-cran-tidyverse r-cran-compositions \
+        ca-certificates curl procps
+    curl -fsSL --retry 3 -o /tmp/ancom.tar.gz \
+        https://github.com/FrederickHuangLin/ANCOM-Code-Archive/archive/refs/heads/master.tar.gz
+    mkdir -p /opt/ANCOM
+    tar -xzf /tmp/ancom.tar.gz -C /tmp
+    cp -R /tmp/ANCOM-Code-Archive-master/. /opt/ANCOM/
+    chmod +x /opt/skill/run_ancom.R
+    apt-get purge -y --auto-remove curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/* /usr/share/man/* /usr/share/info/*
+
+%environment
+    export TMPDIR=/tmp
+    export ANCOM_HOME=/opt/ANCOM
+
+%runscript
+    exec Rscript "$@"
+
+%test
+    Rscript -e 'source(file.path(Sys.getenv("ANCOM_HOME"), "programs", "ancom.R")); stopifnot(exists("ANCOM")); cat("ANCOM_OK\n")'
+
+%labels
+    Author bioskills
+    org.bioskills.software ancom
+    impl native
+    base_image debian:bookworm-slim
+    ancom_version 2.1
+    pkg_route apt 最小化（r-base-core + r-cran-nlme/r-cran-tidyverse/r-cran-compositions）+ ANCOM 源码归档

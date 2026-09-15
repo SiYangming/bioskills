@@ -1,0 +1,188 @@
+software: ea-utils
+canonical: ea-utils
+category: read_processing
+description: 'ea-utils（ExpressionAnalysis utilities）是一套 FASTQ 处理命令行工具集：
+  fastq-join 依据双端重叠把 paired-end reads 拼接为单端序列，fastq-mcf 检测并切除接头/引物
+  并做质量过滤，fastq-multx 按 barcode 拆分，fastq-stats 输出基础统计，fastq-clipper 去除接头。
+  QIIME 1.x 的 join_paired_ends.py 内部即调用 fastq-join。
+
+  '
+homepage: https://expressionanalysis.github.io/ea-utils/
+license: MIT
+software_versions:
+- id: ea_utils_native
+  ea-utils: 1.1.2.537
+  build_route: official biocontainer（quay.io/biocontainers/ea-utils / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/ea-utils
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
+    bioconda 提供 1.1.2.537 与 1.1.2.779 两个版本；官方容器（quay/depot）目前仅构建了 1.1.2.779
+    （ea-utils:1.1.2.779--h9dd4a16_0），1.1.2.537 无官方镜像 tag（2026-09 核实）。
+    上游命名 1.1.2-537 等同 bioconda 版本号 1.1.2.537；宿主机直跑 main.py 时用 conda/mamba 安装
+    ea-utils=1.1.2.537。'
+- id: ea_utils_nextflow_nfcore
+  ea-utils: 1.1.2.779
+  module_version: nf-core master（2026-09）
+  source: 'bioconda::ea-utils=1.1.2.779（modules/nf-core/eautils/fastqstats/environment.yml）；ea-utils/gtf2bed
+    仅依赖 conda-forge::perl=5.26.2'
+  note: 'nf-core 有两个相关子模块：eautils/fastqstats（pin bioconda::ea-utils=1.1.2.779，容器 quay.io/biocontainers/ea-utils:1.1.2.779--h9dd4a16_0）
+    与 ea-utils/gtf2bed（随包 perl 脚本，环境仅 pin perl=5.26.2）。'
+- id: ea_utils_snakemake_wrappers
+  ea-utils: 官方无 wrapper（bio/ea-utils、bio/eautils 均 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ea-utils
+    与 bio/eautils 均返回 404；Snakemake 场景请用 native。
+implementations:
+- id: ea_utils_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.1.2.537"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标， 覆盖
+    join（fastq-join）/mcf（fastq-mcf）/stats（fastq-stats）/clipper（fastq-clipper）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/ea-utils
+    quay_biocontainers: quay.io/biocontainers/ea-utils
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda ea-utils=1.1.2.537；容器可用
+      quay.io/biocontainers/ea-utils:1.1.2.779--h9dd4a16_0（官方仅 1.1.2.779 tag）
+default_implementation: ea_utils_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'ea-utils 子命令：join|mcf|stats|clipper'
+  read1:
+    type: file
+    required: false
+    cli_arg: positional
+    description: join 的第一个（R1）FASTQ 文件
+  read2:
+    type: file
+    required: false
+    cli_arg: positional
+    description: join 的第二个（R2）FASTQ 文件
+  mate:
+    type: file
+    required: false
+    cli_arg: positional
+    description: join 的可选 barcode/mate FASTQ（第 3 个位置参数）
+  adapters:
+    type: file
+    required: false
+    cli_arg: positional
+    description: mcf/clipper 的接头序列文件（FASTA；mcf 可传 "n/a" 关闭接头切除）
+  reads:
+    type: file
+    required: false
+    cli_arg: positional
+    description: mcf/stats 的输入 FASTQ（可多个：mcf 可传多个 mates；stats 可多文件）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: '输出文件：join 为文件名模板（含 % 或后缀 join/un1/un2）；mcf 可重复（每个输入一个）；stats/clipper
+      单一输出'
+  verify:
+    type: string
+    required: false
+    cli_arg: -v
+    description: join：校验两文件 read id 匹配到第 C 个字符（Illumina 用空格 ' '）
+  pct_diff:
+    type: integer
+    required: false
+    cli_arg: -p
+    description: join/mcf/clipper：允许的最大差异百分比（join 默认 8；mcf 默认 10）
+  min_overlap:
+    type: integer
+    required: false
+    cli_arg: -m
+    description: join：最小重叠长度（默认 6）
+  report:
+    type: file
+    required: false
+    cli_arg: -r
+    description: join：verbose stitch length report 输出文件
+  qual:
+    type: integer
+    required: false
+    cli_arg: -q
+    description: mcf：触发碱基切除的质量阈值（默认 10）
+  min_len:
+    type: integer
+    required: false
+    cli_arg: -l
+    description: mcf：过滤后最小剩余长度（默认 19）
+  max_len:
+    type: integer
+    required: false
+    cli_arg: -L
+    description: mcf：过滤后最大剩余长度（默认无限制）
+  scale:
+    type: float
+    required: false
+    cli_arg: -s
+    description: mcf：接头最小匹配长度的 log 尺度（默认 2.2）
+  threshold:
+    type: float
+    required: false
+    cli_arg: -t
+    description: mcf：接头切除的 occurrence 阈值（默认 0.25）
+  window:
+    type: integer
+    required: false
+    cli_arg: -w
+    description: mcf：质量修剪窗口大小（默认 1）
+  per_base:
+    type: file
+    required: false
+    cli_arg: -x
+    description: stats：per-base fastx 统计输出文件
+  no_dups:
+    type: boolean
+    default: false
+    cli_arg: -D
+    description: stats：不做重复 read 统计
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应 ea-utils 子程序的额外参数（高级用法，慎用）
+  threads:
+    type: integer
+    default: 1
+    description: '线程契约字段：ea-utils 各子程序均为单线程，不接受线程参数（fastq-mcf 的 -p 是接头差异百分比，非线程）。'
+outputs:
+  joined_fastq:
+    type: file
+    format: fastq
+    description: join 输出的拼接序列（<output>join）
+  unassembled_fastq:
+    type: file
+    format: fastq
+    description: join 输出的未拼接 reads（<output>un1 / <output>un2）
+  clipped_fastq:
+    type: file
+    format: fastq
+    description: mcf/clipper 输出的接头切除后 FASTQ
+  stats_report:
+    type: file
+    format: txt
+    description: stats 输出的统计报告（stdout 或 -x 指定文件）
+environment:
+  container_official: quay.io/biocontainers/ea-utils（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖（当前仅 1.1.2.779--h9dd4a16_0），本地不再维护 Dockerfile/Apptainer.def；宿主机直跑
+    main.py 时用 conda/mamba 安装 ea-utils。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    join: 1
+    mcf: 1
+    stats: 1
+    clipper: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: fastq-join

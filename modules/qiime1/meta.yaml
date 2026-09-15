@@ -1,0 +1,124 @@
+software: qiime1
+canonical: qiime1
+category: microbiome
+description: 'QIIME 1（Quantitative Insights Into Microbial Ecology 1，1.9.1）是第一代微生物组分析工具包：基于
+  Python 2.7，用 OTU（Operational Taxonomic Unit）聚类方法完成从原始测序数据到多样性分析的完整流程——映射文件校验（validate_mapping_file.py）→
+  双端拼接（join_paired_ends.py）→ 拆分样本（split_libraries_fastq.py）→ 开放式参考 OTU 挑选（pick_open_reference_otus.py）→
+  嵌合体检测/过滤（parallel_identify_chimeric_seqs.py、filter_fasta.py）→ OTU 表（make_otu_table.py）→
+  系统发育（filter_alignment.py、make_phylogeny.py）→ 物种组成/多样性（summarize_taxa_through_plots.py、beta_diversity_through_plots.py、alpha_rarefaction.py）。
+  **已淘汰（deprecated，2018 年停止维护，Python 2.7 EOL）**：新项目请使用 qiime2 模块。
+
+  '
+homepage: http://qiime.org/
+license: GPL-2.0
+deprecated: true
+deprecated_note: '上游 2018 年停止维护、基于 Python 2.7（Py2.7 已于 2020-01 EOL）；OTU 聚类工作流被 QIIME
+  2（DADA2/Deblur ASV 工作流）取代。本模块只做「录入」：native 为「说明型 + 命令构造」驱动（逐脚本构造历史命令，不执行真实分析），
+  不产出自建 Dockerfile/Apptainer.def（deprecated 模块不建容器配方）。历史渠道仍可复现（bioconda qiime=1.9.1 →
+  quay.io/biocontainers/qiime:1.9.1--py27_0 / depot sif，见 README「环境安装」）。'
+software_versions:
+- id: qiime1_native
+  qiime: '1.9.1（bioconda latest；versions 1.8.0 / 1.9.1；PyPI qiime 1.9.1 license=GPL）'
+  subcommands: 'validate_mapping_file.py · join_paired_ends.py · split_libraries_fastq.py ·
+    pick_open_reference_otus.py · parallel_identify_chimeric_seqs.py · filter_fasta.py ·
+    make_otu_table.py · filter_alignment.py · make_phylogeny.py · summarize_taxa_through_plots.py
+    · beta_diversity_through_plots.py · alpha_rarefaction.py · print_qiime_config.py ·
+    assign_taxonomy.py · pick_otus.py'
+  build_route: '历史遗留渠道：bioconda qiime=1.9.1 → quay.io/biocontainers/qiime:1.9.1--py27_0
+    / depot.galaxyproject.org sif（自动构建历史镜像）；或 Python 2.7 下 pip2.7 install qiime /
+    qiime-deploy。软件 deprecated → 不产出自建 Dockerfile/Apptainer.def'
+  source: https://anaconda.org/bioconda/qiime
+  note: '2026-09 核实：bioconda qiime latest=1.9.1（api.anaconda.org 200）；quay 镜像 tag
+    含 1.9.1--py27_0 / 1.9.1--np110py27_1 / 1.9.1--np112py27_1；depot sif qiime%3A1.9.1--py27_0 可达（200）。
+    PyPI qiime 1.9.1 亦存在。'
+- id: qiime1_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/qiime 404）
+  qiime: —
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/qiime 返回 404；历史场景以
+    native 驱动为兜底。
+- id: qiime1_snakemake_wrappers
+  qiime: 官方无 wrapper（bio/qiime 404）
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/qiime 返回 404；历史场景以
+    native 驱动为兜底。
+- id: qiime1_nextflow_local
+  qiime1: 未启用（deprecated 模块不建 nextflow/；需要时以 shell 调 native/main.py）
+- id: qiime1_snakemake_local
+  qiime1: 未启用（deprecated 模块不建 snakemake/；需要时以 shell 调 native/main.py）
+implementations:
+- id: qiime1_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.9.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。本实现为「说明型 + 命令构造」：
+    按 QIIME 1.9.1 脚本参数构造历史命令行并打印，不实际运行（软件 deprecated、Py2.7 EOL），主要供历史复现与文档化调用。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/qiime（qiime=1.9.1 历史包）
+    quay: quay.io/biocontainers/qiime:1.9.1--py27_0（bioconda 自动构建历史镜像）
+    galaxyproject: https://depot.galaxyproject.org/singularity/qiime%3A1.9.1--py27_0
+    install_hint: 宿主机 conda 路线 mamba create -n qiime1-native -c conda-forge -c bioconda
+      qiime=1.9.1；或 Py2.7 下 pip2.7 install qiime / qiime-deploy（见 README「环境安装」）
+default_implementation: qiime1_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'qiime1 子命令（脚本名去 .py）：validate_mapping_file|join_paired_ends|split_libraries_fastq|pick_open_reference_otus|parallel_identify_chimeric_seqs|filter_fasta|make_otu_table|filter_alignment|make_phylogeny|summarize_taxa_through_plots|beta_diversity_through_plots|alpha_rarefaction|print_qiime_config|assign_taxonomy|pick_otus'
+  args:
+    type: string
+    required: false
+    description: '脚本参数（原样透传，如 -m mapping.txt -o 01.mapping_file_output；-f R1.fastq.gz
+      -r R2.fastq.gz -o out）'
+  threads:
+    type: integer
+    default: 4
+    description: '线程数（仅对支持 -O 并行作业的脚本注入：pick_open_reference_otus / parallel_identify_chimeric_seqs）'
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（QIIME 1 无全局 --tmpdir 选项，仅进程 TMPDIR 环境变量）
+outputs:
+  joined_fastq:
+    type: file
+    format: fastq
+    description: join_paired_ends.py 输出的拼接 fastq（fastqjoin.join.fastq）
+  otu_table:
+    type: file
+    format: biom
+    description: make_otu_table.py 输出的 OTU 表（BIOM）
+  taxonomy:
+    type: file
+    format: txt
+    description: assign_taxonomy.py / pick_open_reference_otus.py 输出的分类注释
+  tree:
+    type: file
+    format: newick
+    description: make_phylogeny.py 输出的系统发育树
+  plots_dir:
+    type: file
+    description: summarize_taxa_through_plots.py / beta_diversity_through_plots.py / alpha_rarefaction.py
+      输出的可视化目录
+environment:
+  note: '⚠️ deprecated：不产出自建容器配方（不提供 Dockerfile/Apptainer.def）。历史渠道：bioconda
+    qiime=1.9.1（linux-64/osx-64）→ quay.io/biocontainers/qiime:1.9.1--py27_0 与 depot.galaxyproject.org
+    sif；或 Py2.7 下 pip2.7 install qiime / qiime-deploy。宿主机安装登记在 README「环境安装」。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    pick_open_reference_otus: 4
+    parallel_identify_chimeric_seqs: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: qiime
+  nextflow_note: 本模块未建 nextflow/ 与 snakemake/ 目录；nf-core / snakemake-wrappers 均无 qiime 官方子模块（2026-09
+    核实 404），且软件 deprecated → 历史复现一律以 native 驱动为兜底。

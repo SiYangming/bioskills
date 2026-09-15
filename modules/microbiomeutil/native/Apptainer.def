@@ -1,0 +1,129 @@
+# microbiomeutil native Apptainer/Singularity 定义（自建兜底：apt 最小化 + 官方 SourceForge 源码 make，禁 miniconda）
+#
+# 背景：microbiomeutil（Broad Institute 16S 工具套件：ChimeraSlayer / NAST-iEr / WigeoN）
+#       无官方镜像/conda 包 —— bioconda（microbiomeutil/chimeraslayer 404）、
+#       quay.io/biocontainers（401 = 仓库不存在）、depot.galaxyproject.org（404）、
+#       nf-core / snakemake-wrappers / homebrew 均无（2026-09 核实）。官方仅 SourceForge 源码包
+#       microbiomeutil-r20110519.tgz（133,623,556 bytes；仅公布 md5）。
+#       本配方：debian:bookworm-slim + apt 构建依赖（build-essential/gcc/make）+ 官方源码 make；
+#       NAST-iEr 为 C 程序需编译，ChimeraSlayer / WigeoN 为 Perl 脚本；
+#       运行期外部依赖 megablast（ncbi-blast+）与 cdbtools（cdbfasta/cdbyank）由 apt 提供。
+#
+# 构建（在仓库根 modules/ 层执行；%files 源路径相对构建 cwd=modules/）：
+#   cd modules && apptainer build microbiomeutil-r20110519.sif microbiomeutil/native/Apptainer.def
+# 运行（容器内 CLI = python 驱动 main.py）：
+#   apptainer run -B $PWD:/data -H /data microbiomeutil-r20110519.sif --list-commands
+#   apptainer run -B $PWD:/data -H /data microbiomeutil-r20110519.sif \
+#       chimeraslayer --query-nast /data/q.NAST --db-nast /data/ref.NAST --db-fasta /data/ref.fasta
+
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    Software microbiomeutil
+    Version r20110519
+    MicrobiomeutilVersion r20110519
+    org.bioskills.software microbiomeutil
+    impl native
+    base_image debian:bookworm-slim
+    pkg_route apt build deps + SourceForge source (make)
+
+%files
+    # 源路径相对 apptainer build 时的 cwd（modules/）
+    base.py /opt/skill/base.py
+    microbiomeutil/native/main.py /opt/skill/main.py
+    microbiomeutil/meta.yaml /opt/skill/microbiomeutil/meta.yaml
+    microbiomeutil/native/test/ /opt/skill/test/
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    set -eux
+
+    # 1) apt 最小依赖：构建（build-essential/gcc/make）+ 运行（ncbi-blast+/cdbfasta/perl）
+    #    + 驱动层（python3/python3-yaml/procps）
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc \
+        make \
+        ncbi-blast+ \
+        cdbfasta \
+        perl \
+        ca-certificates \
+        curl \
+        python3 \
+        python3-yaml \
+        procps
+
+    # 2) 官方源码归档下载 + md5 校验 + make + 部署 /opt/microbiomeutil
+    curl -fSL -o /tmp/mbu.tgz \
+        "https://downloads.sourceforge.net/project/microbiomeutil/microbiomeutil-r20110519.tgz"
+    echo "11eaac4b0468c05297ba88ec27bd4b56  /tmp/mbu.tgz" | md5sum -c -
+    mkdir -p /tmp/src && tar -xzf /tmp/mbu.tgz -C /tmp/src
+    SRC="$(find /tmp/src -mindepth 1 -maxdepth 1 -type d -name 'microbiomeutil*' | head -1)"
+    test -n "$SRC"
+    cd "$SRC"
+    make
+    test -x ./NAST-iEr/NAST-iEr
+    test -f ./ChimeraSlayer/ChimeraSlayer.pl
+    mv "$SRC" /opt/microbiomeutil
+    rm -rf /tmp/src /tmp/mbu.tgz
+
+    # 3) 驱动层自检（main.py 可自省）
+    /usr/bin/python3 /opt/skill/main.py --list-commands >/tmp/mbu_commands.txt
+    grep -q '^chimeraslayer' /tmp/mbu_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema >/tmp/mbu_schema.json
+    test -s /tmp/mbu_schema.json
+    rm -f /tmp/mbu_commands.txt /tmp/mbu_schema.json
+
+    # 4) 仅构建期下载工具移除 + 清理四连（gcc/make/ncbi-blast+/cdbfasta 保留）
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONUNBUFFERED=1
+    export PYTHONPATH=/opt/skill
+    export PATH=/opt/microbiomeutil/ChimeraSlayer:/opt/microbiomeutil/NAST-iEr:/opt/microbiomeutil/WigeoN:$PATH
+    export TMPDIR=/tmp
+
+%runscript
+    exec /usr/bin/python3 /opt/skill/main.py "$@"
+
+%test
+    # 非交互自检：组件就位 + 驱动可自省（microbiomeutil 上游无 --version）
+    set -eux
+    test -x /opt/microbiomeutil/NAST-iEr/NAST-iEr
+    test -f /opt/microbiomeutil/ChimeraSlayer/ChimeraSlayer.pl
+    test -f /opt/microbiomeutil/WigeoN/run_WigeoN.pl
+    command -v megablast
+    command -v cdbyank
+    /usr/bin/python3 /opt/skill/main.py --list-commands > /tmp/mbu_commands.txt
+    grep -q '^chimeraslayer' /tmp/mbu_commands.txt
+    /usr/bin/python3 /opt/skill/main.py --schema > /tmp/mbu_schema.json
+    test -s /tmp/mbu_schema.json
+    rm -f /tmp/mbu_commands.txt /tmp/mbu_schema.json
+
+%help
+    microbiomeutil native Apptainer 镜像（自建：apt 最小化 + 官方 SourceForge 源码 make r20110519）。
+    组件：ChimeraSlayer（嵌合体检测）/ NAST-iEr（NAST 比对）/ WigeoN（Pintail 类异常检测）。
+    运行期依赖 megablast（ncbi-blast+）与 cdbtools（cdbfasta/cdbyank）已内置。
+    驱动用法：apptainer run -B $PWD:/data -H /data microbiomeutil-r20110519.sif chimeraslayer \
+        --query-nast /data/q.NAST --db-nast /data/ref.NAST --db-fasta /data/ref.fasta
+    说明：官方渠道（bioconda/quay biocontainers/depot/nf-core/snakemake-wrappers/brew）2026-09
+    全无 → 自建镜像；上游未提供 --version，故以组件存在性 + 驱动自省作为可用性判定。

@@ -1,0 +1,86 @@
+# =============================================================================
+# qiime2 native Apptainer/Singularity 定义（无官方 depot sif，本地构建兜底）
+#
+# 路线：与 native/Dockerfile 一致 —— QIIME 2 官方只以 Conda 发行版分发，不在 apt/bioconda；
+#       apt 只装运行时，curl 拉 micromamba 静态二进制，用官方 2026.1 amplicon conda.yml 建 /opt/env。
+#   ⚠️ depot.galaxyproject.org 无 qiime2 预构建 sif（2026-09 核实 404），只能本地 build；
+#      如需官方镜像，可直接 `apptainer pull qiime2.sif docker://quay.io/qiime2/amplicon:2026.1`。
+#
+# 构建：apptainer build qiime2-2026.1.sif native/Apptainer.def
+# 运行：apptainer run -B $PWD:/data -H /data qiime2-2026.1.sif tools.peek /data/demux.qza
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    org.bioskills.software qiime2
+    org.bioskills.impl native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.qiime2_version 2026.1
+    org.bioskills.pkg_route "apt(runtime)+micromamba(QIIME 2 2026.1 amplicon conda.yml -> /opt/env)"
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export PYTHONUNBUFFERED=1
+    export TMPDIR=/tmp
+    export MAMBA_ROOT_PREFIX=/opt/micromamba
+    export PATH=/opt/env/bin:/opt/micromamba/bin:$PATH
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    set -eux
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3-minimal \
+        python3 \
+        ca-certificates \
+        procps \
+        curl \
+        bzip2
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+    # micromamba 静态二进制
+    mkdir -p /opt/micromamba
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+        | tar -xvj -C /opt/micromamba bin/micromamba
+    /opt/micromamba/bin/micromamba --version
+
+    # 官方 QIIME 2 2026.1 amplicon 发行版环境
+    curl -fsSL -o /opt/qiime2-env.yml \
+        "https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2026.1/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml"
+    /opt/micromamba/bin/micromamba create -y -p /opt/env -f /opt/qiime2-env.yml
+    rm -f /opt/qiime2-env.yml
+
+    # 版本断言 + 清理四连
+    /opt/env/bin/qiime --version | grep -q "2026.1"
+    apt-get purge -y curl bzip2
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+    rm -rf /opt/micromamba/pkgs
+
+%runscript
+    exec qiime "$@"
+
+%test
+    set -eux
+    qiime --version | grep -q "2026.1"
+    qiime --version | head -n 1
+
+%help
+    qiime2 native Apptainer 镜像（bookworm-slim + micromamba 引导官方 QIIME 2 2026.1 amplicon 环境）。
+    qiime2: 2026.1（qiime 位于 /opt/env/bin/qiime）
+    调用方式：apptainer run qiime2-2026.1.sif <plugin> <action> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data qiime2-2026.1.sif \
+        tools.peek /data/demux.qza

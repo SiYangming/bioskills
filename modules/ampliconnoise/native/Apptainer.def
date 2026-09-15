@@ -1,0 +1,80 @@
+# =============================================================================
+# ampliconnoise native Apptainer/Singularity 定义（无官方 depot sif，本地构建兜底）
+#
+# 路线：与 native/Dockerfile 一致 —— 官方渠道全无；原 Google Code 站已死，Google Code 归档发布包可达。
+#       debian:bookworm-slim + apt（build-essential + mpich）+ 官方归档源码 make && make install。
+#       各程序为 MPI 程序，依赖 mpicc/mpirun；无预构建 sif，只能本地 build。
+#
+# 构建：apptainer build ampliconnoise-1.27.sif native/Apptainer.def
+# 运行：apptainer run -B $PWD:/data -H /data ampliconnoise-1.27.sif \
+#           mpirun -np 4 PyroNoise -s /data/reads.sff -d /opt/ampliconnoise-1.27/Data -o /data/out
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%labels
+    Maintainer bioskills
+    org.bioskills.software ampliconnoise
+    org.bioskills.impl native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.ampliconnoise_version 1.27
+    org.bioskills.pkg_route "apt(build-essential+mpich)+Google Code 归档源码 make"
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export PATH=/opt/ampliconnoise-1.27/bin:$PATH
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    set -eux
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        mpich \
+        ca-certificates \
+        curl
+
+    curl -fsSL -o /tmp/ampliconnoise.tar.gz \
+        "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/ampliconnoise/AmpliconNoiseV1.27.tar.gz"
+    tar -xzf /tmp/ampliconnoise.tar.gz -C /opt
+    rm -f /tmp/ampliconnoise.tar.gz
+    mv /opt/AmpliconNoiseV1.27 /opt/ampliconnoise-1.27
+    cd /opt/ampliconnoise-1.27
+    make
+    make install
+    test -x /opt/ampliconnoise-1.27/bin/PyroNoise
+    test -f /opt/ampliconnoise-1.27/Data/LookUp.dat
+
+    # 清理四连（保留 mpich 运行时 mpirun）
+    apt-get purge -y curl build-essential
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf \
+        /usr/share/doc/* \
+        /usr/share/man/* \
+        /usr/share/info/* \
+        /usr/share/locale/* \
+        /var/cache/debconf/* \
+        /var/lib/apt/lists/* \
+        /tmp/* \
+        /var/tmp/*
+
+%runscript
+    exec "$@"
+
+%test
+    set -eux
+    ls /opt/ampliconnoise-1.27/bin
+    test -x /opt/ampliconnoise-1.27/bin/PyroNoise
+    test -x /opt/ampliconnoise-1.27/bin/PerseusD
+    test -f /opt/ampliconnoise-1.27/Data/LookUp.dat
+
+%help
+    ampliconnoise native Apptainer 镜像（bookworm-slim + mpich + Google Code 归档源码编译）。
+    AmpliconNoise: 1.27（12 个 MPI 程序位于 /opt/ampliconnoise-1.27/bin）
+    调用方式：apptainer run ampliconnoise-1.27.sif mpirun -np 4 <program> [options]
+    挂载示例：apptainer run -B $PWD:/data -H /data ampliconnoise-1.27.sif \
+        mpirun -np 4 PyroNoise -s /data/reads.sff -d /opt/ampliconnoise-1.27/Data -o /data/out

@@ -1,0 +1,231 @@
+software: dada2
+canonical: dada2
+category: microbiome
+description: 'DADA2（Divisive Amplicon Denoising Algorithm 2）是扩增子测序去噪的 R 包：基于
+  错误模型推断真实生物学序列，输出单核苷酸分辨率的 ASVs（扩增子序列变异体），内置嵌合体检测与
+  去除、支持单端/双端与多线程。以 R 包形态分发（无独立 CLI），本模块用 Rscript 驱动
+  filterAndTrim / learnErrors / denoise / mergePairs / makeSequenceTable / removeBimera
+  等步骤；QIIME 2 内置 qiime dada2 denoise-single/denoise-paired。
+  conda / 容器包名规范名为 bioconductor-dada2（目录名取软件短名 dada2）。
+  '
+homepage: https://benjjneb.github.io/dada2/
+license: LGPL-2
+software_versions:
+- id: dada2_native
+  bioconductor-dada2: '1.38.0'
+  r: R >= 4.3（官方 biocontainer 内置 r45）
+  build_route: official biocontainer（quay.io/biocontainers/bioconductor-dada2 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bioconductor-dada2
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    DADA2 以 R 包形态分发，宿主机直跑 main.py 时用 conda/mamba 安装 bioconductor-dada2（或
+    R install.packages("dada2")）。'
+- id: dada2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/dada2 404）
+  bioconductor-dada2: —
+  source: —（nf-core/modules 仓库无 modules/nf-core/dada2）
+  note: 2026-09 抓取 https://github.com/nf-core/modules/tree/master/modules/nf-core/dada2
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 容器）为兜底。
+- id: dada2_snakemake_wrappers
+  bioconductor-dada2: 官方无 wrapper（bio/dada2 404）
+  source: —（snakemake-wrappers 仓库无 bio/dada2）
+  note: 2026-09 抓取 https://raw.githubusercontent.com/snakemake/snakemake-wrappers/master/bio/dada2/environment.yaml
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 容器）为兜底。
+- id: dada2_nextflow_local
+  bioconductor-dada2: 未启用（官方缺失时按 native 容器在 main.nf 中声明 Rscript 步骤）
+- id: dada2_snakemake_local
+  bioconductor-dada2: 未启用（需要时用 shell 调 native/main.py）
+implementations:
+- id: dada2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.38.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    覆盖 filterAndTrim / learnErrors / denoise（dada）/ mergePairs / makeSequenceTable /
+    removeBimera 全链路，自动注入多线程（multithread）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-dada2
+    quay_biocontainers: quay.io/biocontainers/bioconductor-dada2
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bioconductor-dada2=1.38.0；
+      容器可用 quay.io/biocontainers/bioconductor-dada2 镜像
+default_implementation: dada2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: dada2 子命令：filterAndTrim|learnErrors|denoise|dada|mergePairs|makeSequenceTable|removeBimera
+  fwd:
+    type: file
+    required: false
+    cli_arg: positional
+    description: filterAndTrim 输入 R1 fastq（可逗号分隔多样本）
+  filt:
+    type: file
+    required: false
+    cli_arg: --filt
+    description: filterAndTrim 输出 R1 过滤后 fastq（可逗号分隔，与 fwd 对应）
+  rev:
+    type: file
+    required: false
+    cli_arg: --rev
+    description: filterAndTrim 双端输入 R2 fastq（可选，给定时为双端模式）
+  filt_rev:
+    type: file
+    required: false
+    cli_arg: --filt-rev
+    description: filterAndTrim 输出 R2 过滤后 fastq（双端模式）
+  reads:
+    type: string
+    required: false
+    cli_arg: --reads
+    description: learnErrors/denoise 输入 fastq 路径（逗号分隔；denoise 为过滤后 fastq）
+  error:
+    type: file
+    required: false
+    cli_arg: --error
+    description: denoise 输入 error model RDS（learnErrors 产物）
+  input_rds:
+    type: file
+    required: false
+    cli_arg: positional
+    description: mergePairs/makeSequenceTable/removeBimera 的输入 RDS（dada/mergers/seqtab）
+  dada_f:
+    type: file
+    required: false
+    cli_arg: --dada-f
+    description: mergePairs 正向 dada RDS（denoise 产物）
+  dada_r:
+    type: file
+    required: false
+    cli_arg: --dada-r
+    description: mergePairs 反向 dada RDS
+  filt_f:
+    type: file
+    required: false
+    cli_arg: --filt-f
+    description: mergePairs 正向过滤后 fastq
+  filt_r:
+    type: file
+    required: false
+    cli_arg: --filt-r
+    description: mergePairs 反向过滤后 fastq
+  output:
+    type: file
+    required: false
+    cli_arg: --output
+    description: 输出 RDS 路径（learnErrors/denoise/mergePairs/makeSequenceTable/removeBimera）
+  trunc_len:
+    type: integer
+    required: false
+    cli_arg: --trunc-len
+    description: filterAndTrim 3' 端整体截短长度（0 表示不截短；双端可配合 trunc-len-f/-r）
+  trim_left:
+    type: integer
+    required: false
+    cli_arg: --trim-left
+    description: filterAndTrim 5' 端截短碱基数（0 表示不截短）
+  max_ee:
+    type: float
+    required: false
+    default: 2.0
+    cli_arg: --max-ee
+    description: filterAndTrim 最大期望错误数（maxEE）
+  trunc_q:
+    type: integer
+    required: false
+    default: 2
+    cli_arg: --trunc-q
+    description: filterAndTrim 质量得分截断阈值（truncQ）
+  min_len:
+    type: integer
+    required: false
+    default: 20
+    cli_arg: --min-len
+    description: filterAndTrim 最小保留长度（minLen）
+  min_overlap:
+    type: integer
+    required: false
+    default: 12
+    cli_arg: --min-overlap
+    description: mergePairs 最小重叠长度
+  max_mismatch:
+    type: integer
+    required: false
+    default: 0
+    cli_arg: --max-mismatch
+    description: mergePairs 最大错配数
+  method:
+    type: string
+    required: false
+    default: consensus
+    cli_arg: --method
+    description: removeBimera 方法：consensus|pooled|per-sample
+  nbases:
+    type: integer
+    required: false
+    cli_arg: --nbases
+    description: learnErrors 用于学习的碱基数（默认 1e8）
+  pool:
+    type: boolean
+    default: false
+    cli_arg: --pool
+    description: denoise 是否跨样本合并（pool=TRUE）
+  self_consist:
+    type: boolean
+    default: false
+    cli_arg: --self-consist
+    description: denoise 是否自洽迭代（selfConsist=TRUE）
+  rm_phix:
+    type: boolean
+    default: false
+    cli_arg: --rm-phix
+    description: filterAndTrim 是否去除 PhiX
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（映射到 DADA2 multithread）
+outputs:
+  filtered_fastq:
+    type: file
+    format: fastq
+    description: filterAndTrim 输出的过滤后 fastq（filt/filt.rev）
+  error_model:
+    type: file
+    format: rds
+    description: learnErrors 输出的 error model RDS
+  dada_result:
+    type: file
+    format: rds
+    description: denoise（dada）输出的 dada 对象 RDS
+  merged:
+    type: file
+    format: rds
+    description: mergePairs 输出的合并对象 RDS
+  seqtab:
+    type: file
+    format: rds
+    description: makeSequenceTable 输出的 ASV 序列表 RDS
+  seqtab_nochim:
+    type: file
+    format: rds
+    description: removeBimera 输出的去嵌合序列表 RDS
+environment:
+  container_official: quay.io/biocontainers/bioconductor-dada2（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 bioconductor-dada2，或用 R install.packages("dada2")。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    learnErrors: 8
+    denoise: 8
+    dada: 8
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript

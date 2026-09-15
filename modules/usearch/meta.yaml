@@ -1,0 +1,179 @@
+software: usearch
+canonical: usearch
+category: otu_clustering
+description: 'USEARCH 是 Robert C. Edgar 开发的高速序列分析工具，提供序列聚类、嵌合体检测（UCHIME）、
+  序列比对与 OTU 挑选（UPARSE）等功能，是 QIIME 1.x 中 OTU 聚类（uclust）与嵌合体检测的核心引擎。
+  本模块登记 USEARCH 8.1.1861，覆盖 cluster_otus / uchime_denovo / uchime_ref / usearch_global /
+  derep_fulllength / cluster_fast。
+
+  '
+homepage: https://www.drive5.com/usearch/
+license: '⚠️ 许可受限：drive5 USEARCH 为商业软件（学术免费，需注册下载并遵守 USEARCH License）；
+  本模块登记的 8.1.1861 历史二进制经 rcedgar/usearch_old_binaries 以 CC0-1.0 重发布
+  （bioconda 标注 license=CC0）。商业使用前请务必阅读上游许可（详见 README「许可声明」）。'
+software_versions:
+- id: usearch_native
+  usearch: 8.1.1861
+  build_route: official biocontainer（quay.io/biocontainers/usearch / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/usearch
+  note: '⚠️ 许可受限工具：drive5 USEARCH 为商业软件（学术免费、需注册下载、须遵守 USEARCH
+    License）。bioconda/quay 提供的 8.1.1861 二进制来自 rcedgar/usearch_old_binaries（标注
+    CC0-1.0 / public domain），官方容器 tag=usearch:8.1.1861--h9ee0642_0（quay 与 depot 均有）。
+    native/install.sh 的 binary 路线不内置任何需注册的下载链接，仅提示用户自行获取授权副本；
+    推荐 conda 路线（bioconda::usearch=8.1.1861）。bioconda 亦提供更新的 12.0_beta
+    （license=GPL-3.0-or-later，来自 github.com/rcedgar/usearch12，GitHub 亦识别为 GPL-3.0；
+    注意该版本与 8.1.1861 的命令行接口有差异）。'
+- id: usearch_nextflow_nfcore
+  usearch: 官方无 nf-core 子模块（404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/usearch
+    返回 404。
+- id: usearch_snakemake_wrappers
+  usearch: 官方无 wrapper（bio/usearch 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/usearch
+    返回 404；Snakemake 场景请用 native。
+implementations:
+- id: usearch_native
+  path: native
+  source_type: custom
+  type: native
+  version: "8.1.1861"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标，覆盖
+    cluster_otus / uchime_denovo / uchime_ref / usearch_global / derep_fulllength / cluster_fast。
+    ⚠️ 商业使用前请确认已获 drive5 授权。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/usearch
+    quay_biocontainers: quay.io/biocontainers/usearch
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda usearch=8.1.1861；容器可用
+      quay.io/biocontainers/usearch:8.1.1861--h9ee0642_0
+default_implementation: usearch_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'usearch 子命令：cluster_otus|uchime_denovo|uchime_ref|usearch_global|derep_fulllength|cluster_fast'
+  input:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入 FASTA（嵌合体 de novo 检测需 ;size=N 丰度标签）
+  db:
+    type: file
+    required: false
+    cli_arg: -db
+    description: 参考库 FASTA（uchime_ref / usearch_global 必填）
+  output:
+    type: file
+    required: false
+    cli_arg: -otus|-uchimeout|-output
+    description: '主输出：cluster_otus→-otus；uchime_denovo/uchime_ref→-uchimeout；derep_fulllength→-output'
+  identity:
+    type: string
+    required: false
+    cli_arg: -id
+    description: 最小一致性阈值（usearch_global / cluster_fast，如 0.97）
+  strand:
+    type: string
+    required: false
+    cli_arg: -strand
+    description: 搜索链：plus / both（uchime_ref / usearch_global）
+  otutabout:
+    type: file
+    required: false
+    cli_arg: -otutabout
+    description: OTU table（tab 分隔）输出（usearch_global）
+  uc:
+    type: file
+    required: false
+    cli_arg: -uc
+    description: UC 格式输出（usearch_global / cluster_fast / derep_fulllength）
+  blast6out:
+    type: file
+    required: false
+    cli_arg: -blast6out
+    description: BLAST6 格式输出（usearch_global）
+  centroids:
+    type: file
+    required: false
+    cli_arg: -centroids
+    description: 聚类中心序列输出（cluster_fast）
+  chimeras:
+    type: file
+    required: false
+    cli_arg: -chimeras
+    description: 嵌合体序列输出 FASTA（uchime_denovo / uchime_ref）
+  nonchimeras:
+    type: file
+    required: false
+    cli_arg: -nonchimeras
+    description: 非嵌合体序列输出 FASTA（uchime_denovo / uchime_ref）
+  relabel:
+    type: string
+    required: false
+    cli_arg: -relabel
+    description: 序列重命名前缀（cluster_otus / derep_fulllength）
+  minsize:
+    type: integer
+    required: false
+    cli_arg: -minsize
+    description: 丢弃小于该丰度的 OTU/簇（cluster_otus / cluster_fast）
+  sizein:
+    type: boolean
+    default: false
+    cli_arg: -sizein
+    description: 输入含丰度标签 ;size=N
+  sizeout:
+    type: boolean
+    default: false
+    cli_arg: -sizeout
+    description: 输出添加 ;size=N 标签
+  threads:
+    type: integer
+    default: 8
+    cli_arg: -threads
+    description: 线程数（仅搜索类子命令 usearch_global / uchime_ref / cluster_fast 注入）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 usearch 的额外参数（高级用法，慎用）
+outputs:
+  otus_fasta:
+    type: file
+    format: fasta
+    description: cluster_otus 输出的 OTU 代表序列
+  uchime_table:
+    type: file
+    format: txt
+    description: uchime_denovo / uchime_ref 输出的 UCHIME 结果表
+  otu_table:
+    type: file
+    format: txt
+    description: usearch_global 输出的 OTU table（-otutabout）
+  unique_fasta:
+    type: file
+    format: fasta
+    description: derep_fulllength 输出的去冗余 unique 序列
+environment:
+  container_official: quay.io/biocontainers/usearch（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: '⚠️ 许可受限：官方镜像已覆盖（usearch:8.1.1861--h9ee0642_0），本地不再维护
+    Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba 安装 usearch=8.1.1861。
+    商业使用前请阅读并遵守 USEARCH 许可。'
+optimization:
+  default_cpus: 8
+  default_mem_mb: 8192
+  env_vars:
+    TMPDIR: '{tmpdir}'
+  per_subcommand_threads:
+    usearch_global: 8
+    uchime_ref: 8
+    cluster_fast: 8
+    cluster_otus: 1
+    uchime_denovo: 1
+    derep_fulllength: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: usearch

@@ -1,0 +1,163 @@
+software: ancom
+canonical: ancom
+category: differential_abundance
+description: 'ANCOM（Analysis of Composition of Microbiomes）是检测微生物群落组成差异的差异丰度
+  （differential abundance）统计方法，考虑微生物组数据的组成性（compositional nature），通过
+  成对 log-ratio 检验（W 统计量）+ 多重校正控制假阳性。以 R 脚本形态分发（无独立命令行二进制）：
+  由 Kumar 等开发，代码归档于 FrederickHuangLin/ANCOM（含 feature_table_pre_process 预处理与
+  ANCOM 主函数）；QIIME 2 以 `qiime composition ancom` 插件调用，其后继实现 ANCOM-BC / ANCOM-BC2
+  已并入 Bioconductor 的 ANCOMBC 包。本模块以 Rscript 驱动 programs/ancom.R 完成分析。
+  '
+homepage: https://github.com/FrederickHuangLin/ANCOM
+license: MIT
+software_versions:
+- id: ancom_native
+  ancom: '2.1'
+  r: R >= 4.0（Debian bookworm r-base-core / conda r-base）
+  build_route: 无官方镜像（bioconda/quay/depot 均无 ancom）→ 自建容器（native/Dockerfile + Apptainer.def，debian:bookworm-slim + apt R 包）
+  source: https://github.com/FrederickHuangLin/ANCOM（代码归档，重定向至 ANCOM-Code-Archive）+ DOI 10.5281/zenodo.3577802
+  note: '上游代码归档无 releases/tags，版本号按 ANCOM 用户手册自述 v2.1（“ANCOM v2.1 currently supports
+    categorical main_var”）；依赖 R 包 nlme/tidyverse/compositions。原仓库已归档且不再维护，官方推荐改用
+    后继 ANCOM-BC（bioconductor-ancombc，见下）。'
+- id: ancom_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/ancom 404）
+  ancom: —
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ancom
+    返回 404；Nextflow 场景以 native/（Rscript 驱动）为兜底。'
+- id: ancom_snakemake_wrappers
+  ancom: 官方无 wrapper（bio/ancom 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ancom
+    返回 404；Snakemake 场景以 native/ 为兜底。'
+- id: ancombc_successor
+  bioconductor_ancombc: '2.14.0'
+  source: https://anaconda.org/bioconda/bioconductor-ancombc（quay.io/biocontainers/bioconductor-ancombc:2.14.0--r45hdfd78af_0）
+  note: '后继实现 ANCOM-BC / ANCOM-BC2 / ANCOM（同一 Bioconductor 包）官方 conda/容器渠道——bioconda
+    bioconductor-ancombc=2.14.0；本模块（原始 ANCOM 脚本）与 ANCOMBC 包为不同实现，原始实现无官方渠道。'
+implementations:
+- id: ancom_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    analyze 子命令以 Rscript 运行 run_ancom.R，先 feature_table_pre_process 预处理（零值/结构零/
+    离群处理），再 ANCOM 检测两组间差异丰度 taxa，输出 W 统计量与各阈值检出标记。'
+  container_ref:
+    github: https://github.com/FrederickHuangLin/ANCOM
+    zenodo: https://doi.org/10.5281/zenodo.3577802
+    self_built: native/Dockerfile + Apptainer.def（debian:bookworm-slim + apt r-base-core/r-cran-nlme/r-cran-tidyverse/r-cran-compositions + ANCOM 源码）
+    successor: bioconda bioconductor-ancombc=2.14.0（ANCOM-BC 后继版本，官方渠道）
+    install_hint: 宿主机 bash native/install.sh（装 R 依赖 + 下载 ANCOM 源码到 ~/software/ANCOM）；容器
+      docker build native/ 或直拉后继 biocontainer bioconductor-ancombc（见 README）
+default_implementation: ancom_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ancom 子命令：analyze（唯一核心命令）
+  feature_table:
+    type: file
+    required: true
+    description: 特征（OTU/ASV）丰度表，Tab 分隔：首列为特征 id，其余列为样本（绝对丰度，勿转相对丰度）
+  metadata:
+    type: file
+    required: true
+    description: 样本元数据表，Tab 分隔：首列为样本 id（与 feature_table 列名匹配），含分组/协变量列
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: 差异丰度结果 CSV（各行含 W 统计量与 detected_0.9/0.8/0.7/0.6 检出标记）
+  sample_var:
+    type: string
+    required: true
+    description: 元数据中样本 ID 所在列名（如 Sample.ID）
+  main_var:
+    type: string
+    required: true
+    description: 主分组变量列名（需为分类变量；ANCOM 仅支持两组比较，超过两组会报错）
+  group_var:
+    type: string
+    required: false
+    description: 用于结构零识别的分组列（纵向/多组场景；默认不设，仅用公式 1 判结构零）
+  out_cut:
+    type: float
+    required: false
+    default: 0.05
+    description: 离群零/离群值判定阈值（混合分布比例，默认 0.05）
+  zero_cut:
+    type: float
+    required: false
+    default: 0.9
+    description: 零比例高于该值的特征剔除（默认 0.90）
+  lib_cut:
+    type: integer
+    required: false
+    default: 0
+    description: 文库大小低于该值的样本剔除（默认 0，不剔除）
+  neg_lb:
+    type: boolean
+    required: false
+    default: false
+    description: 结构零判定是否同时使用渐近下界判据（TRUE 用两条判据，FALSE 仅用公式 1）
+  p_adj_method:
+    type: string
+    required: false
+    default: BH
+    description: 多重比较校正方法（p.adjust 支持的方法名，默认 BH）
+  alpha:
+    type: float
+    required: false
+    default: 0.05
+    description: 显著性水平（默认 0.05）
+  adj_formula:
+    type: string
+    required: false
+    description: 协变量校正公式字符串（如 "ReportedAntibioticUsage"）
+  rand_formula:
+    type: string
+    required: false
+    description: 随机效应公式（nlme::lme，如 "~ 1 | studyid"；纵向分析用）
+  ancom_home:
+    type: string
+    required: false
+    description: ANCOM 源码目录（含 programs/ancom.R）；缺省用环境变量 ANCOM_HOME，再回退 ~/software/ANCOM
+  threads:
+    type: integer
+    default: 4
+    description: 线程数占位（ANCOM 为单进程 R 脚本；仅为统一 CLI 接口保留）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 run_ancom.R 的额外参数（高级用法，慎用）
+outputs:
+  result_csv:
+    type: file
+    format: csv
+    description: 差异丰度结果表（W 统计量 + 各 cutoff 检出标记，供火山图/报告使用）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 原始 ANCOM 无官方镜像（bioconda/quay/depot 均无；2026-09 核实）→ 保留自建配方
+    （native/Dockerfile + Apptainer.def，debian:bookworm-slim + apt --no-install-recommends 装
+    r-base-core/r-cran-nlme/r-cran-tidyverse/r-cran-compositions + 下载 ANCOM 源码）；后继 ANCOM-BC
+    有官方渠道（bioconductor-ancombc=2.14.0，见 software_versions）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+  per_subcommand_threads:
+    analyze: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core / snakemake-wrappers 均无 ancom 官方子模块
+    （2026-09 核实 404），Nextflow/Snakemake 场景以 native Rscript 驱动为兜底。

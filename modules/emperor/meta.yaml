@@ -1,0 +1,114 @@
+software: emperor
+canonical: emperor
+category: visualization
+description: 'Emperor 是微生物组数据交互式可视化工具，主要用于展示主坐标分析（PCoA）等排序
+  （ordination）结果：支持 3D 交互、样本按元数据着色/缩放/形状、元数据动画（gradient/trajectory）、
+  jackknife/procrustes 对比等，输出可在浏览器中探索的 HTML 可视化。以 Python 库形态分发（无独立
+  命令行二进制），QIIME 2 以 `qiime emperor plot` 插件调用、QIIME 1.x 以可视化组件调用；本模块以
+  Python 驱动（emperor.core.Emperor）把 ordination + 元数据渲染为交互式 HTML。
+  '
+homepage: http://emperor.microbio.me/
+license: BSD-3-Clause
+software_versions:
+- id: emperor_native
+  emperor: '1.0.5'
+  build_route: 官方 conda 提供（conda-forge emperor=1.0.5 / PyPI emperor==1.0.5；bioconda 为旧版 0.9.51）
+  source: https://anaconda.org/conda-forge/emperor + https://pypi.org/project/emperor/
+  note: 'bioconda emperor 仅 0.9.51--py27（Python 2.7 旧包，2026-09 核实），官方 biocontainer
+    quay.io/biocontainers/emperor 亦仅 0.9.3--py27；现代版本走 conda-forge emperor=1.0.5 或
+    PyPI emperor==1.0.5（Python>=3.8）。宿主机直跑 main.py 时用 pip/conda 安装 emperor。'
+- id: emperor_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/emperor 404）
+  emperor: —
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/emperor
+    返回 404；Nextflow 场景以 native/（Python 驱动）为兜底。'
+- id: emperor_snakemake_wrappers
+  emperor: 官方无 wrapper（bio/emperor 404）
+  source: —
+  note: '2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/emperor
+    返回 404；Snakemake 场景以 native/ 为兜底。'
+implementations:
+- id: emperor_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.5"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    plot 子命令以 python3 驱动 run_emperor.py，读取 ordination（PCoA 结果）+ 元数据表，调用
+    emperor.core.Emperor 渲染交互式 HTML；自动注入线程/临时目录环境变量。'
+  container_ref:
+    conda_forge: https://anaconda.org/conda-forge/emperor
+    pypi: https://pypi.org/project/emperor/
+    bioconda: https://anaconda.org/bioconda/emperor（仅旧版 0.9.51/py27）
+    quay_biocontainers: quay.io/biocontainers/emperor:0.9.3--py27_0（官方旧镜像，仅 py27）
+    install_hint: 推荐 pip install emperor==1.0.5 或 mamba create -n <env> -c conda-forge emperor=1.0.5
+default_implementation: emperor_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: emperor 子命令：plot（唯一核心命令）
+  ordination:
+    type: file
+    required: true
+    description: 排序结果文件（PCoA/ordination；skbio OrdinationResults 文本格式，含 Eigvals/Site 等段）
+  metadata:
+    type: file
+    required: true
+    description: 样本元数据表（Tab 分隔；首列为样本 ID，需与 ordination 中的样本 ID 匹配）
+  output:
+    type: file
+    required: true
+    description: 输出 HTML 文件路径（交互式可视化；同时在同目录写 Emperor 支持文件）
+  custom_axes:
+    type: string
+    required: false
+    description: 自定义轴（元数据列名，逗号分隔或多次给出；嵌入到可视化中）
+  dimensions:
+    type: integer
+    required: false
+    default: 5
+    description: 保留的排序维度数（默认 5；不能超过 ordination 的维度数）
+  ignore_missing_samples:
+    type: boolean
+    required: false
+    default: false
+    description: 缺元数据的样本不报错，改为填充占位值（默认 false，遇缺失样本报错）
+  remote:
+    type: boolean
+    required: false
+    default: false
+    description: 使用远程 CDN 资源（true）或本地随包资源（false，默认，利于离线/可复现）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数占位（Emperor 渲染为单进程；仅为统一 CLI 接口保留）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 run_emperor.py 的额外参数（高级用法，慎用）
+outputs:
+  visualization_html:
+    type: file
+    format: html
+    description: 交互式 3D PCoA 可视化 HTML（浏览器打开即可探索样本分布）
+environment:
+  container_official: quay.io/biocontainers/emperor（官方 biocontainer 仅旧版 0.9.3--py27_0；现代版本请用 conda-forge emperor=1.0.5 / PyPI，见 README）
+  note: 官方渠道已存在（bioconda 0.9.51--py27 / conda-forge 1.0.5），本地不再维护 Dockerfile/Apptainer.def；
+    官方 biocontainer 版本过旧（Python 2.7），推荐宿主机 pip/conda 安装 emperor=1.0.5。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    plot: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: python3

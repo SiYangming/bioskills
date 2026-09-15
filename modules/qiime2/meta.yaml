@@ -1,0 +1,112 @@
+software: qiime2
+canonical: qiime2
+category: microbiome
+description: 'QIIME 2（Quantitative Insights Into Microbial Ecology 2；2026.1 amplicon 发行版）是扩增子 /
+  微生物组分析平台：以 Artifact（QZA/QZV）贯穿全流程，覆盖 EMP 数据导入（tools import）→ 样品拆分（demux
+  emp-single/summarize）→ 去噪建特征表（dada2 denoise-single/denoise-paired、deblur
+  denoise-16S）→ 系统发育（alignment mafft/mask、phylogeny fasttree/midpoint-root）→ 多样性（diversity
+  core-metrics-phylogenetic、alpha/beta-group-significance、emperor plot）→ 物种分类（feature-classifier
+  extract-reads/fit-classifier-naive-bayes/classify-sklearn、taxa barplot/collapse）→ 差异丰度（composition
+  add-pseudocount/ancom）。本模块 native 为「插件-动作」两段式子命令驱动（如 tools.import）。
+
+  '
+homepage: https://qiime2.org/
+license: BSD-3-Clause
+software_versions:
+- id: qiime2_native
+  qiime2: '2026.1'
+  build_route: '官方 Conda 发行版（QIIME 2 amplicon conda.yml）+ 官方 Quay 镜像 quay.io/qiime2/amplicon:2026.1；
+    bioconda / quay.io/biocontainers / depot.galaxyproject.org 三渠道无 qiime2 包与镜像（2026-09 核实）
+    → 本地自建 Dockerfile/Apptainer.def 兜底（micromamba 建官方 2026.1 amplicon 环境）'
+  source: https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2026.1/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
+  note: '版本锚点：官方发行版目录 2026.1/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml（2026-09
+    核实 200）；官方 Quay 镜像 quay.io/qiime2/amplicon 的 tag 列表含 2026.1（另有 latest/2025.10/…）。官方安装文档
+    https://docs.qiime2.org/ 与 quickstart https://library.qiime2.org/quickstart/amplicon（均 200）。'
+- id: qiime2_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/qiime2 404）
+  qiime2: —
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/nf-core/modules/contents/modules/nf-core/qiime2 返回 404；Nextflow
+    场景以 native 驱动为兜底。
+- id: qiime2_snakemake_wrappers
+  qiime2: 官方无 wrapper（bio/qiime2 404）
+  source: —
+  note: 2026-09 抓取 api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/qiime2 返回 404；Snakemake
+    场景以 native 驱动为兜底。
+- id: qiime2_nextflow_local
+  qiime2: 未启用（无本地 nextflow/ 实现；需要时以 shell 调 native/main.py）
+- id: qiime2_snakemake_local
+  qiime2: 未启用（无本地 snakemake/ 实现；需要时以 shell 调 native/main.py）
+implementations:
+- id: qiime2_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2026.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）首选；按「插件-动作」两段式子命令构造
+    qiime 命令行并执行。'
+  container_ref:
+    quay_official: quay.io/qiime2/amplicon:2026.1（QIIME 2 项目官方 Quay 发行版镜像）
+    conda_env: https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2026.1/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
+    install_hint: 宿主机走官方 conda 发行版（conda env create -n qiime2-amplicon-2026.1 -f <上式 yml>）；容器可直拉官方
+      Quay 镜像，或本地构建 native/Dockerfile（micromamba 建官方 2026.1 amplicon 环境）
+default_implementation: qiime2_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'qiime2 插件-动作（点分两段式）：tools.import|tools.export|tools.peek|tools.view|demux.emp-single|demux.summarize|dada2.denoise-single|dada2.denoise-paired|deblur.denoise-16S|feature-table.summarize|feature-table.tabulate-seqs|feature-table.filter-samples|alignment.mafft|alignment.mask|phylogeny.fasttree|phylogeny.midpoint-root|diversity.core-metrics-phylogenetic|diversity.alpha-group-significance|diversity.beta-group-significance|emperor.plot|feature-classifier.extract-reads|feature-classifier.fit-classifier-naive-bayes|feature-classifier.classify-sklearn|taxa.barplot|taxa.collapse|composition.add-pseudocount|composition.ancom|metadata.tabulate|info'
+  args:
+    type: string
+    required: false
+    description: 'qiime 动作参数（原样透传，如 --i-demultiplexed-seqs demux.qza --p-trim-left 0 --o-table
+      table.qza）'
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（自动注入支持并行的动作：--p-n-threads（dada2/alignment/phylogeny）或 --p-n-jobs（feature-classifier/diversity））
+  tmpdir:
+    type: string
+    required: false
+    description: 覆盖默认临时目录（QIIME 2 读 TMPDIR 环境变量，无全局 --tmpdir 选项）
+outputs:
+  artifact:
+    type: file
+    format: qza
+    description: QIIME 2 artifact（.qza，如 demux.qza / table.qza / rep-seqs.qza / taxonomy.qza）
+  visualization:
+    type: file
+    format: qzv
+    description: QIIME 2 visualization（.qzv，如 demux.qzv / taxa-bar-plots.qzv / ancom-Subject.qzv）
+  exported:
+    type: file
+    description: qiime tools export 导出的普通文件/目录（biom / tsv / nwk / 距离矩阵等）
+environment:
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 'bioconda → quay.io/biocontainers → depot.galaxyproject.org 三渠道均无 qiime2 包与镜像（2026-09 核实）→
+    自建 Dockerfile/Apptainer.def 兜底：debian:bookworm-slim + curl 拉 micromamba，用官方 2026.1 amplicon conda.yml
+    建 /opt/env（不使用 miniconda）。另：QIIME 2 项目在 Quay 官方发布发行版镜像 quay.io/qiime2/amplicon:2026.1（README
+    登记，可直接拉取）。宿主机直跑 main.py 时先建官方 conda 环境。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    dada2.denoise-single: 8
+    dada2.denoise-paired: 8
+    alignment.mafft: 8
+    phylogeny.fasttree: 8
+    feature-classifier.classify-sklearn: 8
+    feature-classifier.extract-reads: 8
+    feature-classifier.fit-classifier-naive-bayes: 8
+    diversity.core-metrics-phylogenetic: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: qiime
