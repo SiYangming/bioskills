@@ -9,6 +9,9 @@ description: |-
   macOS pkg / Windows msi），按用户安装到 $HOME/.aspera/connect（ascp 位于 bin/ascp，公共密钥位于
   etc/）。注意：Aspera 为 IBM 专有软件（非开源），本模块只做方法/命令/链接/配方「录入」（仅 amd64），
   禁止真实下载/构建/安装/运行；容器配方仅供个人/机构内部使用，使用前须阅读并遵守 IBM EULA。
+  ⚠️ 官方 EOL：EMBL-EBI 知识库（KB0011565）明确 Aspera Connect 将于 2026-06 EOL，继任客户端为
+  IBM Aspera for Desktop；本模块 pin 的 Connect 客户端已过 EOL，但底层 ascp/FASP 与 EBI/NCBI 的
+  Aspera 传输服务仍在运营，故保留登记、新部署建议改用 IBM Aspera for Desktop / ASCLI（详见「版本」）。
 homepage: https://www.ibm.com/products/aspera
 license: IBM 专有许可（非自由软件，见 EULA；不得随意再分发）
 software_versions:
@@ -32,6 +35,12 @@ software_versions:
     密钥：公共数据源下载所用的 asperaweb_id_dsa.openssh 位于安装目录 etc/（用户在 3.9.6.177839 包实装
     验证：~/.aspera/connect/etc/asperaweb_id_dsa.openssh）；社区报告 Connect 4.2+ 或不再随包提供该密钥
     （未核实 IBM 官方说明）→ 缺失时显式 --key 指定其它密钥/路径。
+    ⚠️ 客户端 EOL（2026-09-15 核实）：EMBL-EBI 知识库 KB0011565 明确「Aspera Connect will be End of Life
+    June 2026. Please use IBM Aspera for Desktop instead.」——即本模块 pin 的 **Aspera Connect 客户端**
+    已过官方 EOL（2026-06），继任客户端为 **IBM Aspera for Desktop**（另提供 ASCLI 命令行，含 ascp）。
+    底层 ascp/FASP 协议与 EBI/NCBI 的 Aspera 传输服务仍在运营（ENA 仍支持 Aspera 上传/下载，2025 年还
+    更新了加密要求），故本模块保留但不再作为新部署首选；新项目请改用 IBM Aspera for Desktop / ASCLI 的
+    ascp，或改走 HTTPS / sra-tools 等无专有客户端的路线。
 - id: aspera_connect_nextflow_nfcore
   module_version: （官方无此模块）
   note: nf-core modules 无 modules/nf-core/aspera-connect 与 modules/nf-core/ascp 目录（2026-09-08

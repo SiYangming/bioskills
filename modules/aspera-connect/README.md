@@ -5,6 +5,13 @@
 > ⚠️ **Aspera 为 IBM 专有软件（非开源）**：本模块只做「录入」——方法/命令/链接/配方（仅 amd64）
 > 准确即可，**禁止真实下载/构建/安装/运行**；容器配方仅供个人/机构内部使用，使用前须阅读并遵守
 > IBM 官方 EULA，不得随意再分发。
+> ⚠️ **客户端 EOL（2026-09-15 核实）**：EMBL-EBI 知识库（KB0011565）明确
+> *"Aspera Connect will be End of Life June 2026. Please use IBM Aspera for Desktop instead."*
+> ——本模块 pin 的 **Aspera Connect** 客户端已过官方 EOL（2026-06），继任客户端为
+> **IBM Aspera for Desktop**（另提供 ASCLI 命令行，含 `ascp`）。底层 `ascp`/FASP 协议与 EBI/NCBI 的
+> Aspera 传输服务**仍在运营**（ENA 仍支持 Aspera 上传/下载，2025 年还更新了加密要求 AES-128-GCM），
+> 故本模块**保留**登记，但不再作为新部署首选：新项目请改用 IBM Aspera for Desktop / ASCLI 的 `ascp`，
+> 或改走 HTTPS / `sra-tools` 等无专有客户端路线。
 > 本模块仅实现 `native/`（ascp / version 两个技能子命令）。官方登记：**nf-core `modules/ascp` /
 > `modules/aspera-connect` 404、snakemake-wrappers `bio/ascp` 404**（2026-09-08 GitHub API 核实）→
 > 不建 nextflow/、snakemake/ 目录；官方容器渠道（bioconda → conda-forge → quay.io/biocontainers →
