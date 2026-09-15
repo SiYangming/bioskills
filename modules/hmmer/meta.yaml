@@ -2,45 +2,47 @@ software: hmmer
 canonical: hmmer
 category: sequence_search
 description: 'HMMER 是基于 profile hidden Markov model（profile HMM）做序列同源检索 /
-  结构域注释 / 序列谱建库的经典工具套件；本模块覆盖同一软件的两条版本线：
-  （1）HMMER 3.x 现行版（native/）：hmmbuild 由多序列比对（MSA）训练 profile HMM，
-  hmmpress 把 HMM 库按压成 .h3m/.h3i/.h3f/.h3p 索引便于快速检索，hmmsearch 用 HMM 检索
-  蛋白序列库、hmmscan 用序列检索 HMM 库，另有 phmmer/jackhmmer/nhmmer 等同套件命令
-  （生物信息教学课件与 antiSMASH（新版）等工具的常用运行依赖）；
-  （2）HMMER 2.x 遗留版（native2/）：2003 年前后的旧版套件，CLI、二进制命名（带 2 后缀，如
-  hmmbuild2/hmmsearch2）与输出格式均与 3.x 不同，是 RNAmmer 1.2 与旧版 antiSMASH 的必需运行依赖。
+  结构域注释 / 序列谱建库的经典工具套件；本模块为**单一 native 实现**（native/），在一个驱动内
+  同时覆盖同一软件的两条版本线，子命令按版本线区分：
+  （1）HMMER 3.x 现行版（子命令 hmmbuild/hmmpress/hmmsearch，无后缀二进制）：hmmbuild 由多序列
+  比对（MSA）训练 profile HMM，hmmpress 把 HMM 库按压成 .h3m/.h3i/.h3f/.h3p 索引便于快速检索，
+  hmmsearch 用 HMM 检索蛋白序列库，另有 phmmer/jackhmmer/nhmmer 同套件命令（生物信息教学课件与
+  antiSMASH（新版）等工具的常用运行依赖）；
+  （2）HMMER 2.x 遗留版（子命令 hmmbuild2/hmmsearch2，与 bioconda hmmer2 包内带 2 后缀的二进制
+  命名一致）：2003 年前后的旧版套件，CLI 与输出格式均与 3.x 不同，是 RNAmmer 1.2 与旧版 antiSMASH
+  的必需运行依赖。
   '
 homepage: http://hmmer.org/
-# License: 顶层 license 登记默认实现（HMMER 3.x）的 BSD-3-Clause（上游 LICENSE 与 bioconda recipe /
+# License: 顶层 license 登记默认版本线（HMMER 3.x）的 BSD-3-Clause（上游 LICENSE 与 bioconda recipe /
 # homebrew-core 公式一致，2026-09 核实）；
-# 版本差异声明：HMMER 2.x 遗留版（native2 实现）为 GPL-2.0-or-later，与 3.x 的 BSD-3-Clause 不同
-# （详见 software_versions 的 hmmer2_native 条目）。SPDX（3.x）: BSD-3-Clause
+# 版本差异声明：同一实现内的 HMMER 2.x 遗留版（子命令 hmmbuild2/hmmsearch2）为 GPL-2.0-or-later，
+# 与 3.x 的 BSD-3-Clause 不同（详见 software_versions 的 hmmer_native 条目）。SPDX（3.x）: BSD-3-Clause
 license: BSD-3-Clause
 software_versions:
 - id: hmmer_native
   hmmer: '3.4'
-  build_route: official biocontainer（quay.io/biocontainers/hmmer / depot.galaxyproject.org）
-  source: https://anaconda.org/bioconda/hmmer
-  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    hmmer=3.4（bioconda 现行；linux-64 build h7d74f8d_5，2026-08 起发布；平台 linux-64 /
-    macOS-64 / linux-aarch64 / macOS-arm64），随包装入 gsl / openmpi / libblas 等依赖；
-    宿主机直跑 main.py 时用 conda/mamba 安装 hmmer=3.4，或 native/install.sh 双路线
-    （conda / 官方 release 源码归档自编译）。'
-- id: hmmer2_native
   hmmer2: '2.3.2'
-  build_route: official biocontainer（quay.io/biocontainers/hmmer2）
-  source: https://anaconda.org/bioconda/hmmer2
-  note: 'HMMER 2.x 遗留版（native2 实现）：bioconda hmmer2=2.3.2 为唯一版本（linux-64 build
-    h87e0c26_12，build number 12，2017-05 起发布；平台 linux-64 / macOS-64 / linux-aarch64 /
-    macOS-arm64）；容器为 quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12。
-    ⚠️ 二进制命名：bioconda hmmer2 包内所有可执行文件带 2 后缀——hmmbuild2 / hmmsearch2 /
-    hmmalign2 / hmmcalibrate2 / hmmconvert2 / hmmemit2 / hmmfetch2 / hmmindex2 / hmmpfam2
-    （bioconda recipe 用 Makefile.in.patch 改名以避免与 HMMER3 冲突），与 HMMER3 的无后缀名区分；
-    上游源码自编译为无后缀（hmmbuild/hmmsearch），Debian 包为 hmm2 前缀（hmm2build/hmm2search）。
+  build_route: official biocontainer（3.x → quay.io/biocontainers/hmmer；2.x 遗留版 → quay.io/biocontainers/hmmer2；均见 depot.galaxyproject.org）
+  source: 3.x https://anaconda.org/bioconda/hmmer · 2.x 遗留版 https://anaconda.org/bioconda/hmmer2
+  note: '单一 native 实现内覆盖两条版本线（子命令区分：3.x → hmmbuild/hmmpress/hmmsearch；
+  2.x 遗留版 → hmmbuild2/hmmsearch2），两条线的官方镜像/conda 包不同、互不替代。
+    【HMMER 3.x】hmmer=3.4（bioconda 现行；linux-64 build h7d74f8d_5，2026-08 起发布；平台 linux-64 /
+    macOS-64 / linux-aarch64 / macOS-arm64），随包装入 gsl / openmpi / libblas 等依赖；许可
+    BSD-3-Clause；官方镜像 quay.io/biocontainers/hmmer:3.4--h7d74f8d_5。
+    【HMMER 2.x 遗留版】bioconda hmmer2=2.3.2 为唯一版本（linux-64 build h87e0c26_12，2017-05 起发布；
+    平台 linux-64 / macOS-64 / linux-aarch64 / macOS-arm64）；容器为
+    quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12；⚠️ 二进制命名：bioconda hmmer2 包内所有可执行
+    文件带 2 后缀——hmmbuild2 / hmmsearch2 / hmmalign2 / hmmcalibrate2 / hmmconvert2 / hmmemit2 /
+    hmmfetch2 / hmmindex2 / hmmpfam2（bioconda recipe 用 Makefile.in.patch 改名以避免与 HMMER3 冲突），
+    与 HMMER3 的无后缀名区分；上游源码自编译为无后缀（hmmbuild/hmmsearch），Debian 包为 hmm2 前缀
+    （hmm2build/hmm2search）。驱动按 hmmbuild2→hmmbuild→hmm2build、hmmsearch2→hmmsearch→hmm2search
+    多候选名探测，并校验 -h 输出确为 "HMMER 2." 以避免误命中同名 HMMER3。⚠️ 许可与 3.x 不同：
+    HMMER 2.x 为 GPL-2.0-or-later（3.x 为 BSD-3-Clause）。
     官方引擎层均无 HMMER2：nf-core 无 modules/nf-core/hmmer2（2026-09 在线核实 404；nf-core 仅登记
     HMMER3 的 modules/nf-core/hmmer）；snakemake-wrappers 无 bio/hmmer2（2026-09 在线核实 404；
-    bio/ 仅有 HMMER3 的 bio/hmmer）。两引擎场景均以 native2/ 宿主机驱动为兜底。
-    ⚠️ 许可与 3.x 不同：HMMER 2.x 为 GPL-2.0-or-later（3.x 为 BSD-3-Clause）。'
+    bio/ 仅有 HMMER3 的 bio/hmmer）。两引擎场景均以本实现宿主机驱动为兜底。
+    宿主机直跑 main.py：3.x 用 conda/mamba 安装 hmmer=3.4，2.x 安装 hmmer2=2.3.2；或
+    native/install.sh（--line 3|2|both）双路线（conda / 官方 release 源码归档自编译）。'
 - id: hmmer_nextflow_nfcore
   module_version: nf-core master（2026-09 在线核实）
   hmmer: '3.4'
@@ -63,45 +65,28 @@ implementations:
   type: native
   version: "3.4"
   priority: high
-  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
-    hmmbuild 由多序列比对（MSA）训练 profile HMM，hmmpress 生成 .h3f/.h3i/.h3m/.h3p 按压索引，
-    hmmsearch 用 HMM 检索蛋白序列库（--tblout 出表格、-o 主输出缺省 stdout、-E 阈值）；自动注入
-    --cpu 线程与 TMPDIR；容器走官方镜像（quay.io/biocontainers/hmmer，见 software_versions）。'
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标，
+    单一实现覆盖两条版本线：
+    【HMMER 3.x，子命令 hmmbuild/hmmpress/hmmsearch】hmmbuild 由多序列比对（MSA）训练 profile HMM，
+    hmmpress 生成 .h3f/.h3i/.h3m/.h3p 按压索引，hmmsearch 用 HMM 检索蛋白序列库（--tblout 出表格、
+    -o 主输出缺省 stdout、-E 阈值）；自动注入 --cpu 线程与 TMPDIR；容器走官方镜像
+    （quay.io/biocontainers/hmmer，见 software_versions）。
+    【HMMER 2.x 遗留版，子命令 hmmbuild2/hmmsearch2】仅当依赖方明确要求 HMMER 2.x 时使用：它是
+    RNAmmer 1.2（HMM 法 rRNA 基因预测）与旧版 antiSMASH 的必需运行依赖。2.x 的 CLI 与二进制命名均与
+    3.x 不同（bioconda 包内二进制带 2 后缀，如 hmmbuild2 / hmmsearch2；上游源码自编译无后缀、Debian
+    为 hmm2 前缀，驱动按 hmmbuild2→hmmbuild→hmm2build、hmmsearch2→hmmsearch→hmm2search 多候选名
+    探测并校验 -h 输出为 "HMMER 2."）：hmmbuild2（MSA → HMMER2 profile HMM，-n 命名、-F 覆盖）与
+    hmmsearch2（HMM 检索序列库，-E/-T 阈值、-A 比对条数、--cpu 并行）；2.x hmmbuild 无 --cpu、无
+    --tblout，二进制名与输出格式均异于 3.x。容器走官方镜像（quay.io/biocontainers/hmmer2）。'
   container_ref:
-    bioconda: https://anaconda.org/bioconda/hmmer
-    quay_biocontainers: quay.io/biocontainers/hmmer
-    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda hmmer=3.4；容器可用
-      quay.io/biocontainers/hmmer:3.4--h7d74f8d_5 镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
-- id: hmmer2_native
-  path: native2
-  source_type: custom
-  type: native
-  version: "2.3.2"
-  priority: medium
-  when_to_use: 'HMMER 2.x 遗留版（2003 年前后的旧版套件），仅当依赖方明确要求 HMMER 2.x 时使用：
-    它是 RNAmmer 1.2（HMM 法 rRNA 基因预测）与旧版 antiSMASH 的必需运行依赖。2.x 的 CLI 与二进制
-    命名均与 3.x 不同（bioconda 包内二进制带 2 后缀，如 hmmbuild2 / hmmsearch2；上游源码自编译无后缀、
-    Debian 为 hmm2 前缀，驱动按 hmmbuild2→hmmbuild→hmm2build、hmmsearch2→hmmsearch→hmm2search
-    多候选名探测）：子命令 hmmbuild（MSA → HMMER2 profile HMM，-n 命名、-F 覆盖）与 hmmsearch
-    （HMM 检索序列库，-E/-T 阈值、-A 比对条数、--cpu 并行）；2.x 的 hmmbuild 无 --cpu、无 --tblout，
-    二进制名与输出格式均异于 3.x。容器走官方镜像（quay.io/biocontainers/hmmer2，见 software_versions）。'
-  container_ref:
-    bioconda: https://anaconda.org/bioconda/hmmer2
-    quay_biocontainers: quay.io/biocontainers/hmmer2
-    upstream: http://eddylab.org/software/hmmer/2.3.2/hmmer-2.3.2.tar.gz（官方 2.3.2 源码归档，自编译）
-    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda hmmer2=2.3.2（包内二进制带
-      2 后缀，如 hmmsearch2/hmmbuild2）；容器可用 quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12
-      镜像（tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）；
-      或用本仓库 native2/install.sh 双路线（conda / 官方源码自编译）
-  execution:
-    entrypoint: python main.py
-    test_command: bash test/run_test.sh
-    binary: hmmsearch2
-    note: '驱动内含两个官方入口（HMMER2 专用）：hmmbuild（<hmmfile> <alignfile>）由 MSA 训练
-      HMMER2 profile HMM（-n 命名、-F 覆盖；2.x hmmbuild 无并行）；hmmsearch（<hmmfile> <seqfile>）
-      用 HMM 检索序列库（-E/-T 阈值、-A 比对条数；线程经 --threads→--cpu 注入）。execution.binary
-      登记 hmmsearch2 为代表性入口（bioconda 2 后缀命名；上游自编译为 hmmsearch、Debian 为
-      hmm2search，驱动按多候选名探测）。'
+    bioconda: 3.x https://anaconda.org/bioconda/hmmer · 2.x 遗留版 https://anaconda.org/bioconda/hmmer2
+    quay_biocontainers: 3.x quay.io/biocontainers/hmmer · 2.x 遗留版 quay.io/biocontainers/hmmer2
+    upstream_source: 3.x http://eddylab.org/software/hmmer/hmmer-3.4.tar.gz · 2.x http://eddylab.org/software/hmmer/2.3.2/hmmer-2.3.2.tar.gz（官方源码归档，自编译）
+    install_hint: 推荐 3.x mamba create -n <env> -c conda-forge -c bioconda hmmer=3.4；2.x 遗留版
+      mamba create -n <env> -c conda-forge -c bioconda hmmer2=2.3.2（包内二进制带 2 后缀，如
+      hmmsearch2/hmmbuild2）；容器可用 quay.io/biocontainers/hmmer:3.4--h7d74f8d_5 与
+      quay.io/biocontainers/hmmer2:2.3.2--h87e0c26_12 镜像（tag 以 quay / depot.galaxyproject.org
+      为准，见 README「容器与 Conda 链接」）；或用本仓库 native/install.sh --line 3|2|both 双路线安装
 default_implementation: hmmer_native
 source_reference:
   note: 官方实现不建目录；以下子模块清单与官方在线目录一致（2026-09 抓取），刷新请直接核对官方目录 URL。
@@ -133,7 +118,7 @@ inputs:
   subcommand:
     type: string
     required: true
-    description: hmmer 技能子命令：HMMER 3.x（native/）hmmbuild|hmmpress|hmmsearch；HMMER 2.x 遗留版（native2/）hmmbuild|hmmsearch
+    description: hmmer 技能子命令（单一 native 实现，按版本线区分）：HMMER 3.x → hmmbuild|hmmpress|hmmsearch；HMMER 2.x 遗留版 → hmmbuild2|hmmsearch2
   hmm_out:
     type: file
     required: false
@@ -220,11 +205,11 @@ outputs:
     format: txt
     description: hmmsearch 主输出（-o 写文件、缺省 stdout；HMMER2 报告为 2.x 版式，直接写 stdout）
 environment:
-  container_official: quay.io/biocontainers/hmmer（HMMER 3.x 默认实现；HMMER 2.x 遗留版为 quay.io/biocontainers/hmmer2；tag 均以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  container_official: quay.io/biocontainers/hmmer（HMMER 3.x 版本线）· quay.io/biocontainers/hmmer2（HMMER 2.x 遗留版；tag 均以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
   note: 官方镜像已覆盖（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再维护
-    Dockerfile/Apptainer.def；两条版本线各用官方镜像：3.x → quay.io/biocontainers/hmmer，
+    Dockerfile/Apptainer.def；单一实现内的两条版本线各用官方镜像：3.x → quay.io/biocontainers/hmmer，
     2.x 遗留版 → quay.io/biocontainers/hmmer2。宿主机直跑 main.py 时用 conda/mamba 安装
-    hmmer=3.4（native/）或 hmmer2=2.3.2（native2/，包内二进制带 2 后缀）。
+    hmmer=3.4（3.x 子命令）或 hmmer2=2.3.2（2.x 子命令，包内二进制带 2 后缀）。
 optimization:
   default_cpus: 4
   default_mem_mb: 8192
@@ -236,19 +221,22 @@ optimization:
     hmmbuild: 4
     hmmpress: 1
     hmmsearch: 4
+    hmmbuild2: 4
+    hmmsearch2: 4
     default: 4
-    # 说明（版本差异）：hmmbuild / hmmsearch 为 3.x 与 2.x 共有的子命令名——3.x hmmbuild 注入 --cpu N；
-    # 2.x hmmbuild 无线程参数（仅协议位、不注入）；两者 hmmsearch 均注入 --cpu N（沿用 4）。
-    # hmmpress 为 3.x 专有（2.x 无按压索引流程）。
+    # 说明（版本差异）：hmmbuild/hmmsearch（3.x）与 hmmbuild2/hmmsearch2（2.x）为两套独立子命令名，
+    # 线程注入不同——3.x hmmbuild 注入 --cpu N，2.x hmmbuild2 无线程参数（仅协议位、不注入）；
+    # 3.x hmmsearch 与 2.x hmmsearch2 均注入 --cpu N（沿用 4）；hmmpress 为 3.x 专有（2.x 无按压索引）。
 execution:
   entrypoint: python main.py
   test_command: bash test/run_test.sh
   binary: hmmsearch
-  note: 驱动内含三个官方入口：hmmbuild（<hmmfile_out> <msafile>）由 MSA 训练 profile HMM；
-    hmmpress（<hmmfile>）按压生成 .h3f/.h3i/.h3m/.h3p；hmmsearch（<hmmfile> <seqdb>）检索序列库。
-    线程经 --threads→--cpu 注入（hmmpress 无并行、忽略）。execution.binary 登记 hmmsearch 为
-    代表性入口；HMMER 3.x 是 antiSMASH（新版）等工具的常用运行依赖，依赖方模块只需指向本模块
-    安装文档。nextflow/snakemake 官方层见 README 与 software_versions。
-    HMMER 2.x 遗留版另在本模块 native2/（独立 execution：binary 登记 hmmsearch2，entrypoint
-    python main.py，test_command bash test/run_test.sh；子命令 hmmbuild/hmmsearch，二进制按
-    hmmbuild2→hmmbuild→hmm2build 多候选名探测），是 RNAmmer 1.2 与旧版 antiSMASH 的必需运行依赖。
+  note: 单一实现内含五个官方入口（两条版本线）——HMMER 3.x：hmmbuild（<hmmfile_out> <msafile>）由
+    MSA 训练 profile HMM；hmmpress（<hmmfile>）按压生成 .h3f/.h3i/.h3m/.h3p；hmmsearch
+    （<hmmfile> <seqdb>）检索序列库（线程经 --threads→--cpu 注入，hmmpress 无并行、忽略）。
+    HMMER 2.x 遗留版：hmmbuild2（<hmmfile> <alignfile>，-n/-F；2.x 无并行）与 hmmsearch2
+    （<hmmfile> <seqfile>，-E/-T/-A，--cpu 注入），二进制按 hmmbuild2→hmmbuild→hmm2build、
+    hmmsearch2→hmmsearch→hmm2search 多候选名探测（并校验 -h 为 "HMMER 2."，避免误命中同名 HMMER3）。
+    execution.binary 登记 hmmsearch（3.x）为代表性入口。HMMER 3.x 是 antiSMASH（新版）等工具的常用
+    运行依赖；HMMER 2.x 遗留版是 RNAmmer 1.2 与旧版 antiSMASH 的必需运行依赖。依赖方模块只需指向本
+    模块安装文档。nextflow/snakemake 官方层见 README 与 software_versions。

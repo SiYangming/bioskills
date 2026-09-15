@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""生成 hmmer（HMMER 3.x）native 测试用的合成数据。
+"""生成 hmmer native 测试用的合成数据（HMMER 3.x 与 2.x 两条版本线共用）。
 
 产出（<outdir> 下）：
-  family.sto   5 条等长蛋白序列的 Stockholm 多序列比对（hmmbuild 输入）
-  proteins.fa  蛋白序列库 FASTA（含与 family 同源的 hit 与无关 decoy；hmmsearch 输入）
+  family.sto   5 条等长蛋白序列的 Stockholm 多序列比对（hmmbuild / hmmbuild2 输入）
+  proteins.fa  蛋白序列库 FASTA（含与 family 同源的 hit 与无关 decoy；hmmsearch / hmmsearch2 输入）
 
-说明：序列为合成 motif（非真实蛋白家族），仅用于跑通 hmmbuild→hmmpress→hmmsearch 链路。
+说明：序列为合成 motif（非真实蛋白家族），仅用于跑通
+hmmbuild→hmmpress→hmmsearch（3.x）与 hmmbuild→hmmsearch（2.x）链路。
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ VARIANTS = [
     ("seq5", [(2, "R"), (21, "T")]),
 ]
 
-# proteins.fa：一条近同源 hit + 两条无关 decoy
+# proteins.fa：一条近同源 hit + 一条变体 + 一条无关 decoy
 HIT_SEQ = CONSENSUS
 HIT2_SEQ = "".join("W" if i % 7 == 0 else c for i, c in enumerate(CONSENSUS))
 DECOY_SEQ = "MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQ"  # 与 family 无关的合成序列
