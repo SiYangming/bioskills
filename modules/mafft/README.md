@@ -8,7 +8,7 @@
 
 # mafft / native — 多序列比对驱动
 
-MAFFT（[mafft.cbrc.jp](https://mafft.cbrc.jp/alignment/software/)，Multiple Alignment using Fast Fourier Transform）是**多序列比对（MSA）的行业标准工具**：以快速傅里叶变换加速的渐进式/迭代精化算法，把多条核酸或氨基酸序列**比对为等长比对**（默认 FASTA，`--clustalout` 可切 clustal），支持 `--auto`（按序列数与长度自动选择策略）与 `linsi / einsi / ginsi` 等高精度模式。它是 **RepeatModeler 的 LTR 结构流程**（经 LTR_retriever 调用）与**通用基因/注释流程**的常见依赖，也常用于 rRNA/基因序列集比对与进化树构建的前置步骤——**依赖方文档只需指向本模块「环境安装」小节即可复用其安装方式**。
+MAFFT（[mafft.cbrc.jp](https://mafft.cbrc.jp/alignment/software/)，Multiple Alignment using Fast Fourier Transform）是**多序列比对（MSA）的行业标准工具**：以快速傅里叶变换（FFT）加速的渐进式/迭代精化算法，把多条核酸或氨基酸序列**比对为等长比对**（默认 FASTA，`--clustalout` 可切 clustal），支持 `--auto`（按序列数与长度自动选择策略）与 `linsi / einsi / ginsi` 等高精度模式。它是 **RepeatModeler 的 LTR 结构流程**（经 LTR_retriever 调用）与**通用基因/注释流程**的常见依赖，也常用于 rRNA/基因序列集比对与进化树构建的前置步骤——**依赖方文档只需指向本模块「环境安装」小节即可复用其安装方式**。
 
 本实现为自包含驱动（`source_type: custom`、`type: native`），二进制由**官方容器/conda**（quay.io/biocontainers/mafft / bioconda mafft）提供；两个子命令分别包装官方 `mafft` 主程序：
 

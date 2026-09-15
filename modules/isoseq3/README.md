@@ -60,6 +60,7 @@ FLNC reads 经聚类生成全长转录本序列，再用原始 subreads 校正�
 
 ```bash
 # 对 FLNC reads 聚类，得到全长转录本序列信息
+--verbose输出详细信息
 isoseq3 cluster sample.flnc.bam unpolished.bam --verbose
 
 # 用 subreads 对转录本序列进行修正，提高序列准确性

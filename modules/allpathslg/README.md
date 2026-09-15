@@ -47,7 +47,7 @@ python main.py --list-commands
 
 ***
 
-## 实战示例：RunAllPathsLG 组装（历史流程）
+## 实战示例：RunAllPathsLG 组装
 
 以 E. coli 双文库（fragment + jumping）为例，等价能力由 `native/main.py` 的
 prepare / assemble 子命令提供（见上）：

@@ -10,6 +10,8 @@
 
 ## native 实现（真实命令构造 + 执行，`source_type: custom` / `type: native`）
 
+blat 是一个快速的序列比对工具，用于将 DNA/RNA 序列比对到基因组上。
+
 本实现为「真实命令构造 + 执行」：`native/main.py` 按 UCSC usage 构造并运行 blat
 （本地已装 blat 时真实产出 PSL/PSLX）。单子命令：
 

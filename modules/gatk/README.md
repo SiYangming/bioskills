@@ -82,6 +82,10 @@ gatk VariantFiltration -R $REF -V cohort.vcf.gz -O cohort.hf.vcf.gz \
 | `-L` | 区间（`chr1:1000-2000` 或 interval 文件） |
 | `--known-sites` | BaseRecalibrator 已知位点（dbSNP + 1000G，可多个） |
 | `--bqsr-recal-file` | ApplyBQSR 读入的校正表（BaseRecalibrator 的 `-O` 产物） |
+| `--pcr-indel-model CONSERVATIVE` | PCR扩增插入缺失模型，CONSERVATIVE模式更严格 |
+| `--sample-ploidy` | 样品倍性，默认为2（二倍体） |
+| `--min-base-quality-score` | 最小碱基质量分数，默认为10 |
+| `--kmer-size` | 用于局部组装的k-mer大小，可设置多个值 |
 
 > 完整工具清单以 `gatk --list` 为准（含内嵌 Picard）；RNA-seq 建议 HaplotypeCaller 前用 `SplitNCigarReads` 拆分 N-CIGAR。
 
@@ -210,6 +214,7 @@ dependencies:
 
 ## 容器与 Conda 链接
 
+* **官网**：https://gatk.broadinstitute.org/hc/en-us
 * **Bioconda 页面**：<https://anaconda.org/channels/bioconda/packages/gatk4/overview>（4.6.2.0 noarch）；`gatk4-main`：<https://anaconda.org/bioconda/gatk4-main>（4.7.0.0，linux-64/osx-64）
 * **Docker（biocontainers）**：`docker pull quay.io/biocontainers/gatk4:4.6.2.0--py310hdfd78af_1`（4.7.0.0 tag 未构建，以 quay 实时为准）
 * **Singularity**：<https://depot.galaxyproject.org/singularity/gatk4%3A4.6.2.0--py310hdfd78af_1>

@@ -51,6 +51,8 @@ lftp 4.9.3 的本地自包含实现（`source_type: custom`、`type: native`）�
 
 ## 用法
 
+lftp 是功能强大的 FTP/HTTP 客户端，支持多线程下载、断点续传、镜像同步等功能，适合从 NCBI SRA 数据库上传和下载大文件。
+
 ```bash
 # CLI 直跑（get：等价官方 `lftp -e "get -c <path>; exit" <host>`）
 python main.py get --host ftp-trace.ncbi.nlm.nih.gov \

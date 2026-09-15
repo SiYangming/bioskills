@@ -216,6 +216,8 @@ dependencies:
 
 ## 容器与 Conda 链接
 
+* **GitHub**：https://github.com/pezmaster31/bamtools
+
 * **Bioconda 页面**：<https://anaconda.org/channels/bioconda/packages/bamtools/overview>
 
 * **Docker（最新）**：`docker pull quay.io/biocontainers/bamtools:2.5.3--he132191_0`

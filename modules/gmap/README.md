@@ -12,6 +12,8 @@
 
 ## native 实现（真实命令构造 + 执行，`source_type: custom` / `type: native`）
 
+GMAP（Genomic Mapping and Alignment Program）是一个用于将 cDNA 和 EST 序列比对到基因组上的工具。
+
 本实现为「真实命令构造 + 执行」：`native/main.py` 按官方 manual 构造并运行
 gmap_build / gmap / gsnap（本地已装 gmap 时真实运行）。三个子命令：
 

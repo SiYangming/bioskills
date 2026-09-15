@@ -12,6 +12,8 @@
 
 ## 能力
 
+RSEM是用于RNA-seq数据表达量估计的软件包，支持基因和转录本水平的定量，支持多种量化指标（count、FPKM、TPM）。
+
 | 子命令 | 说明 | 线程 |
 |--------|------|------|
 | `prepare-reference` | rsem-prepare-reference：参考 FASTA + GTF → RSEM 参考索引（.seq/.grp/.ti/.transcripts.fa） | ✅（默认 8） |

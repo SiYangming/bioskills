@@ -8,7 +8,7 @@
 
 # muscle / native — 多序列比对驱动
 
-MUSCLE（[drive5.com/muscle](https://www.drive5.com/muscle/) ・ [rcedgar/muscle](https://github.com/rcedgar/muscle)，MUltiple Sequence Comparison by Log-Expectation）是**多序列比对（MSA）工具**：把多条核酸或氨基酸序列**比对为等长序列**（FASTA）。它有一条重要的代际分界线——
+MUSCLE（[drive5.com/muscle](https://www.drive5.com/muscle/) ・ [rcedgar/muscle](https://github.com/rcedgar/muscle)，MUltiple Sequence Comparison by Log-Expectation）是**多序列比对（MSA）工具**：把多条核酸或氨基酸序列**比对为等长序列**（FASTA），适合大规模序列比对。它有一条重要的代际分界线——
 
 * **v3（3.8.x，公共领域）**：2003-04 年的迭代精化算法（draft progressive → improved progressive → refinement），命令行是单文件风格 `muscle -in <fa> -out <aln>`；**旧版 antiSMASH 的比对依赖**，教学课件常安装 **muscle 3.8.31**。
 * **v5（5.x，GPL-3.0-only）**：2021 年从零重写，PPP 算法 + Super5 大规模算法，支持对准集成（ensemble）与结构比对（MUSCLE-3D），命令行改为**子命令式** `muscle -align <fa> -output <aln> -threads N`。
