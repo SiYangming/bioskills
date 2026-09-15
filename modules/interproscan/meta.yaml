@@ -1,0 +1,127 @@
+software: interproscan
+canonical: interproscan
+category: annotation
+description: >-
+  InterProScan 是 EMBL-EBI 开发的蛋白质功能域注释工具，整合 Pfam、SMART、PROSITE、TIGRFAMs、
+  SuperFamily、CDD 等多个数据库的特征识别方法，一次性输出蛋白质家族、结构域、功能位点注释，
+  并可提取 InterPro（IPR）条目与 GO 注释，是功能注释流程中蛋白质结构域层面的核心工具。
+homepage: https://www.ebi.ac.uk/interpro/
+license: Apache-2.0
+software_versions:
+- id: interproscan_native
+  interproscan: "5.59_91.0"
+  build_route: official biocontainer（quay.io/biocontainers/interproscan:5.59_91.0--hec16e2b_1 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/interproscan
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 固定 interproscan=5.59_91.0（bioconda/interproscan 当前唯一最新版，对应 13.md「安装 InterProScan」）；
+    依赖 Java（官方发行包自带 JRE/data，需按版本匹配）；官方向源码归档 + conda，无预编译二进制资产。'
+- id: interproscan_nextflow_nfcore
+  module_version: master（2026-09 抓取）
+  interproscan: "5.59_91.0"
+  source: bioconda::interproscan=5.59_91.0（modules/nf-core/interproscan/environment.yml）
+  note: nf-core 有扁平子模块 interproscan（无二级子目录）；容器 quay.io/biocontainers/interproscan:5.59_91.0--hec16e2b_1，与 native 版本一致。
+- id: interproscan_snakemake_wrappers
+  interproscan: 官方无 wrapper（bio/interproscan 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/interproscan
+    返回 404；Snakemake 场景请走本模块 native 或自建 local。
+implementations:
+- id: interproscan_native
+  path: native
+  source_type: custom
+  type: native
+  version: "5.59_91.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    run / version 链路，自动注入线程与 Java 内存参数。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/interproscan
+    quay_biocontainers: quay.io/biocontainers/interproscan
+    upstream_source: https://github.com/ebi-pf-team/interproscan/archive/5.59-91.0.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda interproscan=5.59_91.0；容器可用 quay.io/biocontainers/interproscan:5.59_91.0--hec16e2b_1
+      镜像（tag 见 README）
+    note: 官方提供源码归档（GitHub archive 5.59-91.0）与 conda，无预编译二进制资产；依赖 Java，env_vars 透传 JAVA_OPTS
+default_implementation: interproscan_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'interproscan 子命令：run|version'
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 输入蛋白序列 FASTA（run）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件路径（run）
+  formats:
+    type: string
+    required: false
+    cli_arg: -f
+    description: 输出格式（逗号分隔，如 tsv,gff3,xml,json）
+  goterms:
+    type: boolean
+    default: true
+    cli_arg: -goterms
+    description: 计算并输出 GO 注释
+  iprlookup:
+    type: boolean
+    default: true
+    cli_arg: -iprlookup
+    description: 查询并输出 InterPro（IPR）条目
+  pathways:
+    type: boolean
+    default: false
+    cli_arg: -pa
+    description: 输出通路注释（需 -goterms -iprlookup）
+  disable_precalc:
+    type: boolean
+    default: false
+    cli_arg: -dp
+    description: 关闭 precalculated（如 Pfam-A 预计算）匹配
+  appl:
+    type: string
+    required: false
+    cli_arg: -appl
+    description: 限定分析应用（逗号分隔，如 pfam,prints,smart）
+  seqtype:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 序列类型：p（蛋白，默认）| n（核酸）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -cpu
+    description: 线程数（自动注入 -cpu）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 interproscan.sh 的额外参数（高级用法，慎用）
+outputs:
+  annotation:
+    type: file
+    description: 注释结果文件（TSV / GFF3 / XML 等，依 -f 而定）
+environment:
+  container_official: quay.io/biocontainers/interproscan（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方提供源码归档与 conda（无预编译二进制，已核实）；依赖 Java，运行时透传 JAVA_OPTS。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx{mem_mb}m -Djava.io.tmpdir={tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    run: 8
+    version: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: interproscan.sh

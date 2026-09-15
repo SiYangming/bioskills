@@ -1,0 +1,117 @@
+software: tmhmm
+canonical: tmhmm
+category: functional_annotation
+description: 'TMHMM 2.0c（Transmembrane Helices Hidden Markov Model）是基于隐马尔可夫模型预测蛋白质跨膜螺旋
+  （transmembrane helix）的工具，用于分泌蛋白筛选（排除具有跨膜结构域的蛋白）： tmhmm <proteins_mature.fasta>
+  输出每个蛋白的跨膜螺旋数量与拓扑，是 13.md「十六、分泌蛋白预测」步骤2 的跨膜区分析核心。
+  ⚠️ 许可受限：官方 tarball（tmhmm-2.0c.Linux.tar.gz）需用 edu 邮箱向 DTU 申请下载链接，非商业用途。
+  ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），故本模块走自建容器兜底。
+
+  '
+homepage: https://services.healthtech.dtu.dk/services/TMHMM-2.0/
+license: Proprietary（DTU 学术许可；需 edu 邮箱申请，非商业；无 SPDX 标识）
+software_versions:
+- id: tmhmm_native
+  tmhmm: 2.0c
+  build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
+    + apt perl 运行时 + 用户自备授权 tarball）
+  source: https://services.healthtech.dtu.dk/services/TMHMM-2.0/（官方下载需 edu 邮箱申请；预编译包
+    tmhmm-2.0c.Linux.tar.gz）
+  note: '⚠️ 许可受限：官方 tarball 需以 edu 邮箱向 DTU 申请下载链接，本库不登记任何伪造直链。bioconda
+    tmhmm（anaconda.org/bioconda/tmhmm）于 2026-09 核实 404（检索仅命中第三方频道 predector/tmhmm 等，
+    非官方）；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/tmhmm
+    404、biocontainers.pro/tools/tmhmm 404。故按 AGENT.md §7 走自建兜底：native/Dockerfile、Apptainer.def
+    （debian:bookworm-slim + apt perl 运行时，构建须 --build-arg TMHMM_URL=<用户自备授权 tarball>）。
+    安装后需修正 Perl 路径（13.md：perl -p -i -e ''s#/usr/local/bin/perl#/usr/bin/perl#'' bin/tmhmm*），容器已在构建期完成。'
+- id: tmhmm_nextflow_nfcore
+  tmhmm: 官方无模块（modules/nf-core/tmhmm 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/tmhmm
+    返回 404；Nextflow 场景请直接调用 native。
+- id: tmhmm_snakemake_wrappers
+  tmhmm: 官方无 wrapper（bio/tmhmm 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/tmhmm
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: tmhmm_native
+  path: native
+  source_type: custom
+  type: native
+  version: 2.0c
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供 predict
+    / plot 两个子命令，覆盖 13.md 分泌蛋白预测步骤2 的跨膜区分析。
+
+    '
+  container_ref:
+    bioconda: 官方无 tmhmm 包（anaconda.org/bioconda/tmhmm 404，2026-09 核实）
+    quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）
+    depot_singularity: depot.galaxyproject.org 无 tmhmm（2026-09 核实 404）
+    install_hint: 无官方 conda/容器 → 使用本模块自建配方 native/Dockerfile、Apptainer.def（须自备授权
+      tarball）；宿主机安装用 native/install.sh --archive <tmhmm-2.0c.Linux.tar.gz>
+default_implementation: tmhmm_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: tmhmm 子命令：predict|plot
+  fasta:
+    type: file
+    required: true
+    cli_arg: positional
+    description: 输入蛋白质 FASTA（13.md 为 SignalP 导出的 proteins_mature.fasta）
+    format:
+    - fasta
+  mature:
+    type: boolean
+    default: false
+    cli_arg: -mature
+    description: 输入为已去信号肽的成熟序列（谓词；13.md 未显式使用，默认关闭）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件路径（tmhmm 默认写 stdout，本驱动可重定向落盘）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（TMHMM 单线程；仅供上层调度器读取）
+    description: 线程数（统一接口保留；TMHMM 为单线程，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 tmhmm 的额外参数（高级用法，慎用）
+outputs:
+  tmhmm_out:
+    type: file
+    format: txt
+    description: 跨膜螺旋预测结果（每蛋白跨膜螺旋数 + 拓扑；13.md 中 grep "Number of predicted
+      TMHs" 的 0 值筛选无跨膜蛋白）
+  plot:
+    type: file
+    format: ps
+    description: plot 子命令的跨膜拓扑图（需 gnuplot/X11）
+environment:
+  container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    404，2026-09 核实）→ 走自建容器兜底
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay→depot）全无，故按 AGENT.md §7 自建兜底（debian:bookworm-slim +
+    apt perl 运行时）；构建须提供用户自备的官方授权 tarball（--build-arg TMHMM_URL 或 %files
+    本地 tarball），禁止伪造下载链接；构建期已修正 bin/tmhmm* 的 Perl 解释器路径。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 1
+    plot: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: tmhmm

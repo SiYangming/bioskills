@@ -1,0 +1,143 @@
+software: eggnog-mapper
+canonical: eggnog-mapper
+category: annotation
+description: >-
+  eggNOG-mapper 是基于 eggNOG 直系同源组数据库的快速功能注释工具：通过 DIAMOND/HMMER/MMseqs2
+  同源搜索把蛋白序列映射到 eggNOG 同源组（ortholog），一次性获得 GO、KEGG、COG/KOG、EC、
+  分类学等注释信息，是大规模蛋白功能注释（NR/Swiss-Prot 之外）的常用补充。
+homepage: http://eggnogdb.embl.de
+license: AGPL-3.0
+software_versions:
+- id: eggnog_mapper_native
+  eggnog_mapper: "1.0.3"
+  emapperdb: "4.5.1"
+  build_route: official biocontainer（quay.io/biocontainers/eggnog-mapper:1.0.3--py_3 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/eggnog-mapper
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 固定 eggnog-mapper=1.0.3（对应 13.md 教程与官方 GitHub archive 1.0.3），配套数据库 emapperdb-4.5.1
+    需单独下载；注意 1.0.3 为 Python 2.7 实现（bioconda 构建为 py27/py_3），如无历史约束可改用 2.1.x（py3）。'
+- id: eggnog_mapper_nextflow_nfcore
+  eggnog_mapper: 官方无 nf-core 子模块（modules/nf-core/eggnog-mapper 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/eggnog-mapper
+    返回 404；Nextflow 场景请改走本模块 native 或自建 local。
+- id: eggnog_mapper_snakemake_wrappers
+  eggnog_mapper: 官方无 wrapper（bio/eggnog-mapper 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/eggnog-mapper
+    返回 404；Snakemake 场景请改走本模块 native 或自建 local。
+implementations:
+- id: eggnog_mapper_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.0.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    annotate / annotate_hits / download_db 链路，自动注入线程与临时目录。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/eggnog-mapper
+    quay_biocontainers: quay.io/biocontainers/eggnog-mapper
+    upstream_source: https://github.com/eggnogdb/eggnog-mapper/archive/refs/tags/1.0.3.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda eggnog-mapper=1.0.3；容器可用 quay.io/biocontainers/eggnog-mapper:1.0.3--py_3
+      镜像（tag 见 README）
+    note: 官方提供源码归档（GitHub archive 1.0.3），无预编译二进制资产；命令 emapper.py 随源码/conda 安装；数据库 emapperdb 需单独下载
+default_implementation: eggnog_mapper_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'eggnog-mapper 子命令：annotate|annotate_hits|download_db'
+  input:
+    type: file
+    required: false
+    cli_arg: -i
+    description: 输入蛋白 FASTA（annotate）
+  output:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 输出前缀（eggnog-mapper 生成 <output>.emapper.annotations 等）
+  output_dir:
+    type: string
+    required: false
+    cli_arg: --output_dir
+    description: 输出目录（默认当前目录）
+  method:
+    type: string
+    required: false
+    cli_arg: -m
+    description: 同源搜索方法：diamond（默认）| hmmer | mmseqs
+  data_dir:
+    type: string
+    required: false
+    cli_arg: --data_dir
+    description: eggNOG 数据库目录（emapperdb-4.5.1 解压所在目录）
+  hits_table:
+    type: file
+    required: false
+    cli_arg: --annotate_hits_table
+    description: 预计算的同源命中表（annotate_hits）
+  tax_scope:
+    type: string
+    required: false
+    cli_arg: --tax_scope
+    description: 限定注释的分类范围（如 Fungi / Bacteria / auto）
+  target_orthologs:
+    type: string
+    required: false
+    cli_arg: --target_orthologs
+    description: 目标同源类型（one2one | many2one | all）
+  go_evidence:
+    type: string
+    required: false
+    cli_arg: --go_evidence
+    description: GO 证据类型（experimental | non-electronic | all）
+  no_file_comments:
+    type: boolean
+    default: false
+    cli_arg: --no_file_comments
+    description: 输出不含 # 注释行
+  dbmem:
+    type: boolean
+    default: false
+    cli_arg: --dbmem
+    description: 把数据库载入内存（加速，需较大内存）
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --cpu
+    description: 线程数（自动注入 --cpu）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 emapper.py 的额外参数（高级用法，慎用）
+outputs:
+  annotations:
+    type: file
+    format: tsv
+    description: 功能注释主表（<output>.emapper.annotations）
+  seed_orthologs:
+    type: file
+    format: tsv
+    description: 同源搜索命中表（<output>.emapper.seed_orthologs）
+environment:
+  container_official: quay.io/biocontainers/eggnog-mapper（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方提供源码归档与 conda（无预编译二进制，已核实）；emapperdb 数据库需单独下载（体积大，不入镜像）。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 16384
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    annotate: 8
+    annotate_hits: 4
+    download_db: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: emapper.py

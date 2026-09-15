@@ -1,0 +1,88 @@
+# go_class native Apptainer/Singularity 配方（自建兜底：与 native/Dockerfile 同一 apt 路线）
+# ---------------------------------------------------------------------------
+# 路线说明：GO class 无官方 conda/容器（bioconda→quay→depot 全无，2026-09 核实），
+# Debian bookworm 亦无该包；13.md 以本地 tar 包分发、无官方下载页。
+# 故走自建兜底：debian:bookworm-slim + apt perl 运行时 + 用户自备 go_class.tar.gz。
+#
+# ⚠️ 构建前请二选一：
+#   1) 环境变量提供自托管/本地 tar 包地址：
+#        export GO_CLASS_URL=https://<your-mirror>/go_class.tar.gz
+#        apptainer build go_class.sif Apptainer.def
+#   2) 或将 go_class.tar.gz 放到本目录并解开下面 %files 中的注释。
+# ---------------------------------------------------------------------------
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    # 如已持有 go_class.tar.gz，可去掉下一行注释并放到本目录
+    # go_class.tar.gz /tmp/go_class.tar.gz
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    GO_CLASS_URL="${GO_CLASS_URL:-}"
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        ca-certificates \
+        procps \
+        curl
+
+    mkdir -p /opt/go_class
+    if [ -f /tmp/go_class.tar.gz ]; then
+        tar -xzf /tmp/go_class.tar.gz -C /opt/go_class --strip-components=1
+    else
+        test -n "${GO_CLASS_URL}" || { \
+            echo "需提供 GO_CLASS_URL 或 %files 本地 go_class.tar.gz（无官方下载页）" >&2; exit 1; }
+        curl -fL "${GO_CLASS_URL}" -o /tmp/go_class.tar.gz
+        tar -xzf /tmp/go_class.tar.gz -C /opt/go_class --strip-components=1
+    fi
+    test -f /opt/go_class/bin/make_go_class_config.pl
+    test -f /opt/go_class/bin/annot2wego.pl
+    test -f /opt/go_class/bin/get_Genes_From_GO.pl
+    test -f /opt/go_class/bin/go_svg.pl
+    chmod +x /opt/go_class/bin/*.pl
+    chmod +x /opt/go_class/svg/*.pl 2>/dev/null || true
+
+    # 清理四连 + 删构建期 curl
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /tmp/go_class.tar.gz
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export GO_CLASS_HOME=/opt/go_class
+    export PATH=/opt/go_class/bin:/opt/go_class/svg:/usr/local/bin:/usr/bin:/bin
+
+%runscript
+    if [ $# -eq 0 ]; then
+        echo "go_class 为 Perl 脚本集：apptainer run go_class.sif <script.pl> [args]"
+        echo "可用脚本：make_go_class_config.pl / annot2wego.pl / get_Genes_From_GO.pl /"
+        echo "          go_svg.pl / distributing_svg.pl / changsvgsize.pl"
+        exit 2
+    fi
+    exec "$@"
+
+%test
+    set -eux
+    test -f /opt/go_class/bin/annot2wego.pl
+    test -f /opt/go_class/bin/get_Genes_From_GO.pl
+    test -f /opt/go_class/svg/distributing_svg.pl
+    perl -c /opt/go_class/bin/annot2wego.pl
+    perl -c /opt/go_class/bin/get_Genes_From_GO.pl
+
+%labels
+    org.bioskills.software go_class
+    org.bioskills.impl go_class_native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.go_class_version unversioned
+    org.bioskills.pkg_route apt(perl) + user-provided go_class tarball -> /opt/go_class
+
+%help
+    go_class native Apptainer 镜像（自建兜底，无官方下载页需自备 tar 包）。
+    调用方式：apptainer run go_class.sif annot2wego.pl /data/go.annot

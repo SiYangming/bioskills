@@ -1,0 +1,65 @@
+# =============================================================================
+# Blast2GO / b2g4pipe Apptainer 定义（官方渠道无 Blast2GO 镜像 → 兜底配方）
+#
+# 路线：apt 最小化优先（debian:bookworm-slim + apt --no-install-recommends + 清理四连）。
+#   Blast2GO 无 conda 包（bioconda 404）/ 无 quay / 无 depot，故不引入 conda 兜底。
+#
+# ⚠️ Blast2GO 许可受限（需注册/订阅）。构建前请自备 b2g4pipe_v2.5.zip 并放到本目录：
+#      cp ~/software/b2g4pipe_v2.5.zip modules/blast2go/native/
+#    构建：apptainer build blast2go.sif modules/blast2go/native/Apptainer.def
+#    运行：apptainer run -B $PWD:/data blast2go.sif -in /data/nr.xml -out /data/go -annot -dat -annex
+#
+# 说明：容器仅打包无头命令行 b2g4pipe；图形客户端为桌面程序，用 native/install.sh 在宿主机安装。
+# =============================================================================
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    b2g4pipe_v2.5.zip /tmp/b2g4pipe.zip
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        perl \
+        ca-certificates \
+        procps \
+        unzip
+    mkdir -p /opt/b2g4pipe /tmp/b2gex
+    unzip -q /tmp/b2g4pipe.zip -d /tmp/b2gex
+    if [ -f /tmp/b2gex/b2gPipe.properties ]; then
+        cp -R /tmp/b2gex/. /opt/b2g4pipe/
+    else
+        d="$(dirname "$(find /tmp/b2gex -maxdepth 2 -name b2gPipe.properties | head -n1)")"
+        cp -R "$d"/. /opt/b2g4pipe/
+    fi
+    rm -rf /tmp/b2gex /tmp/b2g4pipe.zip
+    test -f /opt/b2g4pipe/b2gPipe.properties
+    # 清理四连（unzip 仅构建期用）
+    apt-get purge -y --auto-remove unzip
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+%environment
+    export B2G4PIPE_HOME=/opt/b2g4pipe
+    export JAVA_OPTS="-Xmx6g -Djava.io.tmpdir=/tmp"
+    export TMPDIR=/tmp
+
+%runscript
+    exec java -cp "/opt/b2g4pipe/*:/opt/b2g4pipe/ext/*" es.blast2go.prog.B2GAnnotPipe "$@"
+
+%test
+    set -e
+    java -version
+    test -f /opt/b2g4pipe/b2gPipe.properties
+    echo "b2g4pipe package present (Blast2GO v2.5 CLI, license-gated user-provided zip)"
+
+%labels
+    org.bioskills.software blast2go
+    org.bioskills.impl blast2go_native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.blast2go_version 3.3
+    org.bioskills.b2g4pipe_version 2.5
+    org.bioskills.pkg_route apt+user-zip

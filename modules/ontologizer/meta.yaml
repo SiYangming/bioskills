@@ -1,0 +1,171 @@
+software: ontologizer
+canonical: ontologizer
+category: functional_annotation
+description: 'Ontologizer 是 Java 实现的 GO 术语富集分析工具（over-representation analysis）： java
+  -jar Ontologizer.jar -g <go.obo> -a <gene_association.gaf> -s <study.list> -p <population.list>
+  对基因集做 GO 富集（支持 Term-For-Term / Parent-Child-Union / Topology-Weighted / MGSA 等算法
+  与 Bonferroni/Benjamini-Hochberg 等多重检验校正），是 13.md「十、GO富集分析（Ontologizer）」的核心。
+  ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），官方以公开 jar 分发，
+  故本模块走自建容器兜底（apt openjdk + 官方公开 jar）。
+
+  '
+homepage: http://ontologizer.de/
+license: GPL（Ontologizer 项目声明 GNU GPL；jar 未标注具体版本，以官网为准）
+software_versions:
+- id: ontologizer_native
+  ontologizer: '2.1'
+  build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
+    + apt openjdk-17-jre-headless + 官方公开 jar）
+  source: http://ontologizer.de/cmdline/Ontologizer.jar（2026-09 核实 200；
+    GUI：http://ontologizer.de/gui/OntologizerGui.jar 200）
+  note: '版本 2.1（Build 20160628-1269；实测 `java -jar Ontologizer.jar -v` 输出）。bioconda ontologizer
+    于 2026-09 核实 404；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/ontologizer
+    404、biocontainers.pro/tools/ontologizer 404；nf-core / snakemake-wrappers 亦 404。官方
+    Java WebStart（javaws）或独立 jar 分发（13.md 用 JRE 1.7 javaws），jar 为公开 GPL 资产（非许可受限），
+    故按 AGENT.md §7 自建兜底：native/Dockerfile、Apptainer.def（debian:bookworm-slim + apt
+    openjdk-17-jre-headless，构建期拉取官方公开 jar）。'
+- id: ontologizer_nextflow_nfcore
+  ontologizer: 官方无模块（modules/nf-core/ontologizer 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/ontologizer
+    返回 404；Nextflow 场景请直接调用 native。
+- id: ontologizer_snakemake_wrappers
+  ontologizer: 官方无 wrapper（bio/ontologizer 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/ontologizer
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: ontologizer_native
+  path: native
+  source_type: custom
+  type: native
+  version: "2.1"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供
+    enrich（命令行富集）/ gui（图形界面）两个子命令，覆盖 13.md「十、GO富集分析（Ontologizer）」。
+
+    '
+  container_ref:
+    bioconda: 官方无 ontologizer 包（anaconda.org/bioconda/ontologizer 404，2026-09 核实）
+    quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）
+    depot_singularity: depot.galaxyproject.org 无 ontologizer（2026-09 核实 404）
+    upstream_jar: http://ontologizer.de/cmdline/Ontologizer.jar（公开 GPL；200，2026-09 核实）
+    install_hint: 无官方 conda/容器 → 使用本模块自建配方 native/Dockerfile、Apptainer.def（拉取官方公开
+      jar）；宿主机安装用 native/install.sh（下载官方 jar）
+default_implementation: ontologizer_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: ontologizer 子命令：enrich|gui
+  go:
+    type: file
+    required: false
+    cli_arg: -g
+    description: GO 本体文件 go.obo（enrich 必填）
+  association:
+    type: file
+    required: false
+    cli_arg: -a
+    description: 基因-GO 关联文件 gene_association.gaf（enrich 必填）
+  studyset:
+    type: file
+    required: false
+    cli_arg: -s
+    description: study set 文件或目录（enrich 必填；每行一个基因）
+  population:
+    type: file
+    required: false
+    cli_arg: -p
+    description: population 背景基因文件（enrich 必填；一般以全基因组为背景）
+  outdir:
+    type: string
+    required: false
+    cli_arg: -o
+    description: 结果输出目录（默认当前目录）
+  calculation:
+    type: string
+    required: false
+    cli_arg: -c
+    description: 计算方法：MGSA|Parent-Child-Intersection|Parent-Child-Union|Term-For-Term|Topology-Elim|Topology-Weighted
+  mtc:
+    type: string
+    required: false
+    cli_arg: -m
+    description: 多重检验校正：Benjamini-Hochberg|Benjamini-Yekutieli|Bonferroni|Bonferroni-Holm|None|Westfall-Young-Single-Step|Westfall-Young-Step-Down
+  dot:
+    type: boolean
+    default: false
+    cli_arg: -d
+    description: 为每个 study set 额外输出 GraphViz .dot 图
+  annotate:
+    type: boolean
+    default: false
+    cli_arg: -n
+    description: 额外输出每个 study set 的注释文件
+  resample_steps:
+    type: integer
+    required: false
+    cli_arg: -r
+    description: 重采样类 MTC 的步数
+  size_tolerance:
+    type: string
+    required: false
+    cli_arg: -t
+    description: 重采样 study set 尺寸允许偏差百分比
+  filter_file:
+    type: file
+    required: false
+    cli_arg: -f
+    description: 基因名过滤规则文件（当前仅支持映射）
+  ignore_unassociated:
+    type: boolean
+    default: false
+    cli_arg: -i
+    description: 忽略无任何 GO 关联的基因
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（Ontologizer 单进程 JVM；仅供上层调度器读取）
+    description: 线程数（统一接口保留；Ontologizer 单进程，不注入命令行；堆内存经 JAVA_OPTS 透传）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 Ontologizer 的额外参数（高级用法，慎用）
+outputs:
+  go_enrichment:
+    type: file
+    format: txt
+    description: 富集结果表（<study>_<prefix>.GoEnrichment.txt 等，位于 -o 输出目录）
+  enrichment_annotations:
+    type: file
+    format: txt
+    description: study set 注释文件（-n 时产出）
+  dot_graph:
+    type: file
+    format: dot
+    description: GraphViz 图（-d 时产出）
+environment:
+  container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    404，2026-09 核实）→ 走自建容器兜底
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay→depot）全无 → 按 AGENT.md §7 自建兜底（debian:bookworm-slim +
+    apt openjdk-17-jre-headless）；官方 jar 为公开 GPL 资产（非许可受限），构建期拉取 http://ontologizer.de/cmdline/Ontologizer.jar；
+    JVM 堆内存经 JAVA_OPTS 透传。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx6g -Djava.io.tmpdir={tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    enrich: 1
+    gui: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: java

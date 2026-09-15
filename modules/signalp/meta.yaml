@@ -1,0 +1,125 @@
+software: signalp
+canonical: signalp
+category: functional_annotation
+description: 'SignalP 5.0 是 DTU（丹麦技术大学）开发的信号肽（signal peptide）及其剪切位点预测工具，
+  支持真核（euk）、革兰氏阳性菌（gram+）、革兰氏阴性菌（gram-）与古菌（archaea）： signalp -org <org>
+  -fasta <proteins.fasta> 对蛋白质序列预测信号肽，是 13.md「十六、分泌蛋白预测」步骤1 的分泌蛋白筛选核心。
+  ⚠️ 许可受限：官方 tarball（signalp-5.0.Linux.tar.gz）需用 edu 邮箱向 DTU 申请下载链接，非商业用途。
+  ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），故本模块走自建容器兜底。
+
+  '
+homepage: https://services.healthtech.dtu.dk/services/SignalP-5.0/
+license: Proprietary（DTU 学术许可；需 edu 邮箱申请，非商业；无 SPDX 标识）
+software_versions:
+- id: signalp_native
+  signalp: '5.0'
+  build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
+    + apt perl 运行时 + 用户自备授权 tarball）
+  source: https://services.healthtech.dtu.dk/services/SignalP-5.0/（官方下载需 edu 邮箱申请；预编译包
+    signalp-5.0.Linux.tar.gz）
+  note: '⚠️ 许可受限：官方 tarball 需以 edu 邮箱向 DTU 申请下载链接，本库不登记任何伪造直链。bioconda
+    signalp（anaconda.org/bioconda/signalp）于 2026-09 核实 404（检索仅命中第三方频道 predector/signalp3..6，
+    非官方）；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/signalp
+    404、biocontainers.pro/tools/signalp 404。故按 AGENT.md §7 走自建兜底：native/Dockerfile、Apptainer.def
+    （debian:bookworm-slim + apt perl 运行时，构建须 --build-arg SIGNALP_URL=<用户自备授权 tarball>）。'
+- id: signalp_nextflow_nfcore
+  signalp: 官方无模块（modules/nf-core/signalp 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/signalp
+    返回 404；Nextflow 场景请直接调用 native。
+- id: signalp_snakemake_wrappers
+  signalp: 官方无 wrapper（bio/signalp 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/signalp
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: signalp_native
+  path: native
+  source_type: custom
+  type: native
+  version: "5.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供 predict
+    / mature 两个子命令，覆盖 13.md 分泌蛋白预测步骤1 的信号肽分析。
+
+    '
+  container_ref:
+    bioconda: 官方无 signalp 包（anaconda.org/bioconda/signalp 404，2026-09 核实）
+    quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）
+    depot_singularity: depot.galaxyproject.org 无 signalp（2026-09 核实 404）
+    install_hint: 无官方 conda/容器 → 使用本模块自建配方 native/Dockerfile、Apptainer.def（须自备授权
+      tarball）；宿主机安装用 native/install.sh --archive <signalp-5.0.Linux.tar.gz>
+default_implementation: signalp_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: signalp 子命令：predict|mature
+  fasta:
+    type: file
+    required: true
+    cli_arg: -fasta
+    description: 输入蛋白质 FASTA（别名位置参数 input）
+    format:
+    - fasta
+  organism:
+    type: string
+    required: false
+    cli_arg: -org
+    description: 生物类群：euk|gram+|gram-|archaea（archaea 别名 arch）
+  batch:
+    type: integer
+    required: false
+    cli_arg: -batch
+    description: 每批处理序列数（13.md 用 30000，减小可降低内存占用）
+  gff3:
+    type: boolean
+    default: false
+    cli_arg: -gff3
+    description: 追加 GFF3 格式输出（13.md 分泌蛋白流程使用）
+  prefix:
+    type: string
+    required: false
+    cli_arg: -prefix
+    description: 输出文件前缀（默认取输入 FASTA 文件名）
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（SignalP 单线程，分批处理；仅供上层调度器读取）
+    description: 线程数（统一接口保留；SignalP 为单线程批处理，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 signalp 的额外参数（高级用法，慎用）
+outputs:
+  summary:
+    type: file
+    format: txt
+    description: 预测汇总表（<prefix>_summary.signalp5）
+  mature_fasta:
+    type: file
+    format: fasta
+    description: 成熟蛋白序列 FASTA（-mature 产出，13.md 中作为 TMHMM 步骤输入 proteins_mature.fasta）
+environment:
+  container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    404，2026-09 核实）→ 走自建容器兜底
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay→depot）全无，故按 AGENT.md §7 自建兜底（debian:bookworm-slim +
+    apt perl 运行时）；构建须提供用户自备的官方授权 tarball（--build-arg SIGNALP_URL 或 %files
+    本地 tarball），禁止伪造下载链接。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    predict: 1
+    mature: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: signalp

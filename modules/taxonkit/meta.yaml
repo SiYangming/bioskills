@@ -1,0 +1,125 @@
+software: taxonkit
+canonical: taxonkit
+category: annotation
+description: >-
+  TaxonKit 是基于 NCBI Taxonomy 数据库的命令行工具集，支持分类等级查询（list）、谱系追溯（lineage）、
+  物种名到 TaxID 映射（name2taxid）、以及多级分类格式化（reformat）。常用于从 NR 等大型序列库中
+  按门/界（如真菌 4751、细菌 2）等分类单元提取子集，是功能注释流程的建库前处理工具。
+homepage: https://github.com/shenwei356/taxonkit
+license: MIT
+software_versions:
+- id: taxonkit_native
+  taxonkit: "0.2.4"
+  build_route: official biocontainer（quay.io/biocontainers/taxonkit:0.2.4--0 / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/taxonkit
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
+    native 固定 taxonkit=0.2.4（对应 13.md 教程与官方 release v0.2.4，bioconda/quay/depot 均可取）；宿主机直跑
+    main.py 时用 conda/mamba 安装，或用官方预编译二进制（linux-x64 / macos-x64），亦可用 brew tap brewsci/bio。'
+- id: taxonkit_nextflow_nfcore
+  module_version: master（2026-09 抓取）
+  taxonkit: "0.20.0（list、name2taxid）/ 0.18.0（lineage）"
+  source: bioconda::taxonkit=0.20.0 等（modules/nf-core/taxonkit/{lineage,list,name2taxid}/environment.yml）
+  note: nf-core 有 taxonkit/{lineage,list,name2taxid} 三个子模块，env pin 分别为 lineage=0.18.0、list=0.20.0、
+    name2taxid=0.15.1；list 子模块容器 quay.io/biocontainers/taxonkit:0.20.0--h9ee0642_0，与 native 0.2.4 相差多个 minor。
+- id: taxonkit_snakemake_wrappers
+  wrapper_tag: v9.17.1（2026-09 抓取 snakemake-wrappers 最新 release tag）
+  taxonkit: "0.20.0"
+  source: taxonkit=0.20.0（bio/taxonkit/environment.yaml，扁平 wrapper）
+  note: 官方有 bio/taxonkit 扁平 wrapper（无子目录，含 wrapper.py + environment.yaml，pin taxonkit=0.20.0）。
+implementations:
+- id: taxonkit_native
+  path: native
+  source_type: custom
+  type: native
+  version: "0.2.4"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    list / lineage / name2taxid / reformat 链路，自动注入线程。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/taxonkit
+    quay_biocontainers: quay.io/biocontainers/taxonkit
+    upstream_prebuilt: https://github.com/shenwei356/taxonkit/releases/download/v0.2.4/taxonkit_linux_amd64.tar.gz
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda taxonkit=0.2.4；容器可用 quay.io/biocontainers/taxonkit:0.2.4--0
+      镜像（tag 见 README）
+    note: 官方 release 提供 linux-x64 / macos-x64 预编译二进制包（v0.2.4 无 darwin-arm64 资产）；另有源码编译路线（Go）；无 Homebrew core 公式，brew 需 brewsci/bio tap
+default_implementation: taxonkit_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'taxonkit 子命令：list|lineage|name2taxid|reformat|version'
+  ids:
+    type: string
+    required: false
+    cli_arg: --ids
+    description: list 的根分类单元 TaxID（如真菌界 4751，可用逗号分隔多个）
+  input:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入文件（lineage 的 TaxID 列表 / name2taxid 的名称列表 / reformat 的 lineage 表）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件路径（省略时写 stdout）
+  data_dir:
+    type: string
+    required: false
+    cli_arg: --data-dir
+    description: NCBI Taxonomy 数据目录（默认 ~/.taxonkit，需含 nodes.dmp/names.dmp 等）
+  format:
+    type: string
+    required: false
+    cli_arg: -f
+    description: reformat 的输出格式模板（如 "{k};{p};{c};{o};{f};{g};{s}"）
+  indent:
+    type: string
+    required: false
+    cli_arg: --indent
+    description: list 的缩进字符（默认 "  "，用 --indent "" 输出无缩进）
+  show_name:
+    type: boolean
+    default: false
+    cli_arg: -n
+    description: lineage 输出中附带分类名称
+  show_rank:
+    type: boolean
+    default: false
+    cli_arg: -r
+    description: lineage 输出中附带分类等级
+  threads:
+    type: integer
+    default: 4
+    cli_arg: -j
+    description: 线程数（自动注入 -j，list / name2taxid 使用）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给 taxonkit 子命令的额外参数（高级用法，慎用）
+outputs:
+  result_file:
+    type: file
+    description: 子命令输出文件（list 的 TaxID 列表 / lineage / name2taxid / reformat 结果）
+environment:
+  container_official: quay.io/biocontainers/taxonkit（bioconda 官方镜像；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；官方同时提供预编译二进制包与源码编译两条路线（已核实）；宿主机直跑 main.py 时用 conda/mamba 安装或官方二进制。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 4096
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    list: 8
+    name2taxid: 8
+    lineage: 4
+    reformat: 4
+    version: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: taxonkit

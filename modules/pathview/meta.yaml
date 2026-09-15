@@ -1,0 +1,147 @@
+software: pathview
+canonical: pathview
+category: enrichment
+description: 'pathview 是 Bioconductor 的 KEGG 通路富集可视化 R 包：把基因/化合物表达或
+  差异数据映射到 KEGG 通路图上，按数值着色并生成通路 PNG/PDF/SVG，是转录组/代谢组
+  KEGG 富集结果的图形化落点（本模块以 Rscript 驱动 pathview::pathview()，对应文档
+  「十二、KEGG通路富集分析（pathview）」里的 pathview.pl 调用）。
+  以 R 函数库形态分发（无独立命令行二进制），conda / 容器规范包名为 bioconductor-pathview。
+  '
+homepage: https://bioconductor.org/packages/release/bioc/html/pathview.html
+license: GPL-3.0-or-later
+software_versions:
+- id: pathview_native
+  pathview: '1.50.0'
+  r: R >= 4.2（官方 biocontainer 内置 R 4.5）
+  build_route: official biocontainer（quay.io/biocontainers/bioconductor-pathview / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bioconductor-pathview
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org）：bioconda 与
+    quay.io/biocontainers/bioconductor-pathview:1.50.0--r45hdfd78af_0 均已维护；depot.galaxyproject.org
+    未收录该包（2026-09 核实 404），故 Apptainer 走 quay docker:// 直拉。宿主机直跑 main.py
+    时用 conda/mamba 装 bioconductor-pathview 或 R BiocManager 直装。'
+- id: pathview_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/pathview 404，2026-09 核实）
+  pathview: —
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/pathview
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: pathview_snakemake_wrappers
+  pathview: 官方无 wrapper（bio/pathview 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/pathview
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: pathview_nextflow_local
+  pathview: "未启用（官方缺失时可在 main.nf 以 shell 调 native/main.py plot）"
+- id: pathview_snakemake_local
+  pathview: "未启用（需要时用 shell 调 native/main.py plot 或 Rscript 驱动）"
+implementations:
+- id: pathview_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.50.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    plot 子命令以 Rscript 运行内嵌 R 驱动，调用 pathview::pathview() 把表达/差异数据映射到
+    KEGG 通路图（支持 gene.data/cpd.data、多通路 id、物种与 id 类型选择）。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-pathview
+    quay_biocontainers: quay.io/biocontainers/bioconductor-pathview
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bioconductor-pathview；
+      容器用 quay.io/biocontainers/bioconductor-pathview:1.50.0--r45hdfd78af_0（见 README）
+default_implementation: pathview_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: pathview 子命令：plot（唯一核心命令）
+  kegg_ids:
+    type: string
+    required: true
+    cli_arg: --kegg-ids
+    description: KEGG 通路 id（逗号分隔，如 ko00010 或 ko00010,hsa04110；species=ko 对应 KO 编号）
+  gene_data:
+    type: file
+    required: false
+    cli_arg: --gene-data
+    description: 基因数据表（首列 gene id，次列数值；如差异表达 log2FC）。与 cpd-data 至少一个
+  cpd_data:
+    type: file
+    required: false
+    cli_arg: --cpd-data
+    description: 化合物数据表（首列 compound id，次列数值，代谢组用）。与 gene-data 至少一个
+  species:
+    type: string
+    required: false
+    default: ko
+    cli_arg: --species
+    description: KEGG 物种/通路前缀（ko=KEGG Orthology，hsa/mmu 等为物种三字母代码；默认 ko）
+  out_dir:
+    type: string
+    required: false
+    default: .
+    cli_arg: --out-dir
+    description: 输出目录（生成 <pathway>.<suffix>.png / .xml 等）
+  out_suffix:
+    type: string
+    required: false
+    default: pathview
+    cli_arg: --out-suffix
+    description: 输出文件名后缀（用于区分多次运行）
+  gene_idtype:
+    type: string
+    required: false
+    default: KEGG
+    cli_arg: --gene-idtype
+    description: gene.data 的 id 类型（KEGG/ENTREZ/ORF/UniProt 等，默认 KEGG）
+  cpd_idtype:
+    type: string
+    required: false
+    default: KEGG
+    cli_arg: --cpd-idtype
+    description: cpd.data 的 id 类型（KEGG/CAS/ChEBI 等，默认 KEGG）
+  discrete:
+    type: boolean
+    default: false
+    cli_arg: --discrete
+    description: 离散型数据着色（TRUE 时把数值视为分类）
+  kegg_dir:
+    type: string
+    required: false
+    default: .
+    cli_arg: --kegg-dir
+    description: KEGG 通路 XML 缓存目录（离线时可预置 kgml）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（透传 R 底层 BLAS 的 OMP/OPENBLAS 线程）
+  extra_args:
+    type: string
+    required: false
+    description: 保留字段（参数已结构化，如需扩展请改 main.py 内嵌 R 驱动）
+outputs:
+  pathway_image:
+    type: file
+    format: png
+    description: 通路着色图（<kegg_id>.<out_suffix>.png，另附 .xml 通路数据）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-pathview（bioconda 官方镜像；tag 以 quay 为准，depot 未收录见 README）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 bioconductor-pathview，或已装 R 时 BiocManager::install('pathview')。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+    OMP_NUM_THREADS: '{cpus}'
+  per_subcommand_threads:
+    plot: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 无 pathview 模块（2026-09 核实 404），
+    Nextflow 场景以 native Rscript 驱动 + 官方容器为兜底。

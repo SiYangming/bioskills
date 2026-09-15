@@ -1,0 +1,172 @@
+software: dbcan
+canonical: dbcan
+category: annotation
+description: >-
+  dbCAN 是碳水化合物活性酶（CAZyme）注释的数据库与工具集：提供 CAZy 家族的 HMM 模型
+  （dbCAN-HMMdb）与 CAZy 蛋白序列库（CAZyDB），通过 HMMER hmmscan 与 DIAMOND blastp
+  对蛋白序列做家族识别，再用 hmmscan-parser.sh 等脚本解析，得到 GH/GT/PL/CE/AA/CBM 家族注释。
+homepage: http://bcb.unl.edu/dbCAN2/index.php
+license: GPL-3.0
+software_versions:
+- id: dbcan_native
+  dbcan: "9.0（数据库包：dbCAN-HMMdb-V9 / CAZyDB.07312020 / hmmscan-parser V9）"
+  build_route: official biocontainer（quay.io/biocontainers/dbcan:5.2.9--pyhdfd78af_0 / depot.galaxyproject.org）
+  source: http://bcb.unl.edu/dbCAN2/download/ + https://anaconda.org/bioconda/dbcan
+  note: '13.md 使用经典 dbCAN V9 数据库+脚本路线（下载 dbCAN-HMMdb-V9.txt / CAZyDB.07312020.fa / hmmscan-parser.sh，
+    hmmpress + makeblastdb + diamond makedb 建库），故 native 版本记数据库版本 9.0；官方 bioconda/quay 包名 dbcan
+    实为 run_dbcan（dbCAN2 下游封装，当前 5.2.9），与经典 V9 脚本非同一代，二者可并存（run_dbcan 走 conda/容器，
+    经典 V9 数据库走本模块 native 建库流程）；数据库体积大（HMMdb + CAZy FASTA），需单独下载、不入镜像。'
+- id: dbcan_nextflow_nfcore
+  dbcan: 官方无 nf-core 子模块（modules/nf-core/dbcan 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/dbcan 返回 404；
+    Nextflow 场景请改走本模块 native 或自建 local。
+- id: dbcan_snakemake_wrappers
+  dbcan: 官方无 wrapper（bio/dbcan 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/dbcan 返回 404；
+    Snakemake 场景请改走本模块 native 或自建 local。
+implementations:
+- id: dbcan_native
+  path: native
+  source_type: custom
+  type: native
+  version: "9.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。覆盖
+    build_hmm / build_blastdb / build_diamond / hmmscan / diamond_blastp / parse_hmmscan 全链路，自动注入线程。
+    '
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/dbcan
+    quay_biocontainers: quay.io/biocontainers/dbcan
+    upstream_db: http://bcb.unl.edu/dbCAN2/download/
+    install_hint: 经典 V9 数据库请用 native/install.sh 下载建库；如需 run_dbcan 封装可 mamba create -n <env> -c conda-forge -c bioconda dbcan=5.2.9，或用 quay.io/biocontainers/dbcan:5.2.9--pyhdfd78af_0 镜像（tag 见 README）
+    note: 经典 dbCAN V9 为「数据库 + 脚本」包（无单一二进制），依赖 hmmpress/makeblastdb/diamond；数据库需单独下载
+default_implementation: dbcan_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'dbcan 子命令：build_hmm|build_blastdb|build_diamond|hmmscan|diamond_blastp|parse_hmmscan'
+  fasta:
+    type: file
+    required: false
+    cli_arg: positional
+    description: 输入蛋白 FASTA（build_blastdb/build_diamond/hmmscan/diamond_blastp 的 query）
+  hmm_db:
+    type: file
+    required: false
+    cli_arg: positional
+    description: dbCAN HMM 数据库（dbCAN-fam-HMMs.txt / dbCAN-HMMdb-V9.txt）
+  db:
+    type: string
+    required: false
+    cli_arg: --db
+    description: DIAMOND 数据库前缀（build_diamond 输出 / diamond_blastp 输入）
+  blast_db:
+    type: string
+    required: false
+    cli_arg: -out
+    description: BLAST 数据库前缀（makeblastdb 输出）
+  title:
+    type: string
+    required: false
+    cli_arg: -title
+    description: BLAST 数据库标题
+  logfile:
+    type: file
+    required: false
+    cli_arg: -logfile
+    description: makeblastdb 日志文件
+  domtblout:
+    type: file
+    required: false
+    cli_arg: --domtblout
+    description: hmmscan 域级输出（作为 parse_hmmscan 输入）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 输出文件（parse_hmmscan 解析结果 / diamond_blastp 比对结果）
+  evalue:
+    type: float
+    required: false
+    cli_arg: -E
+    description: E-value 阈值（hmmscan -E / diamond --evalue）
+  dom_evalue:
+    type: float
+    required: false
+    cli_arg: --domE
+    description: hmmscan 域级 E-value 阈值
+  max_target_seqs:
+    type: integer
+    required: false
+    cli_arg: --max-target-seqs
+    description: DIAMOND 每条 query 最大命中数
+  min_id:
+    type: float
+    required: false
+    cli_arg: --id
+    description: DIAMOND 最小一致性百分比
+  outfmt:
+    type: integer
+    required: false
+    cli_arg: --outfmt
+    description: DIAMOND 输出格式（5=XML，6=tabular）
+  index_chunks:
+    type: integer
+    required: false
+    cli_arg: --index-chunks
+    description: DIAMOND 索引分块数
+  threads:
+    type: integer
+    default: 4
+    cli_arg: --cpu
+    description: 线程数（自动注入；hmmscan 用 --cpu，diamond 用 --threads）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层命令的额外参数（高级用法，慎用）
+outputs:
+  hmm_database:
+    type: file
+    description: hmmpress 建好的 HMM 数据库（.h3f/.h3i/.h3m/.h3p）
+  blast_database:
+    type: file
+    description: makeblastdb 建好的 BLAST 蛋白库（.pdb/.phr/.pin 等）
+  diamond_database:
+    type: file
+    description: diamond makedb 建好的 DIAMOND 库（.dmnd）
+  hmmscan_result:
+    type: file
+    format: domtblout
+    description: hmmscan 域级输出
+  blast_result:
+    type: file
+    description: diamond blastp 比对结果（outfmt 5 XML / 6 tabular）
+  parsed_result:
+    type: file
+    format: tsv
+    description: hmmscan-parser.sh 解析后的 CAZy 家族注释表
+environment:
+  container_official: quay.io/biocontainers/dbcan（bioconda 官方镜像，实为 run_dbcan；tag 以 quay / depot.galaxyproject.org 为准，见 README「容器与 Conda 链接」）
+  note: 官方渠道（bioconda/quay/depot）存在 dbcan 包（=run_dbcan），依规范不维护本地 Dockerfile/Apptainer.def；经典 dbCAN V9 数据库+脚本需从 bcb.unl.edu/dbCAN2 单独下载（体积大，不适合入镜像），建库步骤见 README。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    build_hmm: 2
+    build_blastdb: 4
+    build_diamond: 4
+    hmmscan: 8
+    diamond_blastp: 8
+    parse_hmmscan: 1
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: hmmscan-parser.sh

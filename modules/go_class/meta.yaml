@@ -1,0 +1,176 @@
+software: go_class
+canonical: go_class
+category: functional_annotation
+description: 'GO class 是用于 GO 功能分类与 WEGO 风格可视化的 Perl 脚本集，可将 GO 注释结果按生物过程（BP）、
+  分子功能（MF）、细胞组分（CC）三大类统计并绘制 GO 分类图： annot2wego.pl 生成 WEGO 格式， get_Genes_From_GO.pl
+  统计分类， go_svg.pl/distributing_svg.pl/changsvgsize.pl 生成与调整 WEGO-SVG 图，是 13.md「九、GO功能分类（WEGO图）」
+  的核心工具集。⚠️ 依赖 Perl。
+  ⚠️ 无官方渠道：bioconda → quay → depot 全无（2026-09 核实）；13.md 以本地 tar 包（go_class.tar.gz）分发，
+  无官方下载页，故本模块走自建容器兜底（消费用户自备 tar 包）。
+
+  '
+homepage: https://wego.genomics.cn/
+license: 未标注（go_class 本地发行包未声明许可；WEGO 项目见 https://wego.genomics.cn/）
+software_versions:
+- id: go_class_native
+  go_class: 未标注（13.md 本地 tar 包 go_class.tar.gz，无版本号）
+  build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
+    + apt perl 运行时 + 用户自备 go_class.tar.gz）
+  source: 13.md「安装 GO class 分析软件」本地 tar 包 go_class.tar.gz（无官方下载页，2026-09 未找到）
+  note: '⚠️ 无官方分发渠道：bioconda go_class / go-class（anaconda.org/bioconda/go_class）于 2026-09
+    核实 404；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/go-class
+    404、biocontainers.pro/tools/go-class 404；nf-core / snakemake-wrappers 亦 404。13.md 以本地
+    tar 包分发，且未给出官方下载页与版本号（如实登记「未标注」）。故按 AGENT.md §7 走自建兜底：native/Dockerfile、Apptainer.def
+    （debian:bookworm-slim + apt perl 运行时，构建须提供用户自备 go_class.tar.gz）。'
+- id: go_class_nextflow_nfcore
+  go_class: 官方无模块（modules/nf-core/go_class 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/go_class
+    返回 404；Nextflow 场景请直接调用 native。
+- id: go_class_snakemake_wrappers
+  go_class: 官方无 wrapper（bio/go_class 404）
+  source: —
+  note: 2026-09 核实 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/go_class
+    返回 404；Snakemake 场景请直接调用 native。
+implementations:
+- id: go_class_native
+  path: native
+  source_type: custom
+  type: native
+  version: 未标注
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供
+    config / annot2wego / classify / svg / distribute / resize 六个子命令，覆盖 13.md「九、GO功能分类（WEGO图）」全链路。
+
+    '
+  container_ref:
+    bioconda: 官方无 go_class 包（anaconda.org/bioconda/go_class 404，2026-09 核实）
+    quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）
+    depot_singularity: depot.galaxyproject.org 无 go-class（2026-09 核实 404）
+    install_hint: 无官方 conda/容器 → 使用本模块自建配方 native/Dockerfile、Apptainer.def（须自备 go_class.tar.gz）；
+      宿主机安装用 native/install.sh --archive <go_class.tar.gz>
+default_implementation: go_class_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: go_class 子命令：config|annot2wego|classify|svg|distribute|resize
+  obo:
+    type: file
+    required: false
+    cli_arg: positional
+    description: GO 本体文件 go.obo（config / classify 使用）
+  annot:
+    type: file
+    required: false
+    cli_arg: positional
+    description: GO 注释文件 go.annot（annot2wego 使用；格式见 13.md 整合 eggNOG/InterPro 步骤）
+  wego:
+    type: file
+    required: false
+    cli_arg: positional
+    description: WEGO 格式文件 go.wego（classify / svg 使用）
+  outdir:
+    type: string
+    required: false
+    cli_arg: --outdir
+    description: svg 子命令输出目录（默认当前目录）
+  name:
+    type: string
+    required: false
+    cli_arg: --name
+    description: svg 子命令输出名前缀（如 out）
+  color:
+    type: string
+    required: false
+    cli_arg: --color
+    description: svg 子命令配色（如 green）
+  mark:
+    type: string
+    required: false
+    cli_arg: --mark
+    description: svg 子命令图例标注（如 "Whole Genome Genes"）
+  note:
+    type: string
+    required: false
+    cli_arg: --note
+    description: svg 子命令图注文本
+  lst:
+    type: file
+    required: false
+    cli_arg: positional
+    description: distribute 子命令的 out.lst（go_svg.pl 产出并调整 MovePer 后）
+  svg:
+    type: file
+    required: false
+    cli_arg: positional
+    description: distribute / resize 子命令的 SVG 文件
+  width:
+    type: string
+    required: false
+    cli_arg: positional
+    description: resize 子命令目标宽度（如 150）
+  height:
+    type: string
+    required: false
+    cli_arg: positional
+    description: resize 子命令目标高度（如 -100）
+  output:
+    type: file
+    required: false
+    cli_arg: -o
+    description: 对写 stdout 的子命令（annot2wego/classify）将结果落盘的路径
+  threads:
+    type: integer
+    default: 1
+    cli_arg: —（Perl 脚本单线程；仅供上层调度器读取）
+    description: 线程数（统一接口保留；go_class 脚本单线程，不注入命令行）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给对应 go_class 脚本的额外参数（高级用法，慎用）
+outputs:
+  go_wego:
+    type: file
+    format: txt
+    description: WEGO 格式注释（annot2wego.pl 产出；写 stdout 或 -o 落盘）
+  go_class_tab:
+    type: file
+    format: tsv
+    description: GO 分类统计表（get_Genes_From_GO.pl 产出；写 stdout 或 -o 落盘）
+  svg:
+    type: file
+    format: svg
+    description: WEGO-SVG 图（go_svg.pl / distributing_svg.pl / changsvgsize.pl 产出）
+  out_lst:
+    type: file
+    format: txt
+    description: go_svg.pl 产出的图元清单 out.lst（供 distributing_svg.pl 组合）
+environment:
+  container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
+    404，2026-09 核实）→ 走自建容器兜底
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: 官方渠道（bioconda→quay→depot）全无，且 13.md 以本地 tar 包分发（无官方下载页）→ 按 AGENT.md
+    §7 自建兜底（debian:bookworm-slim + apt perl 运行时）；构建须提供用户自备 go_class.tar.gz（--build-arg
+    GO_CLASS_URL 或 %files 本地 tarball），禁止伪造下载链接；容器内已运行 make_go_class_config.pl 需
+    显式提供 go.obo（见 README）。
+optimization:
+  default_cpus: 1
+  default_mem_mb: 2048
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    PYTHONUNBUFFERED: '1'
+  per_subcommand_threads:
+    config: 1
+    annot2wego: 1
+    classify: 1
+    svg: 1
+    distribute: 1
+    resize: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: annot2wego.pl

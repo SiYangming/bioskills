@@ -1,0 +1,147 @@
+software: blast2go
+canonical: blast2go
+category: annotation
+description: 'Blast2GO 是基因功能注释与富集分析工具：以 BLAST 比对结果为基础做 GO 功能注释，
+  提供图形化客户端（3.3）与命令行版本（b2g4pipe v2.5，Java，B2GAnnotPipe），广泛用于转录组/
+  基因组的 GO 注释。客户端与命令行均需 Java；本地注释数据库用 local_b2g_db + install_blast2goDB.sh
+  （依赖 MySQL/Perl）。⚠️ 许可受限：需在官网注册/订阅后获取发行包，且不在 bioconda /
+  quay.io/biocontainers / depot.galaxyproject.org 分发 → 容器配方消费用户自备发行包。
+  '
+homepage: https://www.blast2go.com/
+license: Proprietary (BioBam；需注册/订阅，许可受限)
+software_versions:
+- id: blast2go_native
+  blast2go: '3.3'
+  b2g4pipe: '2.5'
+  java: JDK/JRE 8+（推荐 11/17）
+  mysql: MySQL 5.7+（本地注释库 install_blast2goDB.sh；Perl DBI/DBD::mysql）
+  build_route: 官方渠道（bioconda→quay.io/biocontainers→depot.galaxyproject.org）均无 blast2go
+    → 自建容器兜底（native/Dockerfile + Apptainer.def，debian:bookworm-slim + openjdk-17-jre-headless）
+  source: https://www.blast2go.com/（下载/许可：https://www.biobam.com/download-blast2go/）
+  note: '已核实 2026-09：bioconda 无 blast2go（api.anaconda.org/package/bioconda/blast2go → 404）；
+    quay.io/biocontainers/blast2go 无仓库（401，与不存在仓库一致）；depot.galaxyproject.org/singularity/blast2go
+    → 404；nf-core/modules、snakemake-wrappers、homebrew-core 均无。⚠️ 许可受限：客户端
+    Blast2GO_unix_3_3_x64.zip 与命令行 b2g4pipe_v2.5.zip 需注册/订阅后获取，无公开直链、无官方
+    sha256；本模块自建容器配方需把用户自备的发行包放入构建上下文，宿主机用 native/install.sh 部署。'
+- id: blast2go_nextflow_nfcore
+  blast2go: 官方无模块（modules/nf-core/blast2go 404，2026-09 核实）
+  source: —
+  note: nf-core/modules 无 blast2go 目录（404）；Nextflow 场景以 native/ 为兜底。
+- id: blast2go_snakemake_wrappers
+  blast2go: 官方无 wrapper（bio/blast2go 404，2026-09 核实）
+  source: —
+  note: snakemake-wrappers bio/ 下无 blast2go（404）；Snakemake 场景以 native/ 为兜底。
+- id: blast2go_nextflow_local
+  blast2go: '未启用（未建 nextflow/；需要时在 main.nf 以 shell 调 native/main.py）'
+- id: blast2go_snakemake_local
+  blast2go: '未启用（未建 snakemake/；需要时用 shell 调 native/main.py）'
+implementations:
+- id: blast2go_native
+  path: native
+  source_type: custom
+  type: native
+  version: "3.3"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell）首选目标；
+    子命令 annot（b2g4pipe B2GAnnotPipe 命令行 GO 注释）、install_db（local_b2g_db +
+    install_blast2goDB.sh 建本地注释库）、client（启动 Blast2GO 3.3 图形客户端）'
+  container_ref:
+    upstream_prebuilt: https://www.biobam.com/download-blast2go/（需注册/订阅；许可受限）
+    self_built_dockerfile: native/Dockerfile（debian:bookworm-slim + openjdk-17-jre-headless；需将 b2g4pipe 发行包放入构建上下文）
+    self_built_apptainer: native/Apptainer.def（同上，%files 注入 b2g4pipe zip）
+    install_hint: 官方渠道无镜像/conda；请在官网注册/订阅下载 Blast2GO 客户端与 b2g4pipe_v2.5.zip，
+      用 native/install.sh 部署到用户目录，或按 native/Dockerfile / Apptainer.def 自建容器
+default_implementation: blast2go_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: 'blast2go 子命令：annot | install_db | client'
+  input:
+    type: file
+    required: false
+    cli_arg: -in
+    description: annot 的输入 BLAST XML（BLAST outfmt 5，如 nr.xml）
+  out:
+    type: string
+    required: false
+    cli_arg: -out
+    description: annot 的输出前缀（生成 <out>.annot / <out>.txt 等）
+  prop:
+    type: file
+    required: false
+    description: b2g4pipe 配置（b2gPipe.properties；默认取 <b2g-dir>/b2gPipe.properties）
+  b2g_dir:
+    type: string
+    required: false
+    description: b2g4pipe 安装目录（含 B2GAnnotPipe 类与 ext/；默认取 B2G4PIPE_HOME 环境变量）
+  db_home:
+    type: string
+    required: false
+    description: install_db 的本地注释库目录（含 local_b2g_db 脱出脚本 install_blast2goDB.sh）
+  blast2go_home:
+    type: string
+    required: false
+    description: client 的 Blast2GO 安装目录（含 Blast2GO 启动器；默认取 BLAST2GO_HOME 环境变量）
+  annot:
+    type: boolean
+    default: true
+    cli_arg: -annot
+    description: annot 是否输出注释（B2GAnnotPipe -annot）
+  dat:
+    type: boolean
+    default: true
+    cli_arg: -dat
+    description: annot 是否输出 .dat 统计（B2GAnnotPipe -dat）
+  annex:
+    type: boolean
+    default: true
+    cli_arg: -annex
+    description: annot 是否输出 annex 附加注释（B2GAnnotPipe -annex）
+  threads:
+    type: integer
+    default: 1
+    description: 线程契约（b2g4pipe 命令行单线程；JVM 并行由 JAVA_OPTS 控制，--threads 仅供上层调度）
+  java_opts:
+    type: string
+    required: false
+    description: 覆盖默认 JVM 参数（透传为 JAVA_OPTS，如 "-Xmx8g"；默认见 optimization.env_vars）
+  extra_args:
+    type: string
+    required: false
+    description: 透传给底层命令（B2GAnnotPipe / install_blast2goDB.sh / Blast2GO）的额外参数（高级用法，慎用）
+outputs:
+  annot_out:
+    type: file
+    format: txt
+    description: annot 输出的 GO 注释结果（<out>.annot / <out>.txt / <out>.dat 等）
+environment:
+  container_official: 无（bioconda / quay.io/biocontainers / depot.galaxyproject.org 均无 blast2go，2026-09 核实）
+  dockerfile: Dockerfile
+  apptainer_def: Apptainer.def
+  note: '⚠️ 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）均无 blast2go
+    （2026-09 核实：bioconda 404 / quay 无仓库 / depot 404），且许可受限（需注册/订阅），故本地提供
+    自建兜底配方：Dockerfile 与 Apptainer.def（debian:bookworm-slim + apt --no-install-recommends 安装
+    openjdk-17-jre-headless/perl，清理四连）。容器构建需先把用户自备的 b2g4pipe_v2.5.zip 放入构建上下文
+    （容器仅打包无头命令行 b2g4pipe；Blast2GO 3.3 GUI 客户端为桌面程序，请用 native/install.sh 在宿主机安装）。
+    Java 工具：JAVA_OPTS 经环境变量透传（见 optimization.env_vars）。'
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    JAVA_OPTS: '-Xmx6g -Djava.io.tmpdir={tmpdir}'
+  per_subcommand_threads:
+    annot: 1
+    install_db: 1
+    client: 1
+    default: 1
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: java
+  nextflow_note: 本模块未建 nextflow/ 目录；官方 nf-core/modules 无 blast2go（404，2026-09 核实），
+    Nextflow 场景以 native/ 兜底。
+  snakemake_include_hint: '本模块未建 snakemake/ 目录；官方 snakemake-wrappers 无 bio/blast2go
+    （404，2026-09 核实），Snakemake 场景以 native/ 兜底。'

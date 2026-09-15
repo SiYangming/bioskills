@@ -1,0 +1,76 @@
+# tmhmm native Apptainer/Singularity 配方（自建兜底：与 native/Dockerfile 同一 apt 路线）
+# ---------------------------------------------------------------------------
+# 路线说明：TMHMM 无官方 conda/容器（bioconda→quay→depot 全无，2026-09 核实），
+# Debian bookworm 亦无该包；且官方 tarball 许可受限（需 edu 邮箱向 DTU 申请）。
+# 故走自建兜底：debian:bookworm-slim + apt perl 运行时 + 用户自备授权 tarball，
+# 并在构建期修正 bin/tmhmm* 的 Perl 解释器路径。
+#
+# ⚠️ 构建前请二选一：
+#   1) 环境变量提供自托管/本地授权包地址：
+#        export TMHMM_URL=https://<your-mirror>/tmhmm-2.0c.Linux.tar.gz
+#        apptainer build tmhmm.sif Apptainer.def
+#   2) 或将授权 tarball 放到本目录并解开下面 %files 中的注释。
+# 官方申请入口：https://services.healthtech.dtu.dk/services/software.php
+# ---------------------------------------------------------------------------
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%files
+    # 如已持有官方授权 tmhmm-2.0c.Linux.tar.gz，可去掉下一行注释并放到本目录
+    # tmhmm-2.0c.Linux.tar.gz /tmp/tmhmm.tar.gz
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    TMHMM_URL="${TMHMM_URL:-}"
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        perl \
+        ca-certificates \
+        procps \
+        curl
+
+    mkdir -p /opt/tmhmm
+    if [ -f /tmp/tmhmm.tar.gz ]; then
+        tar -xzf /tmp/tmhmm.tar.gz -C /opt/tmhmm --strip-components=1
+    else
+        test -n "${TMHMM_URL}" || { \
+            echo "需提供 TMHMM_URL 或 %files 本地授权 tarball（官方需 edu 邮箱申请）" >&2; exit 1; }
+        curl -fL "${TMHMM_URL}" -o /tmp/tmhmm.tar.gz
+        tar -xzf /tmp/tmhmm.tar.gz -C /opt/tmhmm --strip-components=1
+    fi
+    perl -p -i -e 's#/usr/local/bin/perl#/usr/bin/perl#' /opt/tmhmm/bin/tmhmm*
+    test -x /opt/tmhmm/bin/tmhmm
+
+    # 清理四连 + 删构建期 curl
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /tmp/tmhmm.tar.gz
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export PATH=/opt/tmhmm/bin:$PATH
+
+%runscript
+    exec /opt/tmhmm/bin/tmhmm "$@"
+
+%test
+    set -eux
+    test -x /opt/tmhmm/bin/tmhmm
+    /opt/tmhmm/bin/tmhmm -version
+
+%labels
+    org.bioskills.software tmhmm
+    org.bioskills.impl tmhmm_native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.tmhmm_version 2.0c
+    org.bioskills.pkg_route apt(perl) + user-provided licensed tmhmm tarball -> /opt/tmhmm
+
+%help
+    tmhmm native Apptainer 镜像（自建兜底，许可受限需自备官方授权 tarball）。
+    调用方式：apptainer run tmhmm.sif /data/proteins_mature.fasta

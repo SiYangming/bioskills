@@ -1,0 +1,64 @@
+# ontologizer native Apptainer/Singularity 配方（自建兜底：与 native/Dockerfile 同一 apt 路线）
+# ---------------------------------------------------------------------------
+# 路线说明：Ontologizer 无官方 conda/容器（bioconda→quay→depot 全无，2026-09 核实），
+# Debian bookworm 亦无该包。官方以公开 GPL jar 分发（非许可受限），构建期从官网直拉：
+#   http://ontologizer.de/cmdline/Ontologizer.jar  /  http://ontologizer.de/gui/OntologizerGui.jar
+# 🚫 不使用 miniconda/micromamba（无 conda 包）。
+#
+# 构建：apptainer build ontologizer.sif Apptainer.def
+# 运行：apptainer run ontologizer.sif -g /data/go.obo -a /data/gene_association.gaf \
+#           -s /data/study.list -p /data/pop.list -o /data
+# ---------------------------------------------------------------------------
+Bootstrap: docker
+From: debian:bookworm-slim
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    ONTOLOGIZER_JAR_URL="${ONTOLOGIZER_JAR_URL:-http://ontologizer.de/cmdline/Ontologizer.jar}"
+    ONTOLOGIZER_GUI_JAR_URL="${ONTOLOGIZER_GUI_JAR_URL:-http://ontologizer.de/gui/OntologizerGui.jar}"
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        ca-certificates \
+        procps \
+        curl
+
+    mkdir -p /opt/ontologizer
+    curl -fL "${ONTOLOGIZER_JAR_URL}" -o /opt/ontologizer/Ontologizer.jar
+    curl -fL "${ONTOLOGIZER_GUI_JAR_URL}" -o /opt/ontologizer/OntologizerGui.jar
+    java -jar /opt/ontologizer/Ontologizer.jar -v
+
+    # 清理四连 + 删构建期 curl
+    apt-get purge -y curl
+    apt-get autoremove -y
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -f /usr/bin/curl
+
+%environment
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export TMPDIR=/tmp
+    export JAVA_TOOL_OPTIONS="-Xmx6g -Djava.io.tmpdir=/tmp"
+    export ONTOLOGIZER_HOME=/opt/ontologizer
+
+%runscript
+    exec java -jar /opt/ontologizer/Ontologizer.jar "$@"
+
+%test
+    set -eux
+    test -f /opt/ontologizer/Ontologizer.jar
+    java -jar /opt/ontologizer/Ontologizer.jar -v
+
+%labels
+    org.bioskills.software ontologizer
+    org.bioskills.impl ontologizer_native
+    org.bioskills.base_image debian:bookworm-slim
+    org.bioskills.ontologizer_version 2.1
+    org.bioskills.pkg_route apt(openjdk-17-jre-headless) + official public Ontologizer.jar -> /opt/ontologizer
+
+%help
+    ontologizer native Apptainer 镜像（自建兜底，官方公开 GPL jar）。
+    调用方式：apptainer run ontologizer.sif -g /data/go.obo -a /data/gene_association.gaf -s /data/study.list -p /data/pop.list -o /data

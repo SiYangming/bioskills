@@ -1,0 +1,128 @@
+software: goseq
+canonical: goseq
+category: enrichment
+description: 'goseq 是 Bioconductor 的 RNA-seq 等长度偏倚数据的 GO 富集分析 R 包：以差异
+  基因列表 + 基因长度（或转录本长度）为输入，先用 nullp 估计长度偏倚的概率权重函数（PWF），
+  再做 GO 类别的过/欠代表检验，是 Trinity run_GOseq.pl 的底层依赖（本模块以 Rscript 驱动
+  goseq::nullp + goseq::goseq，对应文档「十二」的 goseq 安装与 GO 富集）。
+  以 R 函数库形态分发（无独立命令行二进制），conda / 容器规范包名为 bioconductor-goseq。
+  '
+homepage: https://bioconductor.org/packages/release/bioc/html/goseq.html
+license: LGPL-2.0-or-later
+software_versions:
+- id: goseq_native
+  goseq: '1.62.0'
+  r: R >= 4.2（官方 biocontainer 内置 R 4.5）
+  build_route: official biocontainer（quay.io/biocontainers/bioconductor-goseq / depot.galaxyproject.org）
+  source: https://anaconda.org/bioconda/bioconductor-goseq
+  note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org）：bioconda 与
+    quay.io/biocontainers/bioconductor-goseq:1.62.0--r45hdfd78af_0 均已维护；depot.galaxyproject.org
+    未收录该包（2026-09 核实 404），故 Apptainer 走 quay docker:// 直拉。宿主机直跑 main.py
+    时用 conda/mamba 装 bioconductor-goseq 或 R BiocManager 直装。'
+- id: goseq_nextflow_nfcore
+  module_version: 官方无模块（modules/nf-core/goseq 404，2026-09 核实）
+  goseq: —
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/nf-core/modules/contents/modules/nf-core/goseq
+    返回 404；Nextflow 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: goseq_snakemake_wrappers
+  goseq: 官方无 wrapper（bio/goseq 404）
+  source: —
+  note: 2026-09 抓取 https://api.github.com/repos/snakemake/snakemake-wrappers/contents/bio/goseq
+    返回 404；Snakemake 场景以 native/（Rscript 驱动 + 官方容器）为兜底。
+- id: goseq_nextflow_local
+  goseq: "未启用（官方缺失时可在 main.nf 以 shell 调 native/main.py go）"
+- id: goseq_snakemake_local
+  goseq: "未启用（需要时用 shell 调 native/main.py go 或 Rscript 驱动）"
+implementations:
+- id: goseq_native
+  path: native
+  source_type: custom
+  type: native
+  version: "1.62.0"
+  priority: high
+  when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。
+    go 子命令以 Rscript 运行内嵌 R 驱动，串联 nullp（长度偏倚 PWF）+ goseq（GO 过/欠代表检验）
+    并计算 BH FDR，输出 GO 富集结果表。'
+  container_ref:
+    bioconda: https://anaconda.org/bioconda/bioconductor-goseq
+    quay_biocontainers: quay.io/biocontainers/bioconductor-goseq
+    install_hint: 推荐 mamba create -n <env> -c conda-forge -c bioconda bioconductor-goseq；
+      容器用 quay.io/biocontainers/bioconductor-goseq:1.62.0--r45hdfd78af_0（见 README）
+default_implementation: goseq_native
+inputs:
+  subcommand:
+    type: string
+    required: true
+    description: goseq 子命令：go（唯一核心命令）
+  genes:
+    type: file
+    required: true
+    cli_arg: --genes
+    description: 差异基因列表（每行一个 gene id；须为 --lengths 全集中基因的子集）
+  lengths:
+    type: file
+    required: true
+    cli_arg: --lengths
+    description: 基因长度表（首列 gene id、次列长度，覆盖全部被检验基因；用于 nullp 长度偏倚校正）
+  gene2cat:
+    type: file
+    required: true
+    cli_arg: --gene2cat
+    description: 基因→GO 类别映射表（首列 gene id、次列类别，多个类别用 ; 或 , 分隔）
+  output:
+    type: file
+    required: true
+    cli_arg: -o
+    description: GO 富集结果输出表（含 category/over_represented_pvalue/padj 等列，Tab 分隔）
+  method:
+    type: string
+    required: false
+    default: Wallenius
+    cli_arg: --method
+    description: 过/欠代表检验方法：Wallenius（默认，推荐）| Hypergeometric | Repulsive
+  test_cats:
+    type: string
+    required: false
+    default: "GO:CC,GO:BP,GO:MF"
+    cli_arg: --test-cats
+    description: 检验的类别空间（逗号分隔；默认三大 GO 本体 GO:CC,GO:BP,GO:MF；留空则用 gene2cat 全部类别）
+  use_genes_without_cat:
+    type: boolean
+    default: true
+    cli_arg: --use-genes-without-cat
+    description: 是否把无任何 GO 类别的基因也计入背景（默认 TRUE，降低偏倚）
+  threads:
+    type: integer
+    default: 4
+    description: 线程数（透传 R 底层 BLAS 的 OMP/OPENBLAS 线程）
+  extra_args:
+    type: string
+    required: false
+    description: 保留字段（参数已结构化，如需扩展请改 main.py 内嵌 R 驱动）
+outputs:
+  go_enrichment:
+    type: file
+    format: tsv
+    description: GO 富集结果表（category、over/under_represented_pvalue、numDEInCat、numInCat、ontology、padj）
+environment:
+  container_official: quay.io/biocontainers/bioconductor-goseq（bioconda 官方镜像；tag 以 quay 为准，depot 未收录见 README）
+  note: 官方镜像已覆盖，本地不再维护 Dockerfile/Apptainer.def；宿主机直跑 main.py 时用 conda/mamba
+    安装 bioconductor-goseq，或已装 R 时 BiocManager::install('goseq')。
+optimization:
+  default_cpus: 4
+  default_mem_mb: 8192
+  tmpdir: /tmp
+  env_vars:
+    TMPDIR: '{tmpdir}'
+    R_LIBS_USER: '{tmpdir}/R_libs'
+    OMP_NUM_THREADS: '{cpus}'
+  per_subcommand_threads:
+    go: 4
+    default: 4
+execution:
+  entrypoint: python main.py
+  test_command: bash test/run_test.sh
+  binary: Rscript
+  nextflow_note: 本模块未建 nextflow/ 目录；nf-core 无 goseq 模块（2026-09 核实 404），
+    Nextflow 场景以 native Rscript 驱动 + 官方容器为兜底。
