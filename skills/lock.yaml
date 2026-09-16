@@ -1,0 +1,8 @@
+version: '1.0'
+upstream:
+  repo: https://github.com/BioTender-max/awesome-bio-agent-skills
+  commit: 8cbdd18837aa6296c4e77616a03b323bd69b57b1
+  archive_root: skills
+  mirror: .cache/upstream-awesome-skills.git
+note: 内容层按需 vendor：技能正文默认不入库，由 skill-cli add 从 mirror 拉取后登记于本文件。
+skills: []

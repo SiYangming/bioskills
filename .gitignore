@@ -24,6 +24,20 @@ env/
 # -- TRAE 本地会话 / Skill 目录（本机挂载用，不入库）-------------------------
 .trae/
 
+# -- 上游同步缓存（skills/ 归档的上游 mirror 裸库，可再生，不入库）-------------
+# .cache/upstream-awesome-skills.git 为 awesome-bio-agent-skills 的本地裸镜像，
+# 仅用于 git fetch 上游更新后按排除规则回灌 skills/；体积达数百 MB，禁止入库。
+# 重建方式见 ARCHITECTURE.md「七、skills/ 指令层」。
+.cache/
+
+# -- 指令层内容（skills/ 按需 vendor，不入库）----------------------------------
+# skills/ 分三层：索引层(index/) 与登记层(lock.yaml) 入库；内容层(<source>/<skill>/)
+# 由 `skill-cli add` 从 .cache/ mirror 按需拉取，属可重建产物，不入库。
+# 保留：index/（全量离线索引）、assets/，以及 lock.yaml / LICENSE / ROADMAP.md。
+/skills/*/
+!/skills/index/
+!/skills/assets/
+
 # -- 运行产物 ---------------------------------------------------------------
 # *.schema.json 由 skill-cli schema 导出（可再生）。
 # 说明：官方仓库一般保留至少一套样例 schema 便于 Agent/FaaS 直接读取，

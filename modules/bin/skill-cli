@@ -6,6 +6,16 @@
   validate      校验某个软件目录的 meta.yaml（含 implementations 目录存在性）
   schema        从 meta.yaml 导出 JSON Schema
   run           直接调用某个 native 技能
+  link          扫描 skills/index/，重建 link_map.yaml（modules/ ↔ skills/ 跨层索引）
+  search        离线检索 skills/ 索引层（1,705 个技能，不依赖技能正文）
+  add           按需从上游 mirror 拉取技能正文到内容层，并登记 lock.yaml
+  remove        从内容层移除技能正文，并注销 lock.yaml
+  verify        校验内容层：正文缺失 / 本地被改动 / 上游已更新
+
+指令层（skills/）分三层，索引常驻、内容按需：
+  skills/index/               [索引层·入库] 全量技能索引，离线可检索（skill-cli search / link 的数据源）
+  skills/lock.yaml            [登记层·入库] 已拉取技能的 tree-hash 与上游 commit
+  skills/<source>/<skill>/    [内容层·不入库] 技能正文，由 skill-cli add 从 .cache/ mirror 拉取
 
 结构（单 meta.yaml 模式）：
   modules/<sw>/meta.yaml              # 唯一 meta：软件级 + 实现级合并
@@ -24,8 +34,14 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
+import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 SKILLS_ROOT = Path(__file__).resolve().parent.parent
@@ -35,6 +51,34 @@ import base  # noqa: E402
 import yaml  # noqa: E402
 
 REGISTRY = SKILLS_ROOT / "registry.yaml"
+
+# --- 指令层（skills/）路径：索引层常驻入库，内容层按需 vendor -----------------
+REPO_ROOT = SKILLS_ROOT.parent
+SKILLS_DIR_NAME = "skills"
+SKILLS_DIR = REPO_ROOT / SKILLS_DIR_NAME
+SKILLS_INDEX_DIR = SKILLS_DIR / "index"
+INDEX_META = SKILLS_INDEX_DIR / "skill_meta.csv"      # 本仓派生：primary_tool / tool_type
+INDEX_V3 = SKILLS_INDEX_DIR / "bioskill_index_v3.csv"  # 上游原样：description / file_count
+LOCK_FILE = SKILLS_DIR / "lock.yaml"                    # 内容层登记表
+DEFAULT_MIRROR = REPO_ROOT / ".cache" / "upstream-awesome-skills.git"
+LINK_MAP = SKILLS_ROOT / "link_map.yaml"
+
+# 上游技能侧写法与本仓 modules/ canonical 名的已知异写（只收敛确定差异，不做模糊猜测）
+LINK_ALIASES: dict[str, list[str]] = {
+    "rna-star": ["star", "star-aligner"],
+    "star": ["rna-star"],
+    "sra-tools": ["sratoolkit", "sra_tools"],
+    "umi_tools": ["umi-tools", "umitools"],
+    "trnascan-se": ["trnascan", "trnascan_se"],
+    "cd-hit": ["cdhit", "cd_hit"],
+    "eggnog-mapper": ["eggnog", "eggnog_mapper"],
+    "bwa": ["bwa-mem2", "bwamem2"],
+    "qiime1": ["qiime"],
+    "qiime2": ["qiime"],
+    "ensembl-vep": ["vep"],
+    "subread": ["featurecounts"],
+    "repeatmasker": ["repeat-masker"],
+}
 
 SOURCE_TYPES = ("official", "custom")
 IMPL_TYPES = (
@@ -154,6 +198,591 @@ def cmd_run(args: argparse.Namespace) -> int:
     return proc.returncode
 
 
+def _norm(text: str) -> str:
+    """归一化名称：小写、非字母数字折叠为下划线（用于跨层名称匹配）。"""
+    return re.sub(r"[^a-z0-9]+", "_", str(text).lower()).strip("_")
+
+
+def _load_index() -> list[dict]:
+    """加载 skills/index/ 下的索引层并合并为统一条目。
+
+    索引层完全离线可用，不依赖技能正文：
+      skills/index/skill_meta.csv          本仓派生：archive_path / name / primary_tool / tool_type
+      skills/index/bioskill_index_v3.csv   上游原样：skill_name / description / file_count
+    """
+    if not INDEX_META.exists():
+        return []
+    v3: dict[str, dict] = {}
+    if INDEX_V3.exists():
+        with INDEX_V3.open(encoding="utf-8") as fh:
+            for row in csv.DictReader(fh):
+                v3[(row.get("archive_path") or "").strip()] = row
+    entries: list[dict] = []
+    with INDEX_META.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            archive = (row.get("archive_path") or "").strip()
+            if not archive:
+                continue
+            up = v3.get(archive, {})
+            entries.append({
+                # 与上游仓库内路径一致：skills/<source>/<skill>
+                "path": f"{SKILLS_DIR_NAME}/{archive}",
+                "archive_path": archive,
+                "folder": (row.get("folder_name") or "").strip(),
+                "name": (row.get("name") or up.get("skill_name") or "").strip(),
+                "primary_tool": (row.get("primary_tool") or "").strip(),
+                "description": (up.get("description") or "").strip(),
+                "category": (row.get("category") or up.get("category") or "").strip(),
+                "source_repo": (row.get("source_repo") or up.get("source_repo") or "").strip(),
+            })
+    return entries
+
+
+def _load_lock() -> dict:
+    """读取内容层登记表；缺失时返回空结构。"""
+    if not LOCK_FILE.exists():
+        return {"version": "1.0", "upstream": {}, "skills": []}
+    data = yaml.safe_load(LOCK_FILE.read_text(encoding="utf-8")) or {}
+    data.setdefault("skills", [])
+    return data
+
+
+def _save_lock(lock: dict) -> None:
+    lock["skills"] = sorted(lock.get("skills", []), key=lambda s: s.get("path", ""))
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(LOCK_FILE, "w", encoding="utf-8") as fh:
+        yaml.safe_dump(lock, fh, sort_keys=False, allow_unicode=True)
+
+
+def _mirror_dir(lock: dict) -> Path:
+    """mirror 位置：优先取 lock.upstream.mirror（相对仓库根解析），否则用默认路径。"""
+    rel = (lock.get("upstream") or {}).get("mirror")
+    if rel:
+        p = Path(rel)
+        return p if p.is_absolute() else REPO_ROOT / p
+    return DEFAULT_MIRROR
+
+
+def _upstream_ref(lock: dict) -> str:
+    return (lock.get("upstream") or {}).get("commit") or "refs/remotes/origin/main"
+
+
+def _mirror_git(mirror: Path, *args: str) -> tuple[int, str, str]:
+    """在 mirror 裸库上执行 git 命令，返回 (returncode, stdout, stderr)。"""
+    proc = subprocess.run(
+        ["git", f"--git-dir={mirror}", *args],
+        capture_output=True, text=True,
+    )
+    return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+
+
+def _ensure_mirror(lock: dict) -> Path | None:
+    """确保上游 mirror 存在；缺失时建 partial clone（只取元数据，blob 按需拉取）。"""
+    mirror = _mirror_dir(lock)
+    if mirror.exists():
+        return mirror
+    repo = (lock.get("upstream") or {}).get("repo")
+    if not repo:
+        print("[ERROR] lock.yaml 缺少 upstream.repo，无法建立 mirror", file=sys.stderr)
+        return None
+    mirror.parent.mkdir(parents=True, exist_ok=True)
+    print(f"首次使用：建立上游 mirror（partial clone）-> {mirror}")
+    proc = subprocess.run(["git", "clone", "--bare", "--filter=blob:none", repo, str(mirror)])
+    if proc.returncode != 0:
+        print("[ERROR] 建立 mirror 失败：请检查网络，或手动 clone 到该路径", file=sys.stderr)
+        return None
+    return mirror
+
+
+def _resolve_skill(entries: list[dict], token: str) -> list[dict]:
+    """把用户输入解析为索引条目：精确匹配 archive_path 优先，再匹配 folder / skill name。"""
+    token = token.strip().strip("/")
+    if token.startswith(f"{SKILLS_DIR_NAME}/"):
+        token = token[len(SKILLS_DIR_NAME) + 1:]
+    exact = [e for e in entries if e["archive_path"] == token]
+    if exact:
+        return exact
+    for key in ("folder", "name"):
+        hits = [e for e in entries if _norm(e[key]) == _norm(token)]
+        if hits:
+            return hits
+    return []
+
+
+def _git_blob_sha1(path: Path) -> str:
+    """按 git blob 算法计算文件 SHA-1，用于与 mirror 中的 blob 比对。"""
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def _skill_indexes(skills: list[dict]) -> tuple[dict, dict, dict]:
+    """构建 primary_tool / 名称 / description 三个倒排索引。"""
+    by_tool: dict[str, list[dict]] = {}
+    by_name: dict[str, list[dict]] = {}
+    by_desc: dict[str, list[dict]] = {}
+    for skill in skills:
+        if skill["primary_tool"]:
+            by_tool.setdefault(_norm(skill["primary_tool"]), []).append(skill)
+        by_name.setdefault(_norm(skill["folder"]), []).append(skill)
+        if skill["name"]:
+            by_name.setdefault(_norm(skill["name"]), []).append(skill)
+        for word in set(re.findall(r"[A-Za-z][A-Za-z0-9_.+-]{2,}", skill["description"])):
+            by_desc.setdefault(_norm(word), []).append(skill)
+    return by_tool, by_name, by_desc
+
+
+def _dedup(items: list[dict]) -> list[dict]:
+    """按技能路径去重，保持输入顺序。"""
+    seen: set[str] = set()
+    out: list[dict] = []
+    for item in items:
+        if item["path"] not in seen:
+            seen.add(item["path"])
+            out.append(item)
+    return out
+
+
+def cmd_link(_: argparse.Namespace) -> int:
+    """重建 modules/link_map.yaml：把每个软件与 skills/ 中讲它的 SKILL.md 关联起来。
+
+    置信度分三档，宁可漏报不误报：
+      high    primary_tool / 技能名 / 目录名 与模块名精确一致
+      medium  description 中出现模块名（仅供人工复核，不作为唯一依据）
+    """
+    skills = _load_index()
+    if not skills:
+        print(f"[ERROR] 未找到索引层：{INDEX_META}（索引层应随仓库入库）", file=sys.stderr)
+        return 1
+    vendored = {s.get("path") for s in _load_lock().get("skills", [])}
+
+    by_tool, by_name, by_desc = _skill_indexes(skills)
+    links: list[dict] = []
+    count_high = count_medium = 0
+
+    for meta_path in _software_meta_paths():
+        meta = _load_meta(meta_path)
+        module_dir = meta_path.parent.name
+        software = str(meta.get("canonical") or meta.get("software") or module_dir)
+
+        candidates = {_norm(module_dir), _norm(software)}
+        candidates.update(_norm(a) for a in LINK_ALIASES.get(module_dir, []))
+        candidates.discard("")
+
+        entries: list[dict] = []
+        for skill in _dedup([s for c in candidates for s in by_tool.get(c, [])]):
+            entries.append({"path": skill["path"], "confidence": "high", "matched_by": "primary_tool"})
+        known = {e["path"] for e in entries}
+        for skill in _dedup([s for c in candidates for s in by_name.get(c, [])]):
+            if skill["path"] not in known:
+                known.add(skill["path"])
+                entries.append({"path": skill["path"], "confidence": "high", "matched_by": "skill_name"})
+        for skill in _dedup([s for c in candidates for s in by_desc.get(c, [])]):
+            if skill["path"] not in known:
+                known.add(skill["path"])
+                entries.append({"path": skill["path"], "confidence": "medium", "matched_by": "description"})
+
+        # 标注该技能正文是否已按需拉取到本地（内容层可能为空，索引层始终完整）
+        for entry in entries:
+            entry["vendored"] = entry["path"] in vendored
+
+        if any(e["confidence"] == "high" for e in entries):
+            count_high += 1
+        elif entries:
+            count_medium += 1
+        links.append({
+            "software": software,
+            "module_dir": f"modules/{module_dir}",
+            "skills": entries,
+        })
+
+    from datetime import datetime, timezone
+    link_map = {
+        "version": "1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "note": "跨层索引：modules/ 实现层 ↔ skills/ 指令层。由 skill-cli link 重建（读 skills/index/，不依赖技能正文）；vendored 表示正文是否已按需拉取。",
+        "summary": {
+            "skills_total": len(skills),
+            "skills_vendored": len(vendored),
+            "modules_total": len(links),
+            "with_high_confidence": count_high,
+            "with_only_medium": count_medium,
+            "unmatched": len(links) - count_high - count_medium,
+        },
+        "links": links,
+    }
+    with open(LINK_MAP, "w", encoding="utf-8") as fh:
+        yaml.safe_dump(link_map, fh, sort_keys=False, allow_unicode=True)
+    print(
+        f"已重建 link_map.yaml：{len(links)} 个软件，"
+        f"high={count_high}，仅 medium={count_medium}，未命中={len(links) - count_high - count_medium}；"
+        f"已拉取正文 {len(vendored)}/{len(skills)}"
+    )
+    return 0
+
+
+def _now_iso() -> str:
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def cmd_search(args: argparse.Namespace) -> int:
+    """离线检索索引层（读 skills/index/），并标注正文是否已拉取。"""
+    entries = _load_index()
+    if not entries:
+        print(f"[ERROR] 未找到索引层：{INDEX_META}", file=sys.stderr)
+        return 1
+    vendored = {s.get("path") for s in _load_lock().get("skills", [])}
+
+    keyword = (args.keyword or "").lower()
+    hits: list[dict] = []
+    for entry in entries:
+        if args.source and entry["source_repo"] != args.source:
+            continue
+        if args.category and entry["category"].lower() != args.category.lower():
+            continue
+        haystack = " ".join([
+            entry["path"], entry["name"], entry["primary_tool"],
+            entry["description"], entry["category"], entry["source_repo"],
+        ]).lower()
+        if keyword and keyword not in haystack:
+            continue
+        hits.append(entry)
+
+    if not hits:
+        print(f"未命中：{args.keyword}")
+        return 0
+
+    shown = hits[: args.limit]
+    width = max(len(e["path"]) for e in shown)
+    print(f"命中 {len(hits)} 个技能（显示前 {len(shown)} 个）\n")
+    for entry in shown:
+        mark = "已拉取" if entry["path"] in vendored else "  -   "
+        desc = entry["description"] or entry["name"]
+        print(f"[{mark}] {entry['path']:<{width}}  {desc[:64]}")
+    if len(hits) > len(shown):
+        print(f"\n… 另 {len(hits) - len(shown)} 个，可用 --limit 调整")
+    print(f"\n拉取正文：skill-cli add {shown[0]['archive_path']}")
+    return 0
+
+
+def _extract_from_mirror(mirror: Path, ref: str, upstream_path: str, target: Path) -> bool:
+    """把 mirror 中某个技能目录抽取到 target（先落临时目录，再原子搬移）。"""
+    proc = subprocess.run(
+        ["git", f"--git-dir={mirror}", "archive", ref, upstream_path],
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        err = proc.stderr.decode(errors="ignore").strip()
+        print(f"[ERROR] git archive 失败：{err or '未知错误'}", file=sys.stderr)
+        return False
+    tmp = Path(tempfile.mkdtemp(prefix="skill-add-"))
+    try:
+        # archive 内路径为 skills/<source>/<skill>/...，剥掉首层 skills/ 后搬移
+        tar = subprocess.run(["tar", "-x", "-C", str(tmp), "--strip-components=1"], input=proc.stdout)
+        if tar.returncode != 0:
+            print("[ERROR] tar 解包失败", file=sys.stderr)
+            return False
+        src = tmp / upstream_path[len(SKILLS_DIR_NAME) + 1:]
+        if not src.is_dir():
+            print(f"[ERROR] 解包结果缺少目录：{src}", file=sys.stderr)
+            return False
+        if not (src / "SKILL.md").exists():
+            print(f"[ERROR] {upstream_path} 不含 SKILL.md", file=sys.stderr)
+            return False
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            shutil.rmtree(target)
+        shutil.move(str(src), str(target))
+        return True
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+    """从上游 mirror 按路径拉取技能正文到 skills/<source>/<skill>/，并登记到 lock.yaml。"""
+    entries = _load_index()
+    if not entries:
+        print(f"[ERROR] 未找到索引层：{INDEX_META}", file=sys.stderr)
+        return 1
+    lock = _load_lock()
+    mirror = _ensure_mirror(lock)
+    if mirror is None:
+        return 1
+    ref = _upstream_ref(lock)
+    registered = {s.get("path"): s for s in lock.get("skills", [])}
+
+    added = skipped = 0
+    for token in args.skill:
+        found = _resolve_skill(entries, token)
+        if not found:
+            print(f"[跳过] 索引中未找到：{token}", file=sys.stderr)
+            skipped += 1
+            continue
+        if len(found) > 1:
+            print(f"[跳过] {token} 命中 {len(found)} 个，请改用完整路径：", file=sys.stderr)
+            for item in found[:8]:
+                print(f"        {item['archive_path']}", file=sys.stderr)
+            skipped += 1
+            continue
+
+        entry = found[0]
+        upstream_path = entry["path"]
+        target = REPO_ROOT / upstream_path
+        if target.exists() and not args.force:
+            print(f"[已存在] {upstream_path}（加 --force 可重拉）")
+            skipped += 1
+            continue
+
+        rc, tree, err = _mirror_git(mirror, "rev-parse", f"{ref}:{upstream_path}")
+        if rc != 0:
+            print(f"[ERROR] 无法解析 {upstream_path}：{err or 'mirror 中不存在'}", file=sys.stderr)
+            print("        提示：partial clone 需联网拉取 blob，请确认可访问上游后重试", file=sys.stderr)
+            skipped += 1
+            continue
+
+        if not _extract_from_mirror(mirror, ref, upstream_path, target):
+            skipped += 1
+            continue
+
+        registered[upstream_path] = {
+            "path": upstream_path,
+            "tree": tree,
+            "added_at": _now_iso(),
+        }
+        print(f"[拉取] {upstream_path}  tree={tree[:12]}")
+        added += 1
+
+    lock["skills"] = list(registered.values())
+    _save_lock(lock)
+    print(f"完成：新增 {added} 个，跳过 {skipped} 个；内容层共 {len(lock['skills'])} 个技能")
+    return 0
+
+
+def cmd_remove(args: argparse.Namespace) -> int:
+    """从内容层移除技能正文，并从 lock.yaml 注销。"""
+    lock = _load_lock()
+    skills = lock.get("skills", [])
+    entries = _load_index()
+    removed: list[str] = []
+    for token in args.skill:
+        raw = token.strip().strip("/")
+        # 归一化：先按完整路径命中，再用索引解析技能名 / 短路径
+        candidates = {raw, raw if raw.startswith(f"{SKILLS_DIR_NAME}/") else f"{SKILLS_DIR_NAME}/{raw}"}
+        found = next((s for s in skills if s.get("path") in candidates), None)
+        if found is None and entries:
+            resolved = {e["path"] for e in _resolve_skill(entries, token)}
+            found = next((s for s in skills if s.get("path") in resolved), None)
+        if found is None:
+            print(f"[跳过] lock 中未登记：{token}", file=sys.stderr)
+            continue
+        target = REPO_ROOT / found["path"]
+        if target.exists():
+            shutil.rmtree(target)
+        # 清理空的来源目录，避免留下空壳
+        parent = target.parent
+        if parent != SKILLS_DIR and parent.is_dir() and not any(parent.iterdir()):
+            parent.rmdir()
+        skills.remove(found)
+        removed.append(found["path"])
+    lock["skills"] = skills
+    _save_lock(lock)
+    for path in removed:
+        print(f"[移除] {path}")
+    print(f"完成：移除 {len(removed)} 个；内容层剩 {len(skills)} 个")
+    return 0
+
+
+def cmd_verify(_: argparse.Namespace) -> int:
+    """校验内容层：正文缺失 / 本地被改动 / 上游已更新。"""
+    lock = _load_lock()
+    skills = lock.get("skills", [])
+    if not skills:
+        print("内容层为空（零预置）。索引层已提供全量离线检索，用 `skill-cli add` 按需拉取正文。")
+        return 0
+    mirror = _ensure_mirror(lock)
+    if mirror is None:
+        return 1
+    ref = _upstream_ref(lock)
+
+    missing: list[str] = []
+    local_drift: list[str] = []
+    upstream_drift: list[str] = []
+    for item in skills:
+        path = item.get("path", "")
+        target = REPO_ROOT / path
+        if not target.is_dir():
+            missing.append(path)
+            continue
+        rc, tree, _ = _mirror_git(mirror, "rev-parse", f"{ref}:{path}")
+        if rc == 0 and tree and item.get("tree") and tree != item["tree"]:
+            upstream_drift.append(path)
+        skill_md = target / "SKILL.md"
+        if skill_md.exists():
+            rc2, blob, _ = _mirror_git(mirror, "rev-parse", f"{ref}:{path}/SKILL.md")
+            if rc2 == 0 and blob and _git_blob_sha1(skill_md) != blob:
+                local_drift.append(path)
+
+    intact = len(skills) - len(missing) - len(local_drift) - len(upstream_drift)
+    print(f"已登记 {len(skills)} 个技能")
+    print(f"  [ok] 完好        {intact}")
+    if missing:
+        print(f"  [!!] 正文缺失    {len(missing)}")
+        for path in missing[:5]:
+            print(f"       {path}")
+        print("       修复：skill-cli add <技能名>")
+    if local_drift:
+        print(f"  [!!] 本地已改动  {len(local_drift)}")
+        for path in local_drift[:5]:
+            print(f"       {path}")
+        print("       修复：skill-cli add <技能名> --force")
+    if upstream_drift:
+        print(f"  [^ ] 上游已更新  {len(upstream_drift)}")
+        for path in upstream_drift[:5]:
+            print(f"       {path}")
+        print("       修复：skill-cli add <技能名> --force")
+    return 0
+
+
+def _frontmatter_from_text(text: str) -> dict:
+    """从 SKILL.md 文本中解析 YAML frontmatter；缺失或非法返回空 dict。"""
+    matched = re.match(r"^\s*---\s*\n(.*?)\n---\s*\n", text, re.S)
+    if not matched:
+        return {}
+    try:
+        data = yaml.safe_load(matched.group(1)) or {}
+    except yaml.YAMLError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _scalar(value: object) -> str:
+    """把 frontmatter 取值压平成单行字符串（列表用 | 连接）。"""
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        return "|".join(str(v) for v in value)
+    if isinstance(value, dict):
+        return ""
+    return str(value)
+
+
+def _cat_file_batch(mirror: Path, shas: list[str]) -> dict[str, bytes]:
+    """用一次 git cat-file --batch 批量取回对象内容（partial clone 下只按需拉这些 blob）。"""
+    if not shas:
+        return {}
+    proc = subprocess.Popen(
+        ["git", f"--git-dir={mirror}", "cat-file", "--batch"],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+    out, _ = proc.communicate(("\n".join(shas) + "\n").encode())
+    blobs: dict[str, bytes] = {}
+    pos, total = 0, len(out)
+    while pos < total:
+        nl = out.find(b"\n", pos)
+        if nl < 0:
+            break
+        header = out[pos:nl].decode(errors="ignore").split()
+        pos = nl + 1
+        if len(header) < 3 or header[1] != "blob":
+            break
+        sha, size = header[0], int(header[2])
+        blobs[sha] = out[pos:pos + size]
+        pos += size + 1
+    return blobs
+
+
+def cmd_index_build(args: argparse.Namespace) -> int:
+    """从 mirror 重建索引层：上游原样 v3 索引 + ROADMAP，以及派生的 skill_meta.csv。
+
+    索引层必须常驻入库；skill_meta.csv 承载 primary_tool，是跨层索引高置信匹配的唯一依据，
+    因此上游 commit 前进后必须重跑本命令（而不是只刷新内容层）。
+    """
+    lock = _load_lock()
+    mirror = _ensure_mirror(lock)
+    if mirror is None:
+        return 1
+    ref = (lock.get("upstream") or {}).get("commit") or "refs/remotes/origin/main"
+
+    SKILLS_INDEX_DIR.mkdir(parents=True, exist_ok=True)
+
+    def _show(source_path: str) -> bytes | None:
+        """原样取出上游文件（不做 strip，保证与上游逐字节一致）。"""
+        proc = subprocess.run(
+            ["git", f"--git-dir={mirror}", "show", f"{ref}:{source_path}"],
+            capture_output=True,
+        )
+        if proc.returncode != 0:
+            print(f"[跳过] 上游无 {source_path}", file=sys.stderr)
+            return None
+        return proc.stdout
+
+    v3 = _show("bioskill_index_v3.csv")
+    if v3 is not None:
+        INDEX_V3.write_bytes(v3)
+        print(f"[更新] {INDEX_V3.relative_to(REPO_ROOT)}")
+
+    # 上游 docs/ROADMAP.md 的链接形如 ../skills/<src>/<skill>；迁到 skills/ 下需去掉 ../skills/ 前缀
+    roadmap = _show("docs/ROADMAP.md")
+    if roadmap is not None:
+        dest = SKILLS_DIR / "ROADMAP.md"
+        dest.write_bytes(roadmap.replace(b"](../skills/", b"]("))
+        print(f"[更新] {dest.relative_to(REPO_ROOT)}")
+
+    # 2) 枚举全部 SKILL.md，按 blob 批量取回并解析 frontmatter
+    rc, listing, err = _mirror_git(mirror, "ls-tree", "-r", ref)
+    if rc != 0:
+        print(f"[ERROR] git ls-tree 失败：{err}", file=sys.stderr)
+        return 1
+
+    sha_to_archive: dict[str, list[str]] = {}
+    for line in listing.splitlines():
+        meta_part, _, path = line.partition("\t")
+        fields = meta_part.split()
+        if len(fields) < 3 or not path.endswith("/SKILL.md"):
+            continue
+        parts = path.split("/")
+        # 兼容两种层级：skills/<source>/<skill>/SKILL.md 与 skills/<source>/SKILL.md
+        if len(parts) < 3 or parts[0] != SKILLS_DIR_NAME:
+            continue
+        # 内容完全相同的 SKILL.md 会共享同一 blob，故一个 sha 需对应多个技能目录
+        sha_to_archive.setdefault(fields[2], []).append("/".join(parts[1:-1]))
+
+    if not sha_to_archive:
+        print("[ERROR] mirror 中未找到任何 SKILL.md", file=sys.stderr)
+        return 1
+
+    pairs = [(sha, archive) for sha, archives in sha_to_archive.items() for archive in archives]
+    print(f"解析 {len(pairs)} 个 SKILL.md 的 frontmatter（{len(sha_to_archive)} 个唯一 blob）…")
+    blobs = _cat_file_batch(mirror, list(sha_to_archive))
+
+    rows: list[dict] = []
+    for sha, archive in sorted(pairs, key=lambda kv: kv[1]):
+        raw = blobs.get(sha)
+        fm = _frontmatter_from_text(raw.decode("utf-8", errors="ignore")) if raw else {}
+        parts = archive.split("/")
+        rows.append({
+            "archive_path": archive,
+            "source_repo": parts[0],
+            "folder_name": parts[-1],
+            "name": _scalar(fm.get("name")),
+            "primary_tool": _scalar(fm.get("primary_tool")),
+            "tool_type": _scalar(fm.get("tool_type")),
+            "category": _scalar(fm.get("category")),
+        })
+
+    with INDEX_META.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(
+            fh, fieldnames=["archive_path", "source_repo", "folder_name",
+                            "name", "primary_tool", "tool_type", "category"])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    with_pt = sum(1 for r in rows if r["primary_tool"])
+    print(f"[更新] {INDEX_META.relative_to(REPO_ROOT)}：{len(rows)} 行，含 primary_tool {with_pt} 个")
+    print(f"索引层体积：{(INDEX_META.stat().st_size + (INDEX_V3.stat().st_size if INDEX_V3.exists() else 0)) / 1024:.0f} KB")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="skill-cli", description="bioskills 技能库管理工具")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -173,6 +802,28 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("software", help="软件 canonical name（如 samtools）")
     pr.add_argument("argv", nargs=argparse.REMAINDER, help="透传给 main.py 的参数")
     pr.set_defaults(func=cmd_run)
+
+    sub.add_parser("link", help="重建 link_map.yaml（modules/ ↔ skills/ 跨层索引）").set_defaults(func=cmd_link)
+
+    pk = sub.add_parser("search", help="离线检索 skills/index/ 索引层（不依赖技能正文）")
+    pk.add_argument("keyword", nargs="?", default="", help="关键词（匹配路径/名称/工具/描述/分类/来源）")
+    pk.add_argument("--source", help="按来源仓库过滤，如 bioskills")
+    pk.add_argument("--category", help="按分类过滤")
+    pk.add_argument("--limit", type=int, default=20, help="最多显示条数（默认 20）")
+    pk.set_defaults(func=cmd_search)
+
+    pa = sub.add_parser("add", help="按需拉取技能正文到内容层，并登记 lock.yaml")
+    pa.add_argument("skill", nargs="+", help="技能名或路径，如 alignment-indexing / bioskills/alignment-indexing")
+    pa.add_argument("--force", action="store_true", help="已存在时强制重拉")
+    pa.set_defaults(func=cmd_add)
+
+    pd = sub.add_parser("remove", help="从内容层移除技能，并注销 lock.yaml")
+    pd.add_argument("skill", nargs="+", help="已登记的技能名或路径")
+    pd.set_defaults(func=cmd_remove)
+
+    sub.add_parser("verify", help="校验内容层与 lock.yaml 的一致性").set_defaults(func=cmd_verify)
+
+    sub.add_parser("index-build", help="从 mirror 重建索引层（v3 索引 + ROADMAP + skill_meta.csv）").set_defaults(func=cmd_index_build)
     return p
 
 
