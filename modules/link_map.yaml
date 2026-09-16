@@ -1,0 +1,2042 @@
+version: '1.0'
+generated_at: '2026-09-16T09:08:10+00:00'
+note: 跨层索引：modules/ 实现层 ↔ skills/ 指令层。由 skill-cli link 重建（读 skills/index/，不依赖技能正文）；vendored
+  表示正文是否已按需拉取。
+summary:
+  skills_total: 1705
+  skills_vendored: 0
+  modules_total: 206
+  with_high_confidence: 43
+  with_only_medium: 34
+  unmatched: 129
+links:
+- software: abyss
+  module_dir: modules/abyss
+  skills: []
+- software: allpathslg
+  module_dir: modules/allpathslg
+  skills: []
+- software: ampliconnoise
+  module_dir: modules/ampliconnoise
+  skills: []
+- software: ancom
+  module_dir: modules/ancom
+  skills: []
+- software: annovar
+  module_dir: modules/annovar
+  skills:
+  - path: skills/bioskills/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/snpeff-variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: antismash
+  module_dir: modules/antismash
+  skills: []
+- software: aspera-connect
+  module_dir: modules/aspera-connect
+  skills: []
+- software: augustus
+  module_dir: modules/augustus
+  skills:
+  - path: skills/bioskills/eukaryotic-gene-prediction
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: ballgown
+  module_dir: modules/ballgown
+  skills: []
+- software: bamtools
+  module_dir: modules/bamtools
+  skills: []
+- software: barrnap
+  module_dir: modules/barrnap
+  skills: []
+- software: bbmap
+  module_dir: modules/bbmap
+  skills: []
+- software: bcftools
+  module_dir: modules/bcftools
+  skills:
+  - path: skills/bioskills/consensus-sequences
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/fastq-to-variants
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/filtering-best-practices
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/imputation-qc
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/reference-panels
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/variant-calling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/variant-normalization
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/vcf-basics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/vcf-manipulation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/vcf-statistics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/consensus-sequences
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/filtering-best-practices
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-calling
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-normalization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/vcf-basics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/vcf-manipulation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/vcf-statistics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/vcf-variant-filtering
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: beagle-lib
+  module_dir: modules/beagle-lib
+  skills: []
+- software: beast2
+  module_dir: modules/beast2
+  skills:
+  - path: skills/bioskills/divergence-dating
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/bayesian-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/phylodynamics
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: bedtools
+  module_dir: modules/bedtools
+  skills:
+  - path: skills/bioskills/bed-file-basics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/cnv-annotation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/consensus-peakset
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/coverage-analysis
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/interval-arithmetic
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/proximity-operations
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/binding-site-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: biom-format
+  module_dir: modules/biom-format
+  skills: []
+- software: blasr
+  module_dir: modules/blasr
+  skills: []
+- software: blast
+  module_dir: modules/blast
+  skills:
+  - path: skills/bioskills/local-blast
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/adaptyv/foldseek
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioclaw/blast-search
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/blast-searches
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/ncbi-datasets-cli
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/remote-homology
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/biopython
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/gget
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/bio-sequence-similarity
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/biopython-molecular-biology
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/biopython-sequence-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bioservices-multi-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/gget-genomic-databases
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/plannotate-plasmid-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/prokka-genome-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/roary-pangenome
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: blast2go
+  module_dir: modules/blast2go
+  skills: []
+- software: blat
+  module_dir: modules/blat
+  skills:
+  - path: skills/sciagent/gget-genomic-databases
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: bless
+  module_dir: modules/bless
+  skills: []
+- software: bowtie
+  module_dir: modules/bowtie
+  skills: []
+- software: bowtie2
+  module_dir: modules/bowtie2
+  skills:
+  - path: skills/bioskills/bowtie2-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/riboseq-preprocessing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/bismark-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/clip-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/seq-wrangler
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bwa-mem2-dna-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: braker
+  module_dir: modules/braker
+  skills: []
+- software: busco
+  module_dir: modules/busco
+  skills:
+  - path: skills/bioskills/assembly-qc
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/scaffolding
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/busco-status-interpretation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: bwa
+  module_dir: modules/bwa
+  skills:
+  - path: skills/bioskills/bwa-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/sciagent/fastp-fastq-preprocessing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/fastq-to-variants
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/seq-wrangler
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/deeptools-ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: cafe
+  module_dir: modules/cafe
+  skills: []
+- software: canu
+  module_dir: modules/canu
+  skills:
+  - path: skills/bioskills/long-read-assembly
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: cd-hit
+  module_dir: modules/cd-hit
+  skills:
+  - path: skills/sciagent/roary-pangenome
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: circos
+  module_dir: modules/circos
+  skills:
+  - path: skills/bioskills/circos-plots
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/cnv-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/repertoire-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: clustalw
+  module_dir: modules/clustalw
+  skills:
+  - path: skills/sciagent/biopython-sequence-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: clusterprofiler
+  module_dir: modules/clusterprofiler
+  skills:
+  - path: skills/bioskills/expression-to-pathways
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/go-enrichment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/gsea
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/kegg-pathways
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/wikipathways
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/enrichment-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/omicsclaw/functional-enrichment-from-degs
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/kegg-pathway-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: cufflinks
+  module_dir: modules/cufflinks
+  skills: []
+- software: cutadapt
+  module_dir: modules/cutadapt
+  skills:
+  - path: skills/bioskills/adapter-trimming
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/smrna-preprocessing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/fastp-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: dada2
+  module_dir: modules/dada2
+  skills:
+  - path: skills/bioskills/amplicon-processing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/microbiome-pipeline
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/taxonomy-assignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/edna-metabarcoding
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/edna-pipeline
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/qiime2-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: dbcan
+  module_dir: modules/dbcan
+  skills: []
+- software: dbg2olc
+  module_dir: modules/dbg2olc
+  skills: []
+- software: deblur
+  module_dir: modules/deblur
+  skills: []
+- software: deseq2
+  module_dir: modules/deseq2
+  skills:
+  - path: skills/bioskills/count-matrix-qc
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/de-results
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/de-visualization
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/deseq2-basics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/differential-mirna
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/normalization
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/rnaseq-to-de
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/differential-accessibility
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-binding
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-clip
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/featurecounts-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/spike-in-normalization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/tximport-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/pydeseq2
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/labclaw/bioinformatics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/omicsclaw/bulk-rnaseq-counts-to-de-deseq2
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/bulk-deg-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/tooluniverse-rnaseq-deseq2
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/tooluniverse-single-cell
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/deseq2-differential-expression
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/gseapy-gene-enrichment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/salmon-rna-quantification
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: dia-nn
+  module_dir: modules/dia-nn
+  skills:
+  - path: skills/bioskills/dia-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/tooluniverse-proteomics-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: diamond
+  module_dir: modules/diamond
+  skills:
+  - path: skills/bioskills/remote-homology
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bakta-genome-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: discovar
+  module_dir: modules/discovar
+  skills: []
+- software: dorado
+  module_dir: modules/dorado
+  skills:
+  - path: skills/bioskills/basecalling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: ea-utils
+  module_dir: modules/ea-utils
+  skills: []
+- software: edena
+  module_dir: modules/edena
+  skills: []
+- software: edger
+  module_dir: modules/edger
+  skills:
+  - path: skills/bioskills/edger-basics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/de-results
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/de-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-accessibility
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-binding
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-clip
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-mirna
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/drugz-chemogenomic
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/featurecounts-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/spike-in-normalization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/tximport-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/deseq2-differential-expression
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/gseapy-gene-enrichment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/salmon-rna-quantification
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: eggnog-mapper
+  module_dir: modules/eggnog-mapper
+  skills:
+  - path: skills/bioskills/functional-annotation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/bioskills__database-access__ortholog-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/database-access__ortholog-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/comparative-genomics__ortholog-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/ortholog-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: emperor
+  module_dir: modules/emperor
+  skills: []
+- software: ensembl-vep
+  module_dir: modules/ensembl-vep
+  skills:
+  - path: skills/bioskills/variant-annotation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/ensembl-rest
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/vcf-annotator
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/labclaw/ensembl-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/clinvar-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/snpeff-variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/ucsc-genome-browser
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: evidencemodeler
+  module_dir: modules/evidencemodeler
+  skills: []
+- software: exonerate
+  module_dir: modules/exonerate
+  skills: []
+- software: falcon
+  module_dir: modules/falcon
+  skills: []
+- software: fasta
+  module_dir: modules/fasta
+  skills:
+  - path: skills/bioskills/alignment-io
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/consensus-sequences
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/format-conversion
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/prokaryotic-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/read-sequences
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/write-sequences
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/analyze-fasta
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/dnasp
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/fastreer
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/biopython
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/pysam
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/kdense/scikit-bio
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/consensus-sequences
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/tooluniverse-phylogenetics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/uniprot-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bakta-genome-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bedtools-genomic-intervals
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/biopython-molecular-biology
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/biopython-sequence-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/ena-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/plannotate-plasmid-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pride-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/prokka-genome-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/salmon-rna-quantification
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/uniprot-protein-database
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: fastp
+  module_dir: modules/fastp
+  skills:
+  - path: skills/bioclaw_hub/read-qc
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/fastp-workflow
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/quality-filtering
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/multiqc-reporter
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: fastqc
+  module_dir: modules/fastqc
+  skills:
+  - path: skills/bioskills/quality-reports
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/adapter-trimming
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/automated-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/fastp-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/multiqc-reporter
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/seq-wrangler
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: fasttree
+  module_dir: modules/fasttree
+  skills:
+  - path: skills/kdense/phylogenetics
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: fastuniq
+  module_dir: modules/fastuniq
+  skills: []
+- software: fgenesh
+  module_dir: modules/fgenesh
+  skills: []
+- software: figtree
+  module_dir: modules/figtree
+  skills:
+  - path: skills/kdense/phylogenetics
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: finishersc
+  module_dir: modules/finishersc
+  skills: []
+- software: flair
+  module_dir: modules/flair
+  skills:
+  - path: skills/bioskills/long-read-splicing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/neuroclaw/freesurfer-tool
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/neuroclaw/mschallenge-skill
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/neuroclaw/smri-skill
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/neuroclaw/wmh-segmentation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: freebayes
+  module_dir: modules/freebayes
+  skills: []
+- software: fusionmap
+  module_dir: modules/fusionmap
+  skills: []
+- software: gapcloser
+  module_dir: modules/gapcloser
+  skills: []
+- software: gapfiller
+  module_dir: modules/gapfiller
+  skills: []
+- software: gatk
+  module_dir: modules/gatk
+  skills:
+  - path: skills/bioskills/gatk-cnv
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/gatk-variant-calling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/joint-calling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/allele-specific-accessibility
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/cnv-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/cnvkit-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/fastq-to-variants
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/filtering-best-practices
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/wdl-workflows
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/filtering-best-practices
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/gatk-variant-calling
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/joint-calling
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bcftools-variant-manipulation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bwa-mem2-dna-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/cnvkit-copy-number
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/gatk-variant-calling
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: gblocks
+  module_dir: modules/gblocks
+  skills: []
+- software: gce
+  module_dir: modules/gce
+  skills: []
+- software: gemoma
+  module_dir: modules/gemoma
+  skills:
+  - path: skills/bioskills/comparative-annotation-projection
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: genemark-es
+  module_dir: modules/genemark-es
+  skills: []
+- software: genemarks
+  module_dir: modules/genemarks
+  skills: []
+- software: genetribe
+  module_dir: modules/genetribe
+  skills: []
+- software: genewise
+  module_dir: modules/genewise
+  skills: []
+- software: genomescope2
+  module_dir: modules/genomescope2
+  skills: []
+- software: genomethreader
+  module_dir: modules/genomethreader
+  skills: []
+- software: genometools
+  module_dir: modules/genometools
+  skills: []
+- software: geta
+  module_dir: modules/geta
+  skills: []
+- software: ggplot2
+  module_dir: modules/ggplot2
+  skills:
+  - path: skills/bioskills/distribution-plots
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/ggplot2-fundamentals
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/volcano-and-ma-plots
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/openclaw/bio-data-visualization-specialized-omics-plots
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/bio-data-visualization-volcano-customization
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: ggrepel
+  module_dir: modules/ggrepel
+  skills: []
+- software: glimmer
+  module_dir: modules/glimmer
+  skills: []
+- software: glimmerhmm
+  module_dir: modules/glimmerhmm
+  skills: []
+- software: gmap
+  module_dir: modules/gmap
+  skills: []
+- software: gnu_sort
+  module_dir: modules/gnu_sort
+  skills: []
+- software: go_class
+  module_dir: modules/go_class
+  skills: []
+- software: goseq
+  module_dir: modules/goseq
+  skills: []
+- software: gstama
+  module_dir: modules/gstama
+  skills: []
+- software: gunzip
+  module_dir: modules/gunzip
+  skills: []
+- software: hisat2
+  module_dir: modules/hisat2
+  skills:
+  - path: skills/bioskills/hisat2-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/bismark-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/clip-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/featurecounts-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: hmmer
+  module_dir: modules/hmmer
+  skills:
+  - path: skills/bioskills/remote-homology
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/openclaw/bio-sequence-similarity
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: htseq
+  module_dir: modules/htseq
+  skills: []
+- software: humann
+  module_dir: modules/humann
+  skills:
+  - path: skills/bioskills/functional-profiling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/metagenomics-pipeline
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: idba
+  module_dir: modules/idba
+  skills: []
+- software: igv
+  module_dir: modules/igv
+  skills:
+  - path: skills/bioskills/chipseq-visualization
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/genome-tracks
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/bio-data-visualization-genome-browser-tracks
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/star-rna-seq-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: infernal
+  module_dir: modules/infernal
+  skills:
+  - path: skills/bioskills/ncrna-annotation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/ncrna-search
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: interproscan
+  module_dir: modules/interproscan
+  skills:
+  - path: skills/bioskills/functional-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: iqtree
+  module_dir: modules/iqtree
+  skills: []
+- software: isolasso
+  module_dir: modules/isolasso
+  skills: []
+- software: isoseq3
+  module_dir: modules/isoseq3
+  skills:
+  - path: skills/bioskills/isoseq-analysis
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: jcvi
+  module_dir: modules/jcvi
+  skills:
+  - path: skills/bioskills/synteny-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: jellyfish
+  module_dir: modules/jellyfish
+  skills: []
+- software: kallisto
+  module_dir: modules/kallisto
+  skills:
+  - path: skills/bioskills/alignment-free-quant
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/counts-ingest
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/tximport-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/fastq-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: kent
+  module_dir: modules/kent
+  skills: []
+- software: lastz
+  module_dir: modules/lastz
+  skills:
+  - path: skills/bioskills/whole-genome-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: lftp
+  module_dir: modules/lftp
+  skills: []
+- software: lima
+  module_dir: modules/lima
+  skills: []
+- software: limma
+  module_dir: modules/limma
+  skills:
+  - path: skills/bioskills/bioskills__proteomics__differential-abundance
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/proteomics-pipeline
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/proteomics__differential-abundance
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/statistical-analysis
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/timeseries-de
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/batch-correction
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/bioskills__differential-expression__batch-correction
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/crispr-screens__batch-correction
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-cpg-testing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/differential-expression__batch-correction
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/omicsclaw/proteomics-diff-exp
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: longreadsum
+  module_dir: modules/longreadsum
+  skills: []
+- software: lordec
+  module_dir: modules/lordec
+  skills: []
+- software: ltr_retriever
+  module_dir: modules/ltr_retriever
+  skills: []
+- software: mafft
+  module_dir: modules/mafft
+  skills:
+  - path: skills/bioskills/multiple-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/kdense/phylogenetics
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: maker
+  module_dir: modules/maker
+  skills:
+  - path: skills/pantheon/figure_styling
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: masurca
+  module_dir: modules/masurca
+  skills: []
+- software: matrixeqtl
+  module_dir: modules/matrixeqtl
+  skills: []
+- software: mauve
+  module_dir: modules/mauve
+  skills:
+  - path: skills/bioskills/whole-genome-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: mcl
+  module_dir: modules/mcl
+  skills:
+  - path: skills/sciagent/roary-pangenome
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: mcscanx
+  module_dir: modules/mcscanx
+  skills:
+  - path: skills/bioskills/synteny-analysis
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: metaeuk
+  module_dir: modules/metaeuk
+  skills: []
+- software: microbiomeutil
+  module_dir: modules/microbiomeutil
+  skills: []
+- software: minimap2
+  module_dir: modules/minimap2
+  skills:
+  - path: skills/bioskills/long-read-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/long-read-splicing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/longread-sv-pipeline
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/whole-genome-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/seq-wrangler
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: mirdeep2
+  module_dir: modules/mirdeep2
+  skills:
+  - path: skills/bioskills/mirdeep2-analysis
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/smrna-pipeline
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: misa
+  module_dir: modules/misa
+  skills: []
+- software: mummer
+  module_dir: modules/mummer
+  skills: []
+- software: muscle
+  module_dir: modules/muscle
+  skills:
+  - path: skills/kdense/neurokit2
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/biopython-sequence-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: musket
+  module_dir: modules/musket
+  skills: []
+- software: nanopolish
+  module_dir: modules/nanopolish
+  skills: []
+- software: ncbi-datasets-cli
+  module_dir: modules/ncbi-datasets-cli
+  skills:
+  - path: skills/bioskills/ncbi-datasets-cli
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: newbler
+  module_dir: modules/newbler
+  skills: []
+- software: ngsqctoolkit
+  module_dir: modules/ngsqctoolkit
+  skills: []
+- software: ninja
+  module_dir: modules/ninja
+  skills: []
+- software: omiga
+  module_dir: modules/omiga
+  skills: []
+- software: ontologizer
+  module_dir: modules/ontologizer
+  skills: []
+- software: orfanage
+  module_dir: modules/orfanage
+  skills: []
+- software: orffinder
+  module_dir: modules/orffinder
+  skills: []
+- software: orthofinder
+  module_dir: modules/orthofinder
+  skills:
+  - path: skills/bioskills/comparative-genomics__ortholog-inference
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/ortholog-inference
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/gene-family-evolution
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: orthomcl
+  module_dir: modules/orthomcl
+  skills: []
+- software: paml
+  module_dir: modules/paml
+  skills:
+  - path: skills/bioskills/ancestral-reconstruction
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/positive-selection
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: pasa
+  module_dir: modules/pasa
+  skills: []
+- software: pathview
+  module_dir: modules/pathview
+  skills: []
+- software: pbccs
+  module_dir: modules/pbccs
+  skills: []
+- software: pheatmap
+  module_dir: modules/pheatmap
+  skills:
+  - path: skills/bioskills/heatmaps-clustering
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: picard
+  module_dir: modules/picard
+  skills:
+  - path: skills/clawbio/multiqc-reporter
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: pilon
+  module_dir: modules/pilon
+  skills:
+  - path: skills/bioskills/assembly-polishing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: platanus-allee
+  module_dir: modules/platanus-allee
+  skills: []
+- software: primer3
+  module_dir: modules/primer3
+  skills: []
+- software: prodigal
+  module_dir: modules/prodigal
+  skills:
+  - path: skills/sciagent/bakta-genome-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: prothint
+  module_dir: modules/prothint
+  skills: []
+- software: prottest
+  module_dir: modules/prottest
+  skills: []
+- software: qiime1
+  module_dir: modules/qiime1
+  skills: []
+- software: qiime2
+  module_dir: modules/qiime2
+  skills:
+  - path: skills/bioskills/qiime2-workflow
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: quantifypolya
+  module_dir: modules/quantifypolya
+  skills: []
+- software: quickmerge
+  module_dir: modules/quickmerge
+  skills: []
+- software: r8s
+  module_dir: modules/r8s
+  skills: []
+- software: raxml
+  module_dir: modules/raxml
+  skills: []
+- software: raxml-ng
+  module_dir: modules/raxml-ng
+  skills:
+  - path: skills/bioskills/modern-tree-inference
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: rdp-classifier
+  module_dir: modules/rdp-classifier
+  skills: []
+- software: recon
+  module_dir: modules/recon
+  skills: []
+- software: repeatmasker
+  module_dir: modules/repeatmasker
+  skills:
+  - path: skills/bioskills/repeat-annotation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: repeatmodeler
+  module_dir: modules/repeatmodeler
+  skills:
+  - path: skills/bioskills/repeat-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: repeatscout
+  module_dir: modules/repeatscout
+  skills: []
+- software: riborf
+  module_dir: modules/riborf
+  skills: []
+- software: riboss
+  module_dir: modules/riboss
+  skills: []
+- software: rmblast
+  module_dir: modules/rmblast
+  skills: []
+- software: rnammer
+  module_dir: modules/rnammer
+  skills: []
+- software: rsem
+  module_dir: modules/rsem
+  skills: []
+- software: salmon
+  module_dir: modules/salmon
+  skills:
+  - path: skills/bioclaw_hub/rna-quantification
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-free-quant
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/counts-ingest
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/rnaseq-to-de
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/tximport-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/deseq2-differential-expression
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/fastp-fastq-preprocessing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/featurecounts-rna-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/star-rna-seq-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: samtools
+  module_dir: modules/samtools
+  skills:
+  - path: skills/bioclaw_hub/alignment-and-mapping
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-amplicon-clipping
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-filtering
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-indexing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-sorting
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/alignment-validation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/bam-statistics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/duplicate-handling
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/pileup-generation
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/reference-operations
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/sam-bam-basics
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/clawbio/multiqc-reporter
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/seq-wrangler
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/bio-alignment-files-bam-statistics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bcftools-variant-manipulation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: sepp
+  module_dir: modules/sepp
+  skills: []
+- software: seqkit
+  module_dir: modules/seqkit
+  skills: []
+- software: signalp
+  module_dir: modules/signalp
+  skills:
+  - path: skills/bioskills/isoform-switching
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: snap
+  module_dir: modules/snap
+  skills:
+  - path: skills/clawbio/drug-photo
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: snogps
+  module_dir: modules/snogps
+  skills: []
+- software: snoscan
+  module_dir: modules/snoscan
+  skills: []
+- software: snpeff
+  module_dir: modules/snpeff
+  skills:
+  - path: skills/bioskills/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/snpeff-variant-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: soap2
+  module_dir: modules/soap2
+  skills: []
+- software: soapdenovo2
+  module_dir: modules/soapdenovo2
+  skills: []
+- software: soapfuse
+  module_dir: modules/soapfuse
+  skills: []
+- software: sopra
+  module_dir: modules/sopra
+  skills: []
+- software: splicegrapher
+  module_dir: modules/splicegrapher
+  skills: []
+- software: sra-tools
+  module_dir: modules/sra-tools
+  skills:
+  - path: skills/bioskills/sra-data
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: sspace
+  module_dir: modules/sspace
+  skills: []
+- software: stampy
+  module_dir: modules/stampy
+  skills: []
+- software: star
+  module_dir: modules/star
+  skills:
+  - path: skills/bioskills/clip-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/merip-preprocessing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/star-alignment
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/clip-pipeline
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/featurecounts-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/hisat2-alignment
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/pharmacogenomics
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/splicing-pipeline
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/splicing-qc
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/clawbio/multiqc-reporter
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/fastq-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/pylabrobot
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/bwa-mem2-dna-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/deeptools-ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/fastp-fastq-preprocessing
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/featurecounts-rna-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pylabrobot
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/pysam-genomic-files
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/salmon-rna-quantification
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/star-rna-seq-aligner
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: star-fusion
+  module_dir: modules/star-fusion
+  skills: []
+- software: stringtie
+  module_dir: modules/stringtie
+  skills: []
+- software: subread
+  module_dir: modules/subread
+  skills:
+  - path: skills/bioskills/featurecounts-counting
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/counts-ingest
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/openclaw/ngs-analysis
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/featurecounts-rna-counting
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/multiqc-qc-reports
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: table2asn
+  module_dir: modules/table2asn
+  skills: []
+- software: taxonkit
+  module_dir: modules/taxonkit
+  skills: []
+- software: td2
+  module_dir: modules/td2
+  skills: []
+- software: tmhmm
+  module_dir: modules/tmhmm
+  skills: []
+- software: tophat2
+  module_dir: modules/tophat2
+  skills: []
+- software: tracer
+  module_dir: modules/tracer
+  skills: []
+- software: transdecoder
+  module_dir: modules/transdecoder
+  skills: []
+- software: trf
+  module_dir: modules/trf
+  skills: []
+- software: trimal
+  module_dir: modules/trimal
+  skills:
+  - path: skills/bioskills/alignment-trimming
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: trimmomatic
+  module_dir: modules/trimmomatic
+  skills:
+  - path: skills/bioskills/quality-filtering
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/adapter-trimming
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/bioskills/fastp-workflow
+    confidence: medium
+    matched_by: description
+    vendored: false
+  - path: skills/sciagent/fastp-fastq-preprocessing
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: trinity
+  module_dir: modules/trinity
+  skills: []
+- software: trnascan-se
+  module_dir: modules/trnascan-se
+  skills:
+  - path: skills/bioskills/ncrna-annotation
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: ultra
+  module_dir: modules/ultra
+  skills: []
+- software: umi_tools
+  module_dir: modules/umi_tools
+  skills:
+  - path: skills/bioskills/clip-preprocessing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/bioskills/umi-processing
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: usearch
+  module_dir: modules/usearch
+  skills: []
+- software: varscan
+  module_dir: modules/varscan
+  skills: []
+- software: viennarna
+  module_dir: modules/viennarna
+  skills:
+  - path: skills/bioskills/secondary-structure-prediction
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+  - path: skills/sciagent/viennarna-structure-prediction
+    confidence: medium
+    matched_by: description
+    vendored: false
+- software: wgcna
+  module_dir: modules/wgcna
+  skills:
+  - path: skills/bioskills/coexpression-networks
+    confidence: high
+    matched_by: primary_tool
+    vendored: false
+- software: wgs-assembler
+  module_dir: modules/wgs-assembler
+  skills: []
+- software: wtdbg2
+  module_dir: modules/wtdbg2
+  skills: []
