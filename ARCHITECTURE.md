@@ -355,3 +355,194 @@ execution:
 
    * 导出 JSON Schema 挂载至 AI Agent；在路由逻辑中额外使用 `software_versions` 段做版本冲突拦截与提示。
 
+***
+
+## 七、 skills/ 指令层（索引常驻与按需拉取）
+
+### 7.1 定位：与 modules/ 并列的第二层
+
+本库由**两层**组成，二者互补、互不重复：
+
+| 层 | 目录 | 内容 | 面向对象 | 是否可执行 |
+|---|---|---|---|---|
+| **实现层** | `modules/` `workflow/` `subworkflow/` | `meta.yaml` + `native/main.py` + `.smk`/`.nf` | 流程引擎、CLI | 是（本仓自建） |
+| **指令层** | `skills/` | `SKILL.md`（YAML frontmatter + Markdown）+ 索引层 | Claude 系 Agent 框架（OpenClaw / NanoClaw / Biomni 等） | 否（纯指令文档） |
+
+**边界约定**：`skills/` 只做**上游内容的索引与按需拉取**，不在其中写本仓自有实现；`modules/` 不嵌入 `SKILL.md`，保持实现层格式纯净。跨层检索走 §7.7。
+
+### 7.2 索引常驻 + 内容按需（三层模型）
+
+上游 `skills/` 全量 **76 MB / 7,227 文件**。本仓**不整体归档**，改为三层分离——**发现能力留在仓库里，正文按需拉取**：
+
+| 层 | 路径 | 入库 | 体积 | 作用 |
+|---|---|---|---|---|
+| **索引层** | `skills/index/` | 是 | ~0.80 MB | 全量 1,705 个技能的索引，**完全离线**可检索、可发现 |
+| **登记层** | `skills/lock.yaml` | 是 | <1 KB | 已拉取技能的 `tree-hash` + 上游 commit，供 `verify` 审计 |
+| **内容层** | `skills/<source>/<skill>/` | 否（gitignored） | 按需 | 技能正文，由 `skill-cli add` 从 mirror 拉取，可随时重建 |
+
+入库合计 **约 0.81 MB**，较全量归档（76 MB）减少 **99%**。
+
+索引层构成：
+
+* `index/bioskill_index_v3.csv`（673 KB）— 上游原样索引，1,676 行，含 `skill_name` / `description` / `category` / `archive_path` / `file_count`。
+* `index/skill_meta.csv`（144 KB）— 本仓派生，从全部 `SKILL.md` frontmatter 抽取 `name` / `primary_tool`（577 个）/ `tool_type` / `category`。
+
+> **为什么必须派生 `skill_meta.csv`**：上游索引不含 `primary_tool` 字段，若只依赖它，`link` 的高置信命中会从 43 个降到接近 0。该文件是跨层索引高置信匹配的**唯一依据**，内容层虽按需拉取，匹配能力不打折。上游同步时需一并重建（§7.6）。
+
+### 7.3 上游来源与基线
+
+| 项 | 值 |
+|---|---|
+| 上游仓库 | [BioTender-max/awesome-bio-agent-skills](https://github.com/BioTender-max/awesome-bio-agent-skills) |
+| 归档基线 commit | `8cbdd18837aa6296c4e77616a03b323bd69b57b1`（2026-07-02） |
+| 基线内容 | 1,705 个 `SKILL.md` / 21 个来源目录 / 16 个分类 |
+| 本仓镜像 | `.cache/upstream-awesome-skills.git`（裸库，已 gitignore，可再生） |
+| 上游 LICENSE | CC0 1.0（仅覆盖汇编层，各技能自带许可证见 §7.5） |
+
+上游声明的 22 个来源仓库（技能数为上游 README 标注值；本仓实际落盘 21 个来源目录，上游自身计数与实测有出入）：
+
+| 来源仓库 | 技能数 | 定位 |
+|---|---:|---|
+| [GPTomics/bioSkills](https://github.com/GPTomics/bioSkills) | 536 | 系统化生信套件，覆盖 QC 到多组学 |
+| [FreedomIntelligence/OpenClaw-Medical-Skills](https://github.com/FreedomIntelligence/OpenClaw-Medical-Skills) | 359 | 医学 AI 库，聚合 12 个专项子仓库 |
+| [jaechang-hits/SciAgent-Skills](https://github.com/jaechang-hits/SciAgent-Skills) | 154 | 统计、数据库与临床决策 |
+| [K-Dense-AI/scientific-agent-skills](https://github.com/K-Dense-AI/scientific-agent-skills) | 102 | 通用科学计算与 HPC 工作流 |
+| [CUHK-AIM-Group/NeuroClaw](https://github.com/CUHK-AIM-Group/NeuroClaw) | 86 | 神经影像：sMRI / fMRI / dMRI / EEG，BIDS、FreeSurfer、FSL |
+| [ClawBio/ClawBio](https://github.com/ClawBio/ClawBio) | 63 | GWAS 与单细胞流程编排 |
+| [wu-yc/LabClaw](https://github.com/wu-yc/LabClaw) | 59 | 实验室自动化与生物医学研究 |
+| [QSong-github/DrugClaw](https://github.com/QSong-github/DrugClaw) | 57 | 药物智能：DTI / ADR / DDI / 药物基因组学 |
+| [ChrisLou-bioinfo/nobel-medicine-minds](https://github.com/ChrisLou-bioinfo/nobel-medicine-minds) | 55 | 52 位诺奖得主（2004–2025）认知框架 |
+| [zongtingwei/Bioclaw_Skills_Hub](https://github.com/zongtingwei/Bioclaw_Skills_Hub) | 46 | 十大类生物技能中枢 |
+| [Runchuan-BU/BioClaw](https://github.com/Runchuan-BU/BioClaw) | 37 | 核心生信工具与数据库查询 |
+| [fmschulz/omics-skills](https://github.com/fmschulz/omics-skills) | 29 | 单细胞与空间组学 |
+| [JimLiu/science-skills](https://github.com/JimLiu/science-skills) | 29 | Claude Science 内置技能逆向整理 |
+| [TianGzlab/OmicsClaw](https://github.com/TianGzlab/OmicsClaw) | 28 | 六类组学：空间 / scRNA / bulk RNA / 基因组 / 蛋白 / 代谢 |
+| [adaptyvbio/protein-design-skills](https://github.com/adaptyvbio/protein-design-skills) | 21 | 蛋白设计全链：RFDiffusion / ProteinMPNN / Boltz / Chai |
+| [aristoteleo/PantheonOS](https://github.com/aristoteleo/PantheonOS) | 18 | 单细胞与空间转录组（Dynamo / Spateo 团队） |
+| [NVIDIA-BioNeMo/bionemo-agent-toolkit](https://github.com/NVIDIA-BioNeMo/bionemo-agent-toolkit) | 17 | NVIDIA BioNeMo NIM 官方技能 |
+| [EvoScientist/EvoSkills](https://github.com/EvoScientist/EvoSkills) | 13 | 研究全周期：选题、计划、执行、写作、评审 |
+| [xjtulyc/MedgeClaw](https://github.com/xjtulyc/MedgeClaw) | 7 | 生物医学研究，含仪表盘 / RStudio / JupyterLab |
+| [zamushwani2/biomedical-ai-skills](https://github.com/zamushwani2/biomedical-ai-skills) | 4 | R 语言肿瘤多组学分析 |
+| [ArcInstitute/SRAgent](https://github.com/ArcInstitute/SRAgent) | 1 | SRA / GEO 数据集智能检索 |
+| [BioTender-max/awesome-bio-agent-skills](https://github.com/BioTender-max/awesome-bio-agent-skills) | 1 | 自指中枢技能，索引整个集合 |
+
+### 7.4 上游内容裁剪规则（拉取时生效）
+
+内容层按需拉取时，以下排除规则仍然适用（`.gitignore` + `skill-cli add` 双重保证）：
+
+**规则 1：不拉取内嵌上游源码目录 `*/repo/`**
+
+上游 8 个技能把整仓第三方项目 vendored 进 `repo/`（STAgent、TrialGPT、MAGE、Biomni、BioMCP、BioMaster、CellAgent 等）。这些是第三方源码副本，非技能指令，且含 `chroma_squidpy_db/` 向量库（2 份重复，142 MB）、TREC 评测语料（102 MB）等派生物，均可从原始地址重建。`skill-cli add` 只按技能目录粒度拉取，内容层中不会出现 `repo/`。
+
+**规则 2：不归档集合级打包产物 `bioskill_collection_v3.zip`**
+
+104 MB 的整包 zip，与本仓索引层内容重复。
+
+**规则 3：clawbio 等技能的运行时数据随技能一并拉取，不得裁剪**
+
+`clawbio/**/data/`（15.2 MB）是**运行时依赖**而非可选样例：
+
+* `genome-compare/data/george_church_23andme.txt.gz` — IBS 比对基准基因组（CC0），被 `genome_compare.py` 硬编码引用；
+* `galaxy-bridge/galaxy_catalog.json` — 离线工具发现索引，缺失即退化为必须联网；
+* `methylation-clock/data/GSE139307_small.csv.gz` — 测试夹具，附 `PROVENANCE.md`（含 SHA-256）。
+
+**规则 4：排除 `.DS_Store`**
+
+### 7.5 许可证与合规提示
+
+* 上游部分技能目录自带独立 `LICENSE` / `LICENSE.txt`（19 个）。`skill-cli add` 按技能目录粒度拉取，许可证随技能一并落盘，**不得删除**。
+* `openclaw` 来源下有 148 个 `SKILL.md` 带 HTML 注释形式的「proprietary and confidential」声明，与其 frontmatter 中的 `license: MIT` 相互矛盾。索引层保留原文以维持溯源一致性；**再分发或商用前需逐一核实**，本条为已知遗留风险。
+* 内容层为**只读快照**：本仓不对拉取下来的技能做本地修改（`skill-cli verify` 会检出改动），以便上游更新时用 `add --force` 直接覆盖。
+
+### 7.6 上游更新后的同步流程
+
+同步分「索引层重建」与「内容层刷新」两条独立路径，互不阻塞。
+
+**索引层重建（上游 commit 前进后必做）**
+
+```bash
+# 1) 拉取上游更新（mirror 在 .cache/，已 gitignore）
+git --git-dir=.cache/upstream-awesome-skills.git \
+    fetch origin '+refs/heads/*:refs/remotes/origin/*' --tags
+
+# 2) 查看基线之后的新提交，评估是否值得跟进
+git --git-dir=.cache/upstream-awesome-skills.git \
+    log --oneline 8cbdd18..refs/remotes/origin/main
+
+# 3) 重建索引层（v3 原样索引 + ROADMAP + 派生 skill_meta.csv）
+python modules/bin/skill-cli index-build
+
+# 4) 把 lock.yaml 的 upstream.commit 更新为新 commit（内容层仍指向旧 commit，verify 会提示差异）
+# 5) 重建跨层索引并抽查
+python modules/bin/skill-cli link
+python modules/bin/skill-cli search samtools --limit 5
+```
+
+`index-build` 做了三件事：拉取上游 `bioskill_index_v3.csv` 与 `docs/ROADMAP.md`（后者重写 `../skills/` 链接前缀以适配新位置），以及**遍历上游全部 `SKILL.md` 的 frontmatter 重建 `skill_meta.csv`**。第三步是关键——它承载 `primary_tool`，是 §7.7 高置信匹配的唯一依据，因此上游更新后**必须**重跑，只刷新内容层是不够的。
+
+效率设计：`index-build` 先用 `git ls-tree` 拿到全部 `SKILL.md` 的 blob 哈希，再用单次 `git cat-file --batch` 批量取回，**不需要下载 `skills/` 全量正文**（76 MB），partial clone 下只拉取 SKILL.md 本身。
+
+**内容层刷新（按需，不阻塞索引层）**
+
+```bash
+python modules/bin/skill-cli verify                   # 检出：正文缺失 / 本地改动 / 上游已更新
+python modules/bin/skill-cli add <技能名> --force      # 只重拉受影响的技能
+```
+
+> 与全量归档相比，同步成本从「与上游总量成正比」变为「**与已登记量成正比**」——上游涨到 3,000 个技能时，内容层同步成本不变。
+
+**同步后必做**：更新 §7.3 的归档基线 commit 与统计数字，并在提交信息中写明上游 commit。
+
+### 7.7 跨层索引（`modules/link_map.yaml`）
+
+实现层与指令层通过 `modules/link_map.yaml` 关联：**同一软件，既能拿到「怎么跑」（本仓 `meta.yaml`/`native`），也能拿到「怎么用」（上游 `SKILL.md`）**。
+
+生成方式（与 `registry.yaml` 同属生成物，入库但由 CLI 重建）。注意 `link` **读索引层而非技能正文**，因此内容层为空时依然完整可用：
+
+```bash
+python modules/bin/skill-cli link
+# 已重建 link_map.yaml：206 个软件，high=43，仅 medium=34，未命中=129；已拉取正文 0/1705
+```
+
+匹配分三档，**宁可漏报不误报**：
+
+| 置信度 | 依据 | 说明 |
+|---|---|---|
+| `high` | `primary_tool` / 技能名 / 目录名 与模块名精确一致（含 `LINK_ALIASES` 已知异写，如 `rna-star`↔`star`） | 可直接用于路由与 README 交叉引用登记 |
+| `medium` | 模块名出现在技能 `description` 中 | **仅供人工复核**，不得作为唯一依据 |
+| 未命中（`skills: []`） | 上游集合未覆盖该软件 | 见 §7.8 扩展方向 3（反向补全）的候选清单 |
+
+产出结构（`vendored` 表示该技能正文是否已按需拉到本地）：
+
+```yaml
+summary: { skills_total: 1705, skills_vendored: 0, modules_total: 206, with_high_confidence: 43, with_only_medium: 34, unmatched: 129 }
+links:
+- software: samtools
+  module_dir: modules/samtools
+  skills:
+  - { path: skills/bioskills/alignment-indexing, confidence: high, matched_by: primary_tool, vendored: false }
+  - { path: skills/bioskills/alignment-sorting,  confidence: high, matched_by: primary_tool, vendored: false }
+```
+
+**覆盖度说明**：上游 1,705 个技能中仅 577 个带 `primary_tool` 字段，且 129 个模块对应的是上游未收录的工具，因此高置信命中率约 21%（43/206）属正常水平，不代表索引失效。新增软件后需重跑 `skill-cli link`。
+
+### 7.8 合并计划与后续扩展方向
+
+**已完成**
+
+1. 归档基线锁定为上游 `8cbdd18`；索引层落盘 1,705 行技能索引（v3 原样 + 派生 `skill_meta.csv`）；
+2. 采用**索引常驻 + 内容按需**三层模型，入库体积从 76 MB 降至 **0.81 MB**（减 99%）；内容层默认零预置；
+3. `.gitignore` 实现内容层 `<source>/<skill>/` 忽略、索引层与 `lock.yaml` 保留；
+4. `skill-cli` 新增 `search` / `add` / `remove` / `verify` / `index-build`，`link` 改为读索引并输出 `vendored` 标记；
+5. `verify` 支持三类漂移检出（正文缺失 / 本地改动 / 上游更新），修复路径为 `add --force`；
+6. `.cache/` 上游镜像重指规范地址并纳入 `.gitignore`；本文档记录来源、基线、裁剪规则、同步流程与合规提示。
+
+**后续扩展方向**
+
+1. **场景路线图与 workflow/ 对接**：`skills/ROADMAP.md` 已给出 7 条分析场景（RNA-seq 差异表达、单细胞、WGS 变异、蛋白设计、宏基因组、药物发现、临床 EHR）。逐条比对 `workflow/` 与 `subworkflow/` 现有流程，缺口即新增 workflow 的候选清单。
+2. **回填各模块 README 的交叉引用**：按 `link_map.yaml` 中 `confidence: high` 的条目，在 `modules/<tool>/README.md` 写入「指令层：`skills/<source>/<skill>/`」行（AGENT.md §10 已列为必检项）。建议从 `registry.yaml` 中 `priority: High` 的软件开始。
+3. **指令层补实现层（反向补全）**：以 `link_map.yaml` 中 `skills: []` 的 129 个模块为反向清单，另从 1,705 个技能中筛选高频被引用、而 `modules/` 尚未覆盖的工具，按 AGENT.md §10 Checklist 逐个补 `native/` 实现。
+4. **批量预拉工具**：为 `add` 增加 `--from-links [--confidence high]`，按 `link_map` 一次性预置某个软件或某个优先级档位的技能正文，便于离线场景。
+5. **人工复核 `medium` 条目**：34 个仅 `medium` 命中的模块（依据为 `description` 词面匹配）需人工判断，确认后固化为 `LINK_ALIASES` 或剔除。
+6. **同步自动化**：将 §7.6 步骤固化为一条命令（`index-build` + `link` 已可脚本化），并在 CI 中定期比对上游 commit 以提示更新。
+

@@ -534,7 +534,10 @@ python modules/bin/skill-cli schema modules/<software>/meta.yaml
 # 3. 重建全局 registry.yaml（自动扫描全库 meta.yaml）
 python modules/bin/skill-cli scan
 
-# 4. 跑 native 回归测试（需对应软件已安装）
+# 4. 重建跨层索引 link_map.yaml（关联 modules/ 与 skills/ 指令层；新增软件后必做）
+python modules/bin/skill-cli link
+
+# 5. 跑 native 回归测试（需对应软件已安装）
 bash modules/<software>/native/test/run_test.sh
 ```
 
@@ -614,6 +617,8 @@ bash modules/<software>/native/test/run_test.sh
 * [ ] **Apptainer 登记为 depot 预构建 sif 直拉**（有官方 tag 时：README「环境安装」的「Apptainer / Singularity」小节写 `apptainer pull <tool>.sif docker://depot.galaxyproject.org/singularity/<tool>:<tag>`，无需本地从 quay docker 转换）
 
 * [ ] **native / nf-core / snakemake-wrappers 的 software\_versions 三方差异已逐条核对**
+
+* [ ] **与 `skills/` 指令层的交叉引用已登记**（若索引中存在该软件对应的技能）：先 `python modules/bin/skill-cli search <software>` 确认命中，再在 `modules/<tool>/README.md` 写「指令层：`skills/<source>/<skill>/`」一行，使 Agent 同时拿到「怎么跑」（本仓 `meta.yaml`/`native`）与「怎么用」（上游指令）。匹配规则与置信度见 ARCHITECTURE.md §7.7；`skills/` 分三层——**索引层 `skills/index/` 与 `lock.yaml` 入库，技能正文不入库**，禁止手工增删技能正文（拉取用 `skill-cli add`，更新用 `add --force`，同步流程见 ARCHITECTURE.md §7.6）
 
 * [ ] `skill-cli validate modules/<tool>` 全 \[OK]（实际存在的实现目录均通过）
 

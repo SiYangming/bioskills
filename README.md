@@ -8,6 +8,7 @@
 |------|------|
 | **双源并存架构** | 官方成熟模块（nf-core/modules、snakemake-wrappers）以「说明 + Schema + 引用」挂载；缺失/自定义模块在 `native/` 下自包含构建 |
 | **双层归档** | 原子技能按软件归档（`modules/<software>/`）；复合流程归档于 `workflow/` 根级文档（`<flow>.md`/`.yaml`）或目录（含经典 native 时），常用组合放 `subworkflow/<组合名>.md`/`.yaml` |
+| **指令层按需拉取（skills/）** | 与 `modules/` 并列的第二层：上游 [awesome-bio-agent-skills](https://github.com/BioTender-max/awesome-bio-agent-skills) 的 1,705 个技能（16 分类 / 21 来源目录）。**索引常驻入库（0.81 MB）、正文按需拉取**——全量技能离线可检索，`skill-cli add` 才把正文落盘。**实现层管「怎么跑」，指令层管「怎么用」**；三层模型与同步流程见 [ARCHITECTURE.md §七](ARCHITECTURE.md#七-skills-指令层索引常驻与按需拉取) |
 | **零外部网络依赖** | 自定义模块的代码 / 测试 / Schema 仍**全部本地化**；工具环境改走**官方镜像优先**（bioconda → quay.io/biocontainers → depot.galaxyproject.org，官方已有即登记、不本地内置容器配方），查无官方才自建 apt 最小化镜像 |
 | **软件版本差异透明** | 每个软件的 `meta.yaml.software_versions` 字段**显式声明** native / nf-core / snakemake-wrappers 三路之间的版本差与构建路线 |
 | **官方镜像优先 & 自建兜底** | 官方已有（bioconda → quay.io/biocontainers → depot.galaxyproject.org 任一）→ 不维护 Dockerfile/Apptainer.def，meta.yaml 登记 `container_official` + `build_route=official biocontainer`，README 登记官方镜像/tag；查无官方（如 gstama / orfanage / dorado / gnu_sort / gunzip）→ 才自建 `debian:bookworm-slim + apt --no-install-recommends + 清理四连` 最小化镜像；docker run 必须带 `-u $(id -u):$(id -g)`（见「环境路线」小节） |
@@ -67,7 +68,16 @@ bioskills/
     └── fastqc/                  # 更多原子技能…
 ├── workflow/                    # 【复合流程】完整流程（workflow/ 下 nanoseq/、isoseq/、riboseq/ 目录形态；轻量流程才根级 md+yaml）
 ├── scripts/                     # 通用 shell 工具（run_smk.sh 流程执行入口、run_bg.sh daemon 管理等共享脚本）
- └── subworkflow/                 # 【复合流程】常用软件组合（fastp_bwa_samtools/ 目录形态等）
+├── subworkflow/                 # 【复合流程】常用软件组合（fastp_bwa_samtools/ 目录形态等）
+└── skills/                      # 【指令层】索引常驻 + 内容按需（入库 0.81 MB / 1,705 个技能）
+    ├── index/                   #   [索引层·入库] 全量技能索引，离线可检索
+    │   ├── bioskill_index_v3.csv  #     上游原样索引（1,676 行，含 description / category）
+    │   └── skill_meta.csv         #     本仓派生（primary_tool / tool_type，跨层匹配依据）
+    ├── lock.yaml                #   [登记层·入库] 已拉取技能的 tree-hash + 上游 commit
+    ├── ROADMAP.md               #   7 条分析场景路线图
+    ├── LICENSE                  #   上游汇编层 CC0
+    ├── assets/banner.svg
+    └── <source>/<skill>/        #   [内容层·不入库] 由 skill-cli add 按需拉取
 ```
 
 > **目录构建规则（workflow / subworkflow / modules 通用）**：官方已有的流程/软件实现（nf-core 流程、nf-core modules、snakemake-wrappers）**不单独建目录**，信息并入对应 README / meta.yaml 登记（`source_type: official` + 官方仓库/submodules/版本差异 + 强提示）；**只有官方没有的自定义实现才建目录**（`source_type: custom`）。例：nf-core/riboseq 官方已有 → `workflow/riboseq` 不再建 `nextflow/` 目录只登记引用；本地自定义 Snakemake 重构保留 `snakemake/`。
@@ -85,6 +95,36 @@ bioskills/
 ```
 
 > **官方已有实现一律不建目录**：只把说明 + Schema + 引用登记到流程/软件 README 与 meta.yaml（`source_type: official`）；本地自定义实现（`source_type: custom`）才建目录并写源码。
+
+## skills/ 指令层（怎么用）
+
+`skills/` 是与 `modules/` **并列的第二层**，面向 Claude 系 Agent 框架（OpenClaw / NanoClaw / Biomni 等）。采用**索引常驻 + 内容按需**：仓库里常驻全量索引（0.81 MB），技能正文按需拉取、不入库。
+
+```bash
+# 1. 离线检索（读 skills/index/，不需要技能正文，也不需要网络）
+python modules/bin/skill-cli search "variant calling"
+
+# 2. 按需拉取正文到本地（从 .cache/ 上游 mirror 抽取，并登记 skills/lock.yaml）
+python modules/bin/skill-cli add bioskills/gatk-variant-calling
+
+# 3. 校验已拉取内容（正文缺失 / 本地改动 / 上游更新）
+python modules/bin/skill-cli verify
+
+# 4. 跨层索引：同一软件的「怎么跑」(modules/) 与「怎么用」(skills/) 关联
+python modules/bin/skill-cli link    # 产出 modules/link_map.yaml
+```
+
+首次运行 `add` 会自动建上游 mirror（`.cache/`，不入库）；拉取过的技能之后可离线复用。
+
+| 关注点 | 去哪里看 |
+|---|---|
+| 上游来源、基线 commit、三层模型、裁剪规则 | [ARCHITECTURE.md §七](ARCHITECTURE.md#七-skills-指令层索引常驻与按需拉取) |
+| 22 个来源仓库明细与各自技能数 | ARCHITECTURE.md §7.3（该表已内联） |
+| 上游更新后如何同步（含可执行命令） | ARCHITECTURE.md §7.6 |
+| 跨层索引的匹配规则与置信度分档 | ARCHITECTURE.md §7.7（产出：`modules/link_map.yaml`） |
+| 后续扩展方向（场景对接、README 回填、反向补全） | ARCHITECTURE.md §7.8 |
+
+> ⚠️ **许可证提示**：上游汇编层为 CC0，但各技能自带许可证（19 个目录有独立 `LICENSE`）；`openclaw` 来源下 148 个 `SKILL.md` 带「proprietary and confidential」声明且与 frontmatter 的 MIT 矛盾，**再分发或商用前须逐一核实**。详见 ARCHITECTURE.md §7.5。
 
 ## 新增一个软件？
 
@@ -177,4 +217,6 @@ fastqc
 
 ## License
 
-MIT — 详见 [LICENSE](LICENSE)。
+本仓自建部分（`modules/` / `workflow/` / `subworkflow/` / `scripts/`）为 MIT — 详见 [LICENSE](LICENSE)。
+
+`skills/` 为**上游第三方内容**，遵循其各自许可证，不适用本仓 MIT：上游汇编层为 CC0 1.0，各技能自带许可证（19 个目录含独立 `LICENSE`，随 `skill-cli add` 一并落盘），且 `openclaw` 来源下 148 个 `SKILL.md` 存在「proprietary and confidential」声明与 MIT frontmatter 冲突的遗留问题。**再分发或商用前须逐一核实**，详见 [ARCHITECTURE.md §7.5](ARCHITECTURE.md#75-许可证与合规提示)。
