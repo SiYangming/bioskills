@@ -20,7 +20,7 @@ LASTZ（BLASTZ 后继，Harris 2007）是双序列/全基因组比对工具，�
 
 注意：LASTZ 为单线程程序（无 --threads/-p 选项）——--threads 仅占位接受，不注入命令行；
       官方一致率/覆盖度过滤写作 --filter=identity:<min> / --filter=coverage:<min>
-      （文档 14.md 的 --identity=/--coverage= 简写对应本驱动的 --identity/--coverage 参数）。
+      （--identity=/--coverage= 简写对应本驱动的 --identity/--coverage 参数）。
 """
 
 from __future__ import annotations

@@ -3,9 +3,8 @@ canonical: gblocks
 category: phylogenetics
 description: 'Gblocks（Castresana 2000，经典版本 0.91b）是系统发育分析前的多序列比对（MSA）过滤工具：
   从比对结果（FASTA/PIR/NBRF）中自动筛选保守区块（conserved blocks），剔除高变区与难比对区域，
-  输出更可靠的比对（原生在输入名后追加 -gb），再送入 RAxML / RAxML-NG 等建树。它是 14.md
-  「四、单拷贝同源基因提取和多序列比对 → 3.5 Gblocks 保守区块提取」的核心步骤，与 trimAl 并列为
-  MSA 修剪的两条主流路线。
+  输出更可靠的比对（原生在输入名后追加 -gb），再送入 RAxML / RAxML-NG 等建树。它是单拷贝同源基因提取与多序列比对中
+  Gblocks 保守区块提取的核心步骤，与 trimAl 并列为 MSA 修剪的两条主流路线。
 
   '
 homepage: http://molevol.cmima.csic.es/castresana/Gblocks.html
@@ -17,7 +16,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/gblocks / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/gblocks
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
-    bioconda 现行 latest=1.0，但 14.md 与官方文档流程锁定经典版 0.91b（输出 <input>-gb）；native 登记
+    bioconda 现行 latest=1.0，但本模块按官方文档流程锁定经典版 0.91b（输出 <input>-gb）；native 登记
     0.91b。官方容器 tag quay.io/biocontainers/gblocks:0.91b--h9ee0642_2（depot.galaxyproject.org 有
     同名 sif，tag 0.91b--h9ee0642_2）。官方另有预编译二进制（Linux64/OSX，.tar.Z，需 ncompress 解压）；
     宿主机直跑 main.py 时用 conda/mamba 安装 gblocks=0.91b，或 brew（brewsci/bio tap）。'

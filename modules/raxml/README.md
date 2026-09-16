@@ -34,7 +34,7 @@ Likelihood，standard-RAxML **v8.2.12**）是最大似然系统发育树构建�
 ## 用法
 
 ```bash
-# CLI 直跑（14.md 密码子模型 / 蛋白质模型）
+# CLI 直跑（密码子模型 / 蛋白质模型）
 python main.py ml_bootstrap -s allSingleCopyOrthologsAlign.Codon.phy -m GTRGAMMA -n out_codon -# 100 -T 8
 python main.py ml_search    -s allSingleCopyOrthologsAlign.Protein.phy -m PROTGAMMAILGX -n out_protein -T 8
 python main.py version
@@ -205,7 +205,7 @@ cd modules/raxml/native && bash test/run_test.sh
 ## 版本
 
 * raxml **8.2.12**（bioconda::raxml=8.2.12；官方容器 tag `8.2.12--h031d066_6`；bioconda 现行 latest 为
-  8.2.13，本模块按 14.md 锁定 8.2.12）
+  8.2.13，本模块锁定 8.2.12）
 
 * 许可：GPL-3.0（bioconda raxml 包元数据 license=GPL；standard-RAxML 源码以 GNU GPL 分发）
 

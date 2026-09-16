@@ -6,7 +6,7 @@ description: 'WGCNA（Weighted Gene Co-expression Network Analysis）是加权�
   （adjacency/TOMsimilarity）→ 动态剪切树模块识别（cutreeDynamic）→ 相似模块合并（mergeCloseModules）→
   模块-性状关联（moduleTraitCor/corPvalueStudent），输出基因-模块归属与模块特征基因。
   以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动上述函数完成分析。
-  conda 包名：bioconda r-wgcna（docs/09.md 记 bioconductor-wgcna，经核实未找到，见 software_versions）。
+  conda 包名：bioconda r-wgcna（教程记 bioconductor-wgcna，经核实未找到，见 software_versions）。
   '
 homepage: https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/
 license: GPL-2.0-or-later
@@ -16,7 +16,7 @@ software_versions:
   r: R >= 4.1（conda r-base / 官方镜像自带 R 4.5）
   build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/r-wgcna
-  note: 'bioconda 包名为 r-wgcna（最新 1.74，与 CRAN WGCNA 1.74 一致）；docs/09.md 所述包名
+  note: 'bioconda 包名为 r-wgcna（最新 1.74，与 CRAN WGCNA 1.74 一致）；教程所述包名
     bioconductor-wgcna 经 curl 核实未找到（anaconda bioconda/conda-forge 均无，2026-09-11）。
     quay 官方镜像 r-wgcna:1.74--r45h0df16ae_1；depot.galaxyproject.org 同 tag 可用。
     WGCNA NeedsCompilation: yes（含 C++ 代码），conda 路线已带编译产物。'

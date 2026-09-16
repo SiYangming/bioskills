@@ -61,7 +61,7 @@ python main.py --list-commands
 
 ## 实战示例：EMP 单端扩增子全流程
 
-QIIME 2 以 Artifact（QZA/QZV）贯穿全流程，DADA2 去噪 + 系统发育 + 多样性 + 物种分类是标准扩增子链路。以下为文档（15.md「第二部分：QIIME 2.x 完整流程」）的端到端用法；等价能力由 `native/main.py` 的对应「插件-动作」子命令提供（见上「用法」）。
+QIIME 2 以 Artifact（QZA/QZV）贯穿全流程，DADA2 去噪 + 系统发育 + 多样性 + 物种分类是标准扩增子链路。以下为典型端到端用法；等价能力由 `native/main.py` 的对应「插件-动作」子命令提供（见上「用法」）。
 
 ### 1. 导入 EMP 数据 + 拆样 + 导出
 

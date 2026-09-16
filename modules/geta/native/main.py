@@ -12,7 +12,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐教学文档 docs/10.md 第十五节）：
+命令逻辑：
   geta          geta.pl --RM_species <s> --genome <genome> [-1 <r1>] [-2 <r2>] [--protein <faa>] \
                     [--use_existed_augustus_species <name>] [--RM_lib <lib>] --cpu N \
                     [--pfam_db <hmm>] [--gene_prefix <p>]

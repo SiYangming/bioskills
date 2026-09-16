@@ -13,7 +13,7 @@ GenomeScope 2.0 从 k-mer 计数直方图（jellyfish histo / KMC 产出）估�
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑对照文档 docs/04.md 第 211-295 行：
+命令逻辑：
   genomescope.R -i mer_counts.histo -o genomescope -k 21 -p 1 > genomescope.out
 
 前置：genomescope.R 在 PATH（conda genomescope2 安装自带，含 jellyfish 依赖；见 README

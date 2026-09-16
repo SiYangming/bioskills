@@ -4,7 +4,7 @@
 >
 > ⚠️ **无官方渠道（2026-09 核实）**：bioconda `go_class` / `go-class` **404**（检索无结果）· quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）· depot.galaxyproject.org/singularity/go-class **404** · biocontainers.pro **404** · nf-core 404 · snakemake-wrappers 404 → 走自建容器兜底。
 >
-> ⚠️ **分发方式**：13.md 以**本地 tar 包**（`go_class.tar.gz`）分发，**未给出官方下载页与版本号**（本模块如实登记版本为「未标注」）；容器配方消费用户自备的 tar 包，**不伪造下载链接**。依赖 **Perl**。
+> ⚠️ **分发方式**：分发介质为**本地 tar 包**（`go_class.tar.gz`），**未给出官方下载页与版本号**（本模块如实登记版本为「未标注」）；容器配方消费用户自备的 tar 包，**不伪造下载链接**。依赖 **Perl**。
 
 ***
 
@@ -32,7 +32,7 @@ GO class（Perl 脚本集）的本地自包含实现（`source_type: custom`、`
 ## 用法
 
 ```bash
-# CLI 直跑（13.md「九、GO功能分类（WEGO图）」）
+# CLI 直跑（GO 功能分类 / WEGO 图）
 python main.py config     go.obo
 python main.py annot2wego go.annot -o go.wego
 python main.py classify   go.obo go.wego -o go_class.tab
@@ -76,7 +76,7 @@ convert out.svg out.png   # 可选：ImageMagick 转位图（流程侧工具，�
 
 ## 环境安装（无官方渠道，自建容器 / 自备 tar 包）
 
-GO class 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）**全无**，13.md 以本地 tar 包分发（无官方下载页）→ 本模块走**自建兜底**（`native/Dockerfile`、`native/Apptainer.def`），构建须提供用户自备的 `go_class.tar.gz`。
+GO class 官方渠道（bioconda → quay.io/biocontainers → depot.galaxyproject.org）**全无**，分发介质为本地 tar 包（无官方下载页）→ 本模块走**自建兜底**（`native/Dockerfile`、`native/Apptainer.def`），构建须提供用户自备的 `go_class.tar.gz`。
 
 ### 1. Docker（自建镜像）
 
@@ -101,7 +101,7 @@ apptainer run --bind $PWD:/data go_class.sif annot2wego.pl /data/go.annot
 
 ### 3. 官方发行包（无官方下载页，需自备 tar 包）
 
-* 来源：13.md「安装 GO class 分析软件」的本地 tar 包 `go_class.tar.gz`（**无官方下载页**，2026-09 未找到）。
+* 来源：本地 tar 包 `go_class.tar.gz`（**无官方下载页**，2026-09 未找到）。
 * 用 `native/install.sh` 部署到 `~/software/go_class`（可用 `--obo` 顺带初始化配置）：
 
 ```bash
@@ -133,7 +133,7 @@ bash test/run_test.sh   # 用 stub 脚本验证 argv 与 stdout→-o 重定向
 
 ## 版本
 
-* go_class：**未标注**（13.md 本地 tar 包 `go_class.tar.gz`，无版本号/无官方下载页）
+* go_class：**未标注**（本地 tar 包 `go_class.tar.gz`，无版本号/无官方下载页）
 
 * 构建路线：无官方 conda/容器 → 自建容器（`debian:bookworm-slim` + apt perl 运行时 + 用户自备 tar 包）
 

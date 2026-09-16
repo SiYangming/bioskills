@@ -62,7 +62,7 @@ for f in ../genomes/*.fna; do
         -a "${sample}.faa" -d "${sample}.fna" -g 11 -c
 done
 
-# 2. Prodigal 的 GFF 为 GFF2；如需 GFF3 可用脚本转换（历史遗留工作流见 10.md 第十八节 geneMarkS_gff2gff3.pl）
+# 2. Prodigal 的 GFF 为 GFF2；如需 GFF3 可用脚本转换（历史遗留工作流使用 geneMarkS_gff2gff3.pl）
 #    本驱动不内置转换脚本；可直接将 .gff/.faa 交给下游注释/比较流程
 ```
 

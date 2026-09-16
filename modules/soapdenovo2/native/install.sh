@@ -10,7 +10,7 @@
 #
 # 版本说明（2026-09 核实）：
 #   - bioconda / quay.io/biocontainers / depot.galaxyproject.org 提供的是 2.40（源码基线 r240）；
-#   - 文档 04.md（第 769-854 行）使用 GitHub release r241（仓库 VERSION=2.04-r241）；
+#   - 教程使用 GitHub release r241（仓库 VERSION=2.04-r241）；
 #   - 因此 conda 路线默认装 2.40，source 路线构建 r241。二者 API/用法一致。
 #
 # 官方来源：

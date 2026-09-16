@@ -2,7 +2,7 @@
 
 > 汇总说明：本 README 合并 native 实现用法；安装方式见下方各节，容器与 conda 信息记录于此。
 >
-> **版本提示**：本模块以文档 14.md「十三、LASTZ」采用的 **LASTZ 1.04.22** 为准。2026-09 核实
+> **版本提示**：本模块以 **LASTZ 1.04.22** 为准。2026-09 核实
 > bioconda/quay/depot 均含 1.04.22 构建（bioconda 最新为 1.04.52）；**LASTZ 为单线程程序**，
 > 并行请按参考染色体拆分（见「实战示例」）。
 
@@ -24,14 +24,14 @@ LASTZ 1.04.22 的本地自包含实现（`source_type: custom`、`type: native`�
 - 输出多种格式（MAF、lav等）
 - 速度快，内存效率高
 
-单命令 `align` 覆盖文档 14.md「十三、LASTZ」的比对用法：
+单命令 `align` 覆盖 LASTZ 的比对用法：
 
 | 子命令    | 命令                                                                                             | 作用                                   |
 | ------ | ---------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `align` | `lastz <target> <query> --output=<file> --format=<type> [--hspthresh= … --filter=identity: …]`   | 双序列/全基因组比对 → lav / maf / general 等 |
 
 > 官方一致率/覆盖度过滤的正确写法是 `--filter=identity:<min>` / `--filter=coverage:<min>`；
-> 文档 14.md 的 `--identity=90 --coverage=50` 为本驱动的 `--identity` / `--coverage` 参数（内部映射为
+> `--identity=90 --coverage=50` 为本驱动的 `--identity` / `--coverage` 参数（内部映射为
 > 上述官方 `--filter=` 形式）。
 
 ## 用法
@@ -52,7 +52,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖；LASTZ 单线程，`--threads` 为占位（不注入命令行）。
 
-## 实战示例：两基因组比对（来自文档 14.md「十三、LASTZ」12.2）
+## 实战示例：两基因组比对
 
 ```bash
 mkdir -p i.lastz && cd i.lastz

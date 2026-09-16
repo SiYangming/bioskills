@@ -36,7 +36,7 @@ python main.py --schema
 python main.py --list-commands
 ```
 
-## 实战示例：编译 BEAGLE 并让 BEAST2 用其加速（14.md 七、6.3.1）
+## 实战示例：编译 BEAGLE 并让 BEAST2 用其加速
 
 BEAGLE 是 BEAST2 的可选加速库：装好后在 `beast` 命令加 `-beagle`，运行期由 `LD_LIBRARY_PATH` 找到 `libhmsbeagle.so`。等价能力由 `native/main.py` 的 `install` / `verify` / `flags` 子命令提供（见上「用法」）。
 

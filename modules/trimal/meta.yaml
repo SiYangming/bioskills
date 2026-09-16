@@ -4,8 +4,7 @@ category: phylogenetics
 description: 'trimAl（trimal.cgenomics.org / inab/trimal）是多序列比对（MSA）自动修剪工具，是 Gblocks
   的现代替代品：支持自动化阈值选择（-automated1）、多种修剪策略（-gappyout/-strictplus/-gt 等），
   从比对中去掉伪序列与难比对区域，输出更紧凑可靠的比对供系统发育建树使用；同一发行包还提供 readal
-  （比对格式转换）与 statal（比对统计）两个配套程序。它是 14.md「四、单拷贝同源基因提取和多序列比对 →
-  安装trimAl」登记的 MSA 修剪主流工具（本模块登记 1.4.1）。
+  （比对格式转换）与 statal（比对统计）两个配套程序。它是 MSA 修剪的主流工具（本模块登记 1.4.1）。
 
   '
 homepage: http://trimal.cgenomics.org/
@@ -16,7 +15,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/trimal / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/trimal
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
-    bioconda 现行 latest=1.5.1，但 14.md 流程锁定 1.4.1；native 登记 1.4.1。官方容器 tag
+    bioconda 现行 latest=1.5.1，但本模块锁定 1.4.1；native 登记 1.4.1。官方容器 tag
     quay.io/biocontainers/trimal:1.4.1--h4ac6f70_9（depot.galaxyproject.org 有同名 sif）。官方 GitHub
     release 另提供预编译二进制（trimAl_Linux_x86-64.zip / trimAl_MacOS_x86-64.zip，含 trimal/readal/
     statal）与源码归档（inab/trimal/archive/refs/tags/v1.4.1.tar.gz，source/ 内 make 编译）。宿主机直跑

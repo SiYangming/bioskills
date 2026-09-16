@@ -3,7 +3,7 @@ canonical: viennarna
 category: ncRNA_prediction
 description: 'ViennaRNA（包名 viennarna）是 RNA 二级结构预测与比较的标准工具包，核心程序 RNAfold
   计算最小自由能（MFE）结构与配分函数（Lorenz et al., Algorithms Mol Biol 2011）。常用于 ncRNA /
-  miRNA precursor 二级结构分析（结构与 ΔG 评估）。**命名说明**：docs/10.md 第十九节把 miRNA 预测
+  miRNA precursor 二级结构分析（结构与 ΔG 评估）。**命名说明**：该教学环节把 miRNA 预测
   工具列为「miRDeep、miRNAFold」；经 curl 核实（见 README「关于 miRNAFold 的命名核实」），所引
   freiburg URL 不可达、且无 mirnafold 官方包，而 ViennaRNA/RNAfold 有完整官方渠道且是 RNA 二级结构
   预测标准工具，故本模块 canonical 采用 viennarna。'

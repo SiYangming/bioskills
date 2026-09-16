@@ -27,7 +27,7 @@ InterProScan 是 EMBL-EBI 开发的蛋白质功能域注释工具，整合了 Pf
 ## 用法
 
 ```bash
-# CLI 直跑（对应 13.md「安装 InterProScan → 使用示例」）
+# CLI 直跑（InterProScan 使用示例）
 python main.py run -i proteins.fasta -o interpro_result -f tsv,gff3,xml \
     -goterms -iprlookup -pa -cpu 8
 python main.py version
@@ -143,7 +143,7 @@ bash test/run_test.sh   # argv 构造验证 + JAVA_OPTS 透传断言（真实注
 
 ## 版本
 
-* interproscan 5.59_91.0（bioconda::interproscan=5.59_91.0；bioconda 当前最新版，对应 13.md「安装 InterProScan」）
+* interproscan 5.59_91.0（bioconda::interproscan=5.59_91.0；bioconda 当前最新版）
 
 * 构建路线：官方镜像/conda/源码归档提供（quay.io/biocontainers/interproscan:5.59_91.0--hec16e2b_1 / depot.galaxyproject.org；本地不再自建容器）
 

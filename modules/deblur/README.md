@@ -78,7 +78,7 @@ python main.py workflow \
 | `--threads`              | 并行作业数（映射到 `-O/--jobs-to-start`）         |
 | `--threads-per-sample`   | 每样本线程数（`-a`；0=全部核）                    |
 
-> ⚠️ 15.md 提示：QIIME 2 的 `--p-trim-length` 不能设置为 `-1`（会导致运行失败），必须指定具体截短长度。QIIME 2 等价调用：`qiime deblur denoise-16S`（见 15.md「4.2 使用 Deblur 去噪」与「### 7. Deblur」）。
+> ⚠️ 注意：QIIME 2 的 `--p-trim-length` 不能设置为 `-1`（会导致运行失败），必须指定具体截短长度。QIIME 2 等价调用：`qiime deblur denoise-16S`（QIIME 2 的 Deblur 去噪环节）。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 

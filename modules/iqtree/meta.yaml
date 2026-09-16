@@ -3,8 +3,8 @@ canonical: iqtree
 category: phylogenetics
 description: 'IQ-TREE 是高效的最大似然系统发育树构建工具：iqtree -s <alignment> -m <model|MFP>
   -bb <n> -alrt <n> -nt <threads> 支持自动模型选择（ModelFinder）、超快 bootstrap（UFBoot）、
-  近似似然比检验（aLRT）与分区合并分析，比 classic RAxML 快数倍。是 14.md「五（续）→ 4.7 IQ-TREE -
-  高效的最大似然树构建」的物种树构建工具；本模块登记 v1.6.12（该版线程参数为 -nt）。
+  近似似然比检验（aLRT）与分区合并分析，比 classic RAxML 快数倍。是常用的物种树构建工具；
+  本模块登记 v1.6.12（该版线程参数为 -nt）。
 
   '
 homepage: http://www.iqtree.org/
@@ -42,7 +42,7 @@ implementations:
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。ml 子命令
     建 ML 树（ModelFinder Plus 自动选模型 + UFBoot + aLRT）；model 子命令仅做模型选择（ModelFinder）。
-    自动注入 -nt 线程。覆盖 14.md「五（续）→ 4.7 IQ-TREE」。'
+    自动注入 -nt 线程。覆盖 IQ-TREE 最大似然建树主链路。'
   container_ref:
     bioconda: https://anaconda.org/bioconda/iqtree
     quay_biocontainers: quay.io/biocontainers/iqtree

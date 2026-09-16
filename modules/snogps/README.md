@@ -1,7 +1,7 @@
 # snogps 软件模块
 
 > 汇总说明：本 README 合并各实现的用法；安装方式见下方各节，容器信息记录于此。
-> 来源：`docs/10.md` 第十九节（非编码RNA预测）——snoRNA 预测工具 snoScan / snoGPS。
+> 来源：非编码RNA预测教程——snoRNA 预测工具 snoScan / snoGPS。
 >
 > ⚠️ **官方渠道全无（2026-09 核实）**：bioconda `snogps` 未找到、quay.io/biocontainers/snogps 401（不存在）、
 > depot.galaxyproject.org/singularity/snogps 404，nf-core / snakemake-wrappers / brew 均无。

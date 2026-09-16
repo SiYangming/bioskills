@@ -1,7 +1,7 @@
 # fgenesh 软件模块
 
 > 汇总说明：本 README 合并各实现的用法；安装方式见下方各节，容器信息记录于此。
-> 来源：`docs/10.md` 第十节（FGENESH - 从头基因预测）。
+> 来源：从头基因预测环节——FGENESH。
 >
 > ⚠️ **许可受限（务必先读）**：FGENESH 是 **Softberry 公司的商业软件**。学术用户须向 Softberry
 > 申请**免费学术许可**，商业用户须**购买许可**后方可获得发行包。**禁止未授权获取、使用与再分发。**
@@ -100,7 +100,7 @@ fgenesh genome.fasta -L /opt/biosoft/fgenesh/params/fungi.par -o fgenesh.gff -gf
 # 一键部署（解压授权发行包 -> ~/software/fgenesh，定位 fgenesh 可执行文件并写 PATH）
 bash native/install.sh --tarball ~/downloads/fgenesh.tar.gz
 
-# 或手工部署（文档 10.md 第十节写法，改为用户前缀）
+# 或手工部署（官方写法，改为用户前缀）
 tar zxf ~/software/fgenesh.tar.gz -C ~/software/
 echo 'export PATH=$PATH:~/software/fgenesh/bin/' >> ~/.bashrc
 source ~/.bashrc

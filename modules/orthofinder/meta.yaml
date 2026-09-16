@@ -4,7 +4,7 @@ category: comparative_genomics
 description: 'OrthoFinder（v2.5.5）是 OrthoMCL 的现代继任者：一条命令完成同源基因聚类全流程——
   推断直系同源群（orthogroups）、orthologues、基因树、有根物种树、基因复制事件
   （orthofinder -f input_proteins -S diamond -t 8），比 OrthoMCL 快 10-100 倍、准确性更高、
-  无需 MySQL 数据库，是 14.md §3 推荐的同源基因聚类工具。输入为每物种一个蛋白 FASTA 的目录。
+  无需 MySQL 数据库，是常用的同源基因聚类工具。输入为每物种一个蛋白 FASTA 的目录。
 
   '
 homepage: https://github.com/davidemms/OrthoFinder

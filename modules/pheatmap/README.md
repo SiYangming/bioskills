@@ -3,7 +3,6 @@
 > 汇总说明：pheatmap 是 R 包（CRAN，无独立命令行二进制），本模块以 Rscript 驱动 `pheatmap()`
 > 绘制差异基因表达热图（标准化/双向聚类/列注释/输出 PDF 或 PNG）；安装方式见「环境安装」，
 > 容器与 conda 链接见文末。conda 规范包名为 **r-pheatmap**（conda-forge 1.0.13）。
-> 对应 `docs/09.md`「5.1 pheatmap 热图」。
 
 ***
 
@@ -141,6 +140,6 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 
 ## 版本
 
-* pheatmap 1.0.13（conda-forge，与 CRAN 一致；bioconda/官方镜像为 1.0.8；docs/09.md 未标注版本）
+* pheatmap 1.0.13（conda-forge，与 CRAN 一致；bioconda/官方镜像为 1.0.8；教程未标注版本）
 * 构建路线：官方 biocontainer 已维护（quay / depot r-pheatmap:1.0.8）→ 不维护本地配方；宿主机用 conda/mamba
 * nf-core / snakemake-wrappers 均无 pheatmap 官方子模块（2026-09-11 在线核实 404）

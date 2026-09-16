@@ -7,7 +7,7 @@ description: 'OrthoMCL v2.0.9（Orthologous Groups via MCL）是经典的直系�
   orthomclPairs 找 ortholog/in-paralog 对 → orthomclDumpPairsFiles 导出 mclInput →
   mcl 聚类（OCG）→ orthomclMclToGroups 编号。**已停止维护（deprecated，2026-09 登记）**：
   官方推荐 OrthoFinder 替代，且流程依赖 MySQL 数据库，安装与运行较繁琐。本模块只做
-  「录入」：native 为「说明型 + 命令构造」驱动，按 14.md 流程构造 8 个 OrthoMCL 命令，
+  「录入」：native 为「说明型 + 命令构造」驱动，按官方流程构造 8 个 OrthoMCL 命令，
   不推荐新项目使用。
 
   '
@@ -15,7 +15,7 @@ homepage: http://orthomcl.org/orthomcl/
 license: 'EuPathDB Bioinformatics Resource Center（bioconda orthomcl 配方 license 字段；
   官方许可文件见 tarball 内 doc/OrthoMCLEngine/Main/SoftwareLicense.txt）'
 deprecated: true
-deprecated_note: '上游停止维护（官方及 14.md 均推荐 OrthoFinder 替代）。技术原因：依赖 MySQL
+deprecated_note: '上游停止维护（官方推荐 OrthoFinder 替代）。技术原因：依赖 MySQL
   数据库（orthomclInstallSchema/orthomclLoadBlast/orthomclPairs 均需 DB 连接），流程步骤多、
   安装繁琐；同一任务的现代替代 OrthoFinder 速度更快、准确性更高、无需数据库。2026-09 保留
   渠道：bioconda orthomcl=2.0.9（历史包，quay.io/biocontainers 自动镜像）与官方 tarball
@@ -55,7 +55,7 @@ implementations:
   version: "2.0.9"
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）。本实现为
-    「说明型 + 命令构造」：按 14.md §2 OrthoMCL 流程构造 8 个子命令的 OrthoMCL 命令行，
+    「说明型 + 命令构造」：按官方 OrthoMCL 流程构造 8 个子命令的 OrthoMCL 命令行，
     不实际运行（软件 deprecated、依赖 MySQL、无新用场景），主要供历史复现与文档化调用。
     新项目请改用 orthofinder（modules/orthofinder/）。'
   container_ref:
@@ -96,7 +96,7 @@ inputs:
     type: integer
     default: 10
     cli_arg: positional
-    description: 'filter_fasta：允许的最短蛋白长度（默认 10；14.md 教程常用 30）'
+    description: 'filter_fasta：允许的最短蛋白长度（默认 10；教程常用 30）'
   max_percent_stop:
     type: integer
     default: 20

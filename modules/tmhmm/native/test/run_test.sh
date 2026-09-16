@@ -22,7 +22,7 @@ python "$NATIVE/main.py" --list-commands
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/6] argv 构造验证 #1：predict（13.md 分泌蛋白步骤2）"
+echo "==> [3/6] argv 构造验证 #1：predict（分泌蛋白步骤2）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")
@@ -85,7 +85,7 @@ PATH="$WORK/bin:$PATH" python "$NATIVE/main.py" predict "$WORK/proteins_mature.f
 test -f "$WORK/tmhmm.out"
 grep -q "Number of predicted TMHs:  0" "$WORK/tmhmm.out"
 echo "  OK: -o 落盘并命中 'Number of predicted TMHs:  0'"
-# 覆盖 13.md 的筛选命令
+# 覆盖教程的筛选命令
 grep "Number of predicted TMHs:  0" "$WORK/tmhmm.out" | perl -p -e 's/#\s+(\S+).*/$1/' > "$WORK/genes_without_TMHs.list"
 test -s "$WORK/genes_without_TMHs.list"
 echo "  OK: 无跨膜蛋白清单生成"

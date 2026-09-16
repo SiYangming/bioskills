@@ -38,7 +38,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖（`simple` 注入 `-t`；`config`/`run` 的并发由 `config.txt` 的 `NUM_THREADS` 或 `assemble.sh` 自身控制）。
 
-## 实战示例（来自文档 04.md §16）
+## 实战示例：二代 + 三代混合组装
 
 MaSuRCA （Maryland Super Read-Corrected Assembler）支持二代与三代数据联合组装（super-read + mega-read），内部集成多种组装算法。以下为文档给出的混合组装用法；等价能力由 `native/main.py` 的 `config` / `run` 子命令提供。
 

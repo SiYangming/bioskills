@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐文档 04.md「17. Platanus / Platanus-allee 安装与使用」）：
+命令逻辑（对齐官方流程）：
   assemble   platanus_allee assemble -t N [-o out] -f <reads...> [-k 32] [-m 16] -tmp <dir>
   phase      platanus_allee phase -t N -c <contigs...> [-IP1 FWD REV] [-p <long reads...>] [-x <linked reads...>] [-o out] [-i 2] -tmp <dir>
   consensus  platanus_allee consensus -t N -c <contigs...> [-IP1 FWD REV] [-p <long reads...>] [-o out] -tmp <dir>

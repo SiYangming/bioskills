@@ -1,7 +1,7 @@
 # go_class native Apptainer/Singularity 配方（自建兜底：与 native/Dockerfile 同一 apt 路线）
 # ---------------------------------------------------------------------------
 # 路线说明：GO class 无官方 conda/容器（bioconda→quay→depot 全无，2026-09 核实），
-# Debian bookworm 亦无该包；13.md 以本地 tar 包分发、无官方下载页。
+# Debian bookworm 亦无该包；分发介质为本地 tar 包、无官方下载页。
 # 故走自建兜底：debian:bookworm-slim + apt perl 运行时 + 用户自备 go_class.tar.gz。
 #
 # ⚠️ 构建前请二选一：

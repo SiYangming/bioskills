@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """jellyfish native 标准入口驱动（Jellyfish 2.3.0 k-mer 计数）。
 
-覆盖 Jellyfish 2.x 高频子命令（对照文档 docs/04.md 第 119-210 行）：
+覆盖 Jellyfish 2.x 高频子命令：
   count  jellyfish count -C -m <k> -s <size> -t <N> -o <mer_counts.jf> <reads...>
   histo  jellyfish histo -t <N> <mer_counts.jf>            # stdout 直方图
   stats  jellyfish stats <mer_counts.jf>

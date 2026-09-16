@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（文档 04.md 第 1230/1245 行）：
+命令逻辑：
   canu -p <prefix> [-d <dir>] genomeSize=<size> useGrid=false [maxThreads=N] -pacbio-raw <reads...>
   canu 的 -p 是输出前缀（不是线程数）；单机并发由 useGrid=false + maxThreads=N 控制。
   correct / trim 子命令分别追加 -correct / -trim 只跑对应阶段。

@@ -28,7 +28,7 @@
 # gce / native — k-mer 基因组特征估计驱动（1.0.0）
 
 GCE 1.0.0 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照官方
-tarball 与文档 `docs/04.md`（42-117 行）。
+tarball。
 
 ## 功能
 

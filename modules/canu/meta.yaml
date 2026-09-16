@@ -6,7 +6,7 @@ description: 'Canu 是基于 Overlap-Layout-Consensus（Celera Assembler fork）
   *.contigs.fasta / *.unassembled.fasta 等。典型调用：
   canu -p out -d out genomeSize=8m useGrid=false maxThreads=N -pacbio-raw reads.fasta
   （亦可 -nanopore-raw / -pacbio-corrected / -nanopore-corrected / -pacbio-hifi，并可用
-  -correct / -trim 只跑单阶段）。文档（04.md 第 1178-1261 行）使用 Canu 2.0。
+  -correct / -trim 只跑单阶段）。本模块登记 Canu 2.0。
   '
 homepage: https://github.com/marbl/canu
 license: GPL-2.0-or-later

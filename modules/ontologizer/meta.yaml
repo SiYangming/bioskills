@@ -4,7 +4,7 @@ category: functional_annotation
 description: 'Ontologizer 是 Java 实现的 GO 术语富集分析工具（over-representation analysis）： java
   -jar Ontologizer.jar -g <go.obo> -a <gene_association.gaf> -s <study.list> -p <population.list>
   对基因集做 GO 富集（支持 Term-For-Term / Parent-Child-Union / Topology-Weighted / MGSA 等算法
-  与 Bonferroni/Benjamini-Hochberg 等多重检验校正），是 13.md「十、GO富集分析（Ontologizer）」的核心。
+  与 Bonferroni/Benjamini-Hochberg 等多重检验校正），是 GO 富集分析流程的核心。
   ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），官方以公开 jar 分发，
   故本模块走自建容器兜底（apt openjdk + 官方公开 jar）。
 
@@ -21,7 +21,7 @@ software_versions:
   note: '版本 2.1（Build 20160628-1269；实测 `java -jar Ontologizer.jar -v` 输出）。bioconda ontologizer
     于 2026-09 核实 404；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/ontologizer
     404、biocontainers.pro/tools/ontologizer 404；nf-core / snakemake-wrappers 亦 404。官方
-    Java WebStart（javaws）或独立 jar 分发（13.md 用 JRE 1.7 javaws），jar 为公开 GPL 资产（非许可受限），
+    Java WebStart（javaws）或独立 jar 分发（早期做法用 JRE 1.7 javaws），jar 为公开 GPL 资产（非许可受限），
     故按 AGENT.md §7 自建兜底：native/Dockerfile、Apptainer.def（debian:bookworm-slim + apt
     openjdk-17-jre-headless，构建期拉取官方公开 jar）。'
 - id: ontologizer_nextflow_nfcore
@@ -42,7 +42,7 @@ implementations:
   version: "2.1"
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供
-    enrich（命令行富集）/ gui（图形界面）两个子命令，覆盖 13.md「十、GO富集分析（Ontologizer）」。
+    enrich（命令行富集）/ gui（图形界面）两个子命令，覆盖 GO 富集分析全链路。
 
     '
   container_ref:

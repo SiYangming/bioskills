@@ -8,7 +8,7 @@
 #             - --archive <tmhmm-2.0c.Linux.tar.gz>    直接使用本地授权 tarball（推荐）
 #             - --url <mirror-url>                      使用用户自行托管的可用副本
 #           部署到用户前缀（默认 ~/software/tmhmm-<ver>），无需 root、不写 /opt。
-#           安装后自动修正 Perl 解释器路径（13.md：s#/usr/local/bin/perl#/usr/bin/perl#）。
+#           安装后自动修正 Perl 解释器路径（s#/usr/local/bin/perl#/usr/bin/perl#）。
 #
 # ⚠️ 许可限制：TMHMM 由 DTU 授权，需用 edu 邮箱在官方软件页申请下载链接，禁止商用。
 #    官方申请入口：https://services.healthtech.dtu.dk/services/software.php
@@ -105,7 +105,7 @@ fi
 log "解压到前缀: $PREFIX"
 tar -xzf "$LOCAL_TARBALL" -C "$PREFIX" --strip-components=1
 
-# 修正 Perl 解释器路径（13.md 关键步骤：bin/tmhmm* 里 /usr/local/bin/perl -> /usr/bin/perl）
+# 修正 Perl 解释器路径（关键步骤：bin/tmhmm* 里 /usr/local/bin/perl -> /usr/bin/perl）
 log "修正 Perl 解释器路径（/usr/local/bin/perl -> /usr/bin/perl）"
 perl -p -i -e 's#/usr/local/bin/perl#/usr/bin/perl#' "$PREFIX"/bin/tmhmm* 2>/dev/null || true
 

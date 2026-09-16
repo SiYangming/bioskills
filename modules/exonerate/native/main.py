@@ -9,7 +9,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐教学文档 docs/10.md 第四节）：
+命令逻辑：
   align     exonerate --model <m> --showtargetgff yes [--bestn N] [--percent P] [--score S] <query> <target>
   parallel  exonerate_parallel.pl --cpu N [--coverage_ratio R] [--evalue E] <protein.fasta> <genome.fasta>
 exonerate 本身把结果写到 stdout；align 子命令的 stdout 由本驱动在给出 --output 时落盘。

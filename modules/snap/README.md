@@ -52,7 +52,7 @@ python main.py --list-commands
 
 ## 实战示例：训练 SNAP → 预测 → 转 GFF3
 
-SNAP 需要先用高质量训练基因模型（如 AUGUSTUS 训练集）训练 HMM，再用模型预测。以下为教程（10.md 第八节）典型流程；等价能力由 `native/main.py` 的 7 个子命令提供（见上「用法」）。
+SNAP 需要先用高质量训练基因模型（如 AUGUSTUS 训练集）训练 HMM，再用模型预测。以下为典型流程；等价能力由 `native/main.py` 的 7 个子命令提供（见上「用法」）。
 
 ### 1. 训练 SNAP
 

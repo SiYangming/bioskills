@@ -207,7 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
     pm.add_argument("--hmm_db", "--hmm-db", dest="hmm_db", required=True, help="dbCAN HMM 数据库文件")
     pm.add_argument("--fasta", required=True, help="输入蛋白 FASTA")
     pm.add_argument("--domtblout", required=True, help="域级输出文件")
-    pm.add_argument("-E", "--evalue", type=float, help="E-value 阈值（默认 1e-3 见 13.md）")
+    pm.add_argument("-E", "--evalue", type=float, help="E-value 阈值（默认 1e-3）")
     pm.add_argument("--dom_evalue", "--dom-evalue", dest="dom_evalue", type=float, help="域级 E-value 阈值")
     pm.add_argument("--extra-args", help="透传给 hmmscan 的额外参数")
     _add_runtime_opts(pm)

@@ -4,13 +4,13 @@ category: transcriptome
 description: 'Cufflinks v2.2.1（Tuxedo 套件，TopHat-Cufflinks 流程）是经典的转录组组装与差异表达分析工具集，
   含 cufflinks（转录本组装）、cuffmerge（多样本合并）、cuffcompare（与参考比较）、cuffdiff（差异表达）、
   cuffquant/cuffnorm（定量与归一化）。**已淘汰（deprecated，2026-09 登记）**：官方最后稳定版 2.2.1
-  （2014 年后停更），功能上被 StringTie（组装）+ DESeq2/edgeR（差异表达）取代；docs/08.md 第八节与
-  docs/09.md 3.1 均把它标注为【淘汰技术】。本模块只做「录入 + 命令构造」，不推荐新项目使用。'
+  （2014 年后停更），功能上被 StringTie（组装）+ DESeq2/edgeR（差异表达）取代；教学课件将其标注为
+  【淘汰技术】。本模块只做「录入 + 命令构造」，不推荐新项目使用。'
 homepage: http://cole-trapnell-lab.github.io/cufflinks/
 license: BSL-1.0
 deprecated: true
 deprecated_note: '上游停更：cufflinks 2.2.1 为最后稳定版（官方 release 约 2014），项目归档、不再维护。
-  docs/08.md「8. Cufflinks 转录本组装（淘汰技术）」与 docs/09.md「3.1 Cuffdiff（淘汰技术）」均明确
+  教学课件（Cufflinks 转录本组装 / Cuffdiff 两处）均把它标注为【淘汰技术】，并明确
   建议改用 StringTie / DESeq2 / edgeR。2026-09 保留渠道：bioconda cufflinks=2.2.1（历史包，依赖 python）
   → quay.io/biocontainers/cufflinks:2.2.1--py27_1（自动构建历史镜像）；官方预编译二进制仍在
   cole-trapnell-lab.github.io 下载页（Linux/OSX x86_64）。软件 deprecated → 不产出自建

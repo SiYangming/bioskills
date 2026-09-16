@@ -83,7 +83,7 @@ assert "-E 0.001" in c1 and "--domE 0.001" in c1, c1
 assert "--domtblout $WORK/hmmscan.domtbl $WORK/dbCAN-fam-HMMs.txt $WORK/proteins.fasta" in c1, c1
 print("  OK:", c1)
 
-# diamond_blastp：--threads 注入 + 13.md 关键参数
+# diamond_blastp：--threads 注入 + 关键参数
 c2 = " ".join(skill.build_command(
     "diamond_blastp", db="$WORK/CAZyDB.07312020", fasta="$WORK/proteins.fasta",
     output="$WORK/diamond.xml", outfmt=5, sensitive=True, max_target_seqs=500,

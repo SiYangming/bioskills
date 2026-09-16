@@ -14,7 +14,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/circos / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/circos
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    circos=0.69.6 对应官方 circos-0.69-6.tgz（与 12.md 文档版本一致）；bioconda 另有 0.69.8/0.69.9。
+    circos=0.69.6 对应官方 circos-0.69-6.tgz；bioconda 另有 0.69.8/0.69.9。
     官方 tarball 与 conda 包均不含全部 Perl 依赖，需 circos -modules 检查并按缺失项补装。'
 - id: circos_nextflow_nfcore
   circos: 官方无 nf-core 子模块（2026-09 抓取 modules/nf-core/circos 404）

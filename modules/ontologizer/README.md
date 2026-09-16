@@ -4,7 +4,7 @@
 >
 > ⚠️ **官方渠道核实（2026-09）**：bioconda `ontologizer` **404** · quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）· depot.galaxyproject.org/singularity/ontologizer **404** · biocontainers.pro **404** · nf-core 404 · snakemake-wrappers 404 → 走自建容器兜底。
 >
-> ✅ **官方 jar 为公开 GPL 资产（非许可受限）**：命令行 `http://ontologizer.de/cmdline/Ontologizer.jar`（**200**）· 图形界面 `http://ontologizer.de/gui/OntologizerGui.jar`（**200**）；实测版本 **2.1（Build 20160628-1269）**。13.md 用 JRE 1.7 + Java WebStart（javaws），本模块改用独立 jar（javaws 在现代 JRE 已移除；jar 亦可跑在 OpenJDK 17/21 上）。
+> ✅ **官方 jar 为公开 GPL 资产（非许可受限）**：命令行 `http://ontologizer.de/cmdline/Ontologizer.jar`（**200**）· 图形界面 `http://ontologizer.de/gui/OntologizerGui.jar`（**200**）；实测版本 **2.1（Build 20160628-1269）**。早期做法用 JRE 1.7 + Java WebStart（javaws），本模块改用独立 jar（javaws 在现代 JRE 已移除；jar 亦可跑在 OpenJDK 17/21 上）。
 
 ***
 
@@ -16,7 +16,7 @@ Ontologizer（Java）的本地自包含实现（`source_type: custom`、`type: n
 
 ## 功能
 
-两个子命令覆盖 13.md「十、GO富集分析（Ontologizer）」：
+两个子命令覆盖 GO 富集分析全链路：
 
 | 子命令      | 命令                                                                                                                    | 作用                              |
 | -------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
@@ -28,7 +28,7 @@ Ontologizer（Java）的本地自包含实现（`source_type: custom`、`type: n
 ## 用法
 
 ```bash
-# CLI 直跑（13.md 富集分析；-o 指定结果输出目录）
+# CLI 直跑（GO 富集分析；-o 指定结果输出目录）
 python main.py enrich -g go.obo -a gene_association.gaf2 -s S1_vs_S3_S1_UP.list \
     -p population.list -c Parent-Child-Union -m Bonferroni -o ./enrichment
 
@@ -42,7 +42,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖。
 
-## 实战示例：GO 富集分析（13.md「十」）
+## 实战示例：GO 富集分析
 
 在 GO 注释整理为 `gene_association.gaf2` 后，对差异基因集（study set）以其全基因组为背景做富集分析：
 
@@ -110,7 +110,7 @@ java -jar "$ONTOLOGIZER_HOME/Ontologizer.jar" -v   # 断言 Ontologizer 2.1
 bash modules/ontologizer/native/install.sh
 ```
 
-> 说明：13.md 采用 **Java WebStart（javaws）** + JRE 1.7；现代 JRE 已移除 WebStart，故改用独立 jar（官方同样提供）。
+> 说明：早期做法采用 **Java WebStart（javaws）** + JRE 1.7；现代 JRE 已移除 WebStart，故改用独立 jar（官方同样提供）。
 
 ### 4. Conda / brew（均不可用，已核实）
 
@@ -143,6 +143,6 @@ bash test/run_test.sh   # argv 构造 + JAVA_OPTS 透传验证（monkeypatch jav
 
 * 构建路线：无官方 conda/容器 → 自建容器（`debian:bookworm-slim` + apt `openjdk-17-jre-headless` + 官方公开 jar）
 
-* 依赖：JRE（13.md 用 JRE 1.7 + WebStart；本模块用独立 jar，OpenJDK 17/21 实测可跑）；可选 GraphViz（`-d` 输出 .dot 图时）
+* 依赖：JRE（早期做法用 JRE 1.7 + WebStart；本模块用独立 jar，OpenJDK 17/21 实测可跑）；可选 GraphViz（`-d` 输出 .dot 图时）
 
 * 许可：GPL（Ontologizer 项目声明 GNU GPL；jar 未标注具体版本，以官网为准）

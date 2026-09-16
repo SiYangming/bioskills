@@ -12,7 +12,7 @@ software_versions:
   dbcan: "9.0（数据库包：dbCAN-HMMdb-V9 / CAZyDB.07312020 / hmmscan-parser V9）"
   build_route: official biocontainer（quay.io/biocontainers/dbcan:5.2.9--pyhdfd78af_0 / depot.galaxyproject.org）
   source: http://bcb.unl.edu/dbCAN2/download/ + https://anaconda.org/bioconda/dbcan
-  note: '13.md 使用经典 dbCAN V9 数据库+脚本路线（下载 dbCAN-HMMdb-V9.txt / CAZyDB.07312020.fa / hmmscan-parser.sh，
+  note: '本模块使用经典 dbCAN V9 数据库+脚本路线（下载 dbCAN-HMMdb-V9.txt / CAZyDB.07312020.fa / hmmscan-parser.sh，
     hmmpress + makeblastdb + diamond makedb 建库），故 native 版本记数据库版本 9.0；官方 bioconda/quay 包名 dbcan
     实为 run_dbcan（dbCAN2 下游封装，当前 5.2.9），与经典 V9 脚本非同一代，二者可并存（run_dbcan 走 conda/容器，
     经典 V9 数据库走本模块 native 建库流程）；数据库体积大（HMMdb + CAZy FASTA），需单独下载、不入镜像。'

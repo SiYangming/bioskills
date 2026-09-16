@@ -26,8 +26,7 @@
 
 # genomescope2 / native — k-mer 基因组评估驱动（v1.0.0）
 
-GenomeScope 2.0 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照文档
-`docs/04.md`（211-295 行）。
+GenomeScope 2.0 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照官方文档。
 
 ## 功能
 

@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'RAxML-NG（RAxML Next Generation，amkozlov/raxml-ng，本模块登记 2.0.3）是 classic RAxML
   的重写版最大似然系统发育建树工具：更快、更易用、更灵活，命令行统一为 raxml-ng --<mode> + --msa/--model/
   --threads（如 --all 一次完成 ML 搜索 + bootstrap + 模型选择；--search 拓扑搜索；--evaluate 评估给定
-  拓扑；--parse 解析比对）。它是 14.md「五、RAxML - 物种树构建 → 方法二/三」推荐的下一代建树工具
+  拓扑；--parse 解析比对）。它是本流程推荐的下一代建树工具
   （与 classic RAxML 见 modules/raxml）。
 
   '

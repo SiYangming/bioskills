@@ -3,7 +3,6 @@
 > 汇总说明：ggplot2 是 R 包（CRAN，无独立命令行二进制），本模块以 Rscript 驱动 ggplot2 绘制
 > 差异表达火山图（log2FC vs -log10(padj)，阈值分组着色 + 阈值虚线）并用 `ggsave()` 输出；
 > 安装方式见「环境安装」，容器与 conda 链接见文末。conda 规范包名为 **r-ggplot2**（conda-forge 4.0.3）。
-> 对应 `docs/09.md`「5.2 ggplot2 火山图」。
 
 ***
 
@@ -142,6 +141,6 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 
 ## 版本
 
-* ggplot2 4.0.3（conda-forge，与 CRAN 一致；bioconda/官方镜像为 2.2.1；docs/09.md 未标注版本）
+* ggplot2 4.0.3（conda-forge，与 CRAN 一致；bioconda/官方镜像为 2.2.1）
 * 构建路线：官方 biocontainer 已维护（quay / depot r-ggplot2:2.2.1）→ 不维护本地配方；宿主机用 conda/mamba
 * nf-core / snakemake-wrappers 均无 ggplot2 官方子模块（2026-09-11 在线核实 404）

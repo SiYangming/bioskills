@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐教学文档 docs/10.md 第三节）：
+命令逻辑：
   genewise   genewise [-gff] <protein> <dna>
   homolog    homolog_genewise --cpu N [--coverage_ratio R] [--evalue E] [--max_gene_length L] <protein.fasta> <genome.fasta>
   gff2gff3   homolog_genewiseGFF2GFF3 --genome <genome> [--min_score S] [--gene_prefix P] <genewise.gff>

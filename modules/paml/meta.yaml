@@ -4,8 +4,8 @@ category: phylogenetics
 description: 'PAML（Phylogenetic Analysis by Maximum Likelihood）v4.9i 是 Ziheng Yang 开发的
   分子进化分析程序套件：baseml（核苷酸序列枝长/异常基因检测）、codeml（正选择分析：YN00、branch、
   branch-site 模型）、yn00（Nei-Gojobori dn/ds）、mcmctree（贝叶斯分子钟/分歧时间估计，经 baseml
-  近似似然）、basemlg、evolver（序列模拟）、infinitesites、chi2、pamp。是 14.md「六、PAML baseml」
-  「七、分子钟」「九、PAML codeml」三节的底座。
+  近似似然）、basemlg、evolver（序列模拟）、infinitesites、chi2、pamp。是「PAML baseml」
+  「分子钟」「PAML codeml」三类分析的底座。
 
   '
 homepage: https://github.com/abacus-gene/paml

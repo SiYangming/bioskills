@@ -16,7 +16,7 @@
 
 ## native 实现（说明型 / 命令构造，`source_type: custom` / `type: native`）
 
-本实现为「说明型 + 命令构造」：`native/main.py` 按 14.md §2 流程构造 OrthoMCL 各步骤
+本实现为「说明型 + 命令构造」：`native/main.py` 按官方流程构造 OrthoMCL 各步骤
 命令行并打印，**不实际执行**（软件 deprecated、依赖 MySQL、无新用场景）。八个子命令对应
 OrthoMCL 官方脚本：
 

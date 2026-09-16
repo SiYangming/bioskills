@@ -23,7 +23,7 @@ python "$NATIVE/main.py" --list-commands
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/6] argv 构造验证 #1：predict（13.md 分泌蛋白步骤1 参数）"
+echo "==> [3/6] argv 构造验证 #1：predict（分泌蛋白步骤1 参数）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

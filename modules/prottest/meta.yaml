@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'ProtTest3（ProTest）是蛋白质系统发育的替代模型选择工具：java -jar prottest-3.4.2.jar
   -i <alignment> -all-distributions -F -AIC -BIC -tc 0.5 -threads 4 -o prottest.out，
   对氨基酸比对评估 JTT/LG/WAG/... 等替换矩阵与 +I/+G 位点异质性组合，按 AIC/BIC/AICc/DT
-  给出最佳拟合模型，供下游 RAxML/IQ-TREE/FastTree 建树使用。是 14.md「五 → 4.5 使用 ProTest 选择最佳模型」的核心。
+  给出最佳拟合模型，供下游 RAxML/IQ-TREE/FastTree 建树使用。是蛋白质系统发育流程中模型选择环节的核心。
   ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），官方以 Java 预编译包 + 源码分发，
   故本模块走自建容器兜底（apt openjdk-17-jre-headless + 官方预编译 tarball）。
 
@@ -17,7 +17,7 @@ software_versions:
   build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
     + apt openjdk-17-jre-headless + 官方预编译 tarball）
   source: https://github.com/ddarriba/prottest3/releases/download/3.4.2-release/prottest-3.4.2-20160508.tar.gz
-  note: '版本 3.4.2（tar 内 jar 名为 prottest-3.4.2.jar；14.md 旧文写的 prottest-3.4.jar 已过时，以实际发布包为准）。
+  note: '版本 3.4.2（tar 内 jar 名为 prottest-3.4.2.jar；旧文写的 prottest-3.4.jar 已过时，以实际发布包为准）。
     bioconda（api.anaconda.org/package/bioconda/prottest 404）、quay.io/biocontainers/prottest（无仓库）、
     depot.galaxyproject.org/singularity/prottest（404）、nf-core、snakemake-wrappers、homebrew-core/brewsci
     均无（2026-09 核实），故按 AGENT.md §7 自建兜底：native/Dockerfile、Apptainer.def（debian:bookworm-slim
@@ -41,7 +41,7 @@ implementations:
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。run 子命令做
     序列版模型选择（-i -all-distributions -F -AIC -BIC -tc -threads -o）；hpc 子命令经官方 runProtTestHPC.sh
-    走 MPJ 并行。覆盖 14.md「五 → 4.5 使用 ProTest 选择最佳模型」。'
+    走 MPJ 并行。覆盖 ProTest 的最佳模型选择。'
   container_ref:
     bioconda: 官方无 prottest 包（anaconda.org/bioconda/prottest 404，2026-09 核实）
     quay_biocontainers: 无（bioconda 无包 → biocontainers 自动构建链不存在）

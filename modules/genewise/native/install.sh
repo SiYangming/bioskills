@@ -142,7 +142,7 @@ install_source() {
     [[ -n "$srcdir" && -d "$srcdir/src" ]] || die "源码包结构异常（未找到 wise2*/src）"
 
     cd "$srcdir/src"
-    # --- 教学文档 docs/10.md 第三节要求的兼容修补 ---
+    # --- 兼容修补 ---
     # 1) 旧 makefile 里的 glib-config → pkg-config --libs glib-2.0
     find . -name makefile -print0 | xargs -0 -r perl -pi -e 's/glib-config/pkg-config --libs glib-2.0/g'
     # 2) HMMer2/sqio.c 的 getline 与 glibc 新版冲突 → get_line

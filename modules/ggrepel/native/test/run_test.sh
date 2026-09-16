@@ -21,7 +21,7 @@ python "$NATIVE/main.py" --list-commands | grep -q '^label'
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/5] argv 构造验证：label（来自 docs/09.md 5.2 基因标签）"
+echo "==> [3/5] argv 构造验证：label（火山图基因标签）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

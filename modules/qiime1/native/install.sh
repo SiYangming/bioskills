@@ -86,7 +86,7 @@ install_pip27() {
     for c in python2.7 py2.7 python2; do
         if command -v "$c" >/dev/null 2>&1; then py="$c"; break; fi
     done
-    [[ -n "$py" ]] || die "--method pip2.7 需要 Python 2.7（PATH 中未找到 python2.7）；请参考 01.md 先装 Py2.7"
+    [[ -n "$py" ]] || die "--method pip2.7 需要 Python 2.7（PATH 中未找到 python2.7）；请先安装 Python 2.7"
     log "使用历史路线：$py -m pip install qiime==$VERSION"
     "$py" -m pip install "qiime==$VERSION"
     "$py" -c "import qiime; print('qiime', qiime.__version__)"

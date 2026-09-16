@@ -5,7 +5,7 @@ description: 'wtdbg2（Wtdbg2）是基于模糊德布鲁因图（fuzzy Bruijn gr
   速度快、内存效率高，专为 PacBio / Nanopore 长读设计。流程为两步：wtdbg2 建图（-i reads
   -o dbg -t N -p 21 -S 4 -s 0.05 -g 8m -L 2000 -l 1000）产出 dbg.ctg.lay.gz，wtpoa-cns
   取一致性序列（-i dbg.ctg.lay.gz -fo dbg.raw.fa），随后可用 minimap2+samtools 比对回贴、
-  wtpoa-cns 打磨（-d draft -i aligned -fo polished）。文档（04.md 第 1449-1513 行）使用 2.5。
+  wtpoa-cns 打磨（-d draft -i aligned -fo polished）。教程使用 2.5。
   '
 homepage: https://github.com/ruanjue/wtdbg2
 license: GPL-3.0

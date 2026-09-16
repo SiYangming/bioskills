@@ -46,7 +46,7 @@ python main.py --list-commands
 
 ## 实战示例：MAKER 综合注释
 
-MAKER 整合 EST、同源蛋白、重复序列与从头预测器（AUGUSTUS/SNAP/GeneMark）进行基因预测。以下为教程（10.md 第十一节）典型流程；等价能力由 `native/main.py` 的 4 个子命令提供（见上「用法」）。
+MAKER 整合 EST、同源蛋白、重复序列与从头预测器（AUGUSTUS/SNAP/GeneMark）进行基因预测。以下为典型流程；等价能力由 `native/main.py` 的 4 个子命令提供（见上「用法」）。
 
 ### 1. 准备输入文件
 

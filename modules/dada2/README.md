@@ -95,7 +95,7 @@ python ../native/main.py removeBimera seqtab.rds --output seqtab.nochim.rds
 | `--method`          | removeBimera 方法：consensus/pooled/per-sample |
 | `--threads`         | 线程数（DADA2 `multithread`）          |
 
-> QIIME 2 等价调用：`qiime dada2 denoise-single/denoise-paired`（见 15.md「4.1 使用 DADA2 去噪」与「### 6. DADA2」）。
+> QIIME 2 等价调用：`qiime dada2 denoise-single/denoise-paired`（QIIME 2 的 DADA2 去噪环节）。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 

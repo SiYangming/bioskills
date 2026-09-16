@@ -17,12 +17,12 @@ CAFE v4.2.1 的本地自包含实现（`source_type: custom`、`type: native`）
 CAFE（Computational Analysis of gene Family Evolution）用于分析基因家族在物种进化过程中的扩张和收缩。
 
 CAFE 以「命令脚本」方式运行——脚本首行 shebang 指向 `cafe`，脚本体依次为 `version/date/load/tree/lambda/report`
-等命令（即 14.md 的 `cafe_command`）；`caferror.py` 读取同一脚本（`-i`）做迭代误差模型并行估计。
+等命令（即官方 `cafe_command`）；`caferror.py` 读取同一脚本（`-i`）做迭代误差模型并行估计。
 
 | 子命令        | 命令                                                       | 作用                                        |
 | ---------- | -------------------------------------------------------- | ----------------------------------------- |
 | `command`  | 生成 `cafe_command` 脚本（shebang + `load -i ... -t <threads> -p <pvalue>` + `tree` + `lambda -s` + `report`） | 生成 CAFE 命令脚本（不执行）                      |
-| `run`      | `cafe <command_script>`                                  | 单次 CAFE 分析（等效 14.md 直接执行 shebang 脚本方式）    |
+| `run`      | `cafe <command_script>`                                  | 单次 CAFE 分析（等效直接执行 shebang 脚本方式）    |
 | `caferror` | `caferror.py -i <command_script>`                        | 迭代误差模型并行运行（推荐；可校正组装/注释误差）                 |
 
 线程写入生成脚本的 `load -t`（优先级：`--threads` > `per_subcommand_threads` > `default_cpus`）。
@@ -51,7 +51,7 @@ python main.py --list-commands
 ## 实战示例：OrthoMCL 结果 → CAFE 基因家族扩张分析
 
 CAFE 基于生灭过程在系统发育树上建模基因家族的扩张/收缩；输入为基因家族大小表（OrthoMCL 导出）与带枝长
-Newick 树。以下为 14.md 教程流程；等价能力由 `native/main.py` 的 `command` / `run` / `caferror` 子命令提供
+Newick 树。以下为典型流程；等价能力由 `native/main.py` 的 `command` / `run` / `caferror` 子命令提供
 （见上「用法」）。
 
 ### 1. 从 OrthoMCL 结果得到 CAFE 输入表

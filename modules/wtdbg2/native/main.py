@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（文档 04.md 第 1498-1508 行）：
+命令逻辑（对齐官方流程）：
   assemble  wtdbg2 -i <reads> -o <prefix> -t N -p 21 -S 4 -s 0.05 -g 8m -L 2000 -l 1000
   cns       wtpoa-cns -t N -j 1000 -i <prefix>.ctg.lay.gz -fo <out.fa>
   polish    wtpoa-cns -t N [-x sam-sr] -d <draft.fa> -i <aln|-> -fo <out.fa>

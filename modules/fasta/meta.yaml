@@ -14,7 +14,7 @@ software_versions:
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
     ⚠️ 命名核对：模块名/软件名为 fasta，上游仓库与主程序名为 fasta36；bioconda 的既有包名为 fasta3
     （fasta36 / fasta 在 bioconda 均 404），提供 FASTA 软件包本体（36.3.8 / 36.3.8h / 36.3.8i）；
-    教程（10.md 1.3）源码用的是 fasta-36.3.8g，但 g 版在 bioconda 无对应构建、旧官网
+    教程源码用的是 fasta-36.3.8g，但 g 版在 bioconda 无对应构建、旧官网
     faculty.virginia.edu 分发页已失效，故本模块 pin 可安装的 36.3.8i（官方最新）。'
 - id: fasta_nextflow_nfcore
   fasta: 官方无 nf-core module（modules/nf-core/fasta、modules/nf-core/fasta36 均 404）

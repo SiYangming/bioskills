@@ -2,7 +2,7 @@
 
 > 汇总说明：本 README 合并各实现的用法；安装方式见下方各节，容器与 conda 环境信息记录于此。
 > 官方 nf-core / snakemake-wrappers **均无** dbcan（2026-09 抓取 404），无官方登记层。
-> **本模块为「数据库 + 脚本」包**（非单一二进制）：走 13.md 经典 dbCAN V9 路线，数据库需单独下载并本地建库。
+> **本模块为「数据库 + 脚本」包**（非单一二进制）：走经典 dbCAN V9 路线，数据库需单独下载并本地建库。
 
 ---
 
@@ -34,7 +34,7 @@ python main.py build_hmm --hmm_db dbCAN-fam-HMMs.txt
 python main.py build_blastdb --fasta CAZyDB.07312020.fa --blast_db CAZyDB.07312020 --title CAZyDB.07312020
 python main.py build_diamond --fasta CAZyDB.07312020.fa --db CAZyDB.07312020
 
-# 注释（对应 13.md「十五、CAZy注释」）
+# 注释（CAZy 注释）
 python main.py hmmscan --hmm_db dbCAN-fam-HMMs.txt --fasta proteins.fasta \
     --domtblout hmmscan.domtbl -E 1e-3 --domE 1e-3 --threads 8
 python main.py diamond_blastp --db CAZyDB.07312020 --fasta proteins.fasta \
@@ -84,7 +84,7 @@ diamond makedb --in CAZyDB.07312020.fa --db CAZyDB.07312020
 > 数据体积：HMM 模型库 + CAZy 蛋白序列库体量较大，建库产物（hmmpress 的 `.h3*`、BLAST 的 `.p*`、
 > DIAMOND 的 `.dmnd`）会再增，官方下载页未标注精确体积，建议预留**数 GB** 磁盘。
 
-## 实战示例：HMM + BLAST 双方法合并（对应 13.md「十五、CAZy注释」）
+## 实战示例：HMM + BLAST 双方法合并（CAZy 注释）
 
 CAZy 注释推荐 HMM 方法（`hmmscan`，灵敏）与 BLAST 方法（`diamond`，快速）各跑一遍再合并。等价能力由
 `native/main.py` 的 `hmmscan` / `diamond_blastp` / `parse_hmmscan` 子命令提供（见上「用法」）。
@@ -166,7 +166,7 @@ bash test/run_test.sh   # argv 构造验证（真实注释需下载数据库并�
 
 ## 版本
 
-* dbCAN V9（数据库包：dbCAN-HMMdb-V9 / CAZyDB.07312020 / hmmscan-parser V9；对应 13.md「十五、CAZy注释」）
+* dbCAN V9（数据库包：dbCAN-HMMdb-V9 / CAZyDB.07312020 / hmmscan-parser V9；用于 CAZy 注释）
 
 * 构建路线：经典 V9 数据库/脚本从 bcb.unl.edu/dbCAN2 下载并本地建库；run_dbcan 由官方镜像/conda 提供
   （quay.io/biocontainers/dbcan:5.2.9--pyhdfd78af_0 / depot.galaxyproject.org）

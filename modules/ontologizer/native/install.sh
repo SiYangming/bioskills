@@ -9,8 +9,8 @@
 #             - 图形界面 jar：http://ontologizer.de/gui/OntologizerGui.jar
 #           部署到用户前缀（默认 ~/software/ontologizer-2.1），无需 root、不写 /opt。
 #
-# 依赖：JRE（13.md 用 JRE 1.7；jar 亦可跑在更新版 JVM 上，实测 OpenJDK 21 可用）。
-#   13.md：Java WebStart（javaws）或独立 jar；本脚本用独立 jar（javaws 已被现代 JRE 移除）。
+# 依赖：JRE（早期做法用 JRE 1.7；jar 亦可跑在更新版 JVM 上，实测 OpenJDK 21 可用）。
+#   Java WebStart（javaws）或独立 jar；本脚本用独立 jar（javaws 已被现代 JRE 移除）。
 #
 # 官方来源：
 #   homepage : http://ontologizer.de/

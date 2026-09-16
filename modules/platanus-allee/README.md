@@ -45,7 +45,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads`（注入 `-t`）/ `--tmpdir`（注入 `-tmp`）运行期覆盖。
 
-## 实战示例：Platanus-allee 单倍型组装（来自文档 04.md「17. Platanus / Platanus-allee」）
+## 实战示例：Platanus-allee 单倍型组装
 
 ```bash
 mkdir -p Platanus_allee && cd Platanus_allee

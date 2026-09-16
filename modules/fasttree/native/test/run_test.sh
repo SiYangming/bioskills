@@ -23,7 +23,7 @@ grep -q '^boot' "$WORK/commands.txt"
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/6] argv 构造验证 #1：protein（默认 JTT+CAT，14.md 4.8）"
+echo "==> [3/6] argv 构造验证 #1：protein（默认 JTT+CAT）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

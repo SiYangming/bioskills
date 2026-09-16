@@ -1,8 +1,8 @@
 # go_class native Docker 镜像配方（自建兜底：bookworm-slim + apt perl 运行时 + 用户自备 go_class.tar.gz）
 # ---------------------------------------------------------------------------
 # 路线说明（AGENT.md §7 自建兜底）：GO class 不在 bioconda / quay.io/biocontainers /
-# depot.galaxyproject.org（2026-09 核实均无），Debian bookworm 亦无该包；13.md 以本地
-# tar 包（go_class.tar.gz）分发、无官方下载页。本配方不伪造下载链接，构建时须由用户提供
+# depot.galaxyproject.org（2026-09 核实均无），Debian bookworm 亦无该包；分发介质为本地
+# tar 包（go_class.tar.gz）、无官方下载页。本配方不伪造下载链接，构建时须由用户提供
 # 自备 tar 包：
 #   docker build --build-arg GO_CLASS_URL=https://<your-mirror>/go_class.tar.gz \
 #       -t bioskills/go_class:latest modules/go_class/native
@@ -44,7 +44,7 @@ RUN set -eux; \
 # 2) 部署用户自备的 go_class tar 包（GO_CLASS_URL 必填，无官方下载页）
 RUN set -eux; \
     test -n "${GO_CLASS_URL}" || { \
-        echo "需 --build-arg GO_CLASS_URL=<自备 go_class.tar.gz>（13.md 本地 tar 包，无官方下载页）" >&2; \
+        echo "需 --build-arg GO_CLASS_URL=<自备 go_class.tar.gz>（本地 tar 包，无官方下载页）" >&2; \
         exit 1; \
     }; \
     curl -fL "${GO_CLASS_URL}" -o /tmp/go_class.tar.gz; \

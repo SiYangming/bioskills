@@ -26,7 +26,7 @@ jcvi 的本地自包含实现（`source_type: custom`、`type: native`）。jcvi
 线程经 `--cpus` 注入到 `ortholog`（优先级：`--threads` > `per_subcommand_threads` > `default_cpus`）；
 绘图子命令接受 `--threads` / `--tmpdir` 仅为接口统一。
 
-> ⚠️ CLI 说明：14.md 教程中的 `jcvi.graphics.karyotype --layout=circos ...` 与 `jcvi.graphics.synteny
+> ⚠️ CLI 说明：教程中的 `jcvi.graphics.karyotype --layout=circos ...` 与 `jcvi.graphics.synteny
 > --regions=...` 属旧版写法；jcvi 1.6.7 实际 CLI 为 **位置参数**（`karyotype <seqids> <layout>`、
 > `synteny <blocks> <bed> <layout>`），本模块按 1.6.7 实际 CLI 构造命令（已核对官方源码）。
 
@@ -53,7 +53,7 @@ python main.py --list-commands
 ## 实战示例：两物种基因组共线性检测与发表级出图
 
 jcvi 以 LAST/BLAST 比对 + MCscan 算法计算共线性，并提供点阵图、圈图、微共线性图等可视化，适合产出
-发表级图片。以下为 14.md 教程流程；等价能力由 `native/main.py` 的 `ortholog` / `dotplot` / `karyotype`
+发表级图片。以下为典型流程；等价能力由 `native/main.py` 的 `ortholog` / `dotplot` / `karyotype`
 / `synteny` 子命令提供（见上「用法」）。
 
 ### 1. 数据准备

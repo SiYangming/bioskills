@@ -41,7 +41,7 @@ python main.py --list-commands
 
 ## 实战示例：kent 工具在基因组可视化中的典型用法
 
-kent 工具按 12.md 用于 GBrowse2 的 `Bio::DB::BigFile`（jkweb.a）与 BigWig 转换；等价能力由 `native/main.py` 的子命令提供（命令装配见上「用法」）。
+kent 工具用于 GBrowse2 的 `Bio::DB::BigFile`（jkweb.a）与 BigWig 转换；等价能力由 `native/main.py` 的子命令提供（命令装配见上「用法」）。
 
 ```bash
 # 1. FASTA -> 2bit（blat 建库常用）

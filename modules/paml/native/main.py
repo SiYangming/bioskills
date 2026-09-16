@@ -2,11 +2,11 @@
 """paml（PAML v4.9i）native 标准入口驱动。
 
 PAML 是分子进化分析程序套件，每个程序读取一个控制文件（*.ctl）：
-    baseml baseml.ctl      # 核苷酸枝长/异常基因检测（14.md「六」）
+    baseml baseml.ctl      # 核苷酸枝长/异常基因检测
     basemlg basemlg.ctl    # 连续伽马模型枝长
-    codeml codeml.ctl      # 正选择（YN00/branch/branch-site；14.md「九」）
+    codeml codeml.ctl      # 正选择（YN00/branch/branch-site）
     yn00 yn00.ctl          # Nei-Gojobori dn/ds
-    mcmctree mcmctree.ctl  # 贝叶斯分子钟/分歧时间（14.md「七」）
+    mcmctree mcmctree.ctl  # 贝叶斯分子钟/分歧时间
     evolver evolver.ctl    # 序列模拟
     infinitesites         # 无穷位点模拟（mcmctree -D INFINITESITES）
     chi2                  # 卡方临界值

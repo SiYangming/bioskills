@@ -42,7 +42,7 @@ python main.py --list-commands
 
 ## 实战示例：同源蛋白辅助基因预测（genewise）
 
-GeneWise 利用同源蛋白序列预测基因结构。直接使用 `genewise` 无法做全基因组水平预测，需配合封装脚本 `homolog_genewise`；预测结果再用 `homolog_genewiseGFF2GFF3` 转 GFF3 并按得分过滤（去除含终止密码子的基因）。以下为教学文档（docs/10.md 第三节）典型用法；等价能力由 `native/main.py` 的 `genewise` / `homolog` / `gff2gff3` 子命令提供（见上「用法」）。
+GeneWise 利用同源蛋白序列预测基因结构。直接使用 `genewise` 无法做全基因组水平预测，需配合封装脚本 `homolog_genewise`；预测结果再用 `homolog_genewiseGFF2GFF3` 转 GFF3 并按得分过滤（去除含终止密码子的基因）。以下为典型用法；等价能力由 `native/main.py` 的 `genewise` / `homolog` / `gff2gff3` 子命令提供（见上「用法」）。
 
 ```bash
 mkdir -p homolog && cd homolog

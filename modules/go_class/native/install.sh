@@ -4,7 +4,7 @@
 #
 # 归属    ：bioskills modules/go_class/native/install.sh（native 实现安装方式）
 # 路线    ：官方无 conda/容器渠道（bioconda 404 / quay 无 / depot 404，2026-09 核实）；
-#           13.md 以本地 tar 包（go_class.tar.gz）分发、无官方下载页 → 本脚本仅消费
+#           分发介质为本地 tar 包（go_class.tar.gz）、无官方下载页 → 本脚本仅消费
 #           「用户自备」的 tar 包：
 #             - --archive <go_class.tar.gz>   使用本地 tar 包（推荐）
 #             - --url <mirror-url>             使用用户自行托管的可用副本
@@ -12,7 +12,7 @@
 #           可选：--obo <go.obo> 安装后立即运行 make_go_class_config.pl 初始化配置。
 #
 # ⚠️ 依赖 Perl（go_class 全为 Perl 脚本）。
-#    13.md：tar zxf go_class.tar.gz -C /opt/biosoft/ && cd bin/ && ./make_go_class_config.pl go.obo
+#    tar zxf go_class.tar.gz -C /opt/biosoft/ && cd bin/ && ./make_go_class_config.pl go.obo
 #
 # 用法示例：
 #   bash install.sh --archive ~/software/go_class.tar.gz
@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$ARCHIVE" || -n "$URL" ]] || die "需提供 --archive <go_class.tar.gz> 或 --url <可下载地址>。
-  go_class 无官方下载页（13.md 以本地 tar 包分发），请自备该 tar 包。"
+  go_class 无官方下载页（本地 tar 包分发），请自备该 tar 包。"
 
 # ---------------- Perl 守卫 ----------------
 command -v perl >/dev/null 2>&1 || die "未检测到 perl，请先安装 Perl（go_class 全为 Perl 脚本）"

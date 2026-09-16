@@ -22,7 +22,7 @@ grep -q '^model' "$WORK/commands.txt"
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/5] argv 构造验证 #1：ml（ModelFinder Plus + UFBoot + aLRT，14.md 4.7）"
+echo "==> [3/5] argv 构造验证 #1：ml（ModelFinder Plus + UFBoot + aLRT）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

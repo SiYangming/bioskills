@@ -17,7 +17,7 @@ software_versions:
   source: https://anaconda.org/bioconda/bioconductor-clusterprofiler
   note: 'bioconda 最新 4.18.4（quay 官方镜像 bioconductor-clusterprofiler:4.18.4--r45hdfd78af_0）；
     depot.galaxyproject.org 最新 4.14.0--r44hdfd78af_0，两个官方镜像 tag 版本不同，按需选择。
-    Bioconductor release 当前 4.20.0（docs/09.md 未标注版本），conda 安装最高可得 4.18.4，接口一致。
+    Bioconductor release 当前 4.20.0（教学课件未标注版本），conda 安装最高可得 4.18.4，接口一致。
     KEGG 富集依赖联网访问 KEGG REST（enrichKEGG），离线环境请自备 KEGG 注释或改用 GO/GSEA。'
 - id: clusterprofiler_nextflow_nfcore
   module_version: 官方无模块（modules/nf-core/clusterprofiler 404）

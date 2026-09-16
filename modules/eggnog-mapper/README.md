@@ -52,7 +52,7 @@ download_eggnog_data.py -y -f --data_dir ~/db
 # 等价：python main.py download_db --data_dir ~/db
 ```
 
-> 教程（13.md）给出的直链为 `http://eggnogdb.embl.de/download/emapperdb-4.5.1/{og2level.tsv.gz,eggnog.db.gz,OG_fasta.tar.gz,eggnog_proteins.dmnd.gz}`，
+> 教程给出的直链为 `http://eggnogdb.embl.de/download/emapperdb-4.5.1/{og2level.tsv.gz,eggnog.db.gz,OG_fasta.tar.gz,eggnog_proteins.dmnd.gz}`，
 > 解压到 emapperdb 目录。2026-09 核实 `eggnogdb.embl.de` 域名已无法解析，请以上游 GitHub / 官方下载脚本获取。
 
 ### 2. 本地运行注释
@@ -140,7 +140,7 @@ bash test/run_test.sh   # argv 构造验证（真实注释需 emapperdb 数据�
 
 ## 版本
 
-* eggnog-mapper 1.0.3（bioconda::eggnog-mapper=1.0.3）；配套数据库 emapperdb-4.5.1（对应 13.md 教程）
+* eggnog-mapper 1.0.3（bioconda::eggnog-mapper=1.0.3）；配套数据库 emapperdb-4.5.1
 
 * 构建路线：官方镜像/conda/源码归档提供（quay.io/biocontainers/eggnog-mapper:1.0.3--py_3 / depot.galaxyproject.org；本地不再自建容器）
 

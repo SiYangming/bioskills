@@ -46,9 +46,9 @@ python main.py --list-commands
 edgeR 核心计算基本为单线程，`--threads` 映射为 **BLAS 线程环境变量**
 （`OMP/OPENBLAS/VECLIB/MKL_NUM_THREADS`），用于加速底层矩阵运算。
 
-## 实战示例：edgeR 差异表达分析（来自文档 09.md 2.2 节）
+## 实战示例：edgeR 差异表达分析
 
-文档「2.2 edgeR」给出的典型 R 代码（等价能力由 `native/main.py` 的 `analyze` /
+文档给出的典型 R 代码（等价能力由 `native/main.py` 的 `analyze` /
 `norm` 子命令提供）：
 
 ```r

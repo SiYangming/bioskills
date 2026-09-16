@@ -22,7 +22,7 @@ python "$NATIVE/main.py" --list-commands | grep -q '^plot'
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/5] argv 构造验证：plot（来自 docs/09.md 5.1 热图参数）"
+echo "==> [3/5] argv 构造验证：plot（热图参数）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

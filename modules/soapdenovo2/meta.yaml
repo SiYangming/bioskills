@@ -6,7 +6,7 @@ description: 'SOAPdenovo2 是基于 De Bruijn 图的短读（Illumina）基因�
   SOAPdenovo-63mer / SOAPdenovo-127mer（按 k-mer 上限选择）与 SOAPdenovo-fusion；组装由
   config.txt（[LIB] 文库段：avg_ins / reverse_seq / asm_flags / q1,q2 / pair_num_cutoff /
   map_len）驱动，一条命令 SOAPdenovo-63mer all -s config.txt -o prefix -K 51 -p N -R 完成
-  pregraph→contig→map→scaff 全流程，或分步 pregraph/contig/map/scaff。文档（04.md 第 769-854 行）
+  pregraph→contig→map→scaff 全流程，或分步 pregraph/contig/map/scaff。教程
   给出的源码版本为 GitHub release r241。
   '
 homepage: https://github.com/aquaskyline/SOAPdenovo2

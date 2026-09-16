@@ -3,7 +3,7 @@ canonical: tmhmm
 category: functional_annotation
 description: 'TMHMM 2.0c（Transmembrane Helices Hidden Markov Model）是基于隐马尔可夫模型预测蛋白质跨膜螺旋
   （transmembrane helix）的工具，用于分泌蛋白筛选（排除具有跨膜结构域的蛋白）： tmhmm <proteins_mature.fasta>
-  输出每个蛋白的跨膜螺旋数量与拓扑，是 13.md「十六、分泌蛋白预测」步骤2 的跨膜区分析核心。
+  输出每个蛋白的跨膜螺旋数量与拓扑，是分泌蛋白预测步骤2 的跨膜区分析核心。
   ⚠️ 许可受限：官方 tarball（tmhmm-2.0c.Linux.tar.gz）需用 edu 邮箱向 DTU 申请下载链接，非商业用途。
   ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），故本模块走自建容器兜底。
 
@@ -22,7 +22,7 @@ software_versions:
     非官方）；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/tmhmm
     404、biocontainers.pro/tools/tmhmm 404。故按 AGENT.md §7 走自建兜底：native/Dockerfile、Apptainer.def
     （debian:bookworm-slim + apt perl 运行时，构建须 --build-arg TMHMM_URL=<用户自备授权 tarball>）。
-    安装后需修正 Perl 路径（13.md：perl -p -i -e ''s#/usr/local/bin/perl#/usr/bin/perl#'' bin/tmhmm*），容器已在构建期完成。'
+    安装后需修正 Perl 路径（perl -p -i -e ''s#/usr/local/bin/perl#/usr/bin/perl#'' bin/tmhmm*），容器已在构建期完成。'
 - id: tmhmm_nextflow_nfcore
   tmhmm: 官方无模块（modules/nf-core/tmhmm 404）
   source: —
@@ -41,7 +41,7 @@ implementations:
   version: 2.0c
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供 predict
-    / plot 两个子命令，覆盖 13.md 分泌蛋白预测步骤2 的跨膜区分析。
+    / plot 两个子命令，覆盖分泌蛋白预测步骤2 的跨膜区分析。
 
     '
   container_ref:
@@ -60,14 +60,14 @@ inputs:
     type: file
     required: true
     cli_arg: positional
-    description: 输入蛋白质 FASTA（13.md 为 SignalP 导出的 proteins_mature.fasta）
+    description: 输入蛋白质 FASTA（通常为 SignalP 导出的 proteins_mature.fasta）
     format:
     - fasta
   mature:
     type: boolean
     default: false
     cli_arg: -mature
-    description: 输入为已去信号肽的成熟序列（谓词；13.md 未显式使用，默认关闭）
+    description: 输入为已去信号肽的成熟序列（谓词；教程未显式使用，默认关闭）
   output:
     type: file
     required: false
@@ -86,7 +86,7 @@ outputs:
   tmhmm_out:
     type: file
     format: txt
-    description: 跨膜螺旋预测结果（每蛋白跨膜螺旋数 + 拓扑；13.md 中 grep "Number of predicted
+    description: 跨膜螺旋预测结果（每蛋白跨膜螺旋数 + 拓扑；grep "Number of predicted
       TMHs" 的 0 值筛选无跨膜蛋白）
   plot:
     type: file

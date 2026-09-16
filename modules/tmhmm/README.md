@@ -25,12 +25,12 @@ TMHMM（Transmembrane Helices Hidden Markov Model）是基于隐马尔可夫模�
 | `predict` | `tmhmm [-mature] <fasta>` | 预测跨膜螺旋数量与拓扑（默认写 stdout，可 `-o` 落盘）    |
 | `plot`    | `tmhmm -plot <fasta>` | 生成跨膜拓扑图（需 gnuplot/X11）               |
 
-> TMHMM 2.0c 为 **Perl 脚本**（安装后需修正 `/usr/local/bin/perl → /usr/bin/perl`，见 13.md），本体**单线程**；`--threads` 为统一接口保留（仅供上层调度器读取），不注入命令行。
+> TMHMM 2.0c 为 **Perl 脚本**（安装后需修正 `/usr/local/bin/perl → /usr/bin/perl`），本体**单线程**；`--threads` 为统一接口保留（仅供上层调度器读取），不注入命令行。
 
 ## 用法
 
 ```bash
-# CLI 直跑（13.md 分泌蛋白步骤2；tmhmm 默认写 stdout，用 -o 落盘）
+# CLI 直跑（分泌蛋白步骤2；tmhmm 默认写 stdout，用 -o 落盘）
 python main.py predict ../singalp/proteins_mature.fasta -o tmhmm.out
 python main.py plot    proteins.fasta -o proteins.plot
 
@@ -99,7 +99,7 @@ bash modules/tmhmm/native/install.sh --archive ~/software/tmhmm-2.0c.Linux.tar.g
 
 ### 4. Conda / brew（均不可用，已核实）
 
-* **conda**：`anaconda.org/bioconda/tmhmm` 返回 **404**，无官方包可装（第三方频道 `predector/tmhmm` 等非官方，不登记）；13.md 提到的 `conda install -c bioconda tmhmm` 在当前频道已不可用。
+* **conda**：`anaconda.org/bioconda/tmhmm` 返回 **404**，无官方包可装（第三方频道 `predector/tmhmm` 等非官方，不登记）；教程提到的 `conda install -c bioconda tmhmm` 在当前频道已不可用。
 * **brew**：homebrew-core 与 brewsci/bio 均**无** tmhmm 公式（2026-09 核实 404）→ 不写 brew 块。
 
 ## 测试

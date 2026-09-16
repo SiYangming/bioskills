@@ -113,7 +113,7 @@ install_db() {
 
     # 官方脚本约定：dbCAN-fam-HMMs.txt 为 HMM 库文件名（软链）
     ln -sf dbCAN-HMMdb-V9.txt "$PREFIX/dbCAN-fam-HMMs.txt"
-    # CAZyDB FASTA 头部结尾 " |" 需修复为换行（13.md 步骤）
+    # CAZyDB FASTA 头部结尾 " |" 需修复为换行（官方步骤）
     perl -p -i -e 's/\|\s*$/\n/ if m/^>/' "$PREFIX/CAZyDB.07312020.fa"
 
     if [[ "$DO_BUILD" == 1 ]]; then

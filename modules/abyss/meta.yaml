@@ -4,8 +4,8 @@ category: genome_assembly
 description: 'ABySS（Assembly By Short Sequences，1.9.0）是基于 de Bruijn Graph 的
   并行化基因组组装器：abyss-pe 按 k-mer 组装 paired-end/mate-pair 数据，配套
   abyss-map / abyss-fixmate / DistanceEst / abyss-scaffold / PathConsensus /
-  MergeContigs / PathOverlap 可做独立 scaffolding。版本差异（事实说明）：教学文档
-  （docs/04.md）以 ABySS 1.9.0 为教学版本并标注【淘汰技术】，本模块据此登记 1.9.0；
+  MergeContigs / PathOverlap 可做独立 scaffolding。版本差异（事实说明）：本模块按教学
+  定位登记 1.9.0（教学课件将 ABySS 标注为【淘汰技术】）；
   但 ABySS 上游仍在维护（GitHub https://github.com/bcgsc/abyss 2026-09 探测
   HTTP 200，bioconda 最新 2.3.10，nf-core 有 abyss/abysspe），故不标记废弃；实际
   项目多由 SOAPdenovo / SPAdes / Canu 等承担（见 README「版本差异」）。本模块为

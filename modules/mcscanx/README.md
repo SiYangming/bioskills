@@ -49,7 +49,7 @@ python main.py --list-commands
 
 ## 实战示例：BLAST/DIAMOND → MCScanX 共线性 → 种间/种内 → 基因类型 → 可视化
 
-MCScanX 用于检测基因组间/基因组内的共线性区域，并做基因类型鉴定与可视化。以下为 14.md 教程流程；
+MCScanX 用于检测基因组间/基因组内的共线性区域，并做基因类型鉴定与可视化。以下为典型流程；
 等价能力由 `native/main.py` 的 `scan` / `classify` / `dual` / `circle` 子命令提供（见上「用法」）。
 
 ### 1. 合并蛋白序列并做 all-vs-all 比对

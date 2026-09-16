@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'RAxML（Randomized Axelerated Maximum Likelihood，standard-RAxML v8.2.12）是最大似然系统发育
   树构建的经典工具：以 GTRGAMMA（核酸/密码子）或 PROTGAMMA*（蛋白质）等模型搜索最优树，并支持快速
   bootstrap（-f a -x/-#）评估分支支持度，输出 RAxML_bestTree / RAxML_bipartitions / RAxML_bootstrap 等
-  结果文件。它是 14.md「五、RAxML - 物种树构建」的核心工具（源码编译多套 Makefile，含 SSE3/AVX 的
+  结果文件。它是物种树构建的核心工具（源码编译多套 Makefile，含 SSE3/AVX 的
   PTHREADS 与 HYBRID 版本；HYBRID 版需 MPICH 支持 MPI 并行）。
 
   '
@@ -16,7 +16,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/raxml / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/raxml
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器。
-    bioconda 现行 latest=8.2.13，但 14.md 锁定 8.2.12；native 登记 8.2.12。官方容器 tag
+    bioconda 现行 latest=8.2.13，但本模块锁定 8.2.12；native 登记 8.2.12。官方容器 tag
     quay.io/biocontainers/raxml:8.2.12--h031d066_6（depot.galaxyproject.org 有同名 sif）。官方仅以源码
     分发（无预编译包）：源码编译需按平台/指令集选 Makefile（SSE3.PTHREADS / AVX.PTHREADS / SSE3.HYBRID /
     AVX.HYBRID），HYBRID 版本需 MPICH（libmpich）；源码归档

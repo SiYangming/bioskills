@@ -4,8 +4,8 @@ category: comparative_genomics
 description: 'LASTZ 1.04.22（BLASTZ 后继，Harris 2007）是双序列/全基因组比对工具，
   专为基因组间比对设计：以 BLAST-like 种子扩展识别同源区（含大尺度重排、倒位、插入缺失），
   输出 lav/maf/axt/general 等格式，灵敏度高于 MUMmer、适合亲缘关系较远的基因组；单命令
-  lastz <target> <query> [--output= --format= --hspthresh= …]。本模块以文档 14.md「十三、LASTZ」
-  采用的 1.04.22 为准。'
+  lastz <target> <query> [--output= --format= --hspthresh= …]。本模块以 1.04.22
+  为准。'
 homepage: https://github.com/lastz/lastz
 license: MIT
 software_versions:
@@ -155,7 +155,7 @@ optimization:
     align: 1
     default: 1
   note: LASTZ 单线程（无 --threads/-p 选项）→ --threads 仅占位接受不注入；并行请按参考染色体拆分
-    （见 README 实战示例，与文档 14.md 12.2.3 同法）。内存随目标序列长度增长（染色体级需 GB 级）。
+    （见 README 实战示例）。内存随目标序列长度增长（染色体级需 GB 级）。
 execution:
   entrypoint: python main.py
   test_command: bash test/run_test.sh

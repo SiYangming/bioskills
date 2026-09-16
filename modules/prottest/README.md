@@ -16,7 +16,7 @@ ProTest - 蛋白质替代模型选择工具。
 
 | 子命令   | 命令                                                                                                                               | 作用                        |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `run` | `java <JAVA_OPTS> -jar prottest-3.4.2.jar -i <aln> [-t <tree>] -all-distributions -F -AIC -BIC -tc <x> -o <out> -threads N`        | 序列版模型选择（14.md 4.5）        |
+| `run` | `java <JAVA_OPTS> -jar prottest-3.4.2.jar -i <aln> [-t <tree>] -all-distributions -F -AIC -BIC -tc <x> -o <out> -threads N`        | 序列版模型选择        |
 | `hpc` | `bash runProtTestHPC.sh <np> -i <aln> [-t <tree>] -all-distributions -F -AIC -BIC -tc <x>`（需 MPJ Express）                          | MPJ 并行模型选择（大规模比对）         |
 
 JVM 堆内存与临时目录经 `JAVA_OPTS`（`-Xmx6g -Djava.io.tmpdir=<tmpdir>`）透传。
@@ -37,10 +37,10 @@ python main.py --list-commands
 
 ## 实战示例：ProTest 选择最佳蛋白质模型
 
-ProTest 对氨基酸比对逐一拟合替换矩阵（JTT/LG/WAG/DCMut/…）与位点异质性（+I/+G/+I+G）组合，按 AIC/BIC 给出最佳模型，再交给 RAxML / IQ-TREE / FastTree 建树。以下为 14.md 的典型流程；等价能力由 `native/main.py` 的 `run` 子命令提供（见上「用法」）。
+ProTest 对氨基酸比对逐一拟合替换矩阵（JTT/LG/WAG/DCMut/…）与位点异质性（+I/+G/+I+G）组合，按 AIC/BIC 给出最佳模型，再交给 RAxML / IQ-TREE / FastTree 建树。以下为典型流程；等价能力由 `native/main.py` 的 `run` 子命令提供（见上「用法」）。
 
 ```bash
-# 用 ProTest 选择最佳模型（计算量较大：14.md 记 ~1472 分钟）
+# 用 ProTest 选择最佳模型（计算量较大：约 1472 分钟）
 java -jar $PROTTEST_HOME/prottest-3.4.2.jar \
     -i allSingleCopyOrthologsAlign.phy -all-distributions -F -AIC -BIC \
     -tc 0.5 -threads 4 -o prottest.out

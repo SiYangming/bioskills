@@ -3,9 +3,9 @@ canonical: go_class
 category: functional_annotation
 description: 'GO class 是用于 GO 功能分类与 WEGO 风格可视化的 Perl 脚本集，可将 GO 注释结果按生物过程（BP）、
   分子功能（MF）、细胞组分（CC）三大类统计并绘制 GO 分类图： annot2wego.pl 生成 WEGO 格式， get_Genes_From_GO.pl
-  统计分类， go_svg.pl/distributing_svg.pl/changsvgsize.pl 生成与调整 WEGO-SVG 图，是 13.md「九、GO功能分类（WEGO图）」
+  统计分类， go_svg.pl/distributing_svg.pl/changsvgsize.pl 生成与调整 WEGO-SVG 图，是 GO 功能分类与 WEGO 图流程
   的核心工具集。⚠️ 依赖 Perl。
-  ⚠️ 无官方渠道：bioconda → quay → depot 全无（2026-09 核实）；13.md 以本地 tar 包（go_class.tar.gz）分发，
+  ⚠️ 无官方渠道：bioconda → quay → depot 全无（2026-09 核实）；分发介质为本地 tar 包（go_class.tar.gz），
   无官方下载页，故本模块走自建容器兜底（消费用户自备 tar 包）。
 
   '
@@ -13,13 +13,13 @@ homepage: https://wego.genomics.cn/
 license: 未标注（go_class 本地发行包未声明许可；WEGO 项目见 https://wego.genomics.cn/）
 software_versions:
 - id: go_class_native
-  go_class: 未标注（13.md 本地 tar 包 go_class.tar.gz，无版本号）
+  go_class: 未标注（本地 tar 包 go_class.tar.gz，无版本号）
   build_route: 无官方 conda/容器（bioconda 404 / quay 无 / depot 404，2026-09 核实）→ 自建容器（debian:bookworm-slim
     + apt perl 运行时 + 用户自备 go_class.tar.gz）
-  source: 13.md「安装 GO class 分析软件」本地 tar 包 go_class.tar.gz（无官方下载页，2026-09 未找到）
+  source: 本地 tar 包 go_class.tar.gz（无官方下载页，2026-09 未找到）
   note: '⚠️ 无官方分发渠道：bioconda go_class / go-class（anaconda.org/bioconda/go_class）于 2026-09
     核实 404；quay.io/biocontainers 无（bioconda 无包 → 自动构建链不存在）、depot.galaxyproject.org/singularity/go-class
-    404、biocontainers.pro/tools/go-class 404；nf-core / snakemake-wrappers 亦 404。13.md 以本地
+    404、biocontainers.pro/tools/go-class 404；nf-core / snakemake-wrappers 亦 404。本模块以本地
     tar 包分发，且未给出官方下载页与版本号（如实登记「未标注」）。故按 AGENT.md §7 走自建兜底：native/Dockerfile、Apptainer.def
     （debian:bookworm-slim + apt perl 运行时，构建须提供用户自备 go_class.tar.gz）。'
 - id: go_class_nextflow_nfcore
@@ -40,7 +40,7 @@ implementations:
   version: 未标注
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供
-    config / annot2wego / classify / svg / distribute / resize 六个子命令，覆盖 13.md「九、GO功能分类（WEGO图）」全链路。
+    config / annot2wego / classify / svg / distribute / resize 六个子命令，覆盖 GO 功能分类 / WEGO 图全链路。
 
     '
   container_ref:
@@ -64,7 +64,7 @@ inputs:
     type: file
     required: false
     cli_arg: positional
-    description: GO 注释文件 go.annot（annot2wego 使用；格式见 13.md 整合 eggNOG/InterPro 步骤）
+    description: GO 注释文件 go.annot（annot2wego 使用；格式见 eggNOG/InterPro 整合步骤）
   wego:
     type: file
     required: false
@@ -151,7 +151,7 @@ environment:
     404，2026-09 核实）→ 走自建容器兜底
   dockerfile: Dockerfile
   apptainer_def: Apptainer.def
-  note: 官方渠道（bioconda→quay→depot）全无，且 13.md 以本地 tar 包分发（无官方下载页）→ 按 AGENT.md
+  note: 官方渠道（bioconda→quay→depot）全无，且本模块以本地 tar 包分发（无官方下载页）→ 按 AGENT.md
     §7 自建兜底（debian:bookworm-slim + apt perl 运行时）；构建须提供用户自备 go_class.tar.gz（--build-arg
     GO_CLASS_URL 或 %files 本地 tarball），禁止伪造下载链接；容器内已运行 make_go_class_config.pl 需
     显式提供 go.obo（见 README）。

@@ -13,12 +13,11 @@
 Gblocks（[官网](http://molevol.cmima.csic.es/castresana/Gblocks.html)，Castresana 2000，经典版本 **0.91b**）是
 **系统发育分析前的多序列比对（MSA）过滤工具**：从比对结果（FASTA/PIR/NBRF）中自动筛选**保守区块
 （conserved blocks）**，剔除高变区与难比对区域，输出更可靠的比对（原生在输入名后追加 `-gb`），再送入
-RAxML / RAxML-NG 等建树。它是 14.md「四、单拷贝同源基因提取和多序列比对 → 3.5 Gblocks 保守区块提取」的
+RAxML / RAxML-NG 等建树。它是「单拷贝同源基因提取和多序列比对 → Gblocks 保守区块提取」的
 核心步骤，与 trimAl 并列为 MSA 修剪的两条主流路线。
 
 本实现为自包含驱动（`source_type: custom`、`type: native`），二进制由**官方容器/conda**
-（quay.io/biocontainers/gblocks / bioconda gblocks）提供，登记经典版本 **0.91b**（bioconda 现行 latest 为 1.0，
-但 14.md 与官方文档流程锁定 0.91b）。
+（quay.io/biocontainers/gblocks / bioconda gblocks）提供，登记经典版本 **0.91b**（bioconda 现行 latest 为 1.0，官方文档流程锁定 0.91b）。
 
 ## 功能
 
@@ -46,7 +45,7 @@ python main.py --list-commands
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖（`--tmpdir` 同时注入 `TMPDIR`）。**Gblocks 为单线程
 经典工具**，`--threads` 仅作统一接口保留，**不注入命令行**。
 
-## 实战示例：保守区块提取（14.md 3.5 链路）
+## 实战示例：保守区块提取
 
 Gblocks 通常接在 MAFFT 比对（或蛋白质比对转密码子比对）之后，对每个单拷贝同源基因分别提取保守区块；
 **等价能力由 `native/main.py` 的 `extract` 子命令提供**（见上「用法」）。
@@ -183,7 +182,7 @@ cd modules/gblocks/native && bash test/run_test.sh
 ## 版本
 
 * gblocks **0.91b**（bioconda::gblocks=0.91b；官方容器 tag `0.91b--h9ee0642_2`；bioconda 现行 latest 为 1.0，
-  本模块按 14.md 流程锁定经典版 0.91b）
+  本模块按官方流程锁定经典版 0.91b）
 
 * 许可：自定义（bioconda gblocks 包未登记标准 SPDX；包元数据 license 记为「as is, without guarantee of
   support or maintenance」；以官方文档为准）

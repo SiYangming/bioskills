@@ -13,7 +13,7 @@ IDBA (Iterative De Bruijn Graph Assembler) 的本地驱动，覆盖组装主链�
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑对照文档 docs/04.md 第 691-768 行。
+命令逻辑对照官方文档。
 
 ⚠️ conda 版 IDBA 默认 kMaxShortSequence=128（src/sequence/short_sequence.h）；处理更长 reads
    需源码编译并改该常量（文档示例改为 160）——本驱动只做命令构造，不修改、不重编译源码。

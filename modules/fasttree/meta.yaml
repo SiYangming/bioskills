@@ -3,8 +3,7 @@ canonical: fasttree
 category: phylogenetics
 description: 'FastTree 是超快的近似最大似然系统发育树构建工具（单一 C 源文件，gcc -O3 编译）：
   FastTree [-nt] [-gtr] [-gamma] [-boot <n>] [-out <tree>] <alignment> 从蛋白/核酸比对推断
-  Newick 树，速度比 RAxML 快 100-1000 倍，特别适合大规模数据集（数千条序列）。是 14.md
-  「五（续）→ 4.8 FastTree - 超快的系统发育树构建」的物种树构建工具。
+  Newick 树，速度比 RAxML 快 100-1000 倍，特别适合大规模数据集（数千条序列）。是物种树构建的常用工具。
 
   '
 homepage: http://www.microbesonline.org/fasttree/
@@ -41,7 +40,7 @@ implementations:
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。protein
     子命令建蛋白树（默认 JTT+CAT）；nucleotide 子命令建核酸树（-nt，可 -gtr）；boot 子命令计算
-    局部支持度（-boot）。覆盖 14.md「五（续）→ 4.8 FastTree」。FastTree 单线程，不注入线程参数。'
+    局部支持度（-boot）。FastTree 单线程，不注入线程参数。'
   container_ref:
     bioconda: https://anaconda.org/bioconda/fasttree
     quay_biocontainers: quay.io/biocontainers/fasttree

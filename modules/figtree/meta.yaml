@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'FigTree 是系统发育树可视化与出版级作图工具（Java/Swing）：figtree [-graphic <PDF|SVG|PNG|JPEG>]
   [-width i] [-height i] [<tree-file>] [<graphic-file>] 读取 Newick/NEXUS/NHX 树，交互式编辑并
   导出出版级图片，常用于 RAxML/IQ-TREE 结果与分子钟分析（PAML mcmctree / r8s / BEAST2）树的可视化。
-  是 14.md「五 → 4.6 树文件处理与可视化」及「六、分子钟分析」中的树可视化工具。
+  是树文件处理与可视化及分子钟分析中的树可视化工具。
 
   '
 homepage: http://tree.bio.ed.ac.uk/software/figtree/
@@ -39,7 +39,7 @@ implementations:
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。export
     子命令无界面导出出版级图片（-graphic PDF/SVG/PNG/JPEG -width -height）；view 子命令打开交互式 GUI
-    （需显示环境）。覆盖 14.md「五 → 4.6 树文件处理与可视化」与「六、分子钟分析」的树可视化。'
+    （需显示环境）。用于树文件处理与可视化及分子钟分析中的树可视化。'
   container_ref:
     bioconda: https://anaconda.org/bioconda/figtree
     quay_biocontainers: quay.io/biocontainers/figtree

@@ -7,7 +7,7 @@
 #      docker build --build-arg TMHMM_URL=https://<your-mirror>/tmhmm-2.0c.Linux.tar.gz \
 #          -t bioskills/tmhmm:2.0c modules/tmhmm/native
 #    （申请入口：https://services.healthtech.dtu.dk/services/software.php）
-# 构建期修正 bin/tmhmm* 的 Perl 解释器路径（13.md 关键步骤）。
+# 构建期修正 bin/tmhmm* 的 Perl 解释器路径（安装关键步骤）。
 #
 # 运行：镜像为「tmhmm 二进制容器」；native/main.py 驱动在宿主机运行，不随镜像分发。
 #   docker run --rm -u $(id -u):$(id -g) -v $PWD:/data -w /data \

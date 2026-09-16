@@ -20,8 +20,8 @@ software_versions:
   source: https://github.com/chenlianfu/geta/archive/refs/tags/v2.7.1.tar.gz
   note: '2026-09-11 核实：bioconda（api.anaconda.org/package/bioconda/geta → 404）、
     quay.io/biocontainers、depot.galaxyproject.org、brew 均无 geta；nf-core modules 与
-    snakemake-wrappers 亦 404 → 走官方 tarball + 自建容器。教学文档 docs/10.md 第十五节另用
-    tag 2.4.5（github.com/chenlianfu/geta/archive/2.4.5.tar.gz，HTTP 200），本模块以 2.7.1 为主版本。
+    snakemake-wrappers 亦 404 → 走官方 tarball + 自建容器。另有 tag 2.4.5
+    （github.com/chenlianfu/geta/archive/2.4.5.tar.gz，HTTP 200），本模块以 2.7.1 为主版本。
     geta.pl / gff3ToGtf.pl / homolog_genewise / homolog_genewiseGFF2GFF3 均在仓库 bin/ 命中（200）；
     bestGeneModels.pl 在 master / v2.7.1 / 2.4.5 的 bin/ 下均未命中（404），按教学文档保留子命令、
     由 PATH 解析。'

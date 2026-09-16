@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """orthomcl native 标准入口驱动（OrthoMCL v2.0.9；说明型）。
 
-⚠️ DEPRECATED：OrthoMCL 已停止维护（官方与 14.md 均推荐 OrthoFinder 替代），且流程依赖
+⚠️ DEPRECATED：OrthoMCL 已停止维护（官方推荐 OrthoFinder 替代），且流程依赖
 MySQL 数据库。新项目请改用 OrthoFinder（modules/orthofinder/）。
 
 本驱动为「说明型 + 命令构造」：不实际运行 OrthoMCL 脚本（软件 deprecated、依赖 MySQL），
-按 14.md §2 流程构造各步骤命令行，供历史复现 / 文档化调用 / Agent 展示。子命令对应
+按官方流程构造各步骤命令行，供历史复现 / 文档化调用 / Agent 展示。子命令对应
 OrthoMCL 官方脚本：
 
   adjust_fasta    orthomclAdjustFasta <species> <fasta> <id_length>

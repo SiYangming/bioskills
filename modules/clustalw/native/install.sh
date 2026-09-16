@@ -196,7 +196,7 @@ install_source() {
     srcdir="$(find "$tmp" -maxdepth 1 -mindepth 1 -type d -name 'clustalw-*' | head -1)"
     [[ -n "$srcdir" ]] || die "解压后未找到 clustalw-* 源码目录"
 
-    # 官方源码 configure 位于 src/ 子目录（见 14.md §4 安装ClustalW）
+    # 官方源码 configure 位于 src/ 子目录
     local build_dir="$srcdir"
     [[ -x "$srcdir/src/configure" ]] && build_dir="$srcdir/src"
     log "编译安装中：cd $build_dir && ./configure --prefix=$PREFIX && make && make install"

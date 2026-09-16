@@ -23,8 +23,7 @@ OrthoFinder（v2.5.5）的本地自包含实现（`source_type: custom`、`type:
 | `resume` | `orthofinder -b <prev_dir> [-f <new_dir>] -t <threads> -a <threads> -S <search> [...]` | 从既有结果续跑 / 追加物种 |
 | `help` | `orthofinder -h` | 打印帮助与版本横幅 |
 
-`run`/`resume` 自动注入线程（`-t` 与 `-a` 同值）；`-S` 默认 `diamond`（按 14.md §3 与
-nf-core 用法）。线程优先级 `--threads` > `per_subcommand_threads` > `default_cpus`。
+`run`/`resume` 自动注入线程（`-t` 与 `-a` 同值）；`-S` 默认 `diamond`（与 nf-core 用法一致）。线程优先级 `--threads` > `per_subcommand_threads` > `default_cpus`。
 
 ## 用法
 
@@ -59,7 +58,7 @@ python main.py --list-commands
 | `-o` / `-n` | run | 非默认输出目录 / 结果目录名后缀 |
 | `-op/-og/-os/-oa/-ot` | run/resume | 提前停止（仅准备 / 仅 orthogroups / 仅序列 / 仅比对 / 仅基因树） |
 
-## 实战示例：14.md §3 同源基因聚类
+## 实战示例：同源基因聚类
 
 ```bash
 # 1) 准备输入：每物种一个蛋白 FASTA，文件名即物种名
@@ -122,7 +121,7 @@ orthofinder -h   # 断言：启动横幅含 "OrthoFinder version 2.5.5"
 
 > Homebrew：homebrew-core（formulae.brew.sh/api/formula/orthofinder.json）与 brewsci/bio
 > （Formula/orthofinder.rb）均 404（2026-09 核实），无公式 → 不登记 brew 安装块
-> （14.md 提到的 `brew tap brewsci/bio && brew install orthofinder` 当前不可用）。
+> （`brew tap brewsci/bio && brew install orthofinder` 当前不可用）。
 
 > 一键安装也可直接运行 `native/install.sh`（有 conda 时建 bioconda 环境 `orthofinder`；
 > linux-x64 无 conda 时下载官方 standalone 预编译包，其余平台走源码；版本默认 2.5.5，
@@ -181,7 +180,7 @@ orthofinder.py -h        # 源码入口为 orthofinder.py
 
 ## 版本
 
-* **2.5.5**（14.md §3 登记版本；官方 release tag `2.5.5`）
+* **2.5.5**（官方 release tag `2.5.5`）
 * 构建路线：官方镜像/conda 提供（quay.io/biocontainers/orthofinder / depot.galaxyproject.org；本地不再自建容器）
 * License：**GPL-3.0-only**
 * nf-core：有单模块 `modules/nf-core/orthofinder`（pin **bioconda::orthofinder=3.1.3**，与 native

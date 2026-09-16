@@ -2,7 +2,7 @@
 """cafe native 标准入口驱动。
 
 CAFE v4.2.1 以「命令脚本」方式运行：脚本首行 shebang 指向 cafe 可执行文件，脚本体依次为
-version/date/load/tree/lambda/report 等命令（14.md 的 cafe_command）。caferror.py 则读取同一
+version/date/load/tree/lambda/report 等命令（即官方 cafe_command）。caferror.py 则读取同一
 脚本（-i），以迭代误差模型并行运行。
 
 支持两种调用模式：
@@ -40,7 +40,7 @@ import base  # noqa: E402
 # 子命令语义清单（用于 --list-commands 与 Schema description）
 SUBCOMMANDS = {
     "command": "生成 CAFE 命令脚本（shebang=cafe 路径；load -t <threads> -p <pvalue> + tree + lambda -s + report）",
-    "run": "执行 CAFE 命令脚本（cafe <script>；等价 14.md 的 shebang 脚本方式）",
+    "run": "执行 CAFE 命令脚本（cafe <script>；等效 shebang 脚本方式）",
     "caferror": "以 caferror.py 迭代误差模型并行运行（caferror.py -i <script>）",
 }
 

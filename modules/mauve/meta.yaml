@@ -3,7 +3,7 @@ canonical: mauve
 category: comparative_genomics
 description: 'Mauve 2.4.0 是多基因组比对与可视化系统：progressiveMauve 以渐进式算法构建
   多基因组比对，识别同源区与大尺度结构变异（重排、倒位等），输出 XMFA 比对 + backbone 保守区坐标；
-  mauve（GUI）可视化比对结果。本模块以文档 14.md「十四、Mauve」采用的 2.4.0 为准
+  mauve（GUI）可视化比对结果。本模块以 2.4.0 为准
   （附录 v2.3.1 属淘汰技术，不登记）。'
 homepage: http://darlinglab.org/mauve/mauve.html
 license: GPL-2.0

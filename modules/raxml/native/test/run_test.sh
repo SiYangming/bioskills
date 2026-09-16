@@ -21,7 +21,7 @@ python "$NATIVE/main.py" --list-commands
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/5] argv 构造验证：ml_bootstrap（14.md 密码子模型命令）"
+echo "==> [3/5] argv 构造验证：ml_bootstrap（密码子模型命令）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

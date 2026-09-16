@@ -5,7 +5,7 @@ description: 'MaSuRCA（Maryland Super-Read Celera Assembler）是混合基因�
   Illumina 与三代 PacBio/Nanopore 数据联合组装（super-read + mega-read 算法），内含 QuORUM 纠错、
   jellyfish k-mer 计数、MUMmer 比对、POLCA 打磨等。使用方式：先写 config.txt（DATA 段 PE=/PACBIO= …
   + PARAMETERS 段 GRAPH_KMER_SIZE/USE_GRID/NUM_THREADS 等），运行 masurca config.txt 生成
-  assemble.sh，再执行 ./assemble.sh 完成组装。文档（04.md 第 1520-1623 行）使用 MaSuRCA 3.4.1。
+  assemble.sh，再执行 ./assemble.sh 完成组装。典型流程使用 MaSuRCA 3.4.1。
   '
 homepage: https://github.com/alekseyzimin/masurca
 license: GPL-3.0

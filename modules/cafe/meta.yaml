@@ -16,7 +16,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/cafe / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/cafe
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    cafe=4.2.1（14.md 教程版本；bioconda 另有 5.0.0 / 5.1.0 = CAFE5，命令与报告格式不同，勿混用）。'
+    cafe=4.2.1（教程版本；bioconda 另有 5.0.0 / 5.1.0 = CAFE5，命令与报告格式不同，勿混用）。'
 - id: cafe_nextflow_nfcore
   module_version: nf-core master（2026-09）
   cafe: '5.1.0'

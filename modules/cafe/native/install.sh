@@ -155,7 +155,7 @@ install_source() {
     mkdir -p "$PREFIX/bin"
     install -m 0755 "$srcdir/release/cafe" "$PREFIX/bin/cafe"
     install -m 0755 "$srcdir/cafe/caferror.py" "$PREFIX/bin/caferror.py"
-    # 修正 caferror.py 的 python 解释器路径（对齐 14.md 的 perl 替换步骤）
+    # 修正 caferror.py 的 python 解释器路径（对齐官方 perl 替换步骤）
     if command -v perl >/dev/null 2>&1; then
         perl -p -i -e 's#/usr/bin/python#/usr/bin/env python#' "$PREFIX/bin/caferror.py"
     fi

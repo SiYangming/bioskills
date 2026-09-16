@@ -164,7 +164,7 @@ bash test/run_test.sh   # argv 构造验证（真实运行需 ~/.taxonkit 分类
 
 ## 版本
 
-* taxonkit 0.2.4（bioconda::taxonkit=0.2.4；与 13.md 教程及官方 release v0.2.4 对齐）
+* taxonkit 0.2.4（bioconda::taxonkit=0.2.4；与教程及官方 release v0.2.4 对齐）
 
 * 构建路线：官方镜像/conda/预编译二进制提供（quay.io/biocontainers/taxonkit:0.2.4--0 / depot.galaxyproject.org；本地不再自建容器）
 

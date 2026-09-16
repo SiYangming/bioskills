@@ -107,7 +107,7 @@ curl -fL -o SOPRA_v1.4.6.zip \
     http://www.physics.rutgers.edu/~anirvans/SOPRA/SOPRA_v1.4.6.zip
 unzip -o SOPRA_v1.4.6.zip
 chmod 755 source_codes_v1.4.6/SOPRA_with_prebuilt_contigs/*.pl
-# 规范化行尾（文档 04.md 步骤）
+# 规范化行尾（教程步骤）
 perl -p -i -e 's/\s*$/\n/' source_codes_v1.4.6/SOPRA_with_prebuilt_contigs/*.pl
 export PATH="$HOME/software/SOPRA_v1.4.6/source_codes_v1.4.6/SOPRA_with_prebuilt_contigs:$PATH"
 ```

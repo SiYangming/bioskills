@@ -16,7 +16,7 @@ FigTree 是一个用于可视化和编辑系统发育树的 Java 应用程序，
 
 | 子命令     | 命令                                                                                                          | 作用                       |
 | ------- | ----------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `export` | `java <JAVA_OPTS> -Djava.awt.headless=true -jar figtree.jar -graphic <PDF|SVG|PNG|JPEG> [-width i] [-height i] <tree> <out>` | 无界面导出出版级图片（14.md 4.6 / 六） |
+| `export` | `java <JAVA_OPTS> -Djava.awt.headless=true -jar figtree.jar -graphic <PDF|SVG|PNG|JPEG> [-width i] [-height i] <tree> <out>` | 无界面导出出版级图片 |
 | `view`   | `java <JAVA_OPTS> -jar figtree.jar <tree>`                                                                   | 打开交互式 GUI（需显示环境）         |
 
 JVM 堆内存与临时目录经 `JAVA_OPTS`（`-Xmx2g -Djava.io.tmpdir=<tmpdir>`）透传。
@@ -41,7 +41,7 @@ python main.py --list-commands
 RAxML/IQ-TREE/BEAST2 产出的树（`RAxML_bipartitions.*`、`.treefile`、FigTree.tre 等）可用 FigTree 可视化；批量替换叶名为全称后导出出版级图片。等价能力由 `native/main.py` 的 `export` 子命令提供（见上「用法」）。
 
 ```bash
-# 1. 将树文件中的物种名缩写换成全称（14.md 4.6；配合 source.txt 做后缀替换）
+# 1. 将树文件中的物种名缩写换成全称（配合 source.txt 做后缀替换）
 cp RAxML_bipartitions.out_codon tree_abbr.RAxML
 cp tree_abbr.RAxML tree_fullName.RAxML
 cut -f 1,2 ../../a.preparing_data/source.txt | \

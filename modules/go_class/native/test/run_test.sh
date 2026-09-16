@@ -47,7 +47,7 @@ assert ns.subcommand == "annot2wego" and ns.threads == 4 and ns.tmpdir == "/tmp"
 print("  OK: parser annot2wego")
 PY
 
-echo "==> [4/7] argv 构造验证：svg / distribute / resize（13.md 参数）"
+echo "==> [4/7] argv 构造验证：svg / distribute / resize（WEGO 图参数）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

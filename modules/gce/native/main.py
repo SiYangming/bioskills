@@ -15,7 +15,7 @@ GCE (Genome Characteristics Estimation) 基于 k-mer 频率估计基因组大小
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对照文档 docs/04.md 第 42-117 行）：
+命令逻辑：
   kmer_freq_hash -k 21 -l reads.list -t 8 -i 80000000 -o 0 -p out
   gce -f out.freq.stat -c 21 -g 273206457 -m 1 -D 8 -b 1 [-H 1] > out.table 2> out.log
 

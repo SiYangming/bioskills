@@ -30,7 +30,7 @@ SignalP 是用于预测蛋白质信号肽及其剪切位点的工具，广泛应
 ## 用法
 
 ```bash
-# CLI 直跑（13.md 分泌蛋白步骤1）
+# CLI 直跑（分泌蛋白步骤1）
 python main.py predict ../../proteins.fasta -org euk -batch 30000 --gff3 -prefix proteins
 python main.py mature  proteins.fasta -org euk -prefix proteins
 
@@ -43,7 +43,7 @@ python main.py --list-commands
 
 ## 实战示例：分泌蛋白预测（SignalP → TMHMM）
 
-13.md「十六、分泌蛋白预测」的两步串联：先用 SignalP 预测信号肽并导出成熟蛋白，再用 TMHMM 排除跨膜蛋白。
+分泌蛋白预测流程的两步串联：先用 SignalP 预测信号肽并导出成熟蛋白，再用 TMHMM 排除跨膜蛋白。
 
 ```bash
 mkdir -p secreted_protein/singalp
@@ -101,7 +101,7 @@ bash modules/signalp/native/install.sh --archive ~/software/signalp-5.0.Linux.ta
 
 ### 4. Conda / brew（均不可用，已核实）
 
-* **conda**：`anaconda.org/bioconda/signalp` 返回 **404**，无官方包可装（第三方频道 `predector/signalp*` 非官方，不登记）；13.md 提到的 `conda install -c bioconda signalp` 在当前频道已不可用。
+* **conda**：`anaconda.org/bioconda/signalp` 返回 **404**，无官方包可装（第三方频道 `predector/signalp*` 非官方，不登记）；教程提到的 `conda install -c bioconda signalp` 在当前频道已不可用。
 * **brew**：homebrew-core 与 brewsci/bio 均**无** signalp 公式（2026-09 核实 404）→ 不写 brew 块。
 
 ## 测试

@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐文档 04.md「16. DBG2OLC 安装与使用」）：
+命令逻辑：
   sparseassembler  SparseAssembler LD <ld> k <k> g <g> NodeCovTh <n> EdgeCovTh <e> GS <gs> f <reads...>
   dbg2olc          DBG2OLC LD <ld> k <k> AdaptiveTh <th> KmerCovTh <n> MinOverlap <l> RemoveChimera <c> Contigs <contigs> f <reads...>
   sparc            split_and_run_sparc.sh <backbone> <info> <ctg_pb> <outdir> <cores>

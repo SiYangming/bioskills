@@ -20,13 +20,13 @@ BIOM（Biological Observation Matrix）工具集的本地自包含实现（`sour
 ## 用法
 
 ```bash
-# BIOM -> TSV（15.md「4.3 特征表统计与可视化」流程中 table.qza 导出为 feature-table.biom 后）
+# BIOM -> TSV（特征表统计与可视化流程中 table.qza 导出为 feature-table.biom 后）
 python main.py convert -i feature-table.biom -o feature-table.tsv --to-tsv
 
 # 经典 OTU 表 -> BIOM(HDF5)
 python main.py convert -i otu_table.txt -o table.biom --table-type "OTU table" --to-hdf5
 
-# 特征表统计摘要（15.md「2.9 物种组成分析」）
+# 特征表统计摘要（物种组成分析）
 python main.py summarize-table -i feature-table.biom -o summary.txt
 
 # Agent / Schema 自省
@@ -76,7 +76,7 @@ cat summary.txt
 | `--qualitative`    | summarize-table 以定性（存在/缺失）统计               |
 | `--observations`   | summarize-table 增加逐观测统计                   |
 
-> 15.md 中 BIOM 作为 QIIME 的 Python 依赖（「1.2 安装 Python 2.7 及依赖包」说明行）自动安装的 `biom-format` 模块；QIIME 1.x 的 `biom summarize-table -i *.biom`（「2.9 物种组成分析」）与 QIIME 2 导出后的 `biom convert -i feature-table.biom -o feature-table.tsv --to-tsv`（「4.3 特征表统计与可视化」）均可由本模块子命令等价完成。
+> BIOM 作为 QIIME 的 Python 依赖自动安装的 `biom-format` 模块；QIIME 1.x 的 `biom summarize-table -i *.biom`（物种组成分析）与 QIIME 2 导出后的 `biom convert -i feature-table.biom -o feature-table.tsv --to-tsv`（特征表统计与可视化）均可由本模块子命令等价完成。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 

@@ -1,6 +1,6 @@
 # abyss 软件模块（ABySS — de Bruijn Graph 并行组装器）
 
-> 说明：教学文档（docs/04.md）将 ABySS 标为【淘汰技术】并以其 **1.9.0** 为教学版本；本模块
+> 说明：本模块按教学定位登记 ABySS **1.9.0**（教学课件将 ABySS 标为【淘汰技术】）；本模块
 > 据此登记 1.9.0，但 ABySS **上游仍在维护**（bioconda 最新 `2.3.10`、nf-core 有
 > `abyss/abysspe`、homebrew-core 有 `abyss` 公式；GitHub <https://github.com/bcgsc/abyss>
 > 2026-09 探测 **HTTP 200**），故**不标记 deprecated**。本模块为 8 个子命令提供**可执行**
@@ -185,7 +185,7 @@ nf-core modules install abyss/abysspe
 
 | 实现 / 渠道 | 版本 | 来源 |
 | ---- | ---- | ---- |
-| **本模块（native，教学登记版）** | **1.9.0** | 文档 docs/04.md 教学版本；bioconda `abyss=1.9.0`（linux-64） |
+| **本模块（native，教学登记版）** | **1.9.0** | 教学课件登记版本；bioconda `abyss=1.9.0`（linux-64） |
 | 上游最新 | **2.3.10** | bioconda `abyss=2.3.10`、GitHub tag 2.3.10（2026-09 核实） |
 | nf-core 官方子模块 | **2.3.10** | `modules/nf-core/abyss/abysspe/environment.yml`（`bioconda::abyss=2.3.10`） |
 | snakemake-wrappers | — | `bio/abyss` 404（无官方 wrapper） |

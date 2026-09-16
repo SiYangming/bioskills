@@ -3,8 +3,8 @@
 > 汇总说明：WGCNA 是 R 包（CRAN，无独立命令行二进制），本模块以 Rscript 驱动
 > `goodSamplesGenes()` / `pickSoftThreshold()` / `adjacency()` / `TOMsimilarity()` /
 > `cutreeDynamic()` / `mergeCloseModules()` 完成加权基因共表达网络分析；安装方式见「环境安装」，
-> 容器与 conda 链接见文末。conda 规范包名为 **r-wgcna**（docs/09.md 所述 **bioconductor-wgcna**
-> 经核实未找到，详见 software_versions）。对应 `docs/09.md`「6. WGCNA 共表达网络分析」。
+> 容器与 conda 链接见文末。conda 规范包名为 **r-wgcna**（教程所述 **bioconductor-wgcna**
+> 经核实未找到，详见 software_versions）。
 
 ***
 
@@ -194,7 +194,7 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 * **bioconda**：<https://anaconda.org/bioconda/r-wgcna>（最新 1.74）
 * **quay.io/biocontainers**：`quay.io/biocontainers/r-wgcna:1.74--r45h0df16ae_1`
 * **depot.galaxyproject.org**：<https://depot.galaxyproject.org/singularity/r-wgcna%3A1.74--r45h0df16ae_1>
-* ⚠️ **包名核实**：docs/09.md 所述 `bioconductor-wgcna` 在 bioconda / conda-forge 均**未找到**
+* ⚠️ **包名核实**：教程所述 `bioconductor-wgcna` 在 bioconda / conda-forge 均**未找到**
   （anaconda API 核实，2026-09-11）；实际可用包名为 **r-wgcna**（bioconda）。
 * nf-core modules（`modules/nf-core/wgcna`）、snakemake-wrappers（`bio/wgcna`）**均无官方子模块**
   （2026-09-11 在线核实 404）
@@ -202,6 +202,6 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 
 ## 版本
 
-* wgcna 1.74（bioconda r-wgcna 1.74，与 CRAN WGCNA 1.74 一致；docs/09.md 未标注版本）
+* wgcna 1.74（bioconda r-wgcna 1.74，与 CRAN WGCNA 1.74 一致；教程未标注版本）
 * 构建路线：官方 biocontainer 已维护（quay / depot r-wgcna:1.74）→ 不维护本地配方；宿主机用 conda/mamba
 * nf-core / snakemake-wrappers 均无 wgcna 官方子模块（2026-09-11 在线核实 404）

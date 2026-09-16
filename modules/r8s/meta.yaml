@@ -3,8 +3,7 @@ canonical: r8s
 category: phylogenetics
 description: 'r8s 1.81 是 Michael Sanderson 开发的似然分子钟分析工具：以 NEXUS 树 + 化石校准点
   为输入，用 penalized likelihood（PL，惩罚似然）或 nonparametric rate smoothing 估计物种分歧时间，
-  支持交叉验证（crossv）选择 smoothing 参数。是 14.md「七、分子钟 → 6.2 r8s」的似然分子钟路线
-  （对应「A.3 旧版 r8s」的历史安装）。
+  支持交叉验证（crossv）选择 smoothing 参数。是似然分子钟分析的经典路线（历史安装）。
 
   '
 homepage: https://sourceforge.net/projects/r8s/
@@ -17,7 +16,7 @@ software_versions:
   source: 官方源码 https://downloads.sourceforge.net/project/r8s/r8s1.81.tar.gz（2026-09 核实
     200，sha256 9e89d785…）；brew brewsci/bio 公式同源（r8s.rb，url 指向该 tarball）
   note: '官方无 conda 包（bioconda/bioconda-recipes recipes/r8s 返回 404，quay.io/biocontainers/r8s
-    不存在，depot 404）——14.md「conda install r8s」在当前渠道已不可用，native 以官方源码编译为准。
+    不存在，depot 404）——`conda install r8s` 在当前渠道已不可用，native 以官方源码编译为准。
     r8s 为 Fortran/C 混合程序，make 需 gfortran；旧 makefile 的系统头依赖与 gfortran 10+ 实参不匹配
     需就地补丁（见 native/Dockerfile）。'
 - id: r8s_nextflow_nfcore

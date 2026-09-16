@@ -24,8 +24,7 @@
 
 # idba / native — 迭代 de Bruijn 图短读组装驱动（1.1.3）
 
-IDBA 1.1.3 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照文档
-`docs/04.md`（691-768 行）。
+IDBA 1.1.3 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照官方文档。
 
 ## 功能
 

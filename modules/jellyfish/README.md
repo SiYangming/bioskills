@@ -38,8 +38,7 @@
 
 # jellyfish / native — k-mer 计数驱动（2.3.0）
 
-Jellyfish 2.3.0 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照文档
-`docs/04.md`（119-210 行）。
+Jellyfish 2.3.0 的本地自包含实现（`source_type: custom`、`type: native`），命令逻辑对照官方文档。
 
 ## 功能
 

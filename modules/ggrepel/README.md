@@ -3,7 +3,6 @@
 > 汇总说明：ggrepel 是 R 包（CRAN，无独立命令行二进制），本模块以 Rscript 驱动
 > `ggrepel::geom_text_repel()` 为差异表达火山图添加不重叠的基因标签；安装方式见「环境安装」，
 > 容器与 conda 链接见文末。conda 规范包名为 **r-ggrepel**（conda-forge 0.9.8）。
-> 对应 `docs/09.md`「5.2 ggplot2 火山图」中注释的基因标签部分。
 
 ***
 
@@ -37,9 +36,9 @@ python main.py --list-commands
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖。`--threads` 仅作接口统一（ggrepel/ggplot2 为
 单线程绘图），会在加载包前设置 `OMP/OPENBLAS/MKL/VECLIB` 线程数环境变量。
 
-## 实战示例（来自 docs/09.md 的基因标签）
+## 实战示例（火山图基因标签）
 
-以下为 `docs/09.md`「5.2 ggplot2 火山图」中注释的 `geom_text_repel` 基因标签代码；
+以下为 `geom_text_repel` 基因标签代码；
 **等价能力由 `native/main.py` 的 `label` 子命令提供**（见上「用法」）——CLI 侧把「火山图 + 标签」
 封装为一次参数化调用（无标签火山图见 ggplot2 模块的 `volcano` 子命令）。
 
@@ -141,6 +140,6 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 
 ## 版本
 
-* ggrepel 0.9.8（conda-forge，与 CRAN 一致；bioconda/官方镜像为 0.6.5；docs/09.md 未标注版本）
+* ggrepel 0.9.8（conda-forge，与 CRAN 一致；bioconda/官方镜像为 0.6.5）
 * 构建路线：官方 biocontainer 已维护（quay / depot r-ggrepel:0.6.5）→ 不维护本地配方；宿主机用 conda/mamba
 * nf-core / snakemake-wrappers 均无 ggrepel 官方子模块（2026-09-11 在线核实 404）

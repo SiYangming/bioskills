@@ -21,7 +21,7 @@ python "$NATIVE/main.py" --list-commands
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/6] argv 构造验证 #1：enrich（13.md 富集分析参数）"
+echo "==> [3/6] argv 构造验证 #1：enrich（富集分析参数）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

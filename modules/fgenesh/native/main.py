@@ -9,7 +9,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（依据 docs/10.md 第十节 FGENESH 用法）：
+命令逻辑：
   predict  fgenesh <genome.fa> -L <params.par> -o <output_prefix> [-gff] [-exon] [-gene] -cpu <N>
 ⚠️ FGENESH 为 Softberry 许可受限软件：使用前须获得学术/商业许可并解压发行包加入 PATH。
 """

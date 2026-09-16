@@ -5,7 +5,7 @@ description: 'MUMmer v4（Maximal Unique Matches，mummer4/mummer）是快速全
   nucmer 基于精确匹配种子做基因组对基因组比对（para_nucmer 为其并行版），delta-filter 过滤
   比对结果，show-coords 输出比对坐标/相似度/覆盖率，mummerplot 用 gnuplot 画点阵图，另有
   nucmer 内置的 dnadiff 流程。广泛用于共线性分析、组装质量评估（与参考比对）与 SNP/indel
-  定位。本模块以文档 04.md / 14.md 采用的最新版 v4.0.0beta2 为准。'
+  定位。本模块以最新版 v4.0.0beta2 为准。'
 homepage: https://github.com/mummer4/mummer
 license: Artistic-2.0
 software_versions:

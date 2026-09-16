@@ -12,7 +12,7 @@
 #     故本模块不维护 Dockerfile/Apptainer.def（见模块 README「环境安装」）
 #
 # 版本说明（2026-09 核实）：
-#   - 本模块登记文档（docs/04.md）教学版本 1.9.0（bioconda abyss=1.9.0，linux-64）；
+#   - 本模块登记教学版本 1.9.0（bioconda abyss=1.9.0，linux-64）；
 #   - 上游仍在维护，GitHub tag / bioconda 最新为 2.3.10，nf-core abyss/abysspe pin 2.3.10；
 #   - 官方 GitHub release 仅提供源码归档（如 abyss-2.3.10.tar.gz），无预编译二进制资产；
 #   - 两个版本 abyss-pe 的 k= / np= / j= key=value 用法一致。

@@ -10,7 +10,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（文档 04.md 第 1603-1606 行）：
+命令逻辑：
   config   masurca <config.txt>                 # 生成 assemble.sh
   simple   masurca -t <N> -i <R1,R2> [-r <long>] # 简化模式直跑全流程
   run      bash <assemble.sh>                   # 执行生成的组装脚本（日志重定向由 shell 完成）

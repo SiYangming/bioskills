@@ -12,7 +12,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（文档 04.md 第 825-831 行）：
+命令逻辑（对齐官方流程）：
   all       SOAPdenovo-63mer all -s <config> -o <prefix> -K <k> -p N [-R] [-d] [-D]
   pregraph  SOAPdenovo-63mer pregraph -s <config> -o <prefix> -K <k> -p N [-R]
   contig    SOAPdenovo-63mer contig -g <prefix> [-R]

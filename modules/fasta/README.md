@@ -51,7 +51,7 @@ python main.py --list-commands
 
 ## 实战示例：蛋白库搜索（PASA / 注释流程中的 FASTA 步骤）
 
-FASTA 是 PASA、GETA 等注释流程的序列比对依赖（教程 10.md 第 1.3 节）。以下为典型用法；等价能力由 `native/main.py` 的 `search` / `ssearch` / `fastx` 等子命令提供（见上「用法」）。
+FASTA 是 PASA、GETA 等注释流程的序列比对依赖。以下为典型用法；等价能力由 `native/main.py` 的 `search` / `ssearch` / `fastx` 等子命令提供（见上「用法」）。
 
 ```bash
 # 1) 蛋白-蛋白相似性搜索（输出制表格式，便于下游解析）
@@ -152,7 +152,7 @@ bash test/run_test.sh   # argv 构造验证为主；FASTA（fasta36/fasta）已�
 
 * fasta（上游 fasta36）`36.3.8i`（bioconda::fasta3=36.3.8i；bioconda 另有 36.3.8 / 36.3.8h）
 * 构建路线：官方镜像/conda 提供（quay.io/biocontainers/fasta3 / depot.galaxyproject.org；本地不再自建容器）
-* ⚠️ 教程（10.md 1.3）源码用 `fasta-36.3.8g`，但 g 版在 bioconda 无构建、旧官网 `faculty.virginia.edu` 分发页已失效；本模块取可安装的官方最新 `36.3.8i`
+* ⚠️ 教程源码用 `fasta-36.3.8g`，但 g 版在 bioconda 无构建、旧官网 `faculty.virginia.edu` 分发页已失效；本模块取可安装的官方最新 `36.3.8i`
 * 官方 nf-core module（`modules/nf-core/fasta`、`modules/nf-core/fasta36`）与 snakemake-wrappers（`bio/fasta`、`bio/fasta36`、`bio/fasta3`）均无（2026-09 抓取 404）
 
 ## 容器与 Conda 链接

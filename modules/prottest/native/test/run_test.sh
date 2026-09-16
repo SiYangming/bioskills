@@ -3,7 +3,7 @@
 #
 # 前置条件：
 #   - python3 + pyyaml（base.py 依赖）
-#   - java【可选】：ProtTest3 模型选择计算量极大（14.md 记 ~1472 分钟），本测试不做真实计算；
+#   - java【可选】：ProtTest3 模型选择计算量极大（约 1472 分钟），本测试不做真实计算；
 #     对 run/hpc 采用「python 构造 argv 验证命令构建不崩溃」的断言方式（monkeypatch 二进制/jar 解析）。
 set -euo pipefail
 
@@ -22,7 +22,7 @@ grep -q '^hpc' "$WORK/commands.txt"
 python "$NATIVE/main.py" --schema > "$WORK/schema.json"
 test -s "$WORK/schema.json"
 
-echo "==> [3/5] argv 构造验证 #1：run（序列版模型选择，14.md 4.5）"
+echo "==> [3/5] argv 构造验证 #1：run（序列版模型选择）"
 python3 - <<PY
 import sys
 sys.path.insert(0, "$NATIVE")

@@ -5,7 +5,7 @@ description: 'AmpliconNoise（V1.27）是 454 焦磷酸测序时代的扩增子�
   A, Davenport RJ, Turnbaugh PJ. Removing noise from pyrosequenced amplicons. BMC Bioinformatics
   2011;12:38）：基于 MPI 的序列聚类去噪（PyroNoise/PyroNoiseM/SeqNoise）、距离计算（PyroDist/SeqDist/NDist）、
   聚类（FCluster/SplitClusterEven/SplitClusterClust）、去冗余（FastaUnique）与嵌合体检测（Perseus/PerseusD）。
-  历史上由 QIIME 1 通过 qiime-deploy 一并部署（15.md「1.4 通过 qiime-deploy 部署 QIIME」）。**历史工具（454 时代）**：
+  历史上由 QIIME 1 通过 qiime-deploy 一并部署。**历史工具（454 时代）**：
   依赖 MPI、需源码 make && make install；原 Google Code 站已死（code.google.com/p/ampliconnoise 2026-09 探测 000），
   仅 Google Code 归档仍可下载发布包；功能上已被 DADA2 / Deblur（ASV 去噪，见 qiime2 模块）取代。
 

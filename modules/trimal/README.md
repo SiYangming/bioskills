@@ -129,7 +129,7 @@ echo 'export PATH=$PATH:~/software/trimal-1.4.1/bin' >> ~/.bashrc && source ~/.b
 trimal -h        # 断言
 ```
 
-（14.md「四 → 安装trimAl」即此源码路线；上 §1 预编译包与之等价，二者官方均提供。）
+（教程即此源码路线；上 §1 预编译包与之等价，二者官方均提供。）
 
 ### 3. Conda / brew（包管理器安装，备选）
 
@@ -208,7 +208,7 @@ cd modules/trimal/native && bash test/run_test.sh
 ## 版本
 
 * trimal **1.4.1**（bioconda::trimal=1.4.1；官方容器 tag `1.4.1--h4ac6f70_9`；bioconda 现行 latest 为 1.5.1，
-  本模块按 14.md 流程锁定 1.4.1）
+  本模块锁定 1.4.1）
 
 * 许可：GPL-3.0-or-later（bioconda trimal 包元数据）
 

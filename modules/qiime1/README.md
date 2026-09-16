@@ -126,7 +126,7 @@ apptainer run -B $PWD:/data -H /data qiime.sif \
 ### 4. 源码 / pip2.7 / qiime-deploy（历史路线）
 
 ```bash
-# Python 2.7 下 pip 安装（需自备 Py2.7，见 01.md）
+# Python 2.7 下 pip 安装（需自备 Py2.7）
 /opt/sysoft/Python-2.7.11/bin/pip2.7 install qiime
 
 # 官方部署工具 qiime-deploy（历史）

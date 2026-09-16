@@ -4,7 +4,7 @@ category: multiple_sequence_alignment
 description: 'ClustalW 2.1 是经典的多序列比对工具（渐进式比对算法，Larkin 2007 / Thompson
   1994），适用于核酸与蛋白质序列比对，产出比对结果（CLUSTAL/FASTA/PHYLIP/NEXUS/PIR/GDE/GCG）
   与引导树/系统发育树（NJ/UPGMA，可 bootstrap）；虽速度较慢，仍用于单拷贝同源基因的比对
-  （14.md §4 与 MAFFT/MUSCLE/trimAl 并列），可衔接下游系统发育分析。
+  （与 MAFFT/MUSCLE/trimAl 并列），可衔接下游系统发育分析。
 
   '
 homepage: http://www.clustal.org/clustal2/

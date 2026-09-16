@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'BEAST2 v2.5.2 是基于 MCMC 的贝叶斯系统发育与分子钟分析平台（Java）：beast 运行
   MCMC（relaxed clock / calibrated Yule 等）、beauti（BEAUti）图形界面生成 XML、treeannotator
   生成最大可信度（MCC）树、logcombiner/loganalyser 合并与摘要 log、densitetree 可视化树分布。
-  是 14.md「七、分子钟 → 6.3 BEAST2」的贝叶斯分子钟路线，可用 BEAGLE 库加速。
+  是分子钟分析中的贝叶斯分子钟路线，可用 BEAGLE 库加速。
 
   '
 homepage: https://www.beast2.org/

@@ -5,7 +5,7 @@ description: 'ggrepel 是 CRAN ggplot2 扩展 R 包：为散点/火山图等提�
   （geom_text_repel/geom_label_repel），差异表达分析中常用于在火山图上标注 top-N 差异基因名。
   以 R 函数库形态分发（无独立命令行二进制），本模块以 Rscript 驱动 ggrepel::geom_text_repel()
   在火山图上标注基因标签并输出图片。conda 包名规范名为 r-ggrepel（conda-forge 最新 0.9.8；
-  bioconda 仅 0.6.5），目录名 canonical 取 ggrepel。对应 docs/09.md「5.2 ggplot2 火山图」注释的标签部分。
+  bioconda 仅 0.6.5），目录名 canonical 取 ggrepel。
   '
 homepage: https://cran.r-project.org/package=ggrepel
 license: GPL-3
@@ -16,8 +16,8 @@ software_versions:
   build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
   source: https://anaconda.org/conda-forge/r-ggrepel
   note: 'conda-forge r-ggrepel 最新 0.9.8（与 CRAN ggrepel 0.9.8 一致）；bioconda 频道仅 0.6.5，
-    对应官方镜像 quay.io/biocontainers/r-ggrepel:0.6.5--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本，
-    仅在火山图示例中以注释形式演示 geom_text_repel。ggrepel 依赖 ggplot2（NeedsCompilation: yes，含 Rcpp）。'
+    对应官方镜像 quay.io/biocontainers/r-ggrepel:0.6.5--r3.3.2_0（R 3.3，较老）。
+    常在火山图示例中以注释形式演示 geom_text_repel。ggrepel 依赖 ggplot2（NeedsCompilation: yes，含 Rcpp）。'
 - id: ggrepel_nextflow_nfcore
   module_version: 官方无模块（modules/nf-core/ggrepel 404）
   r-ggrepel: —

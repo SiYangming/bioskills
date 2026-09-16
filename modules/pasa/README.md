@@ -43,7 +43,7 @@ python main.py --list-commands
 
 ## 实战示例：转录本辅助基因预测（PASA）
 
-PASA 利用 RNA-seq 组装转录本辅助真核基因预测，主要步骤包括序列预处理（seqclean）、比对配置、数据库创建与主程序运行。以下为教学文档（docs/10.md 第一节）典型用法；比对组装 / 综合库 / 训练集三段等价能力由 `native/main.py` 的 `align_assemble` / `build_comprehensive` / `asmbls_to_training` 子命令提供（见上「用法」）。
+PASA 利用 RNA-seq 组装转录本辅助真核基因预测，主要步骤包括序列预处理（seqclean）、比对配置、数据库创建与主程序运行。以下为典型用法；比对组装 / 综合库 / 训练集三段等价能力由 `native/main.py` 的 `align_assemble` / `build_comprehensive` / `asmbls_to_training` 子命令提供（见上「用法」）。
 
 ```bash
 mkdir -p pasa && cd pasa

@@ -92,7 +92,7 @@ inputs:
     type: float
     required: false
     cli_arg: --cscore
-    description: ortholog 的 C-score 阈值（默认取 jcvi 内置值 0.7；14.md 示例用 0.5）
+    description: ortholog 的 C-score 阈值（默认取 jcvi 内置值 0.7；典型示例用 0.5）
   no_strip_names:
     type: boolean
     default: false

@@ -5,7 +5,7 @@ description: 'miRDeep2（包名 mirdeep2；含 miRDeep 与 miRDeep2 核心算法
   深度测序 reads 中发现已知与新的 miRNA 基因（Friedländer et al., Nat Biotechnol 2012；miRDeep
   原始算法 Friedländer et al., Nat Biotechnol 2008）。流程为 mapper.pl（折叠 reads + bowtie 比对到
   基因组）→ miRDeep2.pl（核心算法识别 precursor/hairpin）→ quantifier.pl（对已知 miRBase
-  precursor 快速定量）。文档 10.md 第十九节把 miRDeep / miRDeep2 列为 miRNA 预测工具。'
+  precursor 快速定量）。该环节把 miRDeep / miRDeep2 列为 miRNA 预测工具。'
 homepage: https://github.com/rajewsky-lab/mirdeep2
 license: 'Academic（见上游 LICENSE；学术免费，商用需与作者确认）'
 software_versions:

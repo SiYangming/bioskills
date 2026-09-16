@@ -3,7 +3,7 @@ canonical: signalp
 category: functional_annotation
 description: 'SignalP 5.0 是 DTU（丹麦技术大学）开发的信号肽（signal peptide）及其剪切位点预测工具，
   支持真核（euk）、革兰氏阳性菌（gram+）、革兰氏阴性菌（gram-）与古菌（archaea）： signalp -org <org>
-  -fasta <proteins.fasta> 对蛋白质序列预测信号肽，是 13.md「十六、分泌蛋白预测」步骤1 的分泌蛋白筛选核心。
+  -fasta <proteins.fasta> 对蛋白质序列预测信号肽，是分泌蛋白预测步骤1 的分泌蛋白筛选核心。
   ⚠️ 许可受限：官方 tarball（signalp-5.0.Linux.tar.gz）需用 edu 邮箱向 DTU 申请下载链接，非商业用途。
   ⚠️ 无官方 conda/容器渠道（bioconda → quay → depot 全无，2026-09 核实），故本模块走自建容器兜底。
 
@@ -40,7 +40,7 @@ implementations:
   version: "5.0"
   priority: high
   when_to_use: '非流程引擎场景（AI Agent Function Calling / 独立 CLI / Shell 调用）的首选目标。 提供 predict
-    / mature 两个子命令，覆盖 13.md 分泌蛋白预测步骤1 的信号肽分析。
+    / mature 两个子命令，覆盖分泌蛋白预测步骤1 的信号肽分析。
 
     '
   container_ref:
@@ -71,12 +71,12 @@ inputs:
     type: integer
     required: false
     cli_arg: -batch
-    description: 每批处理序列数（13.md 用 30000，减小可降低内存占用）
+    description: 每批处理序列数（常用 30000，减小可降低内存占用）
   gff3:
     type: boolean
     default: false
     cli_arg: -gff3
-    description: 追加 GFF3 格式输出（13.md 分泌蛋白流程使用）
+    description: 追加 GFF3 格式输出（分泌蛋白流程使用）
   prefix:
     type: string
     required: false
@@ -99,7 +99,7 @@ outputs:
   mature_fasta:
     type: file
     format: fasta
-    description: 成熟蛋白序列 FASTA（-mature 产出，13.md 中作为 TMHMM 步骤输入 proteins_mature.fasta）
+    description: 成熟蛋白序列 FASTA（-mature 产出，作为 TMHMM 步骤输入 proteins_mature.fasta）
 environment:
   container_official: 无官方维护镜像（bioconda 404 / quay.io/biocontainers 无 / depot.galaxyproject.org
     404，2026-09 核实）→ 走自建容器兜底

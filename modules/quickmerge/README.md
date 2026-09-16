@@ -43,7 +43,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads`（`nucmer` 注入 `--threads`、`para_nucmer` 注入 `--CPU`）/ `--tmpdir` 运行期覆盖。
 
-## 实战示例：quickmerge 合并两个组装（来自文档 04.md「19. quickmerge」）
+## 实战示例：quickmerge 合并两个组装
 
 ```bash
 mkdir -p quickmerge && cd quickmerge

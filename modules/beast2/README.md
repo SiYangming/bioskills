@@ -40,7 +40,7 @@ python main.py --schema
 python main.py --list-commands
 ```
 
-## 实战示例：BEAST2 贝叶斯分子钟（14.md 七、6.3）
+## 实战示例：BEAST2 贝叶斯分子钟
 
 BEAST2 以 XML 描述模型（BEAUti 生成），MCMC 采样后由 treeannotator 汇总 MCC 树。等价能力由 `native/main.py` 的 `beast` / `treeannotator` 子命令提供（见上「用法」）。
 

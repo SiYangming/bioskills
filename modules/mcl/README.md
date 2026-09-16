@@ -54,7 +54,7 @@ python main.py --list-commands
 | `--dump-pairs` / `--dump-lines` | dump | 逐条输出 / 按行输出（默认按行） |
 | `--no-values` | dump | 省略权重值 |
 
-## 实战示例：OrthoMCL 流程中的 MCL 聚类（对照 14.md §2.10）
+## 实战示例：OrthoMCL 流程中的 MCL 聚类
 
 MCL 在 OrthoMCL 流程里接收 `orthomclDumpPairsFiles` 产出的 `mclInput`（ABC 格式的
 相似序列对）做聚类，得到直系同源群 OCG（Ortholog Cluster Groups）：

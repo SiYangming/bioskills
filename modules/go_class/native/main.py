@@ -14,7 +14,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对应 13.md「九、GO功能分类（WEGO图）」）：
+命令逻辑：
   config       make_go_class_config.pl <go.obo>
   annot2wego   annot2wego.pl <go.annot>                                   （写 stdout）
   classify     get_Genes_From_GO.pl <go.obo> <go.wego>                   （写 stdout）

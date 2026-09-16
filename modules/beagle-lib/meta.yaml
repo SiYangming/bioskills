@@ -4,7 +4,7 @@ category: phylogenetics
 description: 'BEAGLE（Broad-platform Evolutionary Analysis General Likelihood Evaluator）3.1.2 是
   高性能的系统发育似然计算库（C/C++，支持 CPU/SSE/AVX），为 BEAST/BEAST2/MrBayes 等提供加速；
   本身是库（libhmsbeagle）而非可执行程序，通过 pkg-config（hmsbeagle-1）与 PKG_CONFIG_PATH /
-  LD_LIBRARY_PATH / C_INCLUDE_PATH 供上层工具链接。是 14.md「七、6.3.1 BEAGLE 加速库」的组件。
+  LD_LIBRARY_PATH / C_INCLUDE_PATH 供上层工具链接，是分子钟分析中 BEAGLE 加速库环节的组件。
 
   '
 homepage: https://github.com/beagle-dev/beagle-lib

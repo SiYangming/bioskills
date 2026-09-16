@@ -15,7 +15,7 @@ software_versions:
   build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
   source: https://anaconda.org/conda-forge/r-ggplot2
   note: 'conda-forge r-ggplot2 最新 4.0.3（与 CRAN ggplot2 4.0.3 一致）；bioconda 频道仅 2.2.1，
-    对应官方镜像 quay.io/biocontainers/r-ggplot2:2.2.1--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本。
+    对应官方镜像 quay.io/biocontainers/r-ggplot2:2.2.1--r3.3.2_0（R 3.3，较老）。
     宿主机推荐 conda-forge 现版本；如需容器且要新 R，可在容器内自装 4.x。'
 - id: ggplot2_nextflow_nfcore
   module_version: 官方无模块（modules/nf-core/ggplot2 404）

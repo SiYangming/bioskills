@@ -14,8 +14,7 @@ RAxML-NG（[官网](https://cme.h-its.org/exelixis/web/software/raxml/index.html
 [amkozlov/raxml-ng](https://github.com/amkozlov/raxml-ng)，RAxML Next Generation，本模块登记 **2.0.3**）是
 classic RAxML 的重写版最大似然系统发育建树工具：更快、更易用、更灵活，命令行统一为
 `raxml-ng --<mode> + --msa/--model/--threads`（如 `--all` 一次完成 ML 搜索 + bootstrap + 模型选择；
-`--search` 拓扑搜索；`--evaluate` 评估给定拓扑；`--parse` 解析比对）。它是 14.md「五、RAxML - 物种树构建 →
-方法二/三」推荐的下一代建树工具。
+`--search` 拓扑搜索；`--evaluate` 评估给定拓扑；`--parse` 解析比对）。它是本流程推荐的下一代建树工具。
 
 本实现为自包含驱动（`source_type: custom`、`type: native`），二进制由**官方容器/conda**
 （quay.io/biocontainers/raxml-ng / bioconda raxml-ng）提供，登记 **2.0.3**。

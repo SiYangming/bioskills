@@ -46,9 +46,9 @@ python main.py --list-commands
 limma 为线性模型计算，`--threads` 映射为 **BLAS 线程环境变量**
 （`OMP/OPENBLAS/VECLIB/MKL_NUM_THREADS`）。
 
-## 实战示例：limma-voom 差异表达分析（来自文档 09.md 2.3 节）
+## 实战示例：limma-voom 差异表达分析
 
-文档「2.3 limma」给出的典型 R 代码（等价能力由 `native/main.py` 的 `analyze` /
+典型 R 代码（等价能力由 `native/main.py` 的 `analyze` /
 `voom` 子命令提供）：
 
 ```r

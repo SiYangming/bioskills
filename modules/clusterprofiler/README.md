@@ -3,7 +3,7 @@
 > 汇总说明：clusterProfiler 是 R 包（Bioconductor，无独立命令行二进制），本模块以 Rscript 驱动
 > `enrichGO()` / `enrichKEGG()` / `gseGO()` 完成 GO/KEGG/GSEA 富集分析；安装方式见「环境安装」，
 > 容器与 conda 链接见文末。conda / 容器规范包名为 **bioconductor-clusterprofiler**（目录名 canonical
-> 取全小写 **clusterprofiler**）。对应 `docs/09.md`「4.1 GO 富集 / 4.2 KEGG 富集 / 4.3 clusterProfiler 综合分析」。
+> 取全小写 **clusterprofiler**）。覆盖 GO 富集 / KEGG 富集 / clusterProfiler 综合分析。
 
 ***
 
@@ -143,8 +143,8 @@ gse <- gseGO(
 head(gse)
 ```
 
-> 富集结果的可视化（条形图 / 点图 / 网络图 / GSEA 曲线）由 `docs/09.md`「5.3 富集分析可视化」
-> 覆盖，本模块聚焦 enrichGO/enrichKEGG/gseGO 的结果表产出。
+> 富集结果的可视化（条形图 / 点图 / 网络图 / GSEA 曲线）属另一环节，
+> 本模块聚焦 enrichGO/enrichKEGG/gseGO 的结果表产出。
 
 ## 环境安装（官方镜像优先，不维护本地配方）
 
@@ -205,6 +205,6 @@ bash test/run_test.sh   # argv（Rscript -e 表达式）构造 + schema 自省�
 
 ## 版本
 
-* clusterprofiler 4.18.4（bioconda 最新；docs/09.md 未标注版本）
+* clusterprofiler 4.18.4（bioconda 最新；教学课件未标注版本）
 * 构建路线：官方 biocontainer 已维护（quay 4.18.4 / depot 4.14.0）→ 不维护本地配方；宿主机用 conda/mamba
 * nf-core / snakemake-wrappers 均无 clusterprofiler 官方子模块（2026-09-11 在线核实 404）

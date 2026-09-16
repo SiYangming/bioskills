@@ -13,7 +13,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/taxonkit:0.2.4--0 / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/taxonkit
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    native 固定 taxonkit=0.2.4（对应 13.md 教程与官方 release v0.2.4，bioconda/quay/depot 均可取）；宿主机直跑
+    native 固定 taxonkit=0.2.4（对应教程与官方 release v0.2.4，bioconda/quay/depot 均可取）；宿主机直跑
     main.py 时用 conda/mamba 安装，或用官方预编译二进制（linux-x64 / macos-x64），亦可用 brew tap brewsci/bio。'
 - id: taxonkit_nextflow_nfcore
   module_version: master（2026-09 抓取）

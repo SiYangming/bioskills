@@ -16,7 +16,7 @@ FastTree 的本地自包含实现（`source_type: custom`、`type: native`；单
 
 | 子命令         | 命令                                                                     | 作用                        |
 | ----------- | ---------------------------------------------------------------------- | ------------------------- |
-| `protein`   | `FastTree [-out <tree>] <aln>`（默认 JTT+CAT）                             | 蛋白比对建树（14.md 4.8）         |
+| `protein`   | `FastTree [-out <tree>] <aln>`（默认 JTT+CAT）                             | 蛋白比对建树                    |
 | `nucleotide`| `FastTree -nt [-gtr] [-out <tree>] <aln>`                              | 核酸比对建树（GTR+CAT）           |
 | `boot`      | `FastTree [-nt] [-gtr] -boot <n> [-out <tree>] <aln>`（SH-like 重采样）    | 计算局部支持度                   |
 
@@ -37,9 +37,9 @@ python main.py --list-commands
 
 每个子命令支持 `--threads` / `--tmpdir` 运行期覆盖。
 
-## 实战示例：FastTree 快速构建物种树（14.md 4.8）
+## 实战示例：FastTree 快速构建物种树
 
-FastTree 使用近似最大似然法，速度比 RAxML 快 100-1000 倍，特别适合大规模数据集（数千条序列）。以下为 14.md 的典型用法；等价能力由 `native/main.py` 的 `protein` / `nucleotide` / `boot` 子命令提供（见上「用法」）。
+FastTree 使用近似最大似然法，速度比 RAxML 快 100-1000 倍，特别适合大规模数据集（数千条序列）。以下为典型用法；等价能力由 `native/main.py` 的 `protein` / `nucleotide` / `boot` 子命令提供（见上「用法」）。
 
 ```bash
 # 1. 蛋白质序列建树（默认 JTT+CAT 模型）
@@ -110,7 +110,7 @@ apptainer run -B $PWD:/data -H /data fasttree.sif \
 
 ### 4. 官方源码编译（官方无预编译二进制，源码即官方本地安装路线）
 
-官方仅分发单一 C 源文件 `FastTree-2.1.11.c`（2026-09 核实 200），按 14.md 4.8 编译 `FastTree`（单精度）与 `FastTree_d`（`-DUSE_DOUBLE`，双精度）两版本：
+官方仅分发单一 C 源文件 `FastTree-2.1.11.c`（2026-09 核实 200），按官方说明编译 `FastTree`（单精度）与 `FastTree_d`（`-DUSE_DOUBLE`，双精度）两版本：
 
 ```bash
 wget http://www.microbesonline.org/fasttree/FastTree-2.1.11.c -P ~/software/

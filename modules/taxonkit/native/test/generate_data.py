@@ -9,7 +9,7 @@ taxonkit 的真实运行依赖完整 NCBI Taxonomy 数据库（~/.taxonkit 下 n
   <outdir>/taxids.txt         TaxID 列表（lineage 输入；含真菌界 4751）
   <outdir>/names.txt          物种名列表（name2taxid 输入）
   <outdir>/lineage.tsv        lineage 结果占位（reformat 输入）
-  <outdir>/sub.fungi.list     list 输出占位（13.md 提取真菌子集示例）
+  <outdir>/sub.fungi.list     list 输出占位（提取真菌子集示例）
 """
 from __future__ import annotations
 

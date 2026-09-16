@@ -17,17 +17,17 @@ PAML（Phylogenetic Analysis by Maximum Likelihood）的本地自包含实现（
 
 子命令一一映射 PAML 的 9 个程序，命令形如 `<程序> <控制文件>`（省略 `ctl` 时用 PAML 默认名 `<subcommand>.ctl`）：
 
-| 子命令              | 命令                              | 作用                                  | 14.md 对应      |
-| ---------------- | ------------------------------- | ----------------------------------- | ------------- |
-| `baseml`         | `baseml baseml.ctl`             | 核苷酸最大似然枝长 / 异常基因检测                  | 六、PAML baseml |
-| `mcmctree`       | `mcmctree mcmctree.ctl`         | 贝叶斯分子钟 / 分歧时间估计（经 baseml 近似似然）       | 七、6.1        |
-| `codeml`         | `codeml codeml.ctl`             | 正选择分析（YN00 / branch / branch-site）  | 九、PAML codeml |
-| `yn00`           | `yn00 yn00.ctl`                 | Nei-Gojobori 法 dn/ds（候选正选择基因筛选）     | 九、8.4        |
-| `basemlg`        | `basemlg basemlg.ctl`           | 连续伽马模型枝长估计                          | —             |
-| `evolver`        | `evolver evolver.ctl`           | 序列 / 树模拟                            | —             |
-| `infinitesites`  | `infinitesites infinitesites.ctl` | 无穷位点模拟（`mcmctree -D INFINITESITES`） | —             |
-| `chi2`           | `chi2 chi2.ctl`                 | 卡方临界值计算（似然比检验）                      | —             |
-| `pamp`           | `pamp pamp.ctl`                 | 祖先序列重建                              | —             |
+| 子命令              | 命令                              | 作用                                  |
+| ---------------- | ------------------------------- | ----------------------------------- |
+| `baseml`         | `baseml baseml.ctl`             | 核苷酸最大似然枝长 / 异常基因检测                  |
+| `mcmctree`       | `mcmctree mcmctree.ctl`         | 贝叶斯分子钟 / 分歧时间估计（经 baseml 近似似然）       |
+| `codeml`         | `codeml codeml.ctl`             | 正选择分析（YN00 / branch / branch-site）  |
+| `yn00`           | `yn00 yn00.ctl`                 | Nei-Gojobori 法 dn/ds（候选正选择基因筛选）     |
+| `basemlg`        | `basemlg basemlg.ctl`           | 连续伽马模型枝长估计                          |
+| `evolver`        | `evolver evolver.ctl`           | 序列 / 树模拟                            |
+| `infinitesites`  | `infinitesites infinitesites.ctl` | 无穷位点模拟（`mcmctree -D INFINITESITES`） |
+| `chi2`           | `chi2 chi2.ctl`                 | 卡方临界值计算（似然比检验）                      |
+| `pamp`           | `pamp pamp.ctl`                 | 祖先序列重建                              |
 
 ## 用法
 
@@ -44,11 +44,11 @@ python main.py --list-commands
 ```
 
 > PAML 各程序**单线程**；`--threads` 经 `OMP_NUM_THREADS` 透传（对 OpenMP 构建生效），命令行不注入线程参数。
-> `mcmctree` 的大规模近似似然步骤需用 `ParaFly` 等外部工具并行（见 14.md「七、6.1.2」），本驱动只负责单程序 argv 构造。
+> `mcmctree` 的大规模近似似然步骤需用 `ParaFly` 等外部工具并行，本驱动只负责单程序 argv 构造。
 
 ## 实战示例：baseml 异常基因检测 + mcmctree 分子钟 + codeml 正选择
 
-以 14.md 的基因组比较流程为例；等价能力由 `native/main.py` 的 `baseml` / `mcmctree` / `codeml` / `yn00` 子命令提供（见上「用法」）。
+以基因组比较流程为例；等价能力由 `native/main.py` 的 `baseml` / `mcmctree` / `codeml` / `yn00` 子命令提供（见上「用法」）。
 
 ### 1. baseml 枝长分析（异常基因检测）
 

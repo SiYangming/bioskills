@@ -12,7 +12,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐文档 14.md「十二、MUMmer」）：
+命令逻辑：
   nucmer        nucmer [--threads N] [-p out] [-c 200] [-g 200] <ref> <qry>
   para_nucmer   para_nucmer --CPU N --nucmer " <nucmer opts>" <ref> <qry>   （delta 写 stdout）
   delta_filter  delta-filter [-i 95] [-r] [-q] <delta>                       （写 stdout）

@@ -127,10 +127,10 @@ apptainer run -B $PWD:/data -H /data discovar.sif \
 ### 4. 二进制包安装（官方 release / 源码编译）
 
 官方二进制渠道已失效（Broad 下载页 404、旧 FTP 550）；历史源码编译路线如下
-（本文对照文档 04.md，安装前缀由 `/opt/biosoft/*` 改写为用户前缀 `~/software/*`，免 root）：
+（安装前缀由 `/opt/biosoft/*` 改写为用户前缀 `~/software/*`，免 root）：
 
 ```bash
-# 依赖：samtools 1.2、jemalloc 3.6.0（历史版本，见文档 04.md）
+# 依赖：samtools 1.2、jemalloc 3.6.0（历史版本）
 # DISCOVAR（有参考）
 tar zxf ~/software/discovar.tar.gz
 cd discovar-52488/
@@ -173,7 +173,7 @@ export PATH="$HOME/software/discovardenovo/bin:$PATH"
   （root 全局限定路径）；本 README 一律改写为**用户前缀** `~/software/*`（免 root）。
 * 原始发布包名：`discovar.tar.gz`、`discovardenovo.tar.gz`（Broad 官网 `down/` 目录，
   现已不可取）。
-* `NhoodInfo` 结果解读（摘自文档 04.md）：`2850<2851>[1.04x](+10:30,434,920-51,125)C=3346(16K)`
+* `NhoodInfo` 结果解读：`2850<2851>[1.04x](+10:30,434,920-51,125)C=3346(16K)`
   —— edge id；反向互补 id；双倍体出现率（0.5 单倍型，>2x 重复）；链方向；参考区间；
   覆盖度；edge 长度。
 

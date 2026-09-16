@@ -156,7 +156,7 @@ install_source() {
     tar -xzf "$tmp/lastz.tar.gz" -C "$tmp"
     local srcdir; srcdir="$(find "$tmp" -maxdepth 1 -mindepth 1 -type d | head -1)"
     [[ -n "$srcdir" ]] || die "源码解压失败"
-    # LASTZ 官方构建：make 产出 src/lastz（文档 14.md 同法）
+    # LASTZ 官方构建：make 产出 src/lastz
     ( cd "$srcdir" && make -j"$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)" ) \
         || die "make 编译失败（见上方报错）"
     [[ -x "$srcdir/src/lastz" ]] || die "未找到编译产物 src/lastz"

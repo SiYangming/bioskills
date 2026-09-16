@@ -14,7 +14,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/eggnog-mapper:1.0.3--py_3 / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/eggnog-mapper
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    native 固定 eggnog-mapper=1.0.3（对应 13.md 教程与官方 GitHub archive 1.0.3），配套数据库 emapperdb-4.5.1
+    native 固定 eggnog-mapper=1.0.3（官方 GitHub archive 1.0.3），配套数据库 emapperdb-4.5.1
     需单独下载；注意 1.0.3 为 Python 2.7 实现（bioconda 构建为 py27/py_3），如无历史约束可改用 2.1.x（py3）。'
 - id: eggnog_mapper_nextflow_nfcore
   eggnog_mapper: 官方无 nf-core 子模块（modules/nf-core/eggnog-mapper 404）

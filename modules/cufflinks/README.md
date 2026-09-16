@@ -37,16 +37,16 @@ Cufflinks 套件的本地实现（`source_type: custom`、`type: native`；⚠�
 ## 用法
 
 ```bash
-# 转录本组装（08.md 8.1）——0
+# 转录本组装——0
 python main.py cufflinks sample.sorted.bam -o sample -p 8 -b genome.fasta -u -L sample
 
-# 多样本合并（08.md 8.2）
+# 多样本合并
 python main.py cuffmerge gtf_list.txt -o ./cuffmerge -p 4 -s genome.fasta
 
-# 与参考比较（08.md 8.3）
+# 与参考比较
 python main.py cuffcompare A/transcripts.gtf -r genome.gtf -s genome.fasta -o cmp
 
-# 差异表达（09.md 3.1）
+# 差异表达
 python main.py cuffdiff samples.txt --no-update-check -o cuffdiff_out -p 8 \
     -L control,treatment -b genome.fasta -u genome.gtf
 

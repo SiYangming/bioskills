@@ -15,7 +15,7 @@ software_versions:
   build_route: official biocontainer（bioconda → quay.io/biocontainers / depot.galaxyproject.org）
   source: https://anaconda.org/conda-forge/r-pheatmap
   note: 'conda-forge r-pheatmap 最新 1.0.13（与 CRAN pheatmap 1.0.13 一致）；bioconda 频道仅 1.0.8，
-    对应官方镜像 quay.io/biocontainers/r-pheatmap:1.0.8--r3.3.2_0（R 3.3，较老）。docs/09.md 未标注版本。
+    对应官方镜像 quay.io/biocontainers/r-pheatmap:1.0.8--r3.3.2_0（R 3.3，较老）。教程未标注版本。
     宿主机推荐 conda-forge 现版本；如需容器且要新 R，可在容器内自装 1.0.13。'
 - id: pheatmap_nextflow_nfcore
   module_version: 官方无模块（modules/nf-core/pheatmap 404）

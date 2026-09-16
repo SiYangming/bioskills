@@ -40,7 +40,7 @@ FORCE=0
 # 官方源码 paml4.9i.tgz（平台无关，单一 sha256；2026-09 核实下载一致）
 SHA256_SOURCE="48f474354434a28b3a2da25b31d3395591b3a49c61980418470cfc56562000e1"
 
-# 源码 make -f Makefile 产出的全部程序（与 14.md「六」的 cp 列表一致，另含 mcmctree 同源 infinitesites）
+# 源码 make -f Makefile 产出的全部程序（另含 mcmctree 同源 infinitesites）
 PAML_PROGRAMS="baseml basemlg chi2 codeml evolver infinitesites mcmctree pamp yn00"
 
 log()  { printf '\033[1;32m[install]\033[0m %s\n' "$*"; }

@@ -44,7 +44,7 @@ python main.py --list-commands
 
 每个子命令支持 `--threads`（`nucmer` 注入 `--threads`、`para_nucmer` 注入 `--CPU`）/ `--tmpdir` 运行期覆盖。
 
-## 实战示例：MUMmer v4 全基因组比对（来自文档 14.md「十二、MUMmer」）
+## 实战示例：MUMmer v4 全基因组比对
 
 ```bash
 mkdir -p Mummer && cd Mummer

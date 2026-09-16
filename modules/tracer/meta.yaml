@@ -15,7 +15,7 @@ software_versions:
   build_route: official biocontainer（quay.io/biocontainers/tracer / depot.galaxyproject.org）
   source: https://anaconda.org/bioconda/tracer
   note: '官方镜像优先（bioconda→quay.io/biocontainers→depot.galaxyproject.org），本地不再自建容器；
-    tracer=1.7.1 与 14.md 教程一致（bioconda 另有 1.7.2；quay tag 1.7.1--1）；宿主机直跑 main.py 时用
+    tracer=1.7.1 与教程一致（bioconda 另有 1.7.2；quay tag 1.7.1--1）；宿主机直跑 main.py 时用
     conda/mamba 安装 tracer，JVM 调优通过 JAVA_OPTS 透传。'
 - id: tracer_nextflow_nfcore
   tracer: 官方无模块（modules/nf-core/tracer 404）

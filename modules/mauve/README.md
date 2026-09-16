@@ -2,7 +2,7 @@
 
 > 汇总说明：本 README 合并 native 实现用法；安装方式见下方各节，容器与 conda 信息记录于此。
 >
-> **版本提示**：本模块以文档 14.md「十四、Mauve」采用的 **Mauve 2.4.0** 为准（附录 v2.3.1 属淘汰技术，不登记）。
+> **版本提示**：本模块以 **Mauve 2.4.0** 为准（附录 v2.3.1 属淘汰技术，不登记）。
 > 官方分发 **预编译二进制包**（`mauve_linux_2.4.0.tar.gz`）与 **源码**（GitHub）两条路线；bioconda 包 `mauve`
 > 依赖 `mauvealigner` 提供 `progressiveMauve` / `mauveAligner` 命令行工具。
 

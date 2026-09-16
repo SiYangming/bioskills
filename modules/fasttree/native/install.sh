@@ -143,7 +143,7 @@ install_source() {
         warn "非默认版本（${VERSION}），跳过内嵌 sha256 校验（可自行核对官方源码摘要）"
     fi
 
-    # 与 14.md 4.8 一致的编译命令：FastTree（单精度）/ FastTree_d（-DUSE_DOUBLE，双精度）
+    # 官方编译命令：FastTree（单精度）/ FastTree_d（-DUSE_DOUBLE，双精度）
     ( cd "$tmp" && "$CC_BIN" -O3 -finline-functions -funroll-loops -Wall -o FastTree "$src" -lm )
     ( cd "$tmp" && "$CC_BIN" -O3 -finline-functions -funroll-loops -Wall -DUSE_DOUBLE -o FastTree_d "$src" -lm )
     install -m 0755 "$tmp/FastTree" "$PREFIX/bin/FastTree"

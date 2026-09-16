@@ -12,7 +12,7 @@
    python main.py --schema          # 打印 JSON Schema
    python main.py --list-commands   # 列出支持的子命令
 
-命令逻辑（对齐教学文档 docs/10.md 第一节）：
+命令逻辑（对齐官方流程）：
   align_assemble     Launch_PASA_pipeline.pl -c <config> -R -g <genome> -t <transcripts> -T \
                          [-u <unclean>] [--TDN <tdn>] --ALIGNERS <aligners> --CPU N \
                          [--stringent_alignment_overlap X] [--MAX_INTRON_LENGTH L] [--TRANSDECODER] \
