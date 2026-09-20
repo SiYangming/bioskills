@@ -9,6 +9,13 @@
 
 来源：`chenlianfu_training_pipelines_v8.0/01.CentOS_System_Configuration/` 的两份脚本（`modify_system_config_files.sh`、`system_software_installation.sh`），按 bioskills 分层规范迁入 **native 目录形态**。
 
+**原样备份**（未改一字）见 [native/backup/](native/backup/)：
+
+- `native/backup/01.CentOS_System_Configuration/` ← 第 01 章
+- `native/backup/_unused/bash_scripts/` ← `_unused/bash_scripts`（需本机同步，见该目录说明）
+
+编排执行用 [native/main.py](native/main.py)（参数化）；备份目录不参与运行。
+
 > 本组合是 **环境前置**，不是生信分析流程。生信工具本体仍走 `modules/<sw>/`（官方镜像优先，见 AGENT.md §7）。各 workflow 文档「前置环境」可交叉引用本组合。
 
 ## Stage 图
