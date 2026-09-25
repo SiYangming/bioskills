@@ -1,10 +1,7 @@
 # workflow / riboseq 复合流程元数据
 # ---------------------------------------------------------------------------
-# 流程：核糖体足迹分析（Ribo-seq / RPF）+ 配套总 RNA-seq（Totals）
-#       本地实现两种：经典 Shell+Python+R 脚本（Bushell-lab 思路，native/）与 Snakemake 重构（snakemake/，自定义）。
-#       （官方 nf-core/riboseq 与运行方式见 README「执行方式 C」，不建本地目录）
-# 出处与形态：
-#   - 经典脚本整理自 github.com/Bushell-lab/Ribo-seq（native/ 脚本）
+# 经典脚本真源：https://github.com/SiYangming/Ribo-seq（fork of Bushell-lab/Ribo-seq）
+# 含 test/ chr20 冒烟模块。native/ 为该 fork 的 git submodule（见仓库根 .gitmodules）。
 # ---------------------------------------------------------------------------
 
 id: custom_riboseq
@@ -21,7 +18,7 @@ description: |
      samtools 排序索引、RSEM 定量，各自拆分为 modules/<sw> 原子技能并在其 snakemake/ 下维护规则；
      UMI extract/dedup 阶段可复用 subworkflow/umi_tools_extract_dedup（native 编排与 Snakemake 聚合接线见 riboseq.md）；
   2) 本目录负责流程集成层（Snakefile、样本/配置 schema 等流程级文件，属自定义实现）；
-  3) 经典 Bushell-lab Shell/Python/R 脚本保留在 native/ 供人工分步执行与 QC/DE/codon 等下游分析。
+  3) 经典 Shell/Python/R 脚本以 SiYangming/Ribo-seq 为真源；native/ 为其 git submodule（钉死 commit，可 git submodule update --init）。
 
 agent_guidance:
   when_to_use: "需要跑 Ribo-seq/RPF（可含配套 total RNA-seq）全流程（QC->去接头->UMI->比对->定量->RPF 计数/周期/密码子分析）时使用；单工具调用走各软件 native。"
@@ -111,8 +108,8 @@ outputs:
     path_pattern: "{outdir}/RIBOSEQ/Counts_files/{sample}_pc_final.counts"
 
 execution:
-  entrypoint: "bash workflow/riboseq/native/run.sh（经典一键，Conda/Local）；或 python workflow/riboseq/native/main.py --pipeline {RPFs|Totals|Downstream|DataPrep} [--list-stages | --dry-run | --real]（编排入口，见 riboseq.md 执行方式 A）"
-  test_command: "bash workflow/riboseq/native/run.sh --help && python workflow/riboseq/native/main.py --list-stages"
+  entrypoint: "git submodule update --init workflow/riboseq/native && cd workflow/riboseq/native && bash test/run_smoke.sh && ./run.sh --pipeline {RPFs|Totals|Downstream}"
+  test_command: "test -f workflow/riboseq/meta.yaml && test -f workflow/riboseq/native/run.sh"
   dependencies_in_skills:
     - fastqc/native
     - cutadapt/native
@@ -122,8 +119,8 @@ execution:
     - bbmap/native
     - samtools/native
     - rsem/native
-  workflow_skeleton_note: "Snakemake 集成层已并入 workflow/riboseq/riboseq.md「执行方式 B」（仓库不再内置 snakemake/ 目录，按需在项目内重建）"
-  fallback_note: "STAR 为可选（仅 IGV 可视化需要）；UMI 步骤在建库无 UMI 时可跳过；经典脚本见 native/。"
+  workflow_skeleton_note: "经典脚本真源在 SiYangming/Ribo-seq（含 test/ chr20 冒烟模块）；native/ 为 git submodule。Snakemake 按需在项目内重建。"
+  fallback_note: "STAR 可选；无 UMI 可跳过；环境自检见 native/test/run_smoke.sh。克隆本仓请加 --recurse-submodules。"
 
 optimization:
   default_cpus: 8
@@ -133,6 +130,6 @@ software_versions:
   rnaseq_aligner: "bowtie2（转录组）/ STAR（基因组，可选）"
   riboseq_aligner: "bbmap"
   upstream: "https://github.com/Bushell-lab/Ribo-seq"
-  
-  _refactor: ""
-  note: "各工具版本差异见对应 modules/<sw>/meta.yaml 的 software_versions 段。"
+  fork: "https://github.com/SiYangming/Ribo-seq"
+  submodule: "workflow/riboseq/native"
+  note: "各工具版本见 modules/<sw>/meta.yaml；native/ 为 fork 的 submodule，含 test/ chr20 冒烟数据。"

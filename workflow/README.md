@@ -7,7 +7,7 @@ workflow/ 层**不参与** `skill-cli scan/validate`。组织规则（详见 [AG
 - **官方已有流程不建目录**：nf-core 官方已有完整流程 → 不建 `nextflow/` 等目录，只在流程文档登记引用与差异；
 - **流程文档命名 `<flow_name>.md`**（根级文档形态的元数据为 `<flow_name>.yaml`）；
 - **目录内只剩文档 → 折叠到 workflow/ 根**：无代码资产的流程以 `workflow/<flow_name>.md` + `.yaml` 形式存放，不保留目录；
-- **流程级 `native/` 保留经典脚本与编排入口 `main.py`**（如 `riboseq/native` 经典库、`nanoseq|isoseq/native/main.py` 编排入口），纯编排逻辑（无执行入口）不入库、记录于流程文档；
+- **流程级 `native/` 保留经典脚本与编排入口 `main.py`**（如 `riboseq/native` 为 fork 的 **git submodule**、`nanoseq|isoseq/native/main.py` 编排入口），纯编排逻辑（无执行入口）不入库、记录于流程文档；
 - **`snakemake/` 集成内容并入流程文档「执行方式 B」后移除**（工具规则仍存于 `modules/<sw>/snakemake/`，按需在项目内重建）。
 
 ## 现有流程
@@ -16,7 +16,7 @@ workflow/ 层**不参与** `skill-cli scan/validate`。组织规则（详见 [AG
 |---|---|---|
 | `nanoseq` | `nanoseq/`（目录：`nanoseq.md` + `meta.yaml` + `native/` 编排入口与经典脚本） | Nanopore RNA-seq：SRA/dorado → minimap2 → samtools → FLAIR → StringTie → TransDecoder/TD2 ORF |
 | `isoseq` | `isoseq/`（目录：`isoseq.md` + `meta.yaml` + `native/main.py` 编排入口） | PacBio Iso-Seq：CCS → Lima → Refine → gstama polyA → 比对 → collapse/merge |
-| `riboseq` | `riboseq/`（目录，含 `riboseq.md` + `meta.yaml` + `native/` 经典脚本） | Ribo-seq / RPF + Total RNA-seq（Bushell-lab 经典脚本库） |
+| `riboseq` | `riboseq/`（目录：`riboseq.md` + `meta.yaml` + `native/` **git submodule** → [SiYangming/Ribo-seq](https://github.com/SiYangming/Ribo-seq)） | Ribo-seq / RPF + Total RNA-seq（Bushell-lab 经典脚本库 fork） |
 | `snakemake-template/` | `snakemake-template/`（目录，骨架示例） | Snakemake 流程模板参考（源自 snakemake-workflow-template） |
 
 ## 新建流程模板的来源与方法
