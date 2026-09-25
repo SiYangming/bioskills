@@ -88,7 +88,7 @@ modules/<software>/
 
 * **目录形态**：当流程含 **native 代码资产**（上游大树 git submodule，如 `workflow/riboseq/native`、`snakemake-template/native`；或 subworkflow 的 `native/`）或需要多个子资产时保留目录 `workflow/<flow_name>/`（内部 `<flow_name>.md` + `<flow_name>.yaml` [+ `native/`]）；
 
-* `subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `subworkflow/fastp_bwa_samtools/`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用；含 native 代码时取目录形态（`<组合名>.md` + `meta.yaml` + `native/`），仅剩文档时折叠到 subworkflow/ 根（`<组合名>.md` + `<组合名>.yaml`）。
+* `subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联。无独特资产时折叠为根级 `<组合名>.md` + `<组合名>.yaml`（如 `fastp_bwa_samtools`）；有桥接脚本 / Snakemake 聚合 / 档案 `run.sh` 时保留目录。**不要**再写纯编排 `native/main.py`：串联写在 md；例外是确有本地胶水（如 `misa_primer3` 的 `prepare_p3_settings.py` + `misa_primer3.pl`）。
 
 > **workflow 命名与折叠规则**：
 >

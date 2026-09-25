@@ -61,4 +61,4 @@ git commit -m "chore(riboseq): bump Ribo-seq submodule"
 
 ## UMI 子组合
 
-可复用 [subworkflow/umi_tools_extract_dedup](../../subworkflow/umi_tools_extract_dedup/umi_tools_extract_dedup.md)。
+可复用 [subworkflow/umi_tools_extract_dedup](../../subworkflow/umi_tools_extract_dedup.md)。

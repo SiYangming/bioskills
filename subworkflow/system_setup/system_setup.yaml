@@ -1,0 +1,57 @@
+# custom / system_setup 复合流程元数据
+#
+# 定位：CentOS 宿主机环境引导；直接 bash native/<os>/*.sh（无编排 main.py）。
+
+id: custom_system_setup
+version: "0.3.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "宿主机系统引导：按 OS 调用脚本（配置修改 → 软件安装）"
+
+description: |
+  脚本按 OS 扁平归档到 native/centos{6,8}/。
+  无编排 main.py；文档见 system_setup.md。--real 等价于 sudo bash 各脚本。
+
+agent_guidance:
+  when_to_use: >
+    用户要在 CentOS 6/8 类宿主机上完成生信分析环境前置时。
+    容器内分析工具仍走 modules/*/native（官方镜像优先）。
+  recommendation_priority: "Medium（环境前置）"
+  warnings:
+    - "脚本写死 train /opt 等路径；执行前请先审阅 native/<os> 内容"
+    - "口令须自行设置占位符；勿提交真实口令"
+    - "仅适用于隔离实验机，勿在生产机直接执行"
+
+stages:
+  - id: modify_system_config_files
+    purpose: "修改 sudoers / SELinux / 防火墙 / sshd / httpd / MariaDB 等系统配置"
+  - id: system_software_installation
+    purpose: "安装基线系统包与软件目录准备"
+
+inputs:
+  os:
+    type: string
+    default: centos8
+    description: "脚本子目录：centos6 或 centos8"
+  confirm_root:
+    type: boolean
+    default: false
+    description: "--real 时必须为 true"
+  stages:
+    type: string
+    default: all
+    description: "modify_system_config_files,system_software_installation 或 all"
+
+outputs:
+  dry_run_log:
+    path_pattern: "stdout（--dry-run 打印的 bash 命令）"
+
+execution:
+  entrypoint: "bash subworkflow/system_setup/native/<centos6|centos8>/{modify_system_config_files,system_software_installation}.sh"
+  requires_root_for_real: true
+  scripts:
+    - native/centos6/*.sh
+    - native/centos8/*.sh
+  test_command: "bash native/test/run_test.sh"

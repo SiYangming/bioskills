@@ -14,11 +14,11 @@ source_type: custom
 summary: "可复用 UMI 处理阶段：umi_tools extract（SE/PE）-> [流程比对] -> umi_tools dedup（对已比对 BAM 去 PCR 重复）"
 
 description: |
-  将 UMI 处理提炼为可复用的 subworkflow（参照 subworkflow/fastp_bwa_samtools 形态）：
-  1) meta 声明 stages / inputs / outputs（本文件）；
-  2) native 编排入口 native/main.py（--list-stages / --dry-run / --real，委托 modules/umi_tools/native/main.py extract|dedup）；
-  3) Snakemake 聚合接线：snakemake/umi_tools_extract_dedup.smk（include modules/umi_tools/snakemake 的三个单规则 smk）。
-  中间比对不在此组合内：调用流程（如 workflow/riboseq）在 extract 后自行比对，再把含 UMI 的 BAM 作为 dedup 输入。
+  登记型 UMI 组合（无 native/、无聚合 .smk）：
+  1) 本 yaml 声明 stages / inputs / outputs；
+  2) 执行走 modules/umi_tools/native/main.py（extract / dedup）；
+  3) Snakemake 在项目内直接 include modules/umi_tools/snakemake 三规则（见 md）。
+  中间比对不在此组合内：调用流程自行比对后再把 BAM 交给 dedup。
 
 agent_guidance:
   when_to_use: "流程含 UMI 建库（Ribo-seq/Totals RNA-seq 等）需要 extract + dedup 阶段、且不想重复实现 umi_tools 调用时。"
@@ -71,15 +71,15 @@ outputs:
     path_pattern: "{outdir}/stats/{sample_id}_*（--stats 时生成）"
 
 execution:
-  entrypoint: "python subworkflow/umi_tools_extract_dedup/native/main.py --list-stages | --dry-run（默认）| --real"
+  entrypoint: "见 umi_tools_extract_dedup.md：modules/umi_tools extract →（外部比对）→ dedup；Snakemake 直接 include modules/umi_tools/snakemake/*.smk"
   dependencies_in_skills:
     - umi_tools/native
-  fallback_note: "umi_tools native 已构建（modules/umi_tools/native/main.py），dry-run 打印委托命令；real 前请先完成中间比对并备好 aligned_bam。"
-  test_command: "bash native/test/run_test.sh"
-  snakemake_include_hint: |-
-    # 在 Snakefile 中聚合接线（本文件已 include 模块 umi_tools 三个单规则 smk）：
-    include: "subworkflow/umi_tools_extract_dedup/snakemake/umi_tools_extract_dedup.smk"
-    # 若主 Snakefile 已 glob include modules/umi_tools/snakemake/*.smk，请二选一避免规则重复定义。
+  fallback_note: "无编排 main.py；中间比对由调用方提供"
+  test_command: "test -f subworkflow/umi_tools_extract_dedup.yaml"
+  snakemake_include_hint: |
+    include: "modules/umi_tools/snakemake/umi_tools_extract_se.smk"
+    include: "modules/umi_tools/snakemake/umi_tools_extract_pe.smk"
+    include: "modules/umi_tools/snakemake/umi_tools_dedup.smk"
 
 optimization:
   default_cpus: 8

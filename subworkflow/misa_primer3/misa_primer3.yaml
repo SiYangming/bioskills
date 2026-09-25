@@ -19,7 +19,7 @@ description: |
   把「SSR 检测 → 侧翼引物设计」的经典教学链路（MISA + Primer3）提炼为可复用的 subworkflow
   （参照 subworkflow/fastp_bwa_samtools / sratools_pipeline 形态）：
   1) meta 声明 stages / inputs / outputs（本文件）；
-  2) 编排入口 native/main.py（--list-stages / --dry-run（默认）/ --real）逐 stage 构造命令：
+  2) 登记层（无编排 main.py）（--list-stages / --dry-run（默认）/ --real）逐 stage 构造命令：
      stage 1 misa_detect        → python modules/misa/native/main.py detect（产出 <genome>.misa）
      stage 2 prepare_p3_settings→ 由 native/p3_settings.txt 生成 Primer3 设置文件（去注释/空行 +
                                   重写 PRIMER_THERMODYNAMIC_PARAMETERS_PATH，或删行回退内置默认参数）
@@ -99,15 +99,14 @@ outputs:
     path_pattern: "{outdir}/misa_primer3/misa_primer3.tmp/<ID>.out（每位点 Primer3 设置与 primer3_core 原始输出）、misa_primer3.commands"
 
 execution:
-  entrypoint: "python subworkflow/misa_primer3/native/main.py --list-stages | --dry-run（默认）| --real（见同目录 misa_primer3.md「编排入口」）"
+  entrypoint: "见 misa_primer3.md：misa detect → prepare_p3_settings.py → misa_primer3.pl"
   dependencies_in_skills:
-    - misa/native          # detect stage：modules/misa/native/main.py（misa.pl v2.1）
-    - primer3/native       # primer3_core 二进制（由 misa_primer3.pl 直接调用；modules/primer3）
+    - misa/native
+    - primer3/native
   external_dependencies:
-    - perl                 # misa_primer3.pl
-    - ParaFly              # --CPU 并行（bioconda parafly）
-  fallback_note: "misa/primer3 native 未就绪时用 native/main.py --dry-run 演示各 stage 命令形态；
-    --real 需 PATH 内有 misa.pl、primer3_core、ParaFly、perl（见 misa_primer3.md「环境准备」）。"
+    - perl
+    - ParaFly
+  fallback_note: "桥接脚本在 native/；无编排 main.py。需 PATH 内有 misa.pl、primer3_core、ParaFly、perl。"
   test_command: "bash native/test/run_test.sh"
 
 optimization:

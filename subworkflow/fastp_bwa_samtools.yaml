@@ -15,7 +15,7 @@ summary: "最小 DNA 短读比对 + 排序 + 质控串联示例：fastp -> bwa-m
 description: |
   作为“复合流程如何在 workflow/ 下按 AGENT.md 存档”的可参考样例：
   1) meta 声明 stages / inputs / outputs（本文件）；
-  2) 编排入口 native/main.py（--list-stages / --dry-run / --real，逻辑见同目录 fastp_bwa_samtools.md「编排入口」）；
+  2) 登记层（无编排 main.py）（--list-stages / --dry-run / --real，逻辑见同目录 fastp_bwa_samtools.md「编排入口」）；
   3) Snakemake / Nextflow 骨架要点已并入 fastp_bwa_samtools.md，落地时按模块实际参数补齐。
 
 agent_guidance:
@@ -77,13 +77,13 @@ outputs:
     path_pattern: "{outdir}/fastp/{sample_id}_fastp.html"
 
 execution:
-  entrypoint: "python subworkflow/fastp_bwa_samtools/native/main.py --list-stages | --dry-run（默认）| --real（见同目录 fastp_bwa_samtools.md「编排入口」）"
+  entrypoint: "见 fastp_bwa_samtools.md：按序调用 modules/{fastp,bwa-mem2,samtools}/native/main.py"
   dependencies_in_skills:
     - fastp/native
-    - bwa-mem2/native   # 尚未提供，仅占位
-    - samtools/native   # 已提供
-  fallback_note: "bwa-mem2 / fastp / multiqc native 若尚未构建，用 native/main.py --dry-run 演示（输出各 stage 命令形态）"
-  test_command: "bash native/test/run_test.sh"
+    - bwa-mem2/native
+    - samtools/native
+  fallback_note: "无流程级 native/；纯登记层"
+  test_command: "test -f subworkflow/fastp_bwa_samtools.yaml"
 
 optimization:
   default_cpus: 8
