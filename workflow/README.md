@@ -7,17 +7,17 @@ workflow/ 层**不参与** `skill-cli scan/validate`。组织规则（详见 [AG
 - **官方已有流程不建目录**：nf-core 官方已有完整流程 → 不建 `nextflow/` 等目录，只在流程文档登记引用与差异；
 - **流程文档命名 `<flow_name>.md`**（根级文档形态的元数据为 `<flow_name>.yaml`）；
 - **目录内只剩文档 → 折叠到 workflow/ 根**：无代码资产的流程以 `workflow/<flow_name>.md` + `.yaml` 形式存放，不保留目录；
-- **流程级 `native/` 保留经典脚本与编排入口 `main.py`**（如 `riboseq/native` 为 fork 的 **git submodule**、`nanoseq|isoseq/native/main.py` 编排入口），纯编排逻辑（无执行入口）不入库、记录于流程文档；
-- **`snakemake/` 集成内容并入流程文档「执行方式 B」后移除**（工具规则仍存于 `modules/<sw>/snakemake/`，按需在项目内重建）。
+- **流程级 `native/`**：有上游大树时用 **git submodule**（如 `riboseq/native`、`snakemake-template/native`）；无大树时**可不建 native/**，只在流程 md 登记如何串联 `modules/<sw>/native/main.py`（如 `isoseq/`、`nanoseq/`）。批处理薄封装放在对应 **模块** `batch_*.sh`，不要流程级第二套 `run.sh`/`main.py`；
+- **`snakemake/` 集成内容并入流程文档后移除**（工具规则仍存于 `modules/<sw>/snakemake/`，按需在项目内重建）。
 
 ## 现有流程
 
 | 流程 | 形态 | 定位 |
 |---|---|---|
-| `nanoseq` | `nanoseq/`（目录：`nanoseq.md` + `meta.yaml` + `native/` 编排入口与经典脚本） | Nanopore RNA-seq：SRA/dorado → minimap2 → samtools → FLAIR → StringTie → TransDecoder/TD2 ORF |
-| `isoseq` | `isoseq/`（目录：`isoseq.md` + `meta.yaml` + `native/main.py` 编排入口） | PacBio Iso-Seq：CCS → Lima → Refine → gstama polyA → 比对 → collapse/merge |
-| `riboseq` | `riboseq/`（目录：`riboseq.md` + `meta.yaml` + `native/` **git submodule** → [SiYangming/Ribo-seq](https://github.com/SiYangming/Ribo-seq)） | Ribo-seq / RPF + Total RNA-seq（Bushell-lab 经典脚本库 fork） |
-| `snakemake-template/` | `snakemake-template/`（目录，骨架示例） | Snakemake 流程模板参考（源自 snakemake-workflow-template） |
+| `nanoseq` | 根级 `nanoseq.md` + `nanoseq.yaml` | Nanopore RNA-seq：文档串联 modules（FLAIR/StringTie/TD2） |
+| `isoseq` | 根级 `isoseq.md` + `isoseq.yaml` | PacBio Iso-Seq：文档串联 modules；批处理在各模块 `batch_*.sh` |
+| `riboseq` | `riboseq/`（`riboseq.md` + `riboseq.yaml` + `native/` **git submodule** → [SiYangming/Ribo-seq](https://github.com/SiYangming/Ribo-seq)） | Ribo-seq / RPF + Total RNA-seq |
+| `snakemake-template` | `snakemake-template/`（md + `meta.yaml` + `native/` **git submodule** → [snakemake-workflow-template](https://github.com/snakemake-workflows/snakemake-workflow-template)） | Snakemake 官方流程脚手架 |
 
 ## 新建流程模板的来源与方法
 
@@ -43,8 +43,9 @@ nf-core pipelines create -n <name> -d "<description>" -a "<author>" -o <output_d
 
 ### Snakemake：snakemake-workflow-template
 
-- 来源：[snakemake-workflows/snakemake-workflow-template](https://github.com/snakemake-workflows/snakemake-workflow-template)（Snakemake 官方流程模板仓库）
-- 方法：以该仓库为模板生成（GitHub 「Use this template」，或 clone 后改造）；本地参照骨架见本目录 [snakemake-template/](snakemake-template/)（含 `workflow/{rules,scripts,envs,schemas}`、`config/`、`profiles/` 等结构）
+- 来源：[snakemake-workflows/snakemake-workflow-template](https://github.com/snakemake-workflows/snakemake-workflow-template)
+- 本仓挂法：与 riboseq 相同——[snakemake-template/](snakemake-template/) 只留登记文档，`native/` 为官方模板 **git submodule**（`git submodule update --init workflow/snakemake-template/native`）
+- 方法：GitHub 「Use this template」/ clone 上游到项目目录再改造；或对照 submodule 内结构复制，**不要改 submodule 工作树当业务仓**
 - 需符合 Snakemake 最佳实践：rule 命名、conda/envs、wrapper 引用、schema 校验、profile 部署等（官方文档 [snakemake.readthedocs.io](https://snakemake.readthedocs.io)）
 
 ## 使用注意（请谨慎使用此类代码）

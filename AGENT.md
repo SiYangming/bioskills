@@ -2,7 +2,35 @@
 
 > 本文档是「每次新增/维护一个软件技能时必须遵守的标准」。
 > 按本规范构建可保证：目录一致、接口统一、Agent 可路由、可自动校验。
-> 参考实现：`modules/samtools/`（黄金样例：5 条实现路径全覆盖）。
+> 黄金样例：**档案型** `modules/qiime2/` + `subworkflow/qiime2_pipeline/`；**可执行封装型** `modules/samtools/`（多实现路径）。
+
+***
+
+## 0A. 档案优先与代码归属（硬规则）
+
+### 档案优先
+
+* **默认**：`modules/<sw>/` 只保留 `README.md` + `meta.yaml`（官方/备份安装链接；`implementations: []` 允许）。
+* **可执行例外**：需要本地可跑时才保留 `native/run.sh`（流程）或 `native/main.py` + `install.sh`（工具封装）。有 bioconda / Quay 则不复述安装脚本、不自建容器配方。
+* **tarball / `software_installation.sh`**：不入库 bioskills；蒸馏到 `SiYangming/<sw>/INSTALL.md` 或对应 fork；meta 只记 URL。
+
+### 代码归属
+
+* **基于某上游改的** → fork 原库，修改以 commit 推到 fork；bioskills **只留 fork 链接**（可删 vendored 大脚本树）。
+* **没有基于的**，或**未做成项目/论文附件的分析内容** → **留在 bioskills**（清洗后就地档案化）。
+* **仅明确做成项目/论文附件** → 才新建独立仓；bioskills 只留链接。
+* **濒危第三方包**（非「我改的上游」）→ 备份仓 `INSTALL.md` + Release；bioskills 只留链接。公开/私有按许可证；不确定则 private。
+
+### 测试数据（跟随 subworkflow / workflow）
+
+* 优先：`generate_data.py` / `run.sh` 头部 **wget/curl 官方 URL** 再二次处理。
+* 次选：合成占位（不提交真实 BAM/FASTQ）。
+* 禁止：把可网络再生的大文件、教学 `incipient_data` 拷贝入库。
+* 档案型 pipeline 可以无 `test/`，以 `bash -n run.sh` + 文档为准。
+
+### 敏感信息
+
+入库文件禁止：`chenlianfu/` 路径、`/home/train`、`/opt/biosoft` 等教学硬编码。删除 `chenlianfu` 或脚本前须先写入 `.archive-backup/<日期>/`，确认后再删备份。
 
 ***
 
@@ -36,7 +64,7 @@ modules/<software>/
 >
 > * 官方实现（nf-core / snakemake-wrappers）不建目录，其链接、submodules、版本差异记录在软件级 README 与 `software_versions`；
 >
-> * `native/` = main.py + 本地脚本 + test（**官方镜像优先**：bioconda → quay.io/biocontainers → depot.galaxyproject.org 有官方维护 → 不维护 Dockerfile/Apptainer.def，meta.yaml 登记 `container_official`；查无官方才保留自建配方）；conda 环境与容器信息记录到软件级 README（安装方式记本地安装：conda/brew/官方二进制 + 引用 native/install.sh；anaconda/官方镜像已有环境仅记录链接）；
+> * `native/` **按需**：档案型模块可不建 `native/`（见 §0A）；可执行封装才保留 main.py + 本地脚本 + test（**官方镜像优先**：bioconda → quay → depot 有官方维护 → 不维护 Dockerfile/Apptainer.def）；conda/容器信息记入软件级 README；
 >
 > * 环境文件（conda env yaml）按引擎放置：snakemake/ 下的 `*.yaml`、nextflow 用 container（`environment.yaml` 与 snakemake 可共享）。
 >
@@ -56,9 +84,9 @@ modules/<software>/
 
 复合流程与 `modules/` 平级，分**两种形态**：
 
-* **根级文档形态**（默认）：流程文档命名 `<flow_name>.md`、元数据命名 `<flow_name>.yaml`，直接放 `workflow/` 根（无 native 代码资产的轻量流程；本仓库现有 `nanoseq/isoseq/riboseq` 因含 `native/` 代码均取目录形态）；
+* **根级文档形态**（默认）：流程文档 `<flow_name>.md`、元数据 `<flow_name>.yaml` 放 `workflow/` 根（无流程级 `native/` 的登记型流程，如 `isoseq` / `nanoseq`）；
 
-* **目录形态**：当流程含 **native 代码资产**（经典完整实现脚本与/或流程编排入口 `native/main.py`，如 `workflow/nanoseq/`、`workflow/isoseq/`、`workflow/riboseq/`、`subworkflow/fastp_bwa_samtools/`）或需要多个子资产时保留目录 `workflow/<flow_name>/`（内部文档亦命名 `<flow_name>.md`，元数据 `meta.yaml`）；
+* **目录形态**：当流程含 **native 代码资产**（上游大树 git submodule，如 `workflow/riboseq/native`、`snakemake-template/native`；或 subworkflow 的 `native/`）或需要多个子资产时保留目录 `workflow/<flow_name>/`（内部 `<flow_name>.md` + `<flow_name>.yaml` [+ `native/`]）；
 
 * `subworkflow/<组合名>/` —— **常用软件组合**：可复用的多软件串联小流程（如 `subworkflow/fastp_bwa_samtools/`：fastp -> bwa-mem2 -> samtools sort/index -> QC），供 workflow 引用或独立调用；含 native 代码时取目录形态（`<组合名>.md` + `meta.yaml` + `native/`），仅剩文档时折叠到 subworkflow/ 根（`<组合名>.md` + `<组合名>.yaml`）。
 
@@ -66,17 +94,17 @@ modules/<software>/
 >
 > * 流程文档统一命名 `<flow_name>.md`（目录内不再用通用 README.md 名）；根级文档形态的元数据命名 `<flow_name>.yaml`；
 >
-> * 若某流程目录内只剩文档（无 native 经典实现、无其他代码资产）→ **整体折叠到 workflow/ 根**（`<flow_name>.md` + `<flow_name>.yaml`），不保留目录；
+> * 若某流程目录内只剩文档（无 native、无 submodule）→ **整体折叠到 workflow/ 根**（`<flow_name>.md` + `<flow_name>.yaml`），不保留空目录；
 >
-> * 流程级 `native/` 保留**经典完整实现脚本**（多步组合 `run_*.sh` / 历史脚本库，如 `riboseq/native`）与**流程编排入口** **`native/main.py`**（逐 stage 委托 `modules/<sw>/native/main.py`、提供 `--list-stages` / `--dry-run` / `--real` 的可执行入口，如 `nanoseq` / `isoseq` 的 `native/main.py`）；仅当无上述代码资产时，纯编排逻辑不入库、记录于流程文档「执行方式 A」；
+> * 流程级 `native/` **仅**在有上游可钉版本的大树时使用（**git submodule**，如 `riboseq/native` → SiYangming/Ribo-seq、`snakemake-template/native` → 官方模板）。**不要**为登记型流程再写 `native/main.py` 或流程级 `run.sh`：编排写在流程 md；单工具批处理放 `modules/<sw>/native/batch_*.sh`；
 >
 > * `nextflow/`：官方已有完整流程（nf-core）→ **不建目录**，只在文档登记引用与差异；确需本地自建时才建；
 >
-> * `snakemake/`：流程集成层内容并入流程文档「执行方式 B」后移除目录；需要 Snakemake 执行时在项目内按文档重建（工具规则仍存于 `modules/<sw>/snakemake/`）。
+> * `snakemake/`：流程集成层内容并入流程文档后移除目录；需要 Snakemake 执行时在项目内按文档重建（工具规则仍存于 `modules/<sw>/snakemake/`）。
 
 > **通用规则（workflow / subworkflow / modules 全适用）**：官方已经有的流程或软件实现 → **不单独构建目录**，信息并入对应 README / meta.yaml 登记（source\_type: official + 官方仓库/子模块/版本差异 + 强提示）；**只有官方不存在的自定义实现才建目录**（source\_type: custom）。
 
-**脚本归位**：专属于某软件（如 samtools flagstat 汇总）的辅助脚本 → 归位到该软件 `snakemake/`（wrapper/helper 平铺同目录，见「snakemake 集成层规范」）或 `native/`；流程级通用脚本 → 仓库根 `scripts/`（run\_smk.sh / run\_bg.sh 等）或共享 `modules/docker_wrapper.py`；流程专属 snakemake 脚本（如分组汇总）逻辑记录于流程文档。
+**脚本归位**：专属于某软件的辅助脚本 → 该软件 `snakemake/` 或 `native/`；**仓库级通用 Shell**（`run_smk.sh` / `run_bg.sh` / `batch_parallel.sh`）→ 根目录 `scripts/`；**供 `modules/*/snakemake/*.py` import 的共享 Python 库**（`docker_wrapper.py`）→ 留在 `modules/`（wrapper 统一 `sys.path` 注入 `modules/` 两级，勿迁到 `scripts/`）；流程专属 snakemake 脚本逻辑记入流程文档。
 
 ***
 
@@ -101,7 +129,7 @@ modules/<software>/
 | 实现 ID            | `<software>_<impl>`，全小写下划线                                                                                                                                             | `samtools_native`、`samtools_nextflow_nfcore`、`samtools_snakemake_local`                      |
 | `type` 枚举（5 个）   | `native` · `nextflow_nfcore` · `nextflow_local` · `snakemake_wrappers` · `snakemake_local`                                                                             | —                                                                                            |
 | `source_type` 枚举 | `official`（说明层）· `custom`（自实现）                                                                                                                                         | —                                                                                            |
-| 复合流程             | 根级文档 `workflow/<flow_name>.md`（+ `.yaml`，无 native 代码时），或目录 `workflow/<flow_name>/`（含 native 代码时，内部 `<flow_name>.md` + `meta.yaml` + `native/`）；`subworkflow/<组合名>/` 同理 | `workflow/nanoseq/`、`workflow/isoseq/`、`workflow/riboseq/`、`subworkflow/fastp_bwa_samtools/` |
+| 复合流程             | 根级文档 `workflow/<flow_name>.md`（+ `.yaml`，无 native 时）；或目录 `workflow/<flow_name>/`（有 submodule/`native/` 时，内部 `<flow_name>.md` + `<flow_name>.yaml` + `native/`）；`subworkflow/<组合名>/` 同理 | `workflow/isoseq.md`、`workflow/nanoseq.md`、`workflow/riboseq/`、`subworkflow/fastp_bwa_samtools/` |
 
 **实现 ID ↔ type ↔ 路径 对照（必须一一对应）：**
 
@@ -577,73 +605,34 @@ bash modules/<software>/native/test/run_test.sh
 
 ## 10. 新增软件检查清单（Checklist）
 
-构建一个新软件 `<tool>` 时，逐项确认：
+先判定形态，再勾选：
 
-* [ ] 目录 `modules/<tool>/`，canonical 名全小写，`-` 分词（必须与 bioconda / nf-core / Debian 统一规范名一致）
+### A. 档案入库（默认）
 
-* [ ] `modules/<tool>/meta.yaml` 软件级总览：implementations（登记 native + 官方 + 本地自定义条目，按优先级）+ default\_implementation + **software\_versions 差异声明**
+* [ ] `modules/<tool>/README.md` + `meta.yaml`（可 `implementations: []`、`default_implementation: null`）
+* [ ] 官方 / fork / 备份仓安装链接齐全；无 tarball、无 `software_installation.sh` 全文
+* [ ] 归属符合 §0A（有上游 → fork 链接；无上游内容留仓或仅链论文仓）
+* [ ] 无敏感路径；`skill-cli validate modules/<tool>` → `[OK]`
 
-* [ ] `modules/<tool>/native/`（**总是建**，source\_type=custom/type=native）：
-  * [ ] 字段：inputs/outputs/environment/optimization/execution + **software\_versions 段**
+### B. 可执行封装例外（仅需要时）
 
-  * [ ] `main.py`：继承 `SkillBase`，实现 `build_command`，支持 `--schema` / `--list-commands` / `--threads` / `--tmpdir`
+* [ ] `native/main.py` 或流程侧 `native/run.sh`；有 bioconda/Quay 则不自建容器配方
+* [ ] 若保留 native 驱动：`test/` 或流程文档写明 `bash -n`；测数据优先网络再生
+* [ ] `skill-cli validate` / 文档约定的 `test_command` 通过
 
-  * [ ] `native/install.sh`：现代规范双路线（conda / 官方二进制，契约见 §4.5）；默认版本对齐 meta `software_versions.native`，安装后 `<binary> --version` 断言
+### C. 存量精简触达时
 
-  * [ ] `environment.yml`（保留，仅离线/非容器备选）
+* [ ] 同域 D 级薄包装可改为档案（删 native 前写入 `.archive-backup/`）
+* [ ] 基于上游的大脚本树：fork + commit 后 bioskills 改链删树（或挂 git submodule，如 `workflow/riboseq/native`）
 
-  * [ ] **容器路线（官方镜像优先）**：官方已有（bioconda → quay.io/biocontainers → depot.galaxyproject.org）→ meta.yaml 登记 `container_official` + `software_versions.native.build_route=official biocontainer`，README 登记镜像/tag，**native/ 不维护 Dockerfile/Apptainer.def**；查无官方（如 gstama/orfanage/dorado/gnu\_sort/gunzip）→ 才提供 **`Dockerfile`（debian:bookworm-slim + apt --no-install-recommends + 清理四连）** 与 **`Apptainer.def`（同 apt 路线 + %test）**，版本均与 software\_versions 对齐
-
-  * [ ] `test/generate_data.py` + `test/run_test.sh`，本机跑通
-
-  * [ ] `README.md`
-
-* [ ] **官方登记（不建 nf-core / snakemake-wrappers 目录）**：官方已有实现的信息并入软件级 `meta.yaml`（`source_type: official` 条目 + `software_versions`）与 `README.md`：
-  * [ ] `submodules[]` 与官方目录（`modules/nf-core/<tool>/` / `bio/<tool>/`）子项严格一致
-
-  * [ ] `software_versions{}` 对齐官方 `environment.yml` / `environment.yaml` / Wave container
-
-  * [ ] README 顶部写强提示（官方已存在 → 不建目录只登记；执行请用 `nf-core modules install` / `wrapper:` 句柄；缺失时走本地自定义目录）
-
-* [ ] **本地自定义目录（仅官方缺失 / 需定制时才建）**：`nextflow/`（写 `.nf`）、`snakemake/`（写 `.smk`）；未建则不登记目录
-
-* [ ] 实现 ID 严格遵守 §1：`<tool>_native` 等
-
-* [ ] **meta 容器登记二选一**：官方已有 → 必填 `container_official` + `build_route=official biocontainer`（无配方文件）；查无官方 → 必含 Dockerfile/Apptainer.def 自建配方；**自建兜底时避免 miniconda/micromamba 默认引入；所有 Docker 示例命令（官方或自建镜像）都写** **`-u $(id -u):$(id -g)`**
-
-* [ ] **brew 公式存在性已查**（homebrew-core `https://formulae.brew.sh/api/formula/<tool>.json` / brewsci/bio `https://github.com/brewsci/homebrew-bio/tree/master/Formula` 两源；⚠️ 同名异义核对 desc，如 core `lima`=虚拟机、core `star`=归档器）；存在 → README「Conda / brew（包管理器安装）」小节 conda 块后登记 brew 块并注释标注与 meta 的版本差异；两源均无 → 不写 brew（brew 仅宿主登记，不参与容器镜像判定）
-* [ ] **官方安装资产双路线已核实**：官方同时提供「预编译二进制包」与「源码编译」时，两条都要保留在 README「环境安装」（预编译优先、源码并列），且 meta `container_ref`/`software_versions`/`environment.note` 同步登记；未核实不得断言“无预编译资产”
-
-* [ ] **Apptainer 登记为 depot 预构建 sif 直拉**（有官方 tag 时：README「环境安装」的「Apptainer / Singularity」小节写 `apptainer pull <tool>.sif docker://depot.galaxyproject.org/singularity/<tool>:<tag>`，无需本地从 quay docker 转换）
-
-* [ ] **native / nf-core / snakemake-wrappers 的 software\_versions 三方差异已逐条核对**
-
-* [ ] **与 `skills/` 指令层的交叉引用已登记**（若索引中存在该软件对应的技能）：先 `python modules/bin/skill-cli search <software>` 确认命中，再在 `modules/<tool>/README.md` 写「指令层：`skills/<source>/<skill>/`」一行，使 Agent 同时拿到「怎么跑」（本仓 `meta.yaml`/`native`）与「怎么用」（上游指令）。匹配规则与置信度见 ARCHITECTURE.md §7.7；`skills/` 分三层——**索引层 `skills/index/` 与 `lock.yaml` 入库，技能正文不入库**，禁止手工增删技能正文（拉取用 `skill-cli add`，更新用 `add --force`，同步流程见 ARCHITECTURE.md §7.6）
-
-* [ ] `skill-cli validate modules/<tool>` 全 \[OK]（实际存在的实现目录均通过）
-
-* [ ] `skill-cli schema` 成功导出 `.schema.json`（已列入 .gitignore）
-
-* [ ] `skill-cli scan` 成功重建 registry.yaml 并包含新软件
+（原「每个软件总是建 native/main.py」要求已取消；完整多实现样例仍见 `modules/samtools/`。）
 
 ***
 
 ## 11. 黄金样例
 
-**以** **`modules/samtools/`** **为参考**，它完整演示了：
+**档案型（优先对照）**：`modules/qiime2/`（仅 README+meta）+ `subworkflow/qiime2_pipeline/`（`native/run.sh`，远程取数）。
 
-* 软件级 meta.yaml 合并登记（native 总是 + 官方登记条目 + 本地自定义目录按需建立）
+**可执行封装型**：`modules/samtools/`（多实现路径、SkillBase、`software_versions` 差异声明）。
 
-* native main.py 的子命令分发、线程优先级、临时目录优化
-
-* 环境路线示例（官方镜像优先：container\_official + build\_route=official biocontainer 登记；查无官方才自建配方）
-
-* 动态生成测试数据的最小回归
-
-* 两个官方说明层（含 "本目录仅说明不可直接 include / wrapper 靠运行时解析" 的强提示）
-
-* 两个 local 占位 meta.yaml + README
-
-* 与 registry.yaml 条目完全对应
-
-新增任何软件时，先对照 samtools 的对应文件结构复制改造。
+新增软件默认走档案型；需要 CLI/Agent 直调封装时再对照 samtools。

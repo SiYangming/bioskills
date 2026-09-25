@@ -1,0 +1,66 @@
+# custom / nanoseq 复合流程元数据（登记层）
+# ---------------------------------------------------------------------------
+# 无流程级 native/：串联 modules/<sw>/native/main.py。
+# Nextflow：官方 nf-core/nanoseq（不建本地目录；本地下游为 FLAIR/StringTie/TD2）。
+# ---------------------------------------------------------------------------
+
+id: custom_nanoseq
+version: "0.2.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "Nanopore RNA-seq 登记编排：SRA/dorado（可选）→ minimap2 → samtools → FLAIR → StringTie → TransDecoder/TD2"
+
+description: |
+  原子能力在 modules/；本目录只登记阶段顺序与文档。
+  旧多工具 run_*.sh 已移除（备份在 .archive-backup/），不迁入单模块以免破坏原子边界。
+
+agent_guidance:
+  when_to_use: "Nanopore RNA-seq 本地 FLAIR/StringTie 路线；官方 bambu 路线直接用 nf-core/nanoseq。"
+  recommendation_priority: "Medium（登记层；执行在 modules）。"
+
+stages:
+  - id: sra_prep
+    software: sra-tools
+    implementation: sratools_native
+    purpose: "可选 SRA 下载"
+  - id: dorado_basecall
+    software: dorado
+    implementation: dorado_native
+    purpose: "可选 basecall"
+  - id: minimap2_align
+    software: minimap2
+    implementation: minimap2_native
+    purpose: "splice 比对"
+  - id: samtools_qc
+    software: samtools
+    implementation: samtools_native
+    purpose: "sort/index/flagstat"
+  - id: flair_consensus
+    software: flair
+    implementation: flair_native
+    purpose: "FLAIR consensus"
+  - id: stringtie_assembly
+    software: stringtie
+    implementation: stringtie_native
+    purpose: "组装 + merge"
+  - id: orf_prediction
+    software: transdecoder
+    implementation: transdecoder_native
+    purpose: "ORF（或 td2）"
+
+execution:
+  entrypoint: "见 nanoseq.md：按序调用 modules/<sw>/native/main.py"
+  dependencies_in_skills:
+    - minimap2/native
+    - samtools/native
+    - flair/native
+    - stringtie/native
+    - transdecoder/native
+    - td2/native
+    - dorado/native
+    - sra-tools/native
+  workflow_skeleton_note: "无流程级 native/；Snakemake 按需在项目内重建"
+  fallback_note: "官方下游不同时用 nextflow run nf-core/nanoseq"
+  test_command: "python modules/minimap2/native/main.py --list-commands"

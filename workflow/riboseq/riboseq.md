@@ -48,7 +48,7 @@ git commit -m "chore(riboseq): bump Ribo-seq submodule"
 
 | 文件 | 作用 |
 |------|------|
-| [meta.yaml](meta.yaml) | stages / 依赖 modules / fork 与 submodule 登记 |
+| [riboseq.yaml](riboseq.yaml) | stages / 依赖 modules / fork 与 submodule 登记 |
 | [riboseq.md](riboseq.md) | 本说明 |
 | [native/](native/) | **git submodule** → [SiYangming/Ribo-seq](https://github.com/SiYangming/Ribo-seq) |
 

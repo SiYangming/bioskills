@@ -185,7 +185,7 @@ bash test/run_test.sh   # fix_gtf 为真实回归；assemble/merge 退化为 arg
 
 ## 历史留存
 
-多步组合脚本（逐样本 assemble + 坐标修复 + 跨样本 merge）的流程版见 `workflow/nanoseq/native/03_run_stringtie.sh`（Stage 03 · StringTie；硬编码项目路径，仅供追溯对照 / 一键运行）；正式能力请走 `main.py` 的 assemble / fix\_gtf / merge 原子子命令。
+旧多工具一键脚本曾放在 `workflow/nanoseq/native/03_run_stringtie.sh`，已归档移除。请使用本模块 `native/main.py` 的 assemble / fix_gtf / merge 原子子命令串联。
 
 ***
 

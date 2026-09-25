@@ -1,3 +1,6 @@
 [submodule "workflow/riboseq/native"]
 	path = workflow/riboseq/native
 	url = https://github.com/SiYangming/Ribo-seq.git
+[submodule "workflow/snakemake-template/native"]
+	path = workflow/snakemake-template/native
+	url = https://github.com/snakemake-workflows/snakemake-workflow-template.git

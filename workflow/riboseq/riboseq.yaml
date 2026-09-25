@@ -109,7 +109,7 @@ outputs:
 
 execution:
   entrypoint: "git submodule update --init workflow/riboseq/native && cd workflow/riboseq/native && bash test/run_smoke.sh && ./run.sh --pipeline {RPFs|Totals|Downstream}"
-  test_command: "test -f workflow/riboseq/meta.yaml && test -f workflow/riboseq/native/run.sh"
+  test_command: "test -f workflow/riboseq/riboseq.yaml && test -f workflow/riboseq/native/run.sh"
   dependencies_in_skills:
     - fastqc/native
     - cutadapt/native
