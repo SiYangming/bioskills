@@ -1,0 +1,55 @@
+# custom / sratools_pipeline — SRA 批量获取档案（无上游自写编排，留 bioskills）
+#
+# 可执行例外：native/sra_pipeline.sh（download|convert|status|stop|clean）。
+# 安装见 modules/sra-tools。测数据：占位 SRR 列表（不真实下载）。
+
+id: custom_sratools_pipeline
+version: "0.2.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "SRA 批量获取档案：prefetch 并行下载 → FASTQ 转换 + 状态管理（download|convert|status|stop|clean）"
+
+description: |
+  无上游依据的自写编排，按 AGENT §0A 留在 bioskills。
+  依赖 PATH 或 Docker 中的 prefetch / fasterq-dump|fastq-dump / GNU parallel；
+  见 modules/sra-tools README。
+
+agent_guidance:
+  when_to_use: "要从 SRA 批量下载并转 FASTQ，或需要锁/PID/失败记录的一体化下载转换时。"
+  recommendation_priority: "Medium（数据获取前置组合；档案脚本）"
+
+stages:
+  - id: download
+    purpose: "并行 prefetch 下载 .sra（GNU parallel）"
+  - id: convert
+    purpose: "并行 fastq-dump/Docker 转 FASTQ（--split-3 --gzip）"
+  - id: status_stop_clean
+    purpose: "查看 / 停止 / 清理输出与锁"
+
+inputs:
+  srr_list:
+    type: file
+    required: true
+    description: "SRA accession 列表（每行一个；默认 native/SRR_Acc_List.txt）"
+  threads:
+    type: integer
+    default: 4
+  docker:
+    type: boolean
+    default: false
+    description: "convert 时使用官方 biocontainers 镜像"
+
+outputs:
+  sra_files: { path_pattern: "sra_downloads/<srr_id>/<srr_id>.sra" }
+  fastq_files: { path_pattern: "fastq_files/<srr_id>_*.fastq.gz" }
+  master_log: { path_pattern: "sra_downloads/sra_pipeline.log" }
+  failed_record: { path_pattern: "sra_downloads/failed.txt" }
+
+execution:
+  entrypoint: "bash subworkflow/sratools_pipeline/native/sra_pipeline.sh download|convert|status|stop|clean"
+  dependencies_in_skills:
+    - sra-tools
+  fallback_note: "需已装 sra-tools（及 parallel）；或 convert --docker。无单元真下：档案脚本，bash -n + --help 自检。"
+  test_command: "bash native/test/run_test.sh"

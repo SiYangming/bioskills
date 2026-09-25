@@ -81,7 +81,7 @@ class StringtieSkill(base.SkillBase):
             if not bam:
                 raise ValueError("assemble 缺少必填参数 bam（输入 BAM）")
             cmd.append(str(bam))
-            # nanoseq 长读模式默认参数（值内联自 workflow/nanoseq/native/03_run_stringtie.sh / config.yaml）
+            # nanoseq 长读模式常用默认（亦可由调用方覆盖）
             if kw.get("conservative", True):
                 cmd.append("--conservative")
             if kw.get("long_reads", True):

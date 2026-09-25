@@ -1,0 +1,67 @@
+# custom / qiime2_pipeline — 扩增子档案（Moving Pictures）
+#
+# 可执行例外：native/run.sh（远程取数 + qiime 命令链）。
+# 无 Python 编排；安装见 modules/qiime2。
+
+id: custom_qiime2_pipeline
+version: "0.2.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "EMP 扩增子档案：远程示例数据 → demux → DADA2 → phylogeny → diversity → taxonomy → ANCOM"
+
+description: |
+  默认下载 Moving Pictures 示例与 Greengenes 515/806 预训练分类器，再跑 DADA2 主链。
+  官方教程与资源会换 URL/列名时，改 run.sh 头部变量与元数据列即可。
+
+agent_guidance:
+  when_to_use: "需要复现/对照 QIIME 2 扩增子标准链路，或有 EMP+metadata+classifier 要按同一阶段顺序跑时。"
+  recommendation_priority: "Low-Medium（档案脚本；生产请按官方教程与自身数据调参）"
+
+stages:
+  - id: fetch
+    purpose: "wget metadata、EMP zip、pretrained classifier"
+  - id: import_demux
+    purpose: "tools import EMPSingleEndSequences → demux emp-single → summarize"
+  - id: denoise
+    purpose: "dada2 denoise-single + feature-table summarize/tabulate-seqs"
+  - id: phylogeny
+    purpose: "mafft → mask → fasttree → midpoint-root"
+  - id: diversity
+    purpose: "core-metrics-phylogenetic + alpha/beta + emperor"
+  - id: taxonomy
+    purpose: "classify-sklearn + taxa barplot"
+  - id: ancom
+    purpose: "filter body-site=gut → add-pseudocount → ancom（+ collapse L6）"
+
+inputs:
+  trunc_len:
+    type: integer
+    default: 120
+    description: "环境变量 TRUNC_LEN → dada2 --p-trunc-len"
+  sampling_depth:
+    type: integer
+    default: 1103
+    description: "环境变量 SAMPLING_DEPTH → core-metrics --p-sampling-depth"
+  data_base:
+    type: string
+    default: https://moving-pictures-tutorial.readthedocs.io/en/latest/data/moving-pictures
+  classifier_url:
+    type: string
+    default: https://data.qiime2.org/classifiers/sklearn-1.4.2/greengenes/gg-13-8-99-515-806-nb-classifier.qza
+
+outputs:
+  demux: { path_pattern: "02.demux/demux.qza" }
+  table: { path_pattern: "03.feature_table/table.qza" }
+  rooted_tree: { path_pattern: "04.phylogeny/rooted-tree.qza" }
+  core_metrics: { path_pattern: "05.diversity/core-metrics-results/" }
+  taxonomy: { path_pattern: "06.taxonomy/taxonomy.qza" }
+  ancom: { path_pattern: "07.ancom/ancom-subject.qzv" }
+
+execution:
+  entrypoint: "bash subworkflow/qiime2_pipeline/native/run.sh"
+  dependencies_in_skills:
+    - qiime2
+  fallback_note: "需已安装 QIIME 2（modules/qiime2 README）。无单元测试：档案脚本，真跑依赖网络与 qiime。"
+  test_command: "bash -n native/run.sh"

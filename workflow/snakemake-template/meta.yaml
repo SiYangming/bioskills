@@ -1,0 +1,30 @@
+# workflow / snakemake-template 元数据
+# ---------------------------------------------------------------------------
+# 真源：https://github.com/snakemake-workflows/snakemake-workflow-template
+# native/ 为该官方模板的 git submodule（见仓库根 .gitmodules）。
+# 本目录只登记链接；不要在 bioskills 内再拷一份脚手架。
+# ---------------------------------------------------------------------------
+
+id: snakemake_workflow_template
+version: "1.3.0"
+category: template
+type: workflow_template
+source_type: official
+
+summary: "Snakemake 官方流程脚手架（catalog 兼容）；新建自定义 Snakemake 流程时作起点"
+
+description: |
+  对应 snakemake-workflows/snakemake-workflow-template。
+  bioskills 以 git submodule 挂在 workflow/snakemake-template/native/；
+  新建业务流程时：Use this template / clone 上游，或 submodule update 后复制改造，
+  再按 AGENT.md 裁剪接入 modules/。
+
+agent_guidance:
+  when_to_use: "需要新建自定义 Snakemake 复合流程骨架时参考；不要当业务流程直接跑。"
+  recommendation_priority: "Low（脚手架；业务流程见 nanoseq/isoseq/riboseq）。"
+
+execution:
+  entrypoint: "cd workflow/snakemake-template/native && snakemake --help  # 或见上游 README"
+  init: "git submodule update --init workflow/snakemake-template/native"
+  upstream: "https://github.com/snakemake-workflows/snakemake-workflow-template"
+  pin_note: "submodule 钉死 commit；升级用 git submodule update --remote 后再审阅 diff"

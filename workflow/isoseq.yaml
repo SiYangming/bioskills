@@ -1,0 +1,77 @@
+# custom / isoseq 复合流程元数据（登记层）
+# ---------------------------------------------------------------------------
+# 无流程级 native/：串联 modules/<sw>/native/main.py；批处理见各模块 batch_*.sh。
+# Nextflow：官方 nf-core/isoseq（不建本地目录）。
+# ---------------------------------------------------------------------------
+
+id: custom_isoseq
+version: "0.2.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "PacBio Iso-Seq 登记编排：pbccs → lima → isoseq3 refine → bamtools → gstama → minimap2/ultra → gstama collapse/merge"
+
+description: |
+  原子能力在 modules/；本目录只登记阶段顺序与文档。
+  批处理：modules/{pbccs,lima,isoseq3,bamtools,gstama,minimap2,ultra}/native/batch_*.sh。
+
+agent_guidance:
+  when_to_use: "PacBio Iso-Seq 全长转录组；单步走 modules/<sw>/native/main.py，多文件批处理走对应 batch_*.sh。"
+  recommendation_priority: "Medium（登记层；执行在 modules）。"
+
+stages:
+  - id: pbccs
+    software: pbccs
+    implementation: pbccs_native
+    purpose: "subreads -> HiFi CCS"
+  - id: lima
+    software: lima
+    implementation: lima_native
+    purpose: "引物去除 / 条形码拆分"
+  - id: isoseq3_refine
+    software: isoseq3
+    implementation: isoseq3_native
+    purpose: "refine（--require-polya）"
+  - id: bamtools_convert
+    software: bamtools
+    implementation: bamtools_native
+    purpose: "BAM -> FASTA"
+  - id: gstama_polyacleanup
+    software: gstama
+    implementation: gstama_native
+    purpose: "FLNC polyA 清理"
+  - id: minimap2_align
+    software: minimap2
+    implementation: minimap2_native
+    purpose: "比对路径 A"
+  - id: ultra_align
+    software: ultra
+    implementation: ultra_native
+    purpose: "比对路径 B（需 GTF）"
+  - id: gstama_collapse
+    software: gstama
+    implementation: gstama_native
+    purpose: "collapse"
+  - id: gstama_filelist
+    software: gstama
+    implementation: gstama_native
+    purpose: "filelist.tsv"
+  - id: gstama_merge
+    software: gstama
+    implementation: gstama_native
+    purpose: "merge → merged.bed"
+
+execution:
+  entrypoint: "见 isoseq.md：按序调用 modules/<sw>/native/main.py 或 batch_*.sh"
+  dependencies_in_skills:
+    - pbccs/native
+    - lima/native
+    - isoseq3/native
+    - bamtools/native
+    - gstama/native
+    - minimap2/native
+    - ultra/native
+  workflow_skeleton_note: "无流程级 native/；Snakemake 按需在项目内 include modules/*/snakemake/"
+  fallback_note: "Nextflow 用 nf-core/isoseq；uLTRA 未装时用 minimap2"
+  test_command: "python modules/pbccs/native/main.py --list-commands"

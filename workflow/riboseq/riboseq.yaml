@@ -1,0 +1,135 @@
+# workflow / riboseq 复合流程元数据
+# ---------------------------------------------------------------------------
+# 经典脚本真源：https://github.com/SiYangming/Ribo-seq（fork of Bushell-lab/Ribo-seq）
+# 含 test/ chr20 冒烟模块。native/ 为该 fork 的 git submodule（见仓库根 .gitmodules）。
+# ---------------------------------------------------------------------------
+
+id: custom_riboseq
+version: "0.1.0"
+category: custom
+type: custom_workflow
+source_type: custom
+
+summary: "Ribo-seq（RPF）+ Totals RNA-seq 流程编排：fastqc -> cutadapt -> umi_tools -> bowtie2/STAR/bbmap 比对 -> samtools -> RSEM -> 经典 Python 计数 / R 下游分析"
+
+description: |
+  将源自 Bushell-lab/Ribo-seq 经典脚本的 Snakemake 重构，按「原子模块软件」拆分后重新编排：
+  1) 上游处理（fastqc / cutadapt / umi_tools）、比对（rnaseq: bowtie2 转录组 + STAR 基因组；riboseq: bbmap rRNA->tRNA->转录组）、
+     samtools 排序索引、RSEM 定量，各自拆分为 modules/<sw> 原子技能并在其 snakemake/ 下维护规则；
+     UMI extract/dedup 阶段可复用 subworkflow/umi_tools_extract_dedup（native 编排与 Snakemake 聚合接线见 riboseq.md）；
+  2) 本目录负责流程集成层（Snakefile、样本/配置 schema 等流程级文件，属自定义实现）；
+  3) 经典 Shell/Python/R 脚本以 SiYangming/Ribo-seq 为真源；native/ 为其 git submodule（钉死 commit，可 git submodule update --init）。
+
+agent_guidance:
+  when_to_use: "需要跑 Ribo-seq/RPF（可含配套 total RNA-seq）全流程（QC->去接头->UMI->比对->定量->RPF 计数/周期/密码子分析）时使用；单工具调用走各软件 native。"
+  recommendation_priority: "Medium（复合流程编排层；单工具调用请走各软件 native）。"
+
+stages:
+  - id: fastqc
+    software: fastqc
+    implementation: fastqc_native
+    purpose: "原始 reads QC（fastqc HTML/zip）"
+  - id: cutadapt
+    software: cutadapt
+    implementation: cutadapt_native
+    purpose: "3' 接头去除 + 低质量剪切 + 长度过滤（rnaseq/riboseq 参数不同）"
+  - id: umi_tools_extract
+    software: umi_tools
+    implementation: umi_tools_native
+    purpose: "UMI 提取（rnaseq string / riboseq regex 两种模式）"
+  - id: bowtie2_align
+    software: bowtie2
+    implementation: bowtie2_native
+    purpose: "Totals RNA-seq 转录组比对（兼容 RSEM 索引）"
+  - id: star_align
+    software: star
+    implementation: star_native
+    purpose: "可选：Totals RNA-seq 基因组比对（IGV 可视化用）"
+  - id: bbmap_align
+    software: bbmap
+    implementation: bbmap_native
+    purpose: "Ribo-seq：bbmap 分步比对 rRNA -> tRNA -> 最丰转录本（pc），输出 BAM + 分选 FASTQ"
+  - id: samtools_process
+    software: samtools
+    implementation: samtools_native
+    purpose: "BAM 排序 / 索引 / 格式转换"
+  - id: rsem_quantify
+    software: rsem
+    implementation: rsem_native
+    purpose: "Totals 定量（gene/isoform TPM），用于挑选最丰转录本"
+  - id: rpf_counting
+    software: riboseq (custom python scripts)
+    implementation: riboseq_native_scripts
+    purpose: "counting_script / summing_CDS / summing_UTR5 / periodicity / count_codon_occupancy 等 RPF 计数"
+  - id: r_downstream
+    software: r (custom R scripts)
+    implementation: riboseq_native_scripts
+    purpose: "DESeq2 DE / TE、QC 图、meta plots、GSEA、codon occupancy"
+
+inputs:
+  samplesheet:
+    type: file
+    required: true
+    description: "样本表 CSV：sample,fastq_1,fastq_2,type(riboseq|rnaseq) 等（参考 testdata/samplesheet_local.csv）"
+  contrasts:
+    type: file
+    required: false
+    description: "差异分析对照表 CSV（DESeq2 用，参考 testdata/contrasts_local.csv）"
+  fasta:
+    type: file
+    required: true
+    description: "参考基因组 / 蛋白编码转录组 FASTA（如 chr20 测试数据）"
+  gtf:
+    type: file
+    required: true
+    description: "参考注释 GTF"
+  outdir:
+    type: string
+    default: testdata_results
+    description: "输出根目录（config.paths.output_dir）"
+  protocol:
+    type: string
+    default: combine
+    description: "riboseq | rnaseq | combine（config.project.protocol）"
+  threads:
+    type: integer
+    default: 8
+
+outputs:
+  rnaseq_bam:
+    path_pattern: "{outdir}/RNASEQ/umi/{sample}_pc_dedup_sorted.bam.bai"
+  rsem_genes:
+    path_pattern: "{outdir}/RNASEQ/rsem/{sample}_pc.genes.results"
+  riboseq_bam:
+    path_pattern: "{outdir}/RIBOSEQ/umi/{sample}_pc_dedup_sorted.bam.bai"
+  riboseq_fastqc:
+    path_pattern: "{outdir}/RIBOSEQ/fastqc/{sample}_{type}_fastqc.html"
+  final_counts:
+    path_pattern: "{outdir}/RIBOSEQ/Counts_files/{sample}_pc_final.counts"
+
+execution:
+  entrypoint: "git submodule update --init workflow/riboseq/native && cd workflow/riboseq/native && bash test/run_smoke.sh && ./run.sh --pipeline {RPFs|Totals|Downstream}"
+  test_command: "test -f workflow/riboseq/riboseq.yaml && test -f workflow/riboseq/native/run.sh"
+  dependencies_in_skills:
+    - fastqc/native
+    - cutadapt/native
+    - umi_tools/native
+    - bowtie2/native
+    - star/native
+    - bbmap/native
+    - samtools/native
+    - rsem/native
+  workflow_skeleton_note: "经典脚本真源在 SiYangming/Ribo-seq（含 test/ chr20 冒烟模块）；native/ 为 git submodule。Snakemake 按需在项目内重建。"
+  fallback_note: "STAR 可选；无 UMI 可跳过；环境自检见 native/test/run_smoke.sh。克隆本仓请加 --recurse-submodules。"
+
+optimization:
+  default_cpus: 8
+  default_mem_mb: 16384
+
+software_versions:
+  rnaseq_aligner: "bowtie2（转录组）/ STAR（基因组，可选）"
+  riboseq_aligner: "bbmap"
+  upstream: "https://github.com/Bushell-lab/Ribo-seq"
+  fork: "https://github.com/SiYangming/Ribo-seq"
+  submodule: "workflow/riboseq/native"
+  note: "各工具版本见 modules/<sw>/meta.yaml；native/ 为 fork 的 submodule，含 test/ chr20 冒烟数据。"

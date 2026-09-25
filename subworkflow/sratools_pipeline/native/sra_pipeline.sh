@@ -2,10 +2,9 @@
 set -euo pipefail
 
 ###########################################################################
-# SRA 数据处理一体化脚本
-# 功能：并行下载 + SRA转FASTQ + 状态管理 + 错误处理
+# SRA 数据处理一体化脚本（无上游自写，留 bioskills；档案形态）
 # 子命令：download, convert, status, stop, clean
-# 合并自：batch_prefetch.sh, batch_prefetch 2.sh, batch_sra_to_fastq.sh, batch_sra_to_fastq_parallel.sh
+# 二进制：优先 PATH（prefetch / parallel / fastq-dump）；否则试 SCRIPT_DIR/bin/
 ###########################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE}")" && pwd)"
@@ -21,9 +20,31 @@ THREADS=4
 RUN_MODE=""
 USE_DOCKER=false
 DOCKER_IMAGE="quay.io/biocontainers/sra-tools:3.2.1--h4304569_1"
-PARALLEL_BIN="${SCRIPT_DIR}/bin/parallel-20251122/src/parallel"
-PREFETCH_BIN="${SCRIPT_DIR}/bin/sratoolkit.3.2.0-centos_linux64/bin/prefetch"
-FASTQ_DUMP_BIN="${SCRIPT_DIR}/bin/sratoolkit.3.2.0-centos_linux64/bin/fastq-dump"
+
+resolve_bin() {
+    local name="$1"
+    shift
+    if command -v "$name" >/dev/null 2>&1; then
+        command -v "$name"
+        return 0
+    fi
+    local cand
+    for cand in "$@"; do
+        if [ -x "$cand" ]; then
+            echo "$cand"
+            return 0
+        fi
+    done
+    echo ""
+    return 1
+}
+
+PREFETCH_BIN="$(resolve_bin prefetch \
+    "${SCRIPT_DIR}/bin/sratoolkit.3.2.0-centos_linux64/bin/prefetch" || true)"
+PARALLEL_BIN="$(resolve_bin parallel \
+    "${SCRIPT_DIR}/bin/parallel-20251122/src/parallel" || true)"
+FASTQ_DUMP_BIN="$(resolve_bin fastq-dump \
+    "${SCRIPT_DIR}/bin/sratoolkit.3.2.0-centos_linux64/bin/fastq-dump" || true)"
 
 show_help() {
     cat <<'EOF'
@@ -50,39 +71,25 @@ show_help() {
                          （默认 quay.io/biocontainers/sra-tools:3.2.1--h4304569_1）
   -h, --help           - 显示此帮助信息
 
+依赖（真跑）:
+  PATH 上的 prefetch、parallel、fastq-dump（见 modules/sra-tools），
+  或 convert --docker。可选本地 SCRIPT_DIR/bin/ 兜底（不随仓分发）。
+
 示例:
-  # 下载SRA数据
-  ./sra_pipeline.sh download
   ./sra_pipeline.sh download --threads 8
-
-  # 转换SRA为FASTQ（本地二进制）
-  ./sra_pipeline.sh convert
-  ./sra_pipeline.sh convert --threads 5
-
-  # 使用Docker模式转换
   ./sra_pipeline.sh convert --docker
-  ./sra_pipeline.sh convert --docker --threads 8
-
-  # 使用自定义Docker镜像
-  ./sra_pipeline.sh convert --docker --docker-image your/sra-tools:latest
-
-  # 状态管理
-  ./sra_pipeline.sh status    # 查看运行状态
-  ./sra_pipeline.sh stop      # 停止任务
-  ./sra_pipeline.sh clean     # 清理所有输出目录
+  ./sra_pipeline.sh status | stop | clean
 
 输出目录:
   sra_downloads/   - SRA下载文件
   fastq_files/     - FASTQ转换结果
-  sra_downloads/sra_pipeline.log - 运行日志
-  sra_downloads/failed.txt      - 失败记录
 ================================================================
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        download|convert|status|stop|kill|clean)
+        download|convert|status|stop|kill|clean|__download_run|__convert_run)
             RUN_MODE="$1"
             shift
             ;;
@@ -225,19 +232,19 @@ esac
 ###########################################################################
 if [ "$RUN_MODE" = "__download_run" ]; then
     echo "[$(date +%Y-%m-%d_%H:%M:%S)] 开始依赖检查..." | tee -a "$MASTER_LOG"
-    if [ ! -x "$PREFETCH_BIN" ]; then
-        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: prefetch 工具不可执行！路径：$PREFETCH_BIN" | tee -a "$MASTER_LOG"
+    if [ -z "${PREFETCH_BIN}" ] || [ ! -x "$PREFETCH_BIN" ]; then
+        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: 未找到可执行的 prefetch（请装 sra-tools 或放入 PATH）" | tee -a "$MASTER_LOG"
         exit 1
     fi
-    if [ ! -x "$PARALLEL_BIN" ]; then
-        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: parallel 未找到或不可执行！路径：$PARALLEL_BIN" | tee -a "$MASTER_LOG"
+    if [ -z "${PARALLEL_BIN}" ] || [ ! -x "$PARALLEL_BIN" ]; then
+        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: 未找到可执行的 parallel（GNU parallel）" | tee -a "$MASTER_LOG"
         exit 1
     fi
     if [ ! -f "$SRR_LIST" ]; then
         echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: SRR列表文件不存在！路径：$SRR_LIST" | tee -a "$MASTER_LOG"
         exit 1
     fi
-    echo "[$(date +%Y-%m-%d_%H:%M:%S)] 依赖检查通过！SRR列表：$SRR_LIST" | tee -a "$MASTER_LOG"
+    echo "[$(date +%Y-%m-%d_%H:%M:%S)] 依赖检查通过！prefetch=$PREFETCH_BIN parallel=$PARALLEL_BIN SRR列表：$SRR_LIST" | tee -a "$MASTER_LOG"
 
     download_srr() {
         local srr_id="$1"
@@ -278,13 +285,13 @@ if [ "$RUN_MODE" = "__convert_run" ]; then
         fi
         echo "[$(date +%Y-%m-%d_%H:%M:%S)] Docker 模式，镜像：$DOCKER_IMAGE" | tee -a "$MASTER_LOG"
     else
-        if [ ! -x "$FASTQ_DUMP_BIN" ]; then
-            echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: fastq-dump 工具不可执行！路径：$FASTQ_DUMP_BIN" | tee -a "$MASTER_LOG"
+        if [ -z "${FASTQ_DUMP_BIN}" ] || [ ! -x "$FASTQ_DUMP_BIN" ]; then
+            echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: 未找到可执行的 fastq-dump（请装 sra-tools、放入 PATH，或改用 --docker）" | tee -a "$MASTER_LOG"
             exit 1
         fi
     fi
-    if [ ! -x "$PARALLEL_BIN" ]; then
-        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: parallel 未找到或不可执行！路径：$PARALLEL_BIN" | tee -a "$MASTER_LOG"
+    if [ -z "${PARALLEL_BIN}" ] || [ ! -x "$PARALLEL_BIN" ]; then
+        echo "[$(date +%Y-%m-%d_%H:%M:%S)] ERROR: 未找到可执行的 parallel（GNU parallel）" | tee -a "$MASTER_LOG"
         exit 1
     fi
     if [ ! -f "$SRR_LIST" ]; then
